@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nikadi Front Desk</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#14110f">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="app.css">
+<style>
+.mrow{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.mrow h2{font-size:1.7rem}
+.big{font-family:var(--display);font-size:2.6rem;line-height:1;color:var(--gold-hi);font-variant-numeric:lining-nums tabular-nums;text-align:right}
+.big small{display:block;font-family:var(--body);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{background:none;border:0;padding:12px 6px;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink)}
+.preview{font-size:.9rem;color:var(--muted)}
+.preview b{color:var(--gold-hi);font-weight:500}
+.statline{display:flex;justify-content:space-between;gap:10px;font-size:.85rem;color:var(--muted)}
+select.input{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 12px) 55%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="demo-flag" id="demoFlag" hidden>Demo mode · sample data</div>
+  <header class="bar pad">
+    <a class="brand" href="./"><b>NIKADI</b><span>Front desk</span></a>
+    <button class="iconbtn" id="topBtn" type="button" hidden>Log out</button>
+  </header>
+  <main class="pad" id="view" aria-live="polite"></main>
+</div>
+
+<script src="core.js"></script>
+<script src="demo.js"></script>
+<script>
+(function(){
+  var view=document.getElementById('view'),topBtn=document.getElementById('topBtn');
+  if(NIKADI.demo)document.getElementById('demoFlag').hidden=false;
+  function ss(k,v){try{if(v===undefined)return sessionStorage.getItem(k);if(v===null)sessionStorage.removeItem(k);else sessionStorage.setItem(k,v);}catch(e){return null;}}
+  var T=ss('nk_staff'),cfg={pointsPer100:1,welcome:100,discountPoints:100,discountValue:500,freeNightPoints:500,channel:'email'},cur=null,hist=[];
+  function $(id){return document.getElementById(id);}
+  function busy(b,on){if(b){b.classList.toggle('busy',on);b.disabled=on;}}
+  function toast(t){var d=document.createElement('div');d.className='toast fade';d.textContent=t;document.body.appendChild(d);setTimeout(function(){d.remove();},2800);}
+  function phoneField(id,label){return '<label class="field"><span>'+label+'</span><div class="phonewrap"><span class="cc">+91</span><input class="input" id="'+id+'" type="tel" inputmode="numeric" maxlength="14" placeholder="10-digit mobile number"></div></label>';}
+  function call(action,data){return nkApi(action,Object.assign({token:T},data||{})).catch(function(c){if(c==='not_logged_in'||c==='session_expired'){T=null;ss('nk_staff',null);pinScreen();}throw c;});}
+  function actHTML(a,showName){
+    var p=Number(a.points)||0;
+    return '<div class="act"><span class="t">'+(showName?nkEsc(a.name)+' · ':'')+nkEsc(a.type)+(a.note&&a.note.indexOf(a.type)!==0?' · '+nkEsc(a.note):'')+'</span><span class="p '+(p>=0?'plus':'minus')+'">'+(p>=0?'+':'')+p+'<small>bal '+nkEsc(a.balance)+'</small></span><span class="d">'+nkEsc(a.date)+(showName?' · '+nkEsc(a.phone):'')+(a.amount?' · '+nkInr(a.amount):'')+'</span></div>';
+  }
+
+  /* ---------- PIN ---------- */
+  function pinScreen(){
+    topBtn.hidden=true;
+    view.innerHTML='<div class="fade" style="display:grid;gap:22px"><div style="display:grid;gap:8px"><p class="kicker">Staff only</p><h1 class="title">Front desk login</h1><p class="sub">Add stay points, redeem rewards and manage members.</p></div>'+
+      (NIKADI_API_URL||NIKADI.demo?'':'<div class="note"><b>Not connected yet</b>The membership database is not connected to this page yet.</div>')+
+      '<form class="panel" id="pinForm" novalidate><label class="field"><span>Staff PIN</span><input class="input otp" id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="8" placeholder="••••"></label>'+
+      '<p class="err" id="pinErr"></p><button class="btn btn-gold" id="pinBtn" type="submit">Log in</button></form>'+
+      (NIKADI.demo?'<p class="small" style="text-align:center">Demo PIN: 2468</p>':'')+'</div>';
+    $('pin').focus();
+    $('pinForm').onsubmit=function(e){
+      e.preventDefault();var b=$('pinBtn'),err=$('pinErr');err.textContent='';busy(b,true);
+      nkApi('staffLogin',{pin:$('pin').value}).then(function(r){T=r.token;ss('nk_staff',T);if(r.config)cfg=r.config;busy(b,false);desk();},function(c){busy(b,false);err.textContent=nkError(c);$('pin').value='';});
+    };
+  }
+
+  /* ---------- desk ---------- */
+  function desk(){
+    topBtn.hidden=false;
+    nkApi('config').then(function(c){Object.keys(c).forEach(function(k){if(k!=='ok')cfg[k]=c[k];});}).catch(function(){});
+    view.innerHTML='<div class="fade" style="display:grid;gap:22px">'+
+      '<form class="panel" id="findForm" novalidate><h2>Find member</h2>'+phoneField('fPhone','Guest mobile number')+'<p class="err" id="fErr"></p><button class="btn btn-gold" id="fBtn" type="submit">Find</button></form>'+
+      '<div id="memberSlot"></div>'+
+      '<div style="display:grid;gap:10px"><div class="statline"><p class="kicker">Recent activity</p><span id="mcount"></span></div><div class="acts" id="recent"><div class="empty">Loading…</div></div></div></div>';
+    $('findForm').onsubmit=function(e){e.preventDefault();find($('fPhone').value);};
+    loadRecent();
+  }
+  function loadRecent(){
+    call('staffRecent').then(function(r){
+      $('mcount').textContent=r.members+' member'+(r.members===1?'':'s');
+      $('recent').innerHTML=r.recent.length?r.recent.map(function(a){return actHTML(a,true);}).join(''):'<div class="empty">No activity yet.</div>';
+    },function(c){var el=$('recent');if(el)el.innerHTML='<div class="empty">'+nkEsc(nkError(c))+'</div>';});
+  }
+  function find(raw){
+    var p=nkPhoneOk(raw),err=$('fErr'),b=$('fBtn');err.textContent='';
+    if(!p){err.textContent=nkError('invalid_phone');return;}
+    busy(b,true);
+    call('staffMember',{phone:p}).then(function(r){busy(b,false);if(r.found){cur=r.member;hist=r.history;member();}else createForm(p);},function(c){busy(b,false);err.textContent=nkError(c);});
+  }
+
+  function createForm(phone){
+    cur=null;
+    $('memberSlot').innerHTML='<form class="panel fade" id="cForm" novalidate><h2>New member</h2><p class="sub">+91 '+nkEsc(phone)+' is not a member yet. Create the membership now. '+cfg.welcome+' welcome points are added automatically.</p>'+
+      '<label class="field"><span>Full name <i>*</i></span><input class="input" id="cName"></label>'+
+      '<label class="field"><span>Email'+(cfg.channel!=='sms'?' <i>*</i>':'')+'</span><input class="input" id="cEmail" type="email" inputmode="email">'+(cfg.channel!=='sms'?'<span class="small">Needed for OTP codes until SMS is set up.</span>':'')+'</label>'+
+      '<label class="field"><span>City</span><input class="input" id="cCity"></label>'+
+      '<p class="err" id="cErr"></p><button class="btn btn-gold" id="cBtn" type="submit">Create member</button></form>';
+    $('cForm').onsubmit=function(e){
+      e.preventDefault();var err=$('cErr'),b=$('cBtn');err.textContent='';
+      var d={phone:phone,name:$('cName').value.trim(),email:$('cEmail').value.trim(),city:$('cCity').value.trim()};
+      if(d.name.length<2)return err.textContent=nkError('name_required');
+      if(cfg.channel!=='sms'&&!d.email)return err.textContent='Please add an email so the member can receive OTP codes.';
+      busy(b,true);
+      call('staffCreate',d).then(function(r){busy(b,false);cur=r.member;hist=r.history;member();toast('Member created with '+r.member.points+' points');loadRecent();},function(c){busy(b,false);err.textContent=nkError(c);});
+    };
+  }
+
+  function member(){
+    var m=cur,mode='stay';
+    $('memberSlot').innerHTML='<div class="fade" style="display:grid;gap:16px">'+
+      '<div class="panel"><div class="mrow"><div><h2>'+nkEsc(m.name)+'</h2><p class="small">+91 '+nkEsc(m.phone)+(m.city?' · '+nkEsc(m.city):'')+'</p><p class="small">Member since '+nkEsc(String(m.joined).replace(/,.*$/,''))+' · lifetime '+m.lifetime+' pts</p></div>'+
+      '<div class="big" id="bal">'+m.points+'<small>points</small></div></div></div>'+
+      '<div class="seg" role="group" aria-label="Action"><button type="button" data-m="stay" aria-pressed="true">Add stay</button><button type="button" data-m="redeem" aria-pressed="false">Redeem</button><button type="button" data-m="adjust" aria-pressed="false">Adjust</button></div>'+
+      '<div id="actionSlot"></div>'+
+      '<div style="display:grid;gap:10px"><p class="kicker">Member history</p><div class="acts" id="mhist"></div></div></div>';
+    $('memberSlot').querySelectorAll('.seg button').forEach(function(btn){btn.onclick=function(){mode=btn.dataset.m;$('memberSlot').querySelectorAll('.seg button').forEach(function(x){x.setAttribute('aria-pressed',x===btn?'true':'false');});action(mode);};});
+    renderHist();action('stay');
+    $('memberSlot').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function renderHist(){$('mhist').innerHTML=hist.length?hist.map(function(a){return actHTML(a,false);}).join(''):'<div class="empty">No activity yet.</div>';$('bal').innerHTML=cur.points+'<small>points</small>';}
+  function done(r,msg){cur=r.member;hist=r.history;renderHist();toast(msg);loadRecent();}
+
+  function action(mode){
+    var slot=$('actionSlot');
+    if(mode==='stay'){
+      slot.innerHTML='<form class="panel fade" id="sForm" novalidate><h2>Add stay points</h2>'+
+        '<label class="field"><span>Room tariff paid (₹) <i>*</i></span><input class="input" id="sAmt" type="number" inputmode="numeric" min="1" placeholder="e.g. 9000"></label>'+
+        '<label class="field"><span>Note</span><input class="input" id="sNote" placeholder="e.g. 2 nights · Deluxe Twin"></label>'+
+        '<p class="preview" id="sPrev">Enter the room tariff only, not fines or extra charges.</p><p class="err" id="sErr"></p><button class="btn btn-gold" id="sBtn" type="submit">Add points</button></form>';
+      $('sAmt').oninput=function(){var a=+this.value||0,p=Math.floor(a/100*cfg.pointsPer100);$('sPrev').innerHTML=a>0?'Member earns <b>'+p+' points</b>. New balance: <b>'+(cur.points+p)+'</b>.':'Enter the room tariff only, not fines or extra charges.';};
+      $('sForm').onsubmit=function(e){
+        e.preventDefault();var a=Math.round(+$('sAmt').value||0),err=$('sErr'),b=$('sBtn');err.textContent='';
+        if(a<=0)return err.textContent=nkError('invalid_amount');
+        busy(b,true);call('staffAddStay',{phone:cur.phone,amount:a,note:$('sNote').value.trim()}).then(function(r){busy(b,false);done(r,r.added+' points added');action('stay');},function(c){busy(b,false);err.textContent=nkError(c);});
+      };
+    } else if(mode==='redeem'){
+      var discMax=Math.floor(cur.points/cfg.discountPoints),nightMax=Math.floor(cur.points/cfg.freeNightPoints);
+      slot.innerHTML='<form class="panel fade" id="rForm" novalidate><h2>Redeem points</h2>'+
+        (discMax<1?'<p class="sub">This member needs at least '+cfg.discountPoints+' points to redeem.</p></form>':
+        '<label class="field"><span>Reward</span><select class="input" id="rType"><option value="discount">'+nkInr(cfg.discountValue)+' discount · '+cfg.discountPoints+' pts each</option>'+(nightMax>0?'<option value="night">Free night · '+cfg.freeNightPoints+' pts each</option>':'')+'</select></label>'+
+        '<label class="field"><span>Quantity</span><select class="input" id="rQty"></select></label>'+
+        '<p class="preview" id="rPrev"></p>'+
+        '<div id="rCodeStep" hidden><label class="field"><span>Code from the guest</span><input class="input otp" id="rCode" inputmode="numeric" maxlength="6" placeholder="••••••"></label><p class="small" id="rSent" style="margin-top:8px"></p></div>'+
+        '<p class="err" id="rErr"></p><button class="btn btn-gold" id="rBtn" type="submit">Send OTP to guest</button><button class="btn btn-quiet" id="rCancel" type="button" hidden>Cancel</button></form>');
+      if(discMax<1)return;
+      var step=1;
+      var fillQty=function(){var t=$('rType').value,max=t==='night'?nightMax:discMax,o='';for(var i=1;i<=Math.min(max,20);i++)o+='<option value="'+i+'">'+i+'</option>';$('rQty').innerHTML=o;prev();};
+      var prev=function(){var t=$('rType').value,q=+$('rQty').value||1,pts=q*(t==='night'?cfg.freeNightPoints:cfg.discountPoints),lbl=t==='night'?q+' free night'+(q>1?'s':''):nkInr(q*cfg.discountValue)+' off';$('rPrev').innerHTML='Uses <b>'+pts+' points</b> for <b>'+lbl+'</b>. Balance after: <b>'+(cur.points-pts)+'</b>.';};
+      $('rType').onchange=fillQty;$('rQty').onchange=prev;fillQty();
+      $('rCancel').onclick=function(){action('redeem');};
+      $('rForm').onsubmit=function(e){
+        e.preventDefault();var err=$('rErr'),b=$('rBtn');err.textContent='';
+        if(step===1){
+          busy(b,true);
+          call('staffRedeemStart',{phone:cur.phone,reward:$('rType').value,qty:+$('rQty').value}).then(function(r){
+            busy(b,false);step=2;$('rType').disabled=true;$('rQty').disabled=true;$('rCodeStep').hidden=false;$('rCancel').hidden=false;
+            $('rSent').textContent='Code sent by '+(r.channel==='sms'?'SMS':'email')+' to '+r.to+'. Ask the guest to read it out.';
+            b.textContent='Confirm redemption';$('rCode').focus();
+          },function(c){busy(b,false);err.textContent=nkError(c);});
+        } else {
+          var code=$('rCode').value.replace(/\D/g,'');if(code.length!==6)return err.textContent='Enter the 6-digit code.';
+          busy(b,true);
+          call('staffRedeemConfirm',{phone:cur.phone,code:code}).then(function(r){busy(b,false);done(r,r.redeemed+' points redeemed for '+r.label);action('redeem');},function(c){busy(b,false);err.textContent=nkError(c);});
+        }
+      };
+    } else {
+      slot.innerHTML='<form class="panel fade" id="aForm" novalidate><h2>Adjust points</h2><p class="sub">Use for corrections only. Enter a negative number to remove points.</p>'+
+        '<label class="field"><span>Points (+ or −) <i>*</i></span><input class="input" id="aPts" type="number" inputmode="numeric" placeholder="e.g. 50 or -50"></label>'+
+        '<label class="field"><span>Reason <i>*</i></span><input class="input" id="aNote" placeholder="e.g. Missed points for Oct stay"></label>'+
+        '<p class="err" id="aErr"></p><button class="btn btn-line" id="aBtn" type="submit">Save adjustment</button></form>';
+      $('aForm').onsubmit=function(e){
+        e.preventDefault();var p=Math.round(+$('aPts').value||0),n=$('aNote').value.trim(),err=$('aErr'),b=$('aBtn');err.textContent='';
+        if(!p)return err.textContent=nkError('invalid_points');if(!n)return err.textContent=nkError('note_required');
+        busy(b,true);call('staffAdjust',{phone:cur.phone,points:p,note:n}).then(function(r){busy(b,false);done(r,'Adjustment saved');action('adjust');},function(c){busy(b,false);err.textContent=nkError(c);});
+      };
+    }
+  }
+
+  topBtn.onclick=function(){T=null;ss('nk_staff',null);pinScreen();toast('Logged out');};
+  if(T)desk();else pinScreen();
+})();
+</script>
+</body>
+</html>
