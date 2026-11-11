@@ -20,6 +20,8 @@
   --gold:#c9a35a;
   --gold-hi:#e0be7a;
   --gold-ink:#1a1206;
+  --warn:#e07a62;
+  --warn-bg:rgba(224,122,98,.08);
   --display:"Cormorant Garamond", "Times New Roman", Georgia, serif;
   --body:"Jost", "Helvetica Neue", Arial, system-ui, sans-serif;
   color-scheme:dark;
@@ -202,6 +204,64 @@ footer .brand b{font-size:1.2rem}
 /* floating whatsapp */
 .fab{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:14;width:56px;height:56px;border-radius:50%;background:var(--gold);color:var(--gold-ink);display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.45)}
 .fab svg{width:28px;height:28px}
+
+/* forms entry cards */
+.forms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:56px}
+@media (max-width:760px){.forms{grid-template-columns:1fr}}
+.fcard{border:1px solid var(--line);background:var(--panel);padding:30px 26px;display:grid;gap:12px;align-content:start}
+.fcard h3{font-size:1.8rem}
+.fcard p{color:var(--muted);font-size:.95rem}
+.fcard .btn{justify-self:start;margin-top:6px}
+
+/* form sheets */
+.sheet{position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet-bar{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line)}
+.sheet-bar .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px}
+.sheet-bar .btn{padding:9px 16px}
+.form-wrap{max-width:880px!important;padding-block:36px 72px}
+.form-intro{display:grid;gap:10px;margin-bottom:28px}
+.form-intro h2{font-size:clamp(2rem,6vw,2.8rem)}
+.form-intro p{color:var(--muted)}
+.form-intro .org{font-size:.8rem;letter-spacing:.06em}
+.sheet fieldset{border:1px solid var(--line);background:var(--band);padding:22px 20px 24px;margin:0 0 20px;min-width:0}
+.sheet legend{font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);padding:0 8px;font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 18px}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.full{grid-column:1/-1}
+@media (max-width:620px){.grid,.grid.three{grid-template-columns:1fr}}
+.fld{display:grid;gap:6px;min-width:0;align-content:start}
+.fld > span{font-size:.78rem;letter-spacing:.05em;color:var(--muted)}
+.fld > span i{color:var(--gold);font-style:normal}
+.fld small{font-size:.75rem;color:var(--muted)}
+.sheet input:not([type=checkbox]):not([type=radio]),.sheet select,.sheet textarea{background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:12px;font-family:var(--body);font-size:1rem;font-weight:400;border-radius:2px;width:100%;min-width:0;color-scheme:dark}
+.sheet input[readonly]{border-style:dashed;color:var(--gold-hi)}
+.sheet textarea{min-height:90px;resize:vertical}
+.sheet input:focus,.sheet select:focus,.sheet textarea:focus{outline:none;border-color:var(--gold)}
+.sheet select option{background:var(--panel)}
+.checks{display:flex;flex-wrap:wrap;gap:10px 20px;padding:4px 0}
+.checks label,.agree{display:flex;align-items:center;gap:10px;font-size:.95rem;cursor:pointer}
+.sheet input[type=checkbox],.sheet input[type=radio]{accent-color:var(--gold);width:18px;height:18px;margin:0;flex:none}
+.agree{align-items:flex-start;line-height:1.5}
+.agree input{margin-top:3px!important}
+.alert{border:1px solid var(--warn);background:var(--warn-bg);padding:16px 18px;display:grid;gap:6px;font-size:.92rem}
+.alert b{color:var(--warn);font-weight:500}
+.person{display:grid;grid-template-columns:2fr .7fr 1.1fr 1.7fr auto;gap:10px;align-items:end;padding-bottom:16px;margin-bottom:16px;border-bottom:1px dashed var(--line)}
+.person .rm{background:none;border:1px solid var(--line);color:var(--muted);width:44px;height:46px;cursor:pointer;font-size:1.2rem;border-radius:2px}
+@media (max-width:720px){.person{grid-template-columns:1fr 1fr}.person .fld:first-child,.person .fld:nth-child(4){grid-column:1/-1}}
+.addp{margin-top:4px}
+.terms{max-height:360px;overflow-y:auto;border:1px solid var(--line);background:var(--bg);padding:18px 18px 8px;margin-bottom:16px}
+.terms ol{margin:0;padding:0;list-style:none;counter-reset:t;display:grid;gap:14px}
+.terms li{display:grid;grid-template-columns:34px 1fr;gap:8px;font-size:.9rem;color:var(--muted)}
+.terms li::before{counter-increment:t;content:counter(t,decimal-leading-zero);font-family:var(--display);font-size:1.3rem;color:var(--gold);line-height:1.1}
+.terms li b{display:block;color:var(--ink);font-weight:500;letter-spacing:.12em;text-transform:uppercase;font-size:.74rem;margin-bottom:2px}
+.send-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:8px}
+.send-row p{color:var(--muted);font-size:.85rem;flex:1 1 220px}
+.done{border:1px solid var(--line);border-top:2px solid var(--gold);background:var(--panel);padding:28px 22px;display:grid;gap:14px}
+.done h3{font-size:2rem}
+.done p{color:var(--muted)}
+.done textarea{min-height:220px;font-size:.85rem!important;line-height:1.5}
+.done .acts{display:flex;flex-wrap:wrap;gap:10px}
+.done .btn{padding:11px 18px}
 </style>
 </head>
 <body>
@@ -210,7 +270,7 @@ footer .brand b{font-size:1.2rem}
   <div class="wrap">
     <a class="brand" href="#home"><b>NIKADI</b><span>Guest House · Mayapur</span></a>
     <nav class="main" aria-label="Sections">
-      <a href="#rooms">Rooms</a><a href="#gallery">Gallery</a><a href="#amenities">Amenities</a><a href="#booking">Booking</a><a href="#location">Location</a><a href="#contact">Contact</a>
+      <a href="#rooms">Rooms</a><a href="#gallery">Gallery</a><a href="#amenities">Amenities</a><a href="#booking">Booking</a><a href="#forms">Forms</a><a href="#location">Location</a><a href="#contact">Contact</a>
     </nav>
     <a class="btn btn-gold" href="#booking">Book now</a>
   </div>
@@ -332,7 +392,7 @@ footer .brand b{font-size:1.2rem}
     <div class="head">
       <p class="kicker rule">Booking and payment</p>
       <h2>Reserve in three simple steps</h2>
-      <p>Pay securely by UPI from any app. Your booking is confirmed on WhatsApp once we receive the advance.</p>
+      <p>Pay securely by UPI from any app. Your booking is confirmed on WhatsApp once we receive the advance. You can also fill our booking and registration forms online, below.</p>
     </div>
     <div class="pay">
       <ol class="steps">
@@ -361,6 +421,20 @@ footer .brand b{font-size:1.2rem}
           <button class="btn btn-line" type="button" id="copyBank">Copy bank details</button>
           <span class="msg" id="bankMsg" aria-live="polite"></span>
         </div>
+      </div>
+    </div>
+    <div class="forms" id="forms">
+      <div class="fcard">
+        <p class="kicker">Step before you travel</p>
+        <h3>Advance Booking Form</h3>
+        <p>Reserve your room with your dates, guests and advance payment details. Takes about 2 minutes.</p>
+        <a class="btn btn-gold" href="#advance-booking">Fill booking form</a>
+      </div>
+      <div class="fcard">
+        <p class="kicker">Faster check-in</p>
+        <h3>Guest Registration Card</h3>
+        <p>Complete your registration and ID details before arrival, so check-in at the front desk takes only a minute.</p>
+        <a class="btn btn-line" href="#guest-registration">Fill registration form</a>
       </div>
     </div>
   </div>
@@ -406,8 +480,8 @@ footer .brand b{font-size:1.2rem}
       <h2>A sattvic home in the holy dham</h2>
     </div>
     <div class="rules">
-      <div><h3>Pure vegetarian</h3><p>No non-veg food and no eggs on the premises.</p></div>
-      <div><h3>No intoxication</h3><p>No smoking, alcohol or tobacco anywhere in the guest house.</p></div>
+      <div><h3>Pure vegetarian</h3><p>Out of respect for Sri Dham Mayapur, no non-veg food and no eggs on the premises.</p></div>
+      <div><h3>No intoxication</h3><p>No smoking, tobacco, gutka, pan or alcohol anywhere on the premises. ₹2,000 fine for any violation.</p></div>
       <div><h3>Timings</h3><p>Check-in from 11:00 AM. Check-out by 9:00 AM.</p></div>
       <div><h3>Room only</h3><p>Meals are not served. Govinda's is an 8 minute walk.</p></div>
     </div>
@@ -446,10 +520,203 @@ footer .brand b{font-size:1.2rem}
 <footer>
   <div class="wrap">
     <span class="brand"><b>NIKADI</b></span>
-    <span>Opposite ISKCON Gate No. 4, Mayapur, West Bengal 741313</span>
+    <span>A unit of Nikadi Projects Pvt. Ltd. · GSTIN 19AAHCN7789F1ZR<br>Sri Dham Mayapur, Opp. Namahatta Bhavan &amp; ISKCON Gate No. 4, Nadia, WB 741313</span>
     <span>© 2026 Nikadi Guest House</span>
   </div>
 </footer>
+
+<section class="sheet" id="advance-booking" hidden aria-label="Advance Booking Form">
+  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Advance Booking</span></span><a class="btn btn-line" href="#forms">Close</a></div></div>
+  <div class="wrap form-wrap">
+    <div class="form-intro">
+      <p class="kicker rule">Online form</p>
+      <h2>Advance Booking Form</h2>
+      <p>Fill in your details and tap <strong>Send on WhatsApp</strong>. Your completed form opens in WhatsApp, ready to send to us. Fields marked <span style="color:var(--gold)">*</span> are required.</p>
+      <p class="org">Nikadi Guest House · A unit of Nikadi Projects Pvt. Ltd. · GSTIN 19AAHCN7789F1ZR</p>
+    </div>
+    <form class="wform" id="fAdv" data-title="ADVANCE BOOKING FORM" autocomplete="on">
+      <fieldset><legend>Guest</legend>
+        <div class="grid">
+          <label class="fld"><span>Full name <i>*</i></span><input id="a_name" name="name" autocomplete="name" required data-l="Name"></label>
+          <label class="fld"><span>Mobile <i>*</i></span><input id="a_mob" type="tel" autocomplete="tel" inputmode="tel" required pattern="[0-9+ \-]{8,}" data-l="Mobile"></label>
+          <label class="fld"><span>Email</span><input id="a_email" type="email" autocomplete="email" data-l="Email"></label>
+          <label class="fld"><span>City / State</span><input id="a_city" data-l="City / State"></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Stay</legend>
+        <div class="grid">
+          <label class="fld"><span>Arrival date <i>*</i></span><input id="a_ci" type="date" required data-role="ci" data-l="Arrival date"></label>
+          <label class="fld"><span>Arrival time</span><input id="a_cit" type="time" data-l="Arrival time"></label>
+          <label class="fld"><span>Departure date <i>*</i></span><input id="a_co" type="date" required data-role="co" data-l="Departure date"></label>
+          <label class="fld"><span>No. of nights</span><input id="a_n" readonly tabindex="-1" data-role="n" data-l="No. of nights"></label>
+          <label class="fld"><span>Adults <i>*</i></span><input id="a_ad" type="number" min="1" max="20" value="2" required data-role="adults" data-l="Adults"></label>
+          <label class="fld"><span>Children</span><input id="a_ch" type="number" min="0" max="20" value="0" data-l="Children"></label>
+          <label class="fld"><span>Room type <i>*</i></span>
+            <select id="a_room" required data-role="room" data-l="Room type">
+              <option value="Deluxe Double (King bed)" data-rate="5000">Deluxe Double (King bed)</option>
+              <option value="Deluxe Twin" data-rate="4500">Deluxe Twin</option>
+            </select></label>
+          <label class="fld"><span>No. of rooms <i>*</i></span><input id="a_rooms" type="number" min="1" max="10" value="1" required data-role="rooms" data-l="No. of rooms"></label>
+          <div class="fld full"><span>Extras</span>
+            <div class="checks" data-l="Extras"><label><input type="checkbox" id="a_x1" value="Extra mattress"> Extra mattress</label><label><input type="checkbox" id="a_x2" value="Early check-in"> Early check-in</label></div></div>
+          <label class="fld full"><span>Special requests</span><textarea id="a_req" data-l="Special requests"></textarea></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Tariff &amp; Advance</legend>
+        <div class="grid">
+          <label class="fld"><span>Room rate per night (₹)</span><input id="a_rate" readonly tabindex="-1" data-role="rate" data-l="Room rate per night"></label>
+          <label class="fld"><span>Total at standard rate (₹)</span><input id="a_total" readonly tabindex="-1" data-role="total" data-l="Total at standard rate"><small>Offer rates may apply. We confirm the final amount on WhatsApp.</small></label>
+          <label class="fld"><span>Advance paid (₹)</span><input id="a_adv" type="number" min="0" inputmode="numeric" data-l="Advance paid (₹)"></label>
+          <div class="fld"><span>Payment mode</span>
+            <div class="checks" data-l="Payment mode"><label><input type="radio" name="a_mode" id="a_m1" value="UPI"> UPI</label><label><input type="radio" name="a_mode" id="a_m2" value="Bank transfer"> Bank transfer</label><label><input type="radio" name="a_mode" id="a_m3" value="Not paid yet"> Not paid yet</label></div></div>
+          <label class="fld full"><span>Transaction / UPI reference no.</span><input id="a_ref" data-l="Txn / UPI ref."></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Declaration</legend>
+        <div class="alert" style="margin-bottom:16px">
+          <span>Photo ID is mandatory at check-in for every guest.</span>
+          <span><b>No smoking, tobacco, gutka, pan or alcohol on the premises. ₹2,000 fine for any violation.</b></span>
+        </div>
+        <div class="grid">
+          <label class="agree full"><input type="checkbox" id="a_agree" required data-l="Agreed to house rules"> I confirm these details are correct and I agree to the house rules of Nikadi Guest House.</label>
+          <label class="fld"><span>Type your full name as signature <i>*</i></span><input id="a_sig" required data-l="Guest signature (typed)"></label>
+        </div>
+      </fieldset>
+      <div class="send-row">
+        <button class="btn btn-gold" type="submit">Send on WhatsApp</button>
+        <p>Please also send your payment screenshot in the same WhatsApp chat.</p>
+      </div>
+    </form>
+    <div class="done" hidden>
+      <h3>Almost done</h3>
+      <p>WhatsApp should now be open with your form filled in. Tap <strong>Send</strong> in WhatsApp to submit it to us, then send your payment screenshot in the same chat.</p>
+      <p>WhatsApp did not open? Copy the form below and paste it in a WhatsApp message to +91 75011 01137.</p>
+      <textarea readonly aria-label="Your completed form"></textarea>
+      <div class="acts"><a class="btn btn-gold wa-again" href="#" target="_blank" rel="noopener">Open WhatsApp again</a><button class="btn btn-line copy-form" type="button">Copy form</button><button class="btn btn-line edit-form" type="button">Edit form</button></div>
+      <span class="msg" aria-live="polite"></span>
+    </div>
+  </div>
+</section>
+
+<section class="sheet" id="guest-registration" hidden aria-label="Guest Registration Card">
+  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Guest Registration</span></span><a class="btn btn-line" href="#forms">Close</a></div></div>
+  <div class="wrap form-wrap">
+    <div class="form-intro">
+      <p class="kicker rule">Online form</p>
+      <h2>Guest Registration Card</h2>
+      <p>Complete your registration before arrival to make check-in quick. Tap <strong>Send on WhatsApp</strong> at the end. Fields marked <span style="color:var(--gold)">*</span> are required.</p>
+      <p class="org">Nikadi Guest House · A unit of Nikadi Projects Pvt. Ltd. · GSTIN 19AAHCN7789F1ZR</p>
+    </div>
+    <form class="wform" id="fReg" data-title="GUEST REGISTRATION CARD" autocomplete="on">
+      <fieldset><legend>Guest details</legend>
+        <div class="grid">
+          <label class="fld"><span>Full name <i>*</i></span><input id="r_name" autocomplete="name" required data-l="Full name"></label>
+          <label class="fld"><span>Age <i>*</i></span><input id="r_age" type="number" min="1" max="120" required data-l="Age"></label>
+          <div class="fld"><span>Gender <i>*</i></span>
+            <div class="checks" data-l="Gender"><label><input type="radio" name="r_gender" id="r_g1" value="Male" required> Male</label><label><input type="radio" name="r_gender" id="r_g2" value="Female"> Female</label><label><input type="radio" name="r_gender" id="r_g3" value="Other"> Other</label></div></div>
+          <label class="fld"><span>Nationality <i>*</i></span><input id="r_nat" value="Indian" required data-l="Nationality" list="natList"><datalist id="natList"><option value="Indian"></option></datalist></label>
+          <label class="fld full"><span>Address <i>*</i></span><input id="r_addr" autocomplete="street-address" required data-l="Address"></label>
+          <label class="fld"><span>City <i>*</i></span><input id="r_city" autocomplete="address-level2" required data-l="City"></label>
+          <label class="fld"><span>State <i>*</i></span><input id="r_state" autocomplete="address-level1" required data-l="State"></label>
+          <label class="fld"><span>PIN</span><input id="r_pin" inputmode="numeric" autocomplete="postal-code" data-l="PIN"></label>
+          <label class="fld"><span>Mobile <i>*</i></span><input id="r_mob" type="tel" inputmode="tel" autocomplete="tel" required pattern="[0-9+ \-]{8,}" data-l="Mobile"></label>
+          <label class="fld"><span>Email</span><input id="r_email" type="email" autocomplete="email" data-l="Email"></label>
+          <label class="fld"><span>Company (for GST invoice)</span><input id="r_co" autocomplete="organization" data-l="Company (GST invoice)"></label>
+          <label class="fld"><span>GSTIN</span><input id="r_gst" data-l="GSTIN" style="text-transform:uppercase"></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Stay details</legend>
+        <div class="grid">
+          <label class="fld"><span>Check-in date <i>*</i></span><input id="r_ci" type="date" required data-role="ci" data-l="Check-in date"></label>
+          <label class="fld"><span>Check-in time</span><input id="r_cit" type="time" data-l="Check-in time"></label>
+          <label class="fld"><span>Check-out date <i>*</i></span><input id="r_co2" type="date" required data-role="co" data-l="Check-out date"></label>
+          <label class="fld"><span>Check-out time</span><input id="r_cot" type="time" data-l="Check-out time"></label>
+          <label class="fld"><span>No. of nights</span><input id="r_n" readonly tabindex="-1" data-role="n" data-l="No. of nights"></label>
+          <label class="fld"><span>Room type <i>*</i></span>
+            <select id="r_room" required data-role="room" data-l="Room type">
+              <option value="Deluxe Double (King bed)" data-rate="5000">Deluxe Double (King bed)</option>
+              <option value="Deluxe Twin" data-rate="4500">Deluxe Twin</option>
+            </select></label>
+          <label class="fld"><span>Adults <i>*</i></span><input id="r_ad" type="number" min="1" max="20" value="2" required data-role="adults" data-l="Adults"></label>
+          <label class="fld"><span>Children</span><input id="r_ch" type="number" min="0" max="20" value="0" data-l="Children"></label>
+          <label class="fld"><span>Arriving from</span><input id="r_from" data-l="Arriving from"></label>
+          <label class="fld"><span>Going to</span><input id="r_to" data-l="Going to"></label>
+          <label class="fld full"><span>Purpose of visit</span><input id="r_purpose" data-l="Purpose of visit" placeholder="e.g. Pilgrimage, festival, family visit"></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Identity proof</legend>
+        <div class="grid">
+          <div class="fld full"><span>ID type <i>*</i></span>
+            <div class="checks" data-l="ID type"><label><input type="radio" name="r_idt" id="r_i1" value="Aadhaar" required> Aadhaar</label><label><input type="radio" name="r_idt" id="r_i2" value="Passport"> Passport</label><label><input type="radio" name="r_idt" id="r_i3" value="Driving Licence"> Driving Licence</label><label><input type="radio" name="r_idt" id="r_i4" value="Voter ID"> Voter ID</label><label><input type="radio" name="r_idt" id="r_i5" value="Other"> Other</label></div></div>
+          <label class="fld full"><span>ID number <i>*</i></span><input id="r_idn" required data-l="ID number"><small>Please also send a clear photo of this ID in the same WhatsApp chat.</small></label>
+        </div>
+      </fieldset>
+      <fieldset id="foreignSet" hidden disabled><legend>For foreign nationals (Form C)</legend>
+        <div class="grid">
+          <label class="fld"><span>Passport no. <i>*</i></span><input id="r_pp" required data-l="Passport no."></label>
+          <label class="fld"><span>Place of issue</span><input id="r_ppl" data-l="Place of issue"></label>
+          <label class="fld"><span>Passport valid till</span><input id="r_ppv" type="date" data-l="Passport valid till"></label>
+          <label class="fld"><span>Visa no. <i>*</i></span><input id="r_visa" required data-l="Visa no."></label>
+          <label class="fld"><span>Visa type</span><input id="r_vt" data-l="Visa type"></label>
+          <label class="fld"><span>Visa valid till</span><input id="r_vv" type="date" data-l="Visa valid till"></label>
+          <label class="fld"><span>Date of arrival in India</span><input id="r_arr" type="date" data-l="Date of arrival in India"></label>
+          <label class="fld"><span>Port of entry</span><input id="r_port" data-l="Port of entry"></label>
+        </div>
+      </fieldset>
+      <fieldset class="people"><legend>Accompanying guests</legend>
+        <div class="plist" id="plist"></div>
+        <button class="btn btn-line addp" type="button" id="addPerson">+ Add guest</button>
+      </fieldset>
+      <fieldset><legend>Tariff &amp; Payment</legend>
+        <div class="grid">
+          <label class="fld"><span>Tariff per night (₹)</span><input id="r_rate" readonly tabindex="-1" data-role="rate" data-l="Tariff / night"></label>
+          <label class="fld"><span>Advance paid (₹)</span><input id="r_adv" type="number" min="0" inputmode="numeric" data-l="Advance paid (₹)"></label>
+          <div class="fld full"><span>Payment mode</span>
+            <div class="checks" data-l="Payment mode"><label><input type="radio" name="r_mode" id="r_m1" value="UPI"> UPI</label><label><input type="radio" name="r_mode" id="r_m2" value="Bank transfer"> Bank transfer</label><label><input type="radio" name="r_mode" id="r_m3" value="Cash at check-in"> Cash at check-in</label><label><input type="radio" name="r_mode" id="r_m4" value="Card at check-in"> Card at check-in</label></div></div>
+          <label class="fld full"><span>Payment reference no.</span><input id="r_ref" data-l="Ref. no."></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Terms &amp; Conditions of Stay</legend>
+        <div class="alert" style="margin-bottom:16px">
+          <span><b>Smoke-free · Tobacco-free · Alcohol-free property</b></span>
+          <span>Smoking of cigarettes or bidis, use of tobacco, and consumption of gutka, pan, pan masala or alcohol are strictly prohibited in all areas of the property, including guest rooms, balconies, corridors and common areas. <b>Any violation will attract an immediate fine of ₹2,000.</b></span>
+        </div>
+        <div class="terms" tabindex="0" aria-label="Terms and Conditions">
+          <ol>
+            <li><div><b>Identification</b>A valid government-issued photo ID is mandatory for every guest, including accompanying guests. Foreign nationals must present a passport and valid visa.</div></li>
+            <li><div><b>Arrival &amp; departure</b>Check-in from 11:00 AM and check-out by 9:00 AM. Early arrival and late departure are subject to availability and may be charged.</div></li>
+            <li><div><b>Visitors</b>Only registered guests may stay overnight. Visitors are welcome in the reception area only.</div></li>
+            <li><div><b>Payment</b>The room tariff is payable in advance at check-in. All incidental charges are to be settled before departure.</div></li>
+            <li><div><b>Dietary observance</b>Out of respect for the sanctity of Sri Dham Mayapur, non-vegetarian food and eggs are not permitted on the premises.</div></li>
+            <li><div><b>In-room safety</b>Cooking is not permitted in rooms. Heaters, irons and other high-power appliances may be used only with the approval of the Front Office.</div></li>
+            <li><div><b>Quiet hours</b>Guests are requested to keep noise to a minimum, particularly between 10:00 pm and 6:00 am.</div></li>
+            <li><div><b>Property care</b>Any damage to rooms, furnishings, linen or fittings will be charged to the guest at actual cost.</div></li>
+            <li><div><b>Valuables</b>Guests are responsible for their own cash, jewellery and belongings. The management accepts no liability for loss or theft.</div></li>
+            <li><div><b>Energy &amp; keys</b>Please switch off lights, fans and air-conditioning when leaving the room, and deposit the room key at the Front Office.</div></li>
+            <li><div><b>Restricted items</b>Pets, weapons and illegal substances are not permitted. Any unlawful activity will be reported to the authorities.</div></li>
+            <li><div><b>Right of admission</b>The management reserves the right to refuse or terminate a stay, without refund, in case of misconduct or breach of these terms.</div></li>
+          </ol>
+        </div>
+        <div class="grid">
+          <label class="agree full"><input type="checkbox" id="r_agree" required data-l="Agreed to Terms &amp; Conditions"> I confirm the above details are correct. I have read and understood the Terms &amp; Conditions of Stay, agree to abide by them, and accept that any fine or charge arising from them may be added to my bill.</label>
+          <label class="fld"><span>Type your full name as signature <i>*</i></span><input id="r_sig" required data-l="Guest signature (typed)"></label>
+        </div>
+      </fieldset>
+      <div class="send-row">
+        <button class="btn btn-gold" type="submit">Send on WhatsApp</button>
+        <p>After sending, share a photo of your ID proof in the same WhatsApp chat.</p>
+      </div>
+    </form>
+    <div class="done" hidden>
+      <h3>Almost done</h3>
+      <p>WhatsApp should now be open with your registration filled in. Tap <strong>Send</strong> in WhatsApp, then send a clear photo of your ID proof in the same chat.</p>
+      <p>WhatsApp did not open? Copy the form below and paste it in a WhatsApp message to +91 75011 01137.</p>
+      <textarea readonly aria-label="Your completed form"></textarea>
+      <div class="acts"><a class="btn btn-gold wa-again" href="#" target="_blank" rel="noopener">Open WhatsApp again</a><button class="btn btn-line copy-form" type="button">Copy form</button><button class="btn btn-line edit-form" type="button">Edit form</button></div>
+      <span class="msg" aria-live="polite"></span>
+    </div>
+  </div>
+</section>
 
 <a class="fab" href="https://wa.me/917501101137" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
@@ -504,6 +771,123 @@ var WA = "917501101137";
     document.getElementById('upiLink').href=uri;
     document.getElementById('copyUpi').addEventListener('click',function(){copy(UPI_ID,document.getElementById('upiMsg'),document.getElementById('upiId'));});
   }
+})();
+</script>
+<script>
+/* ---- Online forms (Advance Booking + Guest Registration) ---- */
+(function(){
+  var WA_NO = "917501101137";
+  var sheets = [document.getElementById('advance-booking'), document.getElementById('guest-registration')];
+  function iso(d){return d.toISOString().slice(0,10);}
+  function pretty(v){var d=new Date(v+'T12:00:00');return isNaN(d)?v:d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
+  function prettyTime(v){var p=v.split(':'),h=+p[0],m=p[1];return ((h%12)||12)+':'+m+(h<12?' AM':' PM');}
+  function inr(n){return n.toLocaleString('en-IN');}
+
+  // live calculations inside each form
+  function calc(f){
+    var ci=f.querySelector('[data-role=ci]'),co=f.querySelector('[data-role=co]'),n=f.querySelector('[data-role=n]'),
+        room=f.querySelector('[data-role=room]'),rate=f.querySelector('[data-role=rate]'),total=f.querySelector('[data-role=total]'),
+        rooms=f.querySelector('[data-role=rooms]');
+    if(ci.value){var m=new Date(ci.value+'T12:00:00');m.setDate(m.getDate()+1);co.min=iso(m);}
+    var nights=(ci.value&&co.value)?Math.round((new Date(co.value)-new Date(ci.value))/864e5):0;
+    n.value=nights>0?nights:'';
+    var r=+room.options[room.selectedIndex].dataset.rate;
+    rate.value=inr(r);
+    if(total){var q=rooms?Math.max(1,+rooms.value||1):1;total.value=nights>0?inr(nights*r*q):'';}
+  }
+  document.querySelectorAll('.wform').forEach(function(f){
+    var t=new Date();t.setHours(12,0,0,0);
+    f.querySelectorAll('[data-role=ci]').forEach(function(el){el.min=iso(t);});
+    f.addEventListener('input',function(){calc(f);});
+    f.addEventListener('change',function(){calc(f);});
+    calc(f);
+  });
+
+  // copy dates / room / guests from the booking bar when a form opens empty
+  function prefill(id){
+    var f=document.querySelector('#'+id+' form');if(!f)return;
+    var ci=f.querySelector('[data-role=ci]'),co=f.querySelector('[data-role=co]'),room=f.querySelector('[data-role=room]'),ad=f.querySelector('[data-role=adults]');
+    var bci=document.getElementById('ci'),bco=document.getElementById('co'),brm=document.getElementById('rm'),bgu=document.getElementById('gu');
+    if(!ci.value&&bci&&bci.value){ci.value=bci.value;co.value=bco.value;room.selectedIndex=brm.selectedIndex;ad.value=bgu.value;}
+    calc(f);
+  }
+
+  // open / close sheets from the address hash
+  function route(){
+    var h=location.hash.slice(1),open=false;
+    sheets.forEach(function(s){var on=s.id===h;s.hidden=!on;if(on){open=true;}});
+    document.documentElement.style.overflow=open?'hidden':'';
+    if(open){prefill(h);document.getElementById(h).scrollTop=0;}
+  }
+  window.addEventListener('hashchange',route);
+  route();
+
+  // foreign nationals section
+  var nat=document.getElementById('r_nat'),fs=document.getElementById('foreignSet');
+  function natToggle(){var v=nat.value.trim().toLowerCase();var show=v!==''&&v!=='indian'&&v!=='india';fs.hidden=!show;fs.disabled=!show;}
+  nat.addEventListener('input',natToggle);natToggle();
+
+  // accompanying guests
+  var plist=document.getElementById('plist'),pc=0;
+  function addPerson(){
+    if(plist.children.length>=8)return;
+    pc++;var d=document.createElement('div');d.className='person';
+    d.innerHTML='<label class="fld"><span>Name</span><input id="p'+pc+'_n"></label>'+
+      '<label class="fld"><span>Age</span><input id="p'+pc+'_a" type="number" min="0" max="120"></label>'+
+      '<label class="fld"><span>Relation</span><input id="p'+pc+'_r"></label>'+
+      '<label class="fld"><span>ID type &amp; number</span><input id="p'+pc+'_i"></label>'+
+      '<button type="button" class="rm" aria-label="Remove this guest">&times;</button>';
+    d.querySelector('.rm').addEventListener('click',function(){d.remove();});
+    plist.appendChild(d);
+  }
+  document.getElementById('addPerson').addEventListener('click',addPerson);
+  addPerson();
+
+  // turn a form into a WhatsApp message
+  function build(f){
+    var out=[],now=new Date();
+    out.push('*NIKADI GUEST HOUSE*\n*'+f.dataset.title+'*\nSubmitted online: '+now.toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}));
+    f.querySelectorAll('fieldset').forEach(function(s){
+      if(s.hidden)return;
+      var lines=[];
+      if(s.classList.contains('people')){
+        s.querySelectorAll('.person').forEach(function(p){
+          var v=[].map.call(p.querySelectorAll('input'),function(e){return e.value.trim();});
+          if(v.join(''))lines.push((lines.length+1)+'. '+(v[0]||'-')+' | Age: '+(v[1]||'-')+' | '+(v[2]||'-')+' | ID: '+(v[3]||'-'));
+        });
+      } else {
+        s.querySelectorAll('[data-l]').forEach(function(el){
+          var v='';
+          if(el.classList.contains('checks')){v=[].map.call(el.querySelectorAll('input:checked'),function(c){return c.value;}).join(', ');}
+          else if(el.type==='checkbox'){v=el.checked?'Yes':'';}
+          else{v=el.value.trim();if(v&&el.type==='date')v=pretty(v);if(v&&el.type==='time')v=prettyTime(v);if(v&&el.id==='r_gst')v=v.toUpperCase();if(v&&el.dataset.role==='rate')v='₹'+v;if(v&&el.dataset.role==='total')v='₹'+v;}
+          if(v)lines.push(el.dataset.l+': '+v);
+        });
+      }
+      if(lines.length)out.push('*'+s.querySelector('legend').textContent.toUpperCase()+'*\n'+lines.join('\n'));
+    });
+    out.push(f.id==='fReg'?'I will send a photo of my ID proof in this chat.':'I will send the payment screenshot in this chat.');
+    return out.join('\n\n');
+  }
+
+  document.querySelectorAll('.wform').forEach(function(f){
+    var wrap=f.parentNode,done=wrap.querySelector('.done'),ta=done.querySelector('textarea'),again=done.querySelector('.wa-again'),msg=done.querySelector('.msg');
+    f.addEventListener('submit',function(e){
+      e.preventDefault();
+      if(!f.checkValidity()){f.reportValidity();return;}
+      var text=build(f),url='https://wa.me/'+WA_NO+'?text='+encodeURIComponent(text);
+      ta.value=text;again.href=url;
+      f.hidden=true;done.hidden=false;
+      var sheet=f.closest('.sheet');if(sheet)sheet.scrollTop=0;
+      var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+    });
+    done.querySelector('.edit-form').addEventListener('click',function(){done.hidden=true;f.hidden=false;});
+    done.querySelector('.copy-form').addEventListener('click',function(){
+      function ok(){msg.textContent='Copied. Paste it in WhatsApp.';setTimeout(function(){msg.textContent='';},3000);}
+      function fb(){ta.focus();ta.select();msg.textContent='Text selected. Use your device\'s copy option.';}
+      try{navigator.clipboard.writeText(ta.value).then(ok,fb);}catch(err){fb();}
+    });
+  });
 })();
 </script>
 
