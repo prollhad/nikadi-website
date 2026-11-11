@@ -262,6 +262,36 @@ footer .brand b{font-size:1.2rem}
 .done textarea{min-height:220px;font-size:.85rem!important;line-height:1.5}
 .done .acts{display:flex;flex-wrap:wrap;gap:10px}
 .done .btn{padding:11px 18px}
+
+/* membership */
+.member{background:radial-gradient(120% 90% at 85% 20%,rgba(201,163,90,.12),transparent 60%),var(--panel);border-block:1px solid var(--line)}
+.mem-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
+@media (max-width:900px){.mem-grid{grid-template-columns:1fr;gap:40px}}
+.mem-copy{display:grid;gap:18px;min-width:0}
+.mem-copy h2{font-size:clamp(2.2rem,5vw,3.4rem)}
+.mem-lede{color:var(--muted);max-width:36em}
+.mem-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-top:6px}
+.mem-facts li{background:var(--bg);padding:18px 18px;display:grid;gap:2px}
+.mem-facts b{font-family:var(--display);font-size:2rem;font-weight:500;color:var(--gold-hi);line-height:1.1;font-variant-numeric:lining-nums}
+.mem-facts span{font-size:.85rem;color:var(--muted)}
+.mem-eg{font-size:.92rem;color:var(--muted);border-left:2px solid var(--gold);padding-left:14px}
+.mem-eg strong{color:var(--ink)}
+.mem-acts{display:flex;flex-wrap:wrap;gap:12px}
+.mem-side{display:grid;gap:22px;justify-items:center;min-width:0}
+.mcard{width:100%;max-width:400px;aspect-ratio:1.586;border-radius:14px;padding:22px 24px;display:grid;grid-template-rows:auto 1fr auto;color:#1a1206;
+  background:linear-gradient(135deg,#e6c98b 0%,#c9a35a 38%,#a9823e 62%,#dcbc7a 100%);box-shadow:0 24px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.4);position:relative;overflow:hidden;transform:rotate(-3deg)}
+.mcard::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.07) 0 2px,transparent 2px 9px);pointer-events:none}
+.mcard-top{display:flex;justify-content:space-between;align-items:center}
+.mcard-brand{font-family:var(--display);font-weight:600;font-size:1.5rem;letter-spacing:.14em}
+.mcard-tier{font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;border:1px solid rgba(26,18,6,.45);padding:4px 10px;border-radius:999px}
+.mcard-pts{align-self:center;display:flex;align-items:baseline;gap:8px}
+.mcard-pts b{font-family:var(--display);font-size:3rem;font-weight:600;line-height:1}
+.mcard-pts span{font-size:.75rem;letter-spacing:.24em;text-transform:uppercase}
+.mcard-bot{display:flex;justify-content:space-between;gap:10px;font-size:.66rem;letter-spacing:.08em;opacity:.8}
+@media (prefers-reduced-motion: no-preference){.mcard{transition:transform .4s ease}.mcard:hover{transform:rotate(0deg) translateY(-4px)}}
+.mem-terms{width:100%;max-width:440px;border:1px solid var(--line);background:var(--bg)}
+.mem-terms summary{cursor:pointer;padding:14px 18px;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.mem-terms ul{padding:0 18px 16px 34px;list-style:disc;display:grid;gap:8px;color:var(--muted);font-size:.88rem}
 </style>
 </head>
 <body>
@@ -270,7 +300,7 @@ footer .brand b{font-size:1.2rem}
   <div class="wrap">
     <a class="brand" href="#home"><b>NIKADI</b><span>Guest House · Mayapur</span></a>
     <nav class="main" aria-label="Sections">
-      <a href="#rooms">Rooms</a><a href="#gallery">Gallery</a><a href="#amenities">Amenities</a><a href="#booking">Booking</a><a href="#forms">Forms</a><a href="#location">Location</a><a href="#contact">Contact</a>
+      <a href="#rooms">Rooms</a><a href="#amenities">Amenities</a><a href="#booking">Booking</a><a href="#membership">Membership</a><a href="#location">Location</a><a href="#contact">Contact</a>
     </nav>
     <a class="btn btn-gold" href="#booking">Book now</a>
   </div>
@@ -384,6 +414,48 @@ footer .brand b{font-size:1.2rem}
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18"/></svg><span>Wardrobe and mirror</span></li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg><span>Dustbins, room and bath</span></li>
     </ul>
+  </div>
+</section>
+
+<section class="s member" id="membership">
+  <div class="wrap">
+    <div class="mem-grid">
+      <div class="mem-copy">
+        <p class="kicker rule">Nikadi Membership</p>
+        <h2>Stay with us, earn your next night free</h2>
+        <p class="mem-lede">Join free and collect points every time you stay. Use them for discounts on your rooms or a free night on your next visit to Sri Dham Mayapur.</p>
+        <ul class="mem-facts">
+          <li><b>100</b><span>Welcome points when you join</span></li>
+          <li><b>1 pt</b><span>For every ₹100 of room tariff</span></li>
+          <li><b>₹500</b><span>Off your booking for every 100 points</span></li>
+          <li><b>500 pts</b><span>One free night in any room</span></li>
+        </ul>
+        <p class="mem-eg">Example: join and stay 3 nights in a Deluxe Twin. You earn 135 points plus 100 welcome points, which is <strong>₹1,000 off</strong> your next stay.</p>
+        <div class="mem-acts">
+          <a class="btn btn-gold" href="#membership-join">Join free</a>
+          <a class="btn btn-line" href="https://wa.me/917501101137?text=Hare%20Krishna!%20Please%20tell%20me%20my%20Nikadi%20membership%20points%20balance." target="_blank" rel="noopener">Check my points</a>
+        </div>
+      </div>
+      <div class="mem-side">
+        <div class="mcard" aria-hidden="true">
+          <div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Member</span></div>
+          <div class="mcard-pts"><b>100</b><span>points</span></div>
+          <div class="mcard-bot"><span>Your mobile number is your member ID</span><span>Sri Dham Mayapur</span></div>
+        </div>
+        <details class="mem-terms">
+          <summary>Membership terms</summary>
+          <ul>
+            <li>Membership is free. Your registered mobile number is your member ID.</li>
+            <li>Points are earned on room tariff paid, and added to your account after check-out.</li>
+            <li>Points are not earned on fines, damages or other extra charges.</li>
+            <li>To redeem, tell us when you book. 100 points = ₹500 off; 500 points = 1 free night in any room.</li>
+            <li>Free nights are subject to availability.</li>
+            <li>Points cannot be exchanged for cash or transferred to another person.</li>
+            <li>Nikadi Guest House may update the membership terms from time to time.</li>
+          </ul>
+        </details>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -569,6 +641,7 @@ footer .brand b{font-size:1.2rem}
           <label class="fld"><span>Advance paid (₹)</span><input id="a_adv" type="number" min="0" inputmode="numeric" data-l="Advance paid (₹)"></label>
           <div class="fld"><span>Payment mode</span>
             <div class="checks" data-l="Payment mode"><label><input type="radio" name="a_mode" id="a_m1" value="UPI"> UPI</label><label><input type="radio" name="a_mode" id="a_m2" value="Bank transfer"> Bank transfer</label><label><input type="radio" name="a_mode" id="a_m3" value="Not paid yet"> Not paid yet</label></div></div>
+          <div class="fld full"><span>Membership</span><div class="checks" data-l="Membership"><label><input type="checkbox" id="a_redeem" value="Member - wants to redeem points"> I am a Nikadi member and want to redeem my points</label></div></div>
           <label class="fld full"><span>Transaction / UPI reference no.</span><input id="a_ref" data-l="Txn / UPI ref."></label>
         </div>
       </fieldset>
@@ -719,6 +792,47 @@ footer .brand b{font-size:1.2rem}
   </div>
 </section>
 
+<section class="sheet" id="membership-join" hidden aria-label="Join Nikadi Membership">
+  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Membership</span></span><a class="btn btn-line" href="#membership">Close</a></div></div>
+  <div class="wrap form-wrap">
+    <div class="form-intro">
+      <p class="kicker rule">Free to join</p>
+      <h2>Join Nikadi Membership</h2>
+      <p>Get 100 welcome points, then earn 1 point for every ₹100 you spend on rooms. Fill in your details and tap <strong>Send on WhatsApp</strong>. Fields marked <span style="color:var(--gold)">*</span> are required.</p>
+    </div>
+    <form class="wform" id="fMem" data-title="MEMBERSHIP SIGN-UP" autocomplete="on">
+      <fieldset><legend>Your details</legend>
+        <div class="grid">
+          <label class="fld"><span>Full name <i>*</i></span><input id="m_name" autocomplete="name" required data-l="Full name"></label>
+          <label class="fld"><span>Mobile (your member ID) <i>*</i></span><input id="m_mob" type="tel" inputmode="tel" autocomplete="tel" required pattern="[0-9+ \-]{8,}" data-l="Mobile / Member ID"></label>
+          <label class="fld"><span>Email</span><input id="m_email" type="email" autocomplete="email" data-l="Email"></label>
+          <label class="fld"><span>City / State <i>*</i></span><input id="m_city" required data-l="City / State"></label>
+          <label class="fld"><span>Date of birth</span><input id="m_dob" type="date" data-l="Date of birth"><small>Optional. We may send you a birthday wish.</small></label>
+          <div class="fld"><span>Have you stayed with us before?</span>
+            <div class="checks" data-l="Stayed before"><label><input type="radio" name="m_prev" id="m_p1" value="Yes"> Yes</label><label><input type="radio" name="m_prev" id="m_p2" value="No, first time"> No, first time</label></div></div>
+        </div>
+      </fieldset>
+      <fieldset><legend>Agreement</legend>
+        <div class="grid">
+          <label class="agree full"><input type="checkbox" id="m_agree" required data-l="Agreed to membership terms"> I agree to the Nikadi Membership terms. I understand points are earned on room tariff paid and are added after check-out.</label>
+        </div>
+      </fieldset>
+      <div class="send-row">
+        <button class="btn btn-gold" type="submit">Send on WhatsApp</button>
+        <p>We add your 100 welcome points and confirm your membership on WhatsApp.</p>
+      </div>
+    </form>
+    <div class="done" hidden>
+      <h3>Almost done</h3>
+      <p>WhatsApp should now be open with your sign-up details. Tap <strong>Send</strong> in WhatsApp, and we will confirm your membership and welcome points.</p>
+      <p>WhatsApp did not open? Copy the text below and send it to +91 75011 01137.</p>
+      <textarea readonly aria-label="Your sign-up details"></textarea>
+      <div class="acts"><a class="btn btn-gold wa-again" href="#" target="_blank" rel="noopener">Open WhatsApp again</a><button class="btn btn-line copy-form" type="button">Copy text</button><button class="btn btn-line edit-form" type="button">Edit</button></div>
+      <span class="msg" aria-live="polite"></span>
+    </div>
+  </div>
+</section>
+
 <a class="fab" href="https://wa.me/917501101137" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
 </a>
@@ -779,7 +893,7 @@ var WA = "917501101137";
 /* ---- Online forms (Advance Booking + Guest Registration) ---- */
 (function(){
   var WA_NO = "917501101137";
-  var sheets = [document.getElementById('advance-booking'), document.getElementById('guest-registration')];
+  var sheets = [].slice.call(document.querySelectorAll('.sheet'));
   function iso(d){return d.toISOString().slice(0,10);}
   function pretty(v){var d=new Date(v+'T12:00:00');return isNaN(d)?v:d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
   function prettyTime(v){var p=v.split(':'),h=+p[0],m=p[1];return ((h%12)||12)+':'+m+(h<12?' AM':' PM');}
@@ -790,6 +904,7 @@ var WA = "917501101137";
     var ci=f.querySelector('[data-role=ci]'),co=f.querySelector('[data-role=co]'),n=f.querySelector('[data-role=n]'),
         room=f.querySelector('[data-role=room]'),rate=f.querySelector('[data-role=rate]'),total=f.querySelector('[data-role=total]'),
         rooms=f.querySelector('[data-role=rooms]');
+    if(!ci)return;
     if(ci.value){var m=new Date(ci.value+'T12:00:00');m.setDate(m.getDate()+1);co.min=iso(m);}
     var nights=(ci.value&&co.value)?Math.round((new Date(co.value)-new Date(ci.value))/864e5):0;
     n.value=nights>0?nights:'';
@@ -817,6 +932,7 @@ var WA = "917501101137";
   function prefill(id){
     var f=document.querySelector('#'+id+' form');if(!f)return;
     var ci=f.querySelector('[data-role=ci]'),co=f.querySelector('[data-role=co]'),room=f.querySelector('[data-role=room]'),ad=f.querySelector('[data-role=adults]');
+    if(!ci)return;
     var bci=document.getElementById('ci'),bco=document.getElementById('co'),brm=document.getElementById('rm'),bgu=document.getElementById('gu');
     if(!ci.value&&bci&&bci.value){ci.value=bci.value;co.value=bco.value;room.selectedIndex=brm.selectedIndex;ad.value=bgu.value;}
     calc(f);
@@ -876,7 +992,7 @@ var WA = "917501101137";
       }
       if(lines.length)out.push('*'+s.querySelector('legend').textContent.toUpperCase()+'*\n'+lines.join('\n'));
     });
-    out.push(f.id==='fReg'?'I will send a photo of my ID proof in this chat.':'I will send the payment screenshot in this chat.');
+    out.push({fReg:'I will send a photo of my ID proof in this chat.',fAdv:'I will send the payment screenshot in this chat.',fMem:'Please add me as a Nikadi member.'}[f.id]||'');
     return out.join('\n\n');
   }
 
