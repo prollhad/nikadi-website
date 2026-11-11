@@ -292,7 +292,7 @@ footer .brand b{font-size:1.2rem}
           <option value="Deluxe Twin" data-rate="4500">Deluxe Twin</option>
         </select></div>
       <div class="f"><label for="gu">Guests</label>
-        <select id="gu"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+        <select id="gu"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
       <div class="go"><button class="btn btn-gold" type="submit">Check availability</button></div>
     </form>
     <p class="book-sum" id="bookSum" aria-live="polite"></p>
@@ -324,7 +324,7 @@ footer .brand b{font-size:1.2rem}
         <p class="kicker">For couples</p>
         <h3>Deluxe Double</h3>
         <p>A king-size bed with premium linen, ideal for couples or a parent travelling with a small child.</p>
-        <ul class="specs"><li>King bed</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
+        <ul class="specs"><li>King bed</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
         <div class="price"><span class="from">Per night</span><b>₹5,000</b><span class="n">Offer rates from ₹3,500 on select dates</span></div>
         <a class="btn btn-line" href="#home" data-room="0">Book this room</a>
       </div>
@@ -336,7 +336,7 @@ footer .brand b{font-size:1.2rem}
         <p class="kicker">For friends and family</p>
         <h3>Deluxe Twin</h3>
         <p>Two separate beds, well suited to friends, family members or devotees travelling together.</p>
-        <ul class="specs"><li>2 single beds</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
+        <ul class="specs"><li>2 single beds</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
         <div class="price"><span class="from">Per night</span><b>₹4,500</b><span class="n">Offer rates from ₹3,000 on select dates</span></div>
         <a class="btn btn-line" href="#home" data-room="1">Book this room</a>
       </div>
@@ -550,13 +550,13 @@ footer .brand b{font-size:1.2rem}
           <label class="fld"><span>Departure date <i>*</i></span><input id="a_co" type="date" required data-role="co" data-l="Departure date"></label>
           <label class="fld"><span>No. of nights</span><input id="a_n" readonly tabindex="-1" data-role="n" data-l="No. of nights"></label>
           <label class="fld"><span>Adults <i>*</i></span><input id="a_ad" type="number" min="1" max="20" value="2" required data-role="adults" data-l="Adults"></label>
-          <label class="fld"><span>Children</span><input id="a_ch" type="number" min="0" max="20" value="0" data-l="Children"></label>
+          <label class="fld"><span>Children</span><input id="a_ch" type="number" min="0" max="20" value="0" data-role="children" data-l="Children"></label>
           <label class="fld"><span>Room type <i>*</i></span>
             <select id="a_room" required data-role="room" data-l="Room type">
               <option value="Deluxe Double (King bed)" data-rate="5000">Deluxe Double (King bed)</option>
               <option value="Deluxe Twin" data-rate="4500">Deluxe Twin</option>
             </select></label>
-          <label class="fld"><span>No. of rooms <i>*</i></span><input id="a_rooms" type="number" min="1" max="10" value="1" required data-role="rooms" data-l="No. of rooms"></label>
+          <label class="fld"><span>No. of rooms <i>*</i></span><input id="a_rooms" type="number" min="1" max="10" value="1" required data-role="rooms" data-l="No. of rooms"><small>Maximum 3 guests per room. Rooms are added automatically.</small></label>
           <div class="fld full"><span>Extras</span>
             <div class="checks" data-l="Extras"><label><input type="checkbox" id="a_x1" value="Extra mattress"> Extra mattress</label><label><input type="checkbox" id="a_x2" value="Early check-in"> Early check-in</label></div></div>
           <label class="fld full"><span>Special requests</span><textarea id="a_req" data-l="Special requests"></textarea></label>
@@ -638,7 +638,8 @@ footer .brand b{font-size:1.2rem}
               <option value="Deluxe Twin" data-rate="4500">Deluxe Twin</option>
             </select></label>
           <label class="fld"><span>Adults <i>*</i></span><input id="r_ad" type="number" min="1" max="20" value="2" required data-role="adults" data-l="Adults"></label>
-          <label class="fld"><span>Children</span><input id="r_ch" type="number" min="0" max="20" value="0" data-l="Children"></label>
+          <label class="fld"><span>Children</span><input id="r_ch" type="number" min="0" max="20" value="0" data-role="children" data-l="Children"></label>
+          <label class="fld"><span>No. of rooms <i>*</i></span><input id="r_rooms" type="number" min="1" max="10" value="1" required data-role="rooms" data-l="No. of rooms"><small>Maximum 3 guests per room. Rooms are added automatically.</small></label>
           <label class="fld"><span>Arriving from</span><input id="r_from" data-l="Arriving from"></label>
           <label class="fld"><span>Going to</span><input id="r_to" data-l="Going to"></label>
           <label class="fld full"><span>Purpose of visit</span><input id="r_purpose" data-l="Purpose of visit" placeholder="e.g. Pilgrimage, festival, family visit"></label>
@@ -736,20 +737,21 @@ var WA = "917501101137";
   var t=new Date();t.setHours(12,0,0,0);
   var tm=new Date(t);tm.setDate(tm.getDate()+1);
   ci.min=iso(t);ci.value=iso(t);co.min=iso(tm);co.value=iso(tm);
+  function roomsFor(g){return Math.max(1,Math.ceil((+g||1)/3));}
   function nights(){var a=new Date(ci.value),b=new Date(co.value);return Math.round((b-a)/864e5);}
   function fmt(n){return '₹'+n.toLocaleString('en-IN');}
   function pretty(v){var d=new Date(v+'T12:00:00');return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
   function update(){
     if(ci.value){var m=new Date(ci.value);m.setDate(m.getDate()+1);co.min=iso(m);if(!co.value||co.value<=ci.value)co.value=iso(m);}
-    var n=nights(),r=+rm.options[rm.selectedIndex].dataset.rate;
-    sum.innerHTML=n>0?n+(n>1?' nights':' night')+' · '+rm.options[rm.selectedIndex].text+' · standard rate <b>'+fmt(n*r)+'</b>. Ask us about offer rates.':'Choose a check-out date after check-in.';
+    var n=nights(),r=+rm.options[rm.selectedIndex].dataset.rate,k=roomsFor(gu.value);
+    sum.innerHTML=n>0?n+(n>1?' nights':' night')+' · '+k+' × '+rm.options[rm.selectedIndex].text+(k>1?' rooms':' room')+' · standard rate <b>'+fmt(n*r*k)+'</b>'+(k>1?' (max 3 guests per room)':'')+'. Ask us about offer rates.':'Choose a check-out date after check-in.';
   }
   [ci,co,rm,gu].forEach(function(el){el.addEventListener('change',update);});
   update();
   document.getElementById('bookForm').addEventListener('submit',function(e){
     e.preventDefault();
     var n=nights();if(n<1){update();return;}
-    var txt='Hare Krishna! I would like to book at Nikadi Guest House.\n\nRoom: '+rm.value+'\nCheck-in: '+pretty(ci.value)+'\nCheck-out: '+pretty(co.value)+' ('+n+(n>1?' nights':' night')+')\nGuests: '+gu.value+'\n\nIs it available?';
+    var txt='Hare Krishna! I would like to book at Nikadi Guest House.\n\nRoom: '+rm.value+'\nCheck-in: '+pretty(ci.value)+'\nCheck-out: '+pretty(co.value)+' ('+n+(n>1?' nights':' night')+')\nGuests: '+gu.value+'\nRooms: '+roomsFor(gu.value)+'\n\nIs it available?';
     var a=document.createElement('a');a.href='https://wa.me/'+WA+'?text='+encodeURIComponent(txt);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
   });
   document.querySelectorAll('[data-room]').forEach(function(b){b.addEventListener('click',function(){rm.selectedIndex=+b.dataset.room;update();});});
@@ -793,11 +795,19 @@ var WA = "917501101137";
     n.value=nights>0?nights:'';
     var r=+room.options[room.selectedIndex].dataset.rate;
     rate.value=inr(r);
+    var ad=f.querySelector('[data-role=adults]'),ch=f.querySelector('[data-role=children]');
+    if(rooms){
+      var people=(+ad.value||0)+(+(ch&&ch.value)||0),need=Math.max(1,Math.ceil(people/3));
+      rooms.min=need;
+      if(!rooms.dataset.manual||(+rooms.value||0)<need)rooms.value=need;
+    }
     if(total){var q=rooms?Math.max(1,+rooms.value||1):1;total.value=nights>0?inr(nights*r*q):'';}
   }
   document.querySelectorAll('.wform').forEach(function(f){
     var t=new Date();t.setHours(12,0,0,0);
     f.querySelectorAll('[data-role=ci]').forEach(function(el){el.min=iso(t);});
+    var rf=f.querySelector('[data-role=rooms]');
+    if(rf)rf.addEventListener('input',function(){rf.dataset.manual='1';});
     f.addEventListener('input',function(){calc(f);});
     f.addEventListener('change',function(){calc(f);});
     calc(f);
