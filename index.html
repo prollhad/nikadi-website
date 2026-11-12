@@ -81,15 +81,16 @@ nav.main a:hover{color:var(--ink)}
 .hero .lede{margin-top:18px;max-width:40em;font-size:1.08rem;color:var(--ink);opacity:.9}
 /* computers: building on the right, headline on a dark field to its left */
 @media (min-width:1000px){
-  .hero img.bg{left:auto;right:0;width:72%;object-position:50% 50%}
+  .hero img.bg{left:auto;right:0;width:72%;object-position:50% 12%}
   .hero::after{background:linear-gradient(90deg,var(--bg) 27%,rgba(20,17,15,.8) 38%,rgba(20,17,15,.2) 62%,rgba(20,17,15,.1) 100%),linear-gradient(180deg,rgba(20,17,15,.35) 0%,transparent 30%,transparent 62%,var(--bg) 100%)}
 }
 /* phones: building on top, headline below it */
 @media (max-width:700px){
-  .hero .wrap{padding-top:310px}
-  .hero img.bg{height:60%;object-position:50% 20%}
-  .hero::after{background:linear-gradient(180deg,rgba(20,17,15,.25) 0%,rgba(20,17,15,.15) 30%,rgba(20,17,15,.85) 52%,var(--bg) 60%)}
+  .hero .wrap{padding-top:300px}
+  .hero img.bg{height:330px;object-position:50% 30%}
+  .hero::after{background:linear-gradient(180deg,rgba(20,17,15,.2) 0,rgba(20,17,15,.05) 120px,rgba(20,17,15,.6) 250px,var(--bg) 320px)}
 }
+
 
 /* booking bar */
 .book{margin-top:36px;background:rgba(27,23,20,.94);border:1px solid var(--line);border-top:2px solid var(--gold);display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:0}
@@ -414,7 +415,7 @@ footer .brand b{font-size:1.2rem}
 </header>
 
 <section class="hero" id="home">
-  <picture><source media="(max-width:700px)" srcset="img/facade-night-phone.jpg"><img class="bg" src="img/facade-night.jpg" alt="Nikadi Guest House lit up at night, opposite ISKCON Gate No. 4 in Mayapur"></picture>
+  <picture><img class="bg" src="img/facade-day.jpg" alt="Nikadi Guest House building by day, opposite ISKCON Gate No. 4 in Mayapur, with e-rickshaws outside"></picture>
   <div class="wrap">
     <p class="kicker rule">Opposite ISKCON Gate No. 4</p>
     <h1 style="margin-top:18px">Rest well, <em>close to the temple</em></h1>
