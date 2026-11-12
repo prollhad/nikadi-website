@@ -153,7 +153,7 @@ section.alt{background:var(--band)}
 .zoom{cursor:zoom-in}
 .zoom:hover img{transform:scale(1.03)}
 .gal figcaption,.views figcaption{position:absolute;left:0;right:0;bottom:0;padding:30px 14px 10px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;background:linear-gradient(transparent,rgba(20,17,15,.88));pointer-events:none}
-@media (max-width:720px){.gal{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}.gal figure{aspect-ratio:4/5}.gal figure:first-child{grid-column:1/-1;grid-row:auto;aspect-ratio:16/9}}
+@media (max-width:720px){.gal{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}.gal figure{aspect-ratio:4/5}.gal figure:first-child{grid-column:1/-1;grid-row:auto;aspect-ratio:16/9}.gal figure:last-child:nth-child(even){grid-column:1/-1;aspect-ratio:4/3}}
 
 /* views */
 .views{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:stretch}
@@ -489,14 +489,15 @@ footer .brand b{font-size:1.2rem}
     </article>
 
     <article class="room">
-      <div class="ph soon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M2 19v-6a2 2 0 0 1 2-2h7v8M13 19v-8h7a2 2 0 0 1 2 2v6M2 16h20M4 11V7h5v4M15 11V7h5v4"/></svg><span>Photos coming soon</span></div>
+      <a class="ph" href="#room-deluxe-twin" aria-label="View Deluxe Twin room photos and details"><img src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds" loading="lazy" style="object-position:50% 60%"><span class="ph-tag">10 photos</span></a>
       <div class="tx">
         <p class="kicker">For friends and family</p>
         <h3>Deluxe Twin</h3>
-        <p>Two separate beds, well suited to friends, family members or devotees travelling together.</p>
+        <p class="room-size">Two single beds · Smart TV</p>
+        <p>Two separate beds, a sofa corner and a private bathroom with rain shower. Well suited to friends, family or devotees travelling together.</p>
         <ul class="specs"><li>2 single beds</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
         <div class="price"><span class="from">Per night</span><b>₹4,500</b><span class="n">Offer rates from ₹3,000 on select dates</span></div>
-        <a class="btn btn-line" href="#home" data-room="1">Book this room</a>
+        <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-twin">View room</a><a class="btn btn-line" href="#home" data-room="1">Book this room</a></div>
       </div>
     </article>
     </div>
@@ -513,7 +514,7 @@ footer .brand b{font-size:1.2rem}
     <div class="head">
       <p class="kicker rule">Gallery</p>
       <h2>Inside and around Nikadi</h2>
-      <p>Tap any photo to see it larger. See every room photo under <a href="#room-deluxe-double" style="color:var(--gold-hi)">Deluxe Double</a>.</p>
+      <p>Tap any photo to see it larger. See every room photo under <a href="#room-deluxe-double" style="color:var(--gold-hi)">Deluxe Double</a> and <a href="#room-deluxe-twin" style="color:var(--gold-hi)">Deluxe Twin</a>.</p>
     </div>
     <div class="gal">
       <figure class="zoom"><img src="img/facade-front.jpg" alt="Front of Nikadi Guest House at night with the lit sign" loading="lazy"><figcaption>Nikadi Guest House at night</figcaption></figure>
@@ -521,7 +522,10 @@ footer .brand b{font-size:1.2rem}
       <figure class="zoom"><img src="img/mahaprabhu.jpg" alt="Framed picture of Sri Chaitanya Mahaprabhu at the entrance" loading="lazy" style="object-position:50% 40%"><figcaption>Sri Chaitanya Mahaprabhu</figcaption></figure>
       <figure class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Reception</figcaption></figure>
       <figure class="zoom"><img src="img/rooms/double-02.jpg" alt="Deluxe Double room with bed, wardrobe, TV unit and sofa" loading="lazy"><figcaption>Deluxe Double room</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds and sofa" loading="lazy"><figcaption>Deluxe Twin room</figcaption></figure>
       <figure class="zoom"><img src="img/rooms/double-12.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"><figcaption>Bathroom</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/twin-04.jpg" alt="Smart TV unit with desk, kettle and wardrobe in the Deluxe Twin room" loading="lazy"><figcaption>Smart TV and work desk</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-14.jpg" alt="Deluxe Double room with curtains drawn" loading="lazy"><figcaption>Restful evenings</figcaption></figure>
       <figure class="zoom"><img src="img/rooms/double-10.jpg" alt="Nikadi morning kit with bamboo toothbrushes, toiletries and wooden comb" loading="lazy"><figcaption>Morning kit</figcaption></figure>
     </div>
   </div>
@@ -1075,6 +1079,100 @@ footer .brand b{font-size:1.2rem}
         <h3>Good to know</h3>
         <p>Pure vegetarian property. No smoking, tobacco, gutka, pan or alcohol, with a ₹2,000 fine for any violation. Meals are not served; Govinda's is an 8 minute walk. A first aid kit is kept at reception.</p>
         <a class="btn btn-line" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20have%20a%20question%20about%20the%20Deluxe%20Double%20room." target="_blank" rel="noopener">Ask about this room</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sheet" id="room-deluxe-twin" hidden aria-label="Deluxe Twin room details">
+  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Deluxe Twin</span></span><a class="btn btn-line" href="#rooms">Close</a></div></div>
+  <div class="wrap rd">
+    <div class="rd-gal" data-gallery>
+      <div class="rd-main">
+        <img class="rd-img" src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds, sofa and window">
+        <button type="button" class="rd-nav prev" aria-label="Previous photo">&#8249;</button>
+        <button type="button" class="rd-nav next" aria-label="Next photo">&#8250;</button>
+        <span class="rd-count" aria-live="polite">1 / 10</span>
+      </div>
+      <p class="rd-cap">Two single beds and sofa corner</p>
+      <div class="rd-thumbs" role="list">
+        <button type="button" role="listitem" data-src="img/rooms/twin-01.jpg" data-cap="Two single beds and sofa corner"><img src="img/rooms/t/twin-01.jpg" alt="Deluxe Twin room with two single beds, sofa and window" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-02.jpg" data-cap="Single beds with fresh linen and morning kit"><img src="img/rooms/t/twin-02.jpg" alt="Single bed with morning kit and towel" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-03.jpg" data-cap="The full room from the entrance"><img src="img/rooms/t/twin-03.jpg" alt="Full Deluxe Twin room view" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-04.jpg" data-cap="Smart TV, desk and wardrobe"><img src="img/rooms/t/twin-04.jpg" alt="Smart TV unit with desk, kettle and wardrobe" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-05.jpg" data-cap="Beds, mirror and drinking water"><img src="img/rooms/t/twin-05.jpg" alt="Two beds, mirror and drinking water tray" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-06.jpg" data-cap="Work desk with TV and kettle"><img src="img/rooms/t/twin-06.jpg" alt="Work desk with TV and electric kettle" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-07.jpg" data-cap="Electric kettle"><img src="img/rooms/t/twin-07.jpg" alt="Electric kettle and no-smoking notice" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-08.jpg" data-cap="Sofa corner with drinking water"><img src="img/rooms/t/twin-08.jpg" alt="Sofa and coffee table with water bottles" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-09.jpg" data-cap="Washbasin with LED mirror"><img src="img/rooms/t/twin-09.jpg" alt="Bathroom washbasin with LED mirror" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-10.jpg" data-cap="Bathroom with rain shower"><img src="img/rooms/t/twin-10.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"></button>
+      </div>
+    </div>
+
+    <div class="rd-info">
+      <div class="rd-head">
+        <p class="kicker rule">Two single beds · Up to 3 guests</p>
+        <h2>Deluxe Twin Room</h2>
+        <p>An air-conditioned room with two separate single beds, a sofa corner, a work desk with smart TV and a private bathroom with rain shower. Ideal for friends, family members or devotees travelling together.</p>
+      </div>
+
+      <dl class="rd-facts">
+        <div><dt>Beds</dt><dd>2 single<small>10 inch mattresses</small></dd></div>
+        <div><dt>Guests</dt><dd>Up to 3<small>per room</small></dd></div>
+        <div><dt>TV</dt><dd>Smart TV<small>streaming apps</small></dd></div>
+        <div><dt>Bathroom</dt><dd>Private<small>attached</small></dd></div>
+      </dl>
+
+      <div class="rd-book">
+        <div class="price"><span class="from">Per night</span><b>₹4,500</b><span class="n">Offer rates from ₹3,000 on select dates</span></div>
+        <div class="rd-btns">
+          <a class="btn btn-gold" href="#home" data-room="1">Book this room</a>
+          <a class="btn btn-line" href="#advance-booking">Fill booking form</a>
+        </div>
+        <p class="rd-times">Check-in 11:00 AM · Check-out 9:00 AM</p>
+      </div>
+
+      <div class="rd-lists">
+        <div>
+          <h3>In the room</h3>
+          <ul class="rd-ul">
+            <li>Two single beds with 10 inch mattresses</li>
+            <li>Comforter blankets and fresh linen</li>
+            <li>Air conditioning and ceiling fan</li>
+            <li>Wall-mounted smart TV</li>
+            <li>Wi-Fi, 24/7</li>
+            <li>Electric kettle and drinking water</li>
+            <li>Two-seater sofa and coffee table</li>
+            <li>Work desk with drawers</li>
+            <li>Wardrobe</li>
+            <li>Bedside table</li>
+            <li>Full-length mirror</li>
+            <li>Mosquito repellent</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Bathroom</h3>
+          <ul class="rd-ul">
+            <li>Rain shower</li>
+            <li>Geyser for hot water</li>
+            <li>Washbasin with LED mirror and glass shelf</li>
+            <li>Western toilet with health faucet</li>
+            <li>Bath towels and floor mat</li>
+            <li>Dustbins in room and bathroom</li>
+          </ul>
+          <h3>Morning kit</h3>
+          <ul class="rd-ul">
+            <li>Bamboo toothbrush and toothpaste</li>
+            <li>Shampoo, shower gel and moisturiser</li>
+            <li>Wooden comb</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rd-note">
+        <h3>Good to know</h3>
+        <p>Pure vegetarian property. No smoking, tobacco, gutka, pan or alcohol, with a ₹2,000 fine for any violation. Meals are not served; Govinda's is an 8 minute walk. A first aid kit is kept at reception.</p>
+        <a class="btn btn-line" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20have%20a%20question%20about%20the%20Deluxe%20Twin%20room." target="_blank" rel="noopener">Ask about this room</a>
       </div>
     </div>
   </div>
