@@ -1,0 +1,78 @@
+/* ------------------------------------------------------------------ */
+/* Google Sheet storage for the staff app                              */
+/* ------------------------------------------------------------------ */
+
+function deskDb_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), cache = {};
+  function sh(t) { var s = ss.getSheetByName(DESK_SCHEMA[t].sheet); if (!s) throw new Error('not_setup'); return s; }
+  function read(v, type) {
+    if (v instanceof Date) return Utilities.formatDate(v, 'Asia/Kolkata', type === 'd' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm');
+    if (type === 'n') return v === '' || v == null ? 0 : Number(v);
+    return v == null ? '' : String(v);
+  }
+  function colIndex(t, key) {
+    var c = DESK_SCHEMA[t].cols;
+    for (var j = 0; j < c.length; j++) if (c[j][0] === key) return j;
+    return -1;
+  }
+  return {
+    all: function (t) {
+      if (cache[t]) return cache[t];
+      var s = sh(t), c = DESK_SCHEMA[t].cols, n = s.getLastRow(), out = [];
+      if (n > 1) s.getRange(2, 1, n - 1, c.length).getValues().forEach(function (r, i) {
+        var o = { _r: i + 2 };
+        c.forEach(function (col, j) { o[col[0]] = read(r[j], col[2]); });
+        out.push(o);
+      });
+      cache[t] = out;
+      return out;
+    },
+    add: function (t, o) {
+      var s = sh(t), c = DESK_SCHEMA[t].cols;
+      this.all(t);
+      s.appendRow(c.map(function (col) { var v = o[col[0]]; return v === undefined ? '' : v; }));
+      o._r = s.getLastRow();
+      cache[t].push(o);
+      return o;
+    },
+    set: function (t, o, patch) {
+      var s = sh(t);
+      Object.keys(patch).forEach(function (k) {
+        var j = colIndex(t, k); if (j < 0) return;
+        o[k] = patch[k];
+        s.getRange(o._r, j + 1).setValue(patch[k]);
+      });
+    },
+    kvGet: function (k) { return CacheService.getScriptCache().get('desk_' + k); },
+    kvSet: function (k, v, sec) { CacheService.getScriptCache().put('desk_' + k, String(v), sec || 600); }
+  };
+}
+
+/** Called by doPost in Code.gs for every action that starts with "desk". */
+function deskHandle_(req) {
+  var name = String(req.action).slice(4);
+  name = name.charAt(0).toLowerCase() + name.slice(1);
+  var api = deskCore(deskDb_());
+  if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
+  return api[name](req);
+}
+
+/** Creates the staff app tabs. Called from setup() in Code.gs; safe to run again. */
+function deskSetup_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  ss.setSpreadsheetTimeZone('Asia/Kolkata');
+  Object.keys(DESK_SCHEMA).forEach(function (t) {
+    var def = DESK_SCHEMA[t], s = ss.getSheetByName(def.sheet) || ss.insertSheet(def.sheet);
+    if (s.getLastRow() === 0) {
+      s.appendRow(def.cols.map(function (c) { return c[1]; }));
+      s.getRange(1, 1, 1, def.cols.length).setFontWeight('bold').setBackground('#1b1714').setFontColor('#e0be7a');
+      s.setFrozenRows(1);
+      def.cols.forEach(function (c, j) { if (c[2] === 's') s.getRange(1, j + 1, s.getMaxRows(), 1).setNumberFormat('@'); });
+      var rows = DESK_DEFAULTS[t];
+      if (rows) rows.forEach(function (o) { s.appendRow(def.cols.map(function (c) { var v = o[c[0]]; return v === undefined ? '' : v; })); });
+      s.autoResizeColumns(1, def.cols.length);
+    }
+    if (def.hidden) s.hideSheet();
+  });
+  return 'Staff app tabs ready';
+}

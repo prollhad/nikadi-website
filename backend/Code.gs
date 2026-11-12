@@ -62,6 +62,7 @@ function setup() {
   ['Otps', 'Sessions'].forEach(function (n) { ss.getSheetByName(n).hideSheet(); });
   var def = ss.getSheetByName('Sheet1');
   if (def && def.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(def);
+  if (typeof deskSetup_ === 'function') deskSetup_();
   return 'Setup complete';
 }
 
@@ -82,6 +83,8 @@ function doPost(e) {
     staffRedeemStart: staffRedeemStart_, staffRedeemConfirm: staffRedeemConfirm_, staffAdjust: staffAdjust_, staffRecent: staffRecent_
   };
   var fn = actions[req.action];
+  // Staff app (Staff.gs): every action starting with "desk"
+  if (!fn && /^desk[A-Z]\w*$/.test(String(req.action)) && typeof deskHandle_ === 'function') fn = deskHandle_;
   if (!fn) return json_({ ok: false, error: 'unknown_action' });
   var lock = LockService.getScriptLock();
   try {

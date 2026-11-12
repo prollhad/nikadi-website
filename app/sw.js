@@ -1,5 +1,5 @@
 /* Nikadi member app — offline shell. Bump VERSION whenever app files change. */
-var VERSION = "nikadi-app-v1";
+var VERSION = "nikadi-app-v2";
 var SHELL = ["./", "index.html", "app.css", "core.js", "demo.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", function (e) {
@@ -8,7 +8,7 @@ self.addEventListener("install", function (e) {
 
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== VERSION; }).map(function (k) { return caches.delete(k); }));
+    return Promise.all(keys.filter(function (k) { return k.indexOf("nikadi-app-") === 0 && k !== VERSION; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 
