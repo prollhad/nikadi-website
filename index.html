@@ -123,8 +123,7 @@ section.alt{background:var(--band)}
 .room{display:grid;grid-template-columns:1.15fr 1fr;gap:0;background:var(--panel);border:1px solid var(--line)}
 .room-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
 @media (max-width:820px){.room-grid{grid-template-columns:1fr}}
-.room-grid .room{grid-template-columns:1fr}
-.room:nth-of-type(even) .ph{order:2}
+.room-grid .room{grid-template-columns:1fr;align-content:start}
 .room .ph{position:relative;min-height:340px}
 .room .ph img{position:absolute;inset:0;width:100%;height:100%;max-width:100%;object-fit:cover}
 .room .tx{padding:40px;display:grid;gap:18px;align-content:center;min-width:0}
@@ -154,7 +153,7 @@ section.alt{background:var(--band)}
 .zoom{cursor:zoom-in}
 .zoom:hover img{transform:scale(1.03)}
 .gal figcaption,.views figcaption{position:absolute;left:0;right:0;bottom:0;padding:30px 14px 10px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;background:linear-gradient(transparent,rgba(20,17,15,.88));pointer-events:none}
-@media (max-width:720px){.gal{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}.gal figure{aspect-ratio:4/5}.gal figure:first-child{grid-column:1/-1;grid-row:auto;aspect-ratio:16/9}.gal figure:last-child{grid-column:1/-1;aspect-ratio:4/3}}
+@media (max-width:720px){.gal{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}.gal figure{aspect-ratio:4/5}.gal figure:first-child{grid-column:1/-1;grid-row:auto;aspect-ratio:16/9}}
 
 /* views */
 .views{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:stretch}
@@ -345,6 +344,61 @@ footer .brand b{font-size:1.2rem}
 .mem-terms{width:100%;max-width:440px;border:1px solid var(--line);background:var(--bg)}
 .mem-terms summary{cursor:pointer;padding:14px 18px;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
 .mem-terms ul{padding:0 18px 16px 34px;list-style:disc;display:grid;gap:8px;color:var(--muted);font-size:.88rem}
+
+/* room cards */
+.room-grid .room .ph{min-height:0;aspect-ratio:4/3;display:block;overflow:hidden;background:var(--bg);text-decoration:none}
+.room-grid .room .ph img{transition:transform .6s ease}
+.room-grid .room a.ph:hover img{transform:scale(1.03)}
+.ph-tag{position:absolute;left:14px;bottom:14px;z-index:1;background:rgba(20,17,15,.82);border:1px solid var(--line);color:var(--ink);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;padding:8px 12px}
+.ph.soon{display:grid!important;place-items:center;align-content:center;gap:10px;color:var(--muted);border-bottom:1px solid var(--line);background:repeating-linear-gradient(135deg,var(--bg) 0 14px,var(--band) 14px 28px)}
+.ph.soon svg{width:44px;height:44px;color:var(--gold)}
+.ph.soon span{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase}
+.room-btns{display:flex;flex-wrap:wrap;gap:10px}
+.room-size{font-size:.8rem;color:var(--muted);letter-spacing:.06em}
+
+/* room details sheet */
+.rd{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:48px;padding-block:28px 72px;align-items:start}
+@media (max-width:960px){.rd{grid-template-columns:1fr;gap:28px;padding-top:16px}}
+.rd-gal{position:sticky;top:76px;display:grid;gap:12px;min-width:0}
+@media (max-width:960px){.rd-gal{position:static}}
+.rd-main{position:relative;background:#0d0b0a;aspect-ratio:3/4;max-height:72vh;width:100%;display:grid;place-items:center;overflow:hidden;touch-action:pan-y}
+.rd-img{width:100%;height:100%;max-width:100%;object-fit:contain;display:block;transition:opacity .25s ease}
+.rd-img.fade{opacity:.25}
+.rd-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;background:rgba(20,17,15,.75);border:1px solid var(--line);color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer;display:grid;place-items:center}
+.rd-nav:hover{border-color:var(--gold);color:var(--gold-hi)}
+.rd-nav.prev{left:10px}.rd-nav.next{right:10px}
+.rd-count{position:absolute;right:12px;bottom:12px;background:rgba(20,17,15,.8);padding:5px 10px;font-size:.75rem;letter-spacing:.12em;font-variant-numeric:tabular-nums}
+.rd-cap{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-height:1.4em}
+.rd-thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
+.rd-thumbs button{flex:0 0 auto;width:68px;height:90px;padding:0;border:2px solid transparent;background:var(--panel);cursor:pointer;scroll-snap-align:start;opacity:.65;transition:opacity .2s,border-color .2s}
+.rd-thumbs button img{width:100%;height:100%;max-width:100%;object-fit:cover;display:block}
+.rd-thumbs button[aria-current="true"]{border-color:var(--gold);opacity:1}
+.rd-thumbs button:hover{opacity:1}
+.rd-info{display:grid;gap:28px;min-width:0}
+.rd-head{display:grid;gap:12px}
+.rd-head h2{font-size:clamp(2.2rem,5vw,3.2rem)}
+.rd-head p{color:var(--muted)}
+.rd-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:0}
+@media (max-width:520px){.rd-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rd-facts div{background:var(--band);padding:16px 14px;display:grid;gap:4px}
+.rd-facts dt{font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+.rd-facts dd{margin:0;font-family:var(--display);font-size:1.6rem;line-height:1.1;color:var(--gold-hi);font-variant-numeric:lining-nums}
+.rd-facts dd small{display:block;font-family:var(--body);font-size:.78rem;color:var(--muted);margin-top:4px}
+.rd-book{border:1px solid var(--line);border-top:2px solid var(--gold);background:var(--panel);padding:22px;display:grid;gap:16px}
+.rd-book .price{border-top:0;padding-top:0}
+.rd-btns{display:flex;flex-wrap:wrap;gap:10px}
+.rd-btns .btn{flex:1 1 180px}
+.rd-times{font-size:.85rem;color:var(--muted)}
+.rd-lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
+@media (max-width:620px){.rd-lists{grid-template-columns:1fr}}
+.rd-lists h3,.rd-note h3{font-size:1.45rem;margin-bottom:10px}
+.rd-lists h3:not(:first-child){margin-top:22px}
+.rd-ul{display:grid;gap:9px;font-size:.95rem}
+.rd-ul li{display:flex;gap:10px;align-items:baseline}
+.rd-ul li::before{content:"";flex:none;width:5px;height:5px;background:var(--gold);transform:rotate(45deg) translateY(-2px)}
+.rd-note{border-top:1px solid var(--line);padding-top:24px;display:grid;gap:12px;justify-items:start}
+.rd-note p{color:var(--muted);font-size:.93rem}
+.amen-note{margin-top:16px;font-size:.88rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -422,17 +476,20 @@ footer .brand b{font-size:1.2rem}
 
     <div class="room-grid">
     <article class="room">
+      <a class="ph" href="#room-deluxe-double" aria-label="View Deluxe Double room photos and details"><img src="img/rooms/double-01.jpg" alt="Deluxe Double room with king bed and warm cove lighting" loading="lazy" style="object-position:50% 70%"><span class="ph-tag">13 photos</span></a>
       <div class="tx">
         <p class="kicker">For couples</p>
         <h3>Deluxe Double</h3>
-        <p>A king-size bed with premium linen, ideal for couples or a parent travelling with a small child.</p>
+        <p class="room-size">190 sq ft · 17.7 m²</p>
+        <p>A spacious room with a king-size bed, sofa corner, work desk and a private bathroom with rain shower.</p>
         <ul class="specs"><li>King bed</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
         <div class="price"><span class="from">Per night</span><b>₹5,000</b><span class="n">Offer rates from ₹3,500 on select dates</span></div>
-        <a class="btn btn-line" href="#home" data-room="0">Book this room</a>
+        <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-double">View room</a><a class="btn btn-line" href="#home" data-room="0">Book this room</a></div>
       </div>
     </article>
 
     <article class="room">
+      <div class="ph soon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M2 19v-6a2 2 0 0 1 2-2h7v8M13 19v-8h7a2 2 0 0 1 2 2v6M2 16h20M4 11V7h5v4M15 11V7h5v4"/></svg><span>Photos coming soon</span></div>
       <div class="tx">
         <p class="kicker">For friends and family</p>
         <h3>Deluxe Twin</h3>
@@ -456,13 +513,16 @@ footer .brand b{font-size:1.2rem}
     <div class="head">
       <p class="kicker rule">Gallery</p>
       <h2>Inside and around Nikadi</h2>
-      <p>Tap any photo to see it larger. New room photos are coming soon.</p>
+      <p>Tap any photo to see it larger. See every room photo under <a href="#room-deluxe-double" style="color:var(--gold-hi)">Deluxe Double</a>.</p>
     </div>
     <div class="gal">
       <figure class="zoom"><img src="img/facade-front.jpg" alt="Front of Nikadi Guest House at night with the lit sign" loading="lazy"><figcaption>Nikadi Guest House at night</figcaption></figure>
       <figure class="zoom"><img src="img/stairs.jpg" alt="Marble staircase with a framed picture of Sri Chaitanya Mahaprabhu" loading="lazy"><figcaption>Entrance staircase</figcaption></figure>
       <figure class="zoom"><img src="img/mahaprabhu.jpg" alt="Framed picture of Sri Chaitanya Mahaprabhu at the entrance" loading="lazy" style="object-position:50% 40%"><figcaption>Sri Chaitanya Mahaprabhu</figcaption></figure>
       <figure class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Reception</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-02.jpg" alt="Deluxe Double room with bed, wardrobe, TV unit and sofa" loading="lazy"><figcaption>Deluxe Double room</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-12.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"><figcaption>Bathroom</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-10.jpg" alt="Nikadi morning kit with bamboo toothbrushes, toiletries and wooden comb" loading="lazy"><figcaption>Morning kit</figcaption></figure>
     </div>
   </div>
 </section>
@@ -481,12 +541,17 @@ footer .brand b{font-size:1.2rem}
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M8 21h8"/></svg><span>Television</span></li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM17 10h2a2 2 0 0 1 0 4h-2"/></svg><span>Electric kettle</span></li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 2h4v3h-4zM9 5h6l1 4v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9z"/></svg><span>Drinking water</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 20 15 9M14 4h6v4l-5 5-4-4z"/></svg><span>Morning dental kit</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="3" width="6" height="8" rx="2"/><path d="M8 11v10M5 6h6"/></svg><span>Hairbrush</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 20 15 9M14 4h6v4l-5 5-4-4z"/></svg><span>Morning kit</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="3" width="6" height="8" rx="2"/><path d="M8 11v10M5 6h6"/></svg><span>Wooden comb</span></li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 12h14v3a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5zM7 12V5a2 2 0 0 1 4 0"/></svg><span>Western toilet</span></li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18"/></svg><span>Wardrobe and mirror</span></li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg><span>Dustbins, room and bath</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg><span>Mosquito repellent</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8c3-2 6 2 9 0s6-2 9 0v10c-3-2-6 2-9 0s-6-2-9 0z"/></svg><span>Comforter blanket</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M5 8h14M9 13h6"/></svg><span>Bath towels</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="8" width="18" height="9" rx="1"/><path d="M6 8v9M18 8v9"/></svg><span>Floor mat</span></li>
     </ul>
+    <p class="amen-note">A first aid kit is kept at reception.</p>
   </div>
 </section>
 
@@ -915,6 +980,103 @@ footer .brand b{font-size:1.2rem}
   </div>
 </section>
 
+<section class="sheet" id="room-deluxe-double" hidden aria-label="Deluxe Double room details">
+  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Deluxe Double</span></span><a class="btn btn-line" href="#rooms">Close</a></div></div>
+  <div class="wrap rd">
+    <div class="rd-gal" data-gallery>
+      <div class="rd-main">
+        <img class="rd-img" src="img/rooms/double-01.jpg" alt="King bed with fresh white linen in the Deluxe Double room">
+        <button type="button" class="rd-nav prev" aria-label="Previous photo">&#8249;</button>
+        <button type="button" class="rd-nav next" aria-label="Next photo">&#8250;</button>
+        <span class="rd-count" aria-live="polite">1 / 13</span>
+      </div>
+      <p class="rd-cap">King bed with fresh linen</p>
+      <div class="rd-thumbs" role="list">
+        <button type="button" role="listitem" data-src="img/rooms/double-01.jpg" data-cap="King bed with fresh linen"><img src="img/rooms/t/double-01.jpg" alt="King bed" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-02.jpg" data-cap="The full room, from the bed"><img src="img/rooms/t/double-02.jpg" alt="Full room view" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-03.jpg" data-cap="Wardrobe, TV unit and sofa corner"><img src="img/rooms/t/double-03.jpg" alt="Wardrobe, TV unit and sofa" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-04.jpg" data-cap="Window with full-length curtains"><img src="img/rooms/t/double-04.jpg" alt="Window and curtains" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-05.jpg" data-cap="Bed, wardrobe and entrance"><img src="img/rooms/t/double-05.jpg" alt="Bed, wardrobe and entrance" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-06.jpg" data-cap="Entrance and sliding wardrobe"><img src="img/rooms/t/double-06.jpg" alt="Entrance and wardrobe" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-07.jpg" data-cap="Work desk with TV and kettle"><img src="img/rooms/t/double-07.jpg" alt="Work desk, TV and kettle" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-08.jpg" data-cap="Sofa corner with drinking water"><img src="img/rooms/t/double-08.jpg" alt="Sofa and coffee table" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-09.jpg" data-cap="Mirror and bedside table"><img src="img/rooms/t/double-09.jpg" alt="Mirror and bedside table" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-10.jpg" data-cap="Nikadi morning kit"><img src="img/rooms/t/double-10.jpg" alt="Morning kit" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-11.jpg" data-cap="Electric kettle and TV"><img src="img/rooms/t/double-11.jpg" alt="Kettle and TV" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-12.jpg" data-cap="Bathroom with rain shower"><img src="img/rooms/t/double-12.jpg" alt="Bathroom with shower" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-13.jpg" data-cap="Vanity with LED mirror and geyser"><img src="img/rooms/t/double-13.jpg" alt="Bathroom vanity" loading="lazy"></button>
+      </div>
+    </div>
+
+    <div class="rd-info">
+      <div class="rd-head">
+        <p class="kicker rule">King bed · Up to 3 guests</p>
+        <h2>Deluxe Double Room</h2>
+        <p>A spacious air-conditioned room with a king-size bed, a sofa corner, a work desk and a private bathroom with rain shower. Warm cove lighting and wood-finish floors throughout.</p>
+      </div>
+
+      <dl class="rd-facts">
+        <div><dt>Room size</dt><dd>190 sq ft<small>17.7 m²</small></dd></div>
+        <div><dt>Bed</dt><dd>King<small>10 inch mattress</small></dd></div>
+        <div><dt>Guests</dt><dd>Up to 3<small>per room</small></dd></div>
+        <div><dt>Bathroom</dt><dd>Private<small>attached</small></dd></div>
+      </dl>
+
+      <div class="rd-book">
+        <div class="price"><span class="from">Per night</span><b>₹5,000</b><span class="n">Offer rates from ₹3,500 on select dates</span></div>
+        <div class="rd-btns">
+          <a class="btn btn-gold" href="#home" data-room="0">Book this room</a>
+          <a class="btn btn-line" href="#advance-booking">Fill booking form</a>
+        </div>
+        <p class="rd-times">Check-in 11:00 AM · Check-out 9:00 AM</p>
+      </div>
+
+      <div class="rd-lists">
+        <div>
+          <h3>In the room</h3>
+          <ul class="rd-ul">
+            <li>King-size bed with 10 inch mattress</li>
+            <li>Comforter blanket and fresh linen</li>
+            <li>Air conditioning and ceiling fan</li>
+            <li>Wall-mounted TV</li>
+            <li>Wi-Fi, 24/7</li>
+            <li>Electric kettle and drinking water</li>
+            <li>Two-seater sofa and coffee table</li>
+            <li>Work desk with drawers</li>
+            <li>Sliding wardrobe with shelves</li>
+            <li>Two bedside tables</li>
+            <li>Full-length mirror</li>
+            <li>Mosquito repellent</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Bathroom</h3>
+          <ul class="rd-ul">
+            <li>Rain shower</li>
+            <li>Geyser for hot water</li>
+            <li>Washbasin with LED mirror</li>
+            <li>Western toilet with health faucet</li>
+            <li>Bath towels and floor mat</li>
+            <li>Dustbins in room and bathroom</li>
+          </ul>
+          <h3>Morning kit</h3>
+          <ul class="rd-ul">
+            <li>Bamboo toothbrush and toothpaste</li>
+            <li>Shampoo, shower gel and moisturiser</li>
+            <li>Wooden comb</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rd-note">
+        <h3>Good to know</h3>
+        <p>Pure vegetarian property. No smoking, tobacco, gutka, pan or alcohol, with a ₹2,000 fine for any violation. Meals are not served; Govinda's is an 8 minute walk. A first aid kit is kept at reception.</p>
+        <a class="btn btn-line" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20have%20a%20question%20about%20the%20Deluxe%20Double%20room." target="_blank" rel="noopener">Ask about this room</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <a class="fab" href="https://wa.me/917501101137" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
 </a>
@@ -1122,6 +1284,32 @@ var WA = "917501101137";
   document.addEventListener('keydown',function(e){if(lb.hidden)return;if(e.key==='Escape')close();if(e.key==='ArrowLeft')show(i-1);if(e.key==='ArrowRight')show(i+1);});
   lb.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
   lb.addEventListener('touchend',function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)show(i+(dx<0?1:-1));sx=null;});
+})();
+</script>
+<script>
+/* ---- Room details gallery ---- */
+(function(){
+  document.querySelectorAll('[data-gallery]').forEach(function(g){
+    var img=g.querySelector('.rd-img'),cap=g.querySelector('.rd-cap'),cnt=g.querySelector('.rd-count'),
+        th=[].slice.call(g.querySelectorAll('.rd-thumbs button')),i=0,sx=null;
+    function show(n){
+      i=(n+th.length)%th.length;var b=th[i];
+      img.classList.add('fade');
+      var pre=new Image();pre.onload=pre.onerror=function(){img.src=b.dataset.src;img.alt=b.querySelector('img').alt;img.classList.remove('fade');};pre.src=b.dataset.src;
+      cap.textContent=b.dataset.cap;cnt.textContent=(i+1)+' / '+th.length;
+      th.forEach(function(t,k){t.setAttribute('aria-current',k===i?'true':'false');});
+      b.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+      if(th[i+1]){var p=new Image();p.src=th[i+1].dataset.src;}
+    }
+    th.forEach(function(b,k){b.addEventListener('click',function(){show(k);});});
+    g.querySelector('.prev').addEventListener('click',function(){show(i-1);});
+    g.querySelector('.next').addEventListener('click',function(){show(i+1);});
+    var main=g.querySelector('.rd-main');
+    main.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
+    main.addEventListener('touchend',function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>45)show(i+(dx<0?1:-1));sx=null;});
+    document.addEventListener('keydown',function(e){var sh=g.closest('.sheet');if(!sh||sh.hidden)return;if(e.key==='ArrowLeft')show(i-1);if(e.key==='ArrowRight')show(i+1);if(e.key==='Escape')location.hash='rooms';});
+    th[0].setAttribute('aria-current','true');
+  });
 })();
 </script>
 
