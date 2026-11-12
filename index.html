@@ -71,23 +71,30 @@ nav.main a:hover{color:var(--ink)}
 
 /* hero */
 .hero{position:relative;min-height:min(86vh,760px);display:flex;align-items:flex-end;overflow:hidden}
-.hero img.bg{position:absolute;inset:0;width:100%;height:100%;max-width:100%;object-fit:cover;object-position:50% 45%}
-.hero picture{position:absolute;inset:0}
+.hero .slides{position:absolute;inset:0;z-index:0;overflow:hidden;background:var(--bg)}
+.hero .slides img{position:absolute;inset:0;width:100%;height:100%;max-width:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease;will-change:opacity,transform;backface-visibility:hidden}
+.hero .slides img.on{opacity:1;z-index:2}
+.hero .slides img.prev{opacity:1;z-index:1;transition:none}
+.hero .slides picture{display:contents}
+@keyframes kbIn{from{transform:scale(1)}to{transform:scale(1.14)}}
+@keyframes kbOut{from{transform:scale(1.14)}to{transform:scale(1)}}
+.hero .slides img.zin{animation:kbIn 7.2s linear both}
+.hero .slides img.zout{animation:kbOut 7.2s linear both}
+@media (prefers-reduced-motion: reduce){.hero .slides img{animation:none!important}}
 
 .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,17,15,.55) 0%,rgba(20,17,15,.35) 35%,rgba(20,17,15,.92) 82%,var(--bg) 100%)}
 .hero .wrap{position:relative;z-index:1;width:100%;padding-block:120px 40px}
 .hero h1{font-size:clamp(2.6rem,7vw,5rem);font-weight:500;max-width:13ch}
 .hero h1 em{font-style:italic;color:var(--gold-hi)}
 .hero .lede{margin-top:18px;max-width:40em;font-size:1.08rem;color:var(--ink);opacity:.9}
-/* computers: building on the right, headline on a dark field to its left */
+/* computers: full-width moving photos, headline on a dark fade to the left */
 @media (min-width:1000px){
-  .hero img.bg{left:auto;right:0;width:72%;object-position:50% 12%}
-  .hero::after{background:linear-gradient(90deg,var(--bg) 27%,rgba(20,17,15,.8) 38%,rgba(20,17,15,.2) 62%,rgba(20,17,15,.1) 100%),linear-gradient(180deg,rgba(20,17,15,.35) 0%,transparent 30%,transparent 62%,var(--bg) 100%)}
+  .hero::after{background:linear-gradient(90deg,rgba(20,17,15,.94) 0%,rgba(20,17,15,.82) 30%,rgba(20,17,15,.35) 58%,rgba(20,17,15,.08) 100%),linear-gradient(180deg,rgba(20,17,15,.45) 0%,transparent 26%,transparent 60%,var(--bg) 100%)}
 }
-/* phones: building on top, headline below it */
+/* phones: moving photos on top, headline below them */
 @media (max-width:700px){
   .hero .wrap{padding-top:300px}
-  .hero img.bg{height:330px;object-position:50% 30%}
+  .hero .slides{height:330px;bottom:auto}
   .hero::after{background:linear-gradient(180deg,rgba(20,17,15,.2) 0,rgba(20,17,15,.05) 120px,rgba(20,17,15,.6) 250px,var(--bg) 320px)}
 }
 
@@ -415,7 +422,10 @@ footer .brand b{font-size:1.2rem}
 </header>
 
 <section class="hero" id="home">
-  <picture><img class="bg" src="img/facade-day-hd.jpg" alt="Nikadi Guest House building by day, opposite ISKCON Gate No. 4 in Mayapur, with e-rickshaws outside"></picture>
+  <div class="slides" role="img" aria-label="Photos of Nikadi Guest House: the building opposite ISKCON Gate No. 4, reception, staircases and the deluxe rooms">
+    <picture><source media="(max-width:700px)" srcset="img/hero/S/facade-day-hd.jpg"><img class="on zin" src="img/hero/L/facade-day-hd.jpg" alt="" fetchpriority="high"></picture>
+    <img alt="">
+  </div>
   <div class="wrap">
     <p class="kicker rule">Sri Dham Mayapur</p>
     <h1 style="margin-top:18px">Wake up <em>steps from the Mayapur&nbsp;temple</em></h1>
@@ -519,15 +529,27 @@ footer .brand b{font-size:1.2rem}
     </div>
     <div class="gal">
       <figure class="zoom"><img src="img/facade-front.jpg" alt="Front of Nikadi Guest House at night with the lit sign" loading="lazy"><figcaption>Nikadi Guest House at night</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-reception.jpg" alt="Reception desk with wood-panelled wall, clock and devotional pictures" loading="lazy"><figcaption>Reception</figcaption></figure>
       <figure class="zoom"><img src="img/stairs.jpg" alt="Marble staircase with a framed picture of Sri Chaitanya Mahaprabhu" loading="lazy"><figcaption>Entrance staircase</figcaption></figure>
       <figure class="zoom"><img src="img/mahaprabhu.jpg" alt="Framed picture of Sri Chaitanya Mahaprabhu at the entrance" loading="lazy" style="object-position:50% 40%"><figcaption>Sri Chaitanya Mahaprabhu</figcaption></figure>
-      <figure class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Reception</figcaption></figure>
       <figure class="zoom"><img src="img/rooms/double-02.jpg" alt="Deluxe Double room with bed, wardrobe, TV unit and sofa" loading="lazy"><figcaption>Deluxe Double room</figcaption></figure>
       <figure class="zoom"><img src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds and sofa" loading="lazy"><figcaption>Deluxe Twin room</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-reception-desk.jpg" alt="Staff member at the reception desk" loading="lazy" style="object-position:50% 35%"><figcaption>Front desk</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-reception-wide.jpg" alt="Reception counter with backlit marble front" loading="lazy"><figcaption>Reception counter</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-reception-stairs.jpg" alt="Reception seen from the staircase" loading="lazy"><figcaption>Reception from the stairs</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/twin-02.jpg" alt="Single beds in the Deluxe Twin room" loading="lazy"><figcaption>Twin beds</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-04.jpg" alt="Deluxe Double room window with full-length curtains" loading="lazy"><figcaption>Window and curtains</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-stairs.jpg" alt="Staircase with steel railings leading to the rooms" loading="lazy"><figcaption>Staircase to the rooms</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-stairs-landing.jpg" alt="Staircase landing with window and fire extinguisher" loading="lazy"><figcaption>Staircase landing</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-corridor.jpg" alt="Long corridor with marble floor and cove lighting" loading="lazy"><figcaption>Room corridor</figcaption></figure>
       <figure class="zoom"><img src="img/rooms/double-12.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"><figcaption>Bathroom</figcaption></figure>
       <figure class="zoom"><img src="img/rooms/twin-04.jpg" alt="Smart TV unit with desk, kettle and wardrobe in the Deluxe Twin room" loading="lazy"><figcaption>Smart TV and work desk</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-14.jpg" alt="Deluxe Double room with curtains drawn" loading="lazy"><figcaption>Restful evenings</figcaption></figure>
       <figure class="zoom"><img src="img/rooms/double-10.jpg" alt="Nikadi morning kit with bamboo toothbrushes, toiletries and wooden comb" loading="lazy"><figcaption>Morning kit</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-fire-safety.jpg" alt="Fire extinguisher and CCTV camera on the staircase wall" loading="lazy" style="object-position:50% 55%"><figcaption>Fire safety and CCTV</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-security.jpg" alt="CCTV monitor and biometric attendance device at reception" loading="lazy"><figcaption>Security at reception</figcaption></figure>
+      <figure class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Entrance sign</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-first-aid.jpg" alt="Reception corner with a picture of Lord Narasimha and the first aid kit" loading="lazy" style="object-position:50% 30%"><figcaption>Reception corner</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-14.jpg" alt="Deluxe Double room with curtains drawn" loading="lazy"><figcaption>Restful evenings</figcaption></figure>
     </div>
   </div>
 </section>
@@ -556,7 +578,7 @@ footer .brand b{font-size:1.2rem}
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M5 8h14M9 13h6"/></svg><span>Bath towels</span></li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="8" width="18" height="9" rx="1"/><path d="M6 8v9M18 8v9"/></svg><span>Floor mat</span></li>
     </ul>
-    <p class="amen-note">A first aid kit is kept at reception.</p>
+    <p class="amen-note">CCTV covers the common areas, fire extinguishers are mounted on the stairs, and a first aid kit is kept at reception.</p>
   </div>
 </section>
 
@@ -1386,6 +1408,34 @@ var WA = "917501101137";
   document.addEventListener('keydown',function(e){if(lb.hidden)return;if(e.key==='Escape')close();if(e.key==='ArrowLeft')show(i-1);if(e.key==='ArrowRight')show(i+1);});
   lb.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
   lb.addEventListener('touchend',function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)show(i+(dx<0?1:-1));sx=null;});
+})();
+</script>
+<script>
+/* ---- Hero: moving photo slideshow, new photo every 5 seconds ---- */
+(function(){
+  var box=document.querySelector('.hero .slides'); if(!box) return;
+  var N=["facade-day-hd","hotel-reception","double-01","view-temple","twin-01","double-02","hotel-reception-stairs","twin-03","double-04","facade-night","double-14","twin-05","hotel-reception-wide","double-03","twin-02","stairs","hotel-stairs","hotel-stairs-landing","double-05"];
+  var O=['50% 50%','30% 40%','70% 45%','45% 65%','60% 35%','40% 55%'];
+  var L=box.querySelectorAll('img'), cur=0, i=0, timer=null, phone=matchMedia('(max-width:700px)');
+  function src(n){return 'img/hero/'+(phone.matches?'S':'L')+'/'+n+'.jpg';}
+  function kb(el,k){el.classList.remove('zin','zout');void el.offsetWidth;el.style.transformOrigin=O[k%O.length];el.classList.add(k%2?'zout':'zin');}
+  function preload(k){var p=new Image();p.src=src(N[k%N.length]);}
+  function next(){
+    var k=(i+1)%N.length, el=L[1-cur], old=L[cur], s=src(N[k]), p=new Image();
+    p.onload=p.onerror=function(){
+      var pic=box.querySelector('picture source'); if(pic){var f=box.querySelector('picture img'); f.src=f.currentSrc||f.src; box.querySelectorAll('picture source').forEach(function(x){x.remove();});}
+      el.src=s; kb(el,k);
+      old.classList.remove('on'); old.classList.add('prev');
+      el.classList.remove('prev'); el.classList.add('on');
+      setTimeout(function(){old.classList.remove('prev');},1500);
+      cur=1-cur; i=k; preload(k+1);
+    };
+    p.src=s;
+  }
+  function start(){if(!timer)timer=setInterval(next,5000);}
+  function stop(){clearInterval(timer);timer=null;}
+  document.addEventListener('visibilitychange',function(){document.hidden?stop():start();});
+  L[0].style.transformOrigin=O[0]; preload(1); start();
 })();
 </script>
 <script>
