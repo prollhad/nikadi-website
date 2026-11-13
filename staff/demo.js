@@ -47,6 +47,22 @@
     api.checkOut({ token: owner, id: c, nights: 2 });
     api.roomStatus({ token: hk, room: 9, status: 'Needs cleaning' });
     api.stock({ token: owner, item: 'Water bottle', mode: 'add', qty: 48, note: 'Delivery from supplier' });
+    db.all('items').forEach(function (i) { if (i.item === 'Morning kit (free)') i.stock = 12; if (i.item === 'Toilet roll') i.stock = 46; });
+    var bk = function (o) { return api.bookingCreate(Object.assign({ token: owner }, o)).booking.id; };
+    var w1 = api.bookingRequest({ guest: 'Priya Nair', phone: '9845012345', email: 'priya@example.com', guests: 3, roomType: 'Deluxe Double (King)', checkin: ymd(5), checkout: ymd(7), notes: 'Arriving by train around 2 PM' }).id;
+    bk({ guest: 'Ramesh Gupta', phone: '9007012345', guests: 6, roomsNeeded: 2, roomType: 'Any', checkin: ymd(10), checkout: ymd(12), rate: 4500, source: 'Phone', notes: 'Family of 6, wants rooms next to each other' });
+    var c1 = bk({ guest: 'Lakshmi Venkatesh', phone: '9444012345', guests: 5, roomsNeeded: 2, roomType: 'Any', checkin: ymd(0), checkout: ymd(2), rate: 4000, source: 'WhatsApp' });
+    api.bookingConfirm({ token: owner, id: c1, rooms: [8, 11], amount: 8000, method: 'UPI', ref: 'UPI 431298776512' });
+    var c2 = bk({ guest: 'John Smith', phone: '9812345678', email: 'john@example.com', guests: 2, roomType: 'Deluxe Double (King)', checkin: ymd(3), checkout: ymd(6), rate: 5000, source: 'Website' });
+    api.bookingConfirm({ token: owner, id: c2, rooms: [4], amount: 7500, method: 'Bank transfer', ref: 'NEFT AXIS 88123' });
+    var c3 = bk({ guest: 'Sunita Rao', phone: '9900112233', guests: 2, roomType: 'Deluxe Double (King)', checkin: ymd(3), checkout: ymd(5), rate: 4500, source: 'Phone' });
+    api.bookingConfirm({ token: owner, id: c3, rooms: [2], amount: 4500, method: 'Cash', ref: '' });
+    var c4 = bk({ guest: 'Arjun Mehta', phone: '9811122233', guests: 2, roomType: 'Deluxe Twin', checkin: ymd(1), checkout: ymd(3), rate: 4500, source: 'WhatsApp' });
+    api.bookingConfirm({ token: owner, id: c4, rooms: [1], amount: 4500, method: 'UPI', ref: 'UPI 556120098812' });
+    api.bookingCancel({ token: owner, id: c4, reason: 'Change of plans' });
+    var c5 = bk({ guest: 'Meera Krishnan', phone: '9822233344', guests: 3, roomType: 'Large Twin', checkin: ymd(8), checkout: ymd(11), rate: 5000, source: 'Phone' });
+    api.bookingConfirm({ token: owner, id: c5, rooms: [10], amount: 7500, method: 'UPI', ref: 'UPI 778812300045' });
+    void w1;
     data.tables.sessions = [];
     return data;
   }

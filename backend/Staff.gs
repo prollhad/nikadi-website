@@ -11,6 +11,12 @@
    It never touches a sheet or the browser directly: it only uses the small `db` object it is given. */
 
 var DESK_TZ_MIN = 330; // India Standard Time, UTC+5:30 (no daylight saving)
+var DESK_POLICY = {
+  advancePct: 50,      // advance needed to confirm a booking
+  freeCancelDays: 3,   // cancel at least this many days before check-in = full refund of the advance
+  text: 'To confirm a booking we need an advance of 50% of the total room price. Cancel 3 or more days before check-in and we refund the full advance. ' +
+    'Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are not refunded, and the advance cannot be moved to another date.'
+};
 
 var DESK_SCHEMA = {
   rooms: { sheet: 'Rooms', cols: [['room', 'Room', 'n'], ['type', 'Room type'], ['beds', 'Beds'], ['rate', 'Usual rate per night (₹)', 'n'],
@@ -18,12 +24,19 @@ var DESK_SCHEMA = {
   stays: { sheet: 'Stays', cols: [['id', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['guests', 'Guests', 'n'],
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
-    ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't']] },
+    ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't'],
+    ['booking', 'Booking ID']] },
+  bookings: { sheet: 'Bookings', cols: [['id', 'Booking ID'], ['status', 'Status'], ['source', 'Source'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['email', 'Email'],
+    ['guests', 'Guests', 'n'], ['roomsNeeded', 'Rooms needed', 'n'], ['roomType', 'Room preference'], ['rooms', 'Room numbers', 's'], ['checkin', 'Check-in date', 'd'],
+    ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
+    ['advanceDue', 'Advance required, 50% (₹)', 'n'], ['advancePaid', 'Advance paid (₹)', 'n'], ['refunded', 'Refunded (₹)', 'n'], ['notes', 'Notes'],
+    ['created', 'Created', 't'], ['createdBy', 'Created by'], ['confirmedBy', 'Confirmed by'], ['confirmedAt', 'Confirmed at', 't'],
+    ['closedBy', 'Closed by'], ['closedAt', 'Closed at', 't'], ['closeNote', 'Cancellation / closing note']] },
   charges: { sheet: 'Room charges', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['item', 'Item'], ['qty', 'Qty', 'n'],
     ['price', 'Unit price (₹)', 'n'], ['total', 'Total (₹)', 'n'], ['free', 'Free'], ['note', 'Note'], ['by', 'Added by'], ['removed', 'Removed']] },
   payments: { sheet: 'Payments', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['amount', 'Amount (₹)', 'n'],
-    ['method', 'Method'], ['note', 'Note'], ['by', 'Taken by']] },
-  items: { sheet: 'Items', cols: [['item', 'Item'], ['price', 'Price (₹)', 'n'], ['track', 'Track stock'], ['stock', 'In stock', 'n'], ['low', 'Warn below', 'n'], ['active', 'Active']] },
+    ['method', 'Method'], ['note', 'Note'], ['by', 'Taken by'], ['booking', 'Booking ID'], ['ref', 'Reference no.', 's']] },
+  items: { sheet: 'Items', cols: [['item', 'Item'], ['price', 'Price (₹)', 'n'], ['track', 'Track stock'], ['stock', 'In stock', 'n'], ['low', 'Warn below', 'n'], ['active', 'Active'], ['sell', 'Sold to rooms']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
   staff: { sheet: 'Staff', cols: [['name', 'Name'], ['pin', 'PIN', 's'], ['role', 'Role'], ['active', 'Active']] },
   sessions: { sheet: 'Staff sessions', hidden: true, cols: [['token', 'Token', 's'], ['name', 'Name'], ['role', 'Role'], ['expires', 'Expires', 't']] }
@@ -36,10 +49,12 @@ var DESK_DEFAULTS = {
       rate: twin ? 4500 : 5000, status: 'Ready', stay: '', updated: '', by: '' };
   }),
   items: [
-    { item: 'Water bottle', price: 20, track: 'Yes', stock: 0, low: 24, active: 'Yes' },
-    { item: 'Dental kit', price: 150, track: 'Yes', stock: 0, low: 10, active: 'Yes' },
-    { item: 'Extra mattress', price: 500, track: 'No', stock: 0, low: 0, active: 'Yes' },
-    { item: 'Late checkout', price: 1500, track: 'No', stock: 0, low: 0, active: 'Yes' }
+    { item: 'Water bottle', price: 20, track: 'Yes', stock: 0, low: 24, active: 'Yes', sell: 'Yes' },
+    { item: 'Dental kit', price: 150, track: 'Yes', stock: 0, low: 10, active: 'Yes', sell: 'Yes' },
+    { item: 'Extra mattress', price: 500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes' },
+    { item: 'Late checkout', price: 1500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes' },
+    { item: 'Morning kit (free)', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'No' },
+    { item: 'Toilet roll', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'No' }
   ],
   staff: [
     { name: 'Owner', pin: '1111', role: 'Owner', active: 'Yes' },
@@ -48,7 +63,8 @@ var DESK_DEFAULTS = {
 };
 
 function deskCore(db) {
-  var METHODS = ['Cash', 'UPI', 'Card'];
+  var METHODS = ['Cash', 'UPI', 'Bank transfer', 'Card'];
+  var FROM_ADV = 'From advance'; // internal: moves a booking advance onto a room bill at check-in (not new money)
   var ROLES = ['Owner', 'Manager', 'Staff'];
 
   function fail(code) { throw new Error(code); }
@@ -76,6 +92,41 @@ function deskCore(db) {
   function room(n) { return find('rooms', 'room', n) || fail('no_room'); }
   function stay(sid) { return find('stays', 'id', sid) || fail('no_stay'); }
   function item(name) { var it = find('items', 'item', name); if (!it || !yes(it.active)) fail('no_item'); return it; }
+  function sellable(it) { return it.sell !== 'No'; }
+  function roomList(str) { return String(str || '').split(/[^\d]+/).filter(Boolean).map(Number); }
+  function overlaps(a1, a2, b1, b2) { return dayNum(a1) < dayNum(b2) && dayNum(b1) < dayNum(a2); }
+  /* What already holds this room between `from` and `to`? (in-house stays and confirmed bookings) */
+  function roomClash(roomNo, from, to, skip) {
+    skip = skip || {};
+    var st = db.all('stays').filter(function (x) { return x.status === 'In house' && Number(x.room) === Number(roomNo) && x.id !== skip.stay && overlaps(x.checkin, x.checkout, from, to); })[0];
+    if (st) return { kind: 'stay', guest: st.guest, from: st.checkin, to: st.checkout };
+    var bk = db.all('bookings').filter(function (b) { return b.status === 'Confirmed' && b.id !== skip.booking && roomList(b.rooms).indexOf(Number(roomNo)) >= 0 && overlaps(b.checkin, b.checkout, from, to); })[0];
+    if (bk) return { kind: 'booking', guest: bk.guest, from: bk.checkin, to: bk.checkout, id: bk.id };
+    return null;
+  }
+  function clashFail(roomNo, c) { var e = new Error('room_booked'); e.detail = { room: roomNo, guest: c.guest, from: c.from, to: c.to }; throw e; }
+  function bookingPays(bid) { return db.all('payments').filter(function (p) { return p.booking === bid && !p.stay && p.method !== FROM_ADV; }); }
+  function recomputeBooking(b) {
+    var nights = nightsBetween(b.checkin, b.checkout), rooms = Math.max(1, Number(b.roomsNeeded || 1));
+    var total = nights * rooms * Number(b.rate || 0);
+    var pays = bookingPays(b.id);
+    var paid = pays.filter(function (p) { return Number(p.amount) > 0; }).reduce(function (a, p) { return a + Number(p.amount); }, 0);
+    var refunded = -pays.filter(function (p) { return Number(p.amount) < 0; }).reduce(function (a, p) { return a + Number(p.amount); }, 0);
+    db.set('bookings', b, { nights: nights, total: total, advanceDue: Math.ceil(total * DESK_POLICY.advancePct / 100), advancePaid: paid, refunded: refunded });
+  }
+  function daysBefore(b) { return Math.round(dayNum(b.checkin) - dayNum(today())); }
+  function bookingView(b, me) {
+    var mgr = isMgr(me);
+    var v = { id: b.id, status: b.status, source: b.source, guest: mgr ? b.guest : String(b.guest || '').split(/\s+/)[0], guests: b.guests, roomsNeeded: b.roomsNeeded,
+      roomType: b.roomType, rooms: roomList(b.rooms), checkin: b.checkin, checkout: b.checkout, nights: b.nights, created: b.created, createdBy: b.createdBy,
+      confirmedBy: b.confirmedBy, confirmedAt: b.confirmedAt, closedBy: b.closedBy, closedAt: b.closedAt, closeNote: b.closeNote, daysBefore: daysBefore(b) };
+    if (mgr) {
+      v.phone = b.phone; v.email = b.email; v.rate = b.rate; v.total = b.total; v.advanceDue = b.advanceDue; v.advancePaid = b.advancePaid; v.refunded = b.refunded; v.notes = b.notes;
+      v.payments = bookingPays(b.id).map(function (p) { return { at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: p.note, by: p.by }; }).reverse();
+      v.refundable = b.status === 'Confirmed' && daysBefore(b) >= DESK_POLICY.freeCancelDays ? Number(b.advancePaid || 0) - Number(b.refunded || 0) : 0;
+    }
+    return v;
+  }
   function isMgr(me) { return me.role === 'Owner' || me.role === 'Manager'; }
   function needMgr(me) { if (!isMgr(me)) fail('not_allowed'); }
   function needOwner(me) { if (me.role !== 'Owner') fail('not_allowed'); }
@@ -122,7 +173,8 @@ function deskCore(db) {
     if (mgr) {
       v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes;
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
-      v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by }; }).reverse();
+      v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
+      v.booking = s.booking;
     } else {
       v.guest = String(s.guest || '').split(/\s+/)[0];
     }
@@ -155,8 +207,14 @@ function deskCore(db) {
     var me = auth(req), mgr = isMgr(me), t = today();
     var stays = {};
     db.all('stays').forEach(function (s) { if (s.status === 'In house') stays[s.id] = s; });
+    var arriving = {};
+    db.all('bookings').forEach(function (b) {
+      if (b.status === 'Confirmed' && b.checkin <= t && b.checkout > t) roomList(b.rooms).forEach(function (n) { arriving[n] = b; });
+    });
     var rooms = db.all('rooms').map(function (r) {
       var o = { room: r.room, type: r.type, beds: r.beds, status: r.status, updated: r.updated, by: r.by };
+      var ab = arriving[r.room];
+      if (ab && !(r.stay && stays[r.stay])) o.arriving = { id: ab.id, guest: mgr ? ab.guest : String(ab.guest || '').split(/\s+/)[0], late: ab.checkin < t };
       if (mgr) o.rate = r.rate;
       var s = r.stay && stays[r.stay];
       if (s) {
@@ -167,14 +225,18 @@ function deskCore(db) {
       return o;
     }).sort(function (a, b) { return a.room - b.room; });
     var items = db.all('items').filter(function (i) { return yes(i.active); }).map(function (i) {
-      var o = { item: i.item, track: yes(i.track), stock: i.stock, low: i.low };
+      var o = { item: i.item, track: yes(i.track), stock: i.stock, low: i.low, sell: sellable(i) };
       if (mgr) o.price = i.price;
       return o;
     });
-    var out = { me: me, today: t, now: stamp(), rooms: rooms, items: items, methods: METHODS,
-      stocklog: db.all('stocklog').slice(-15).reverse() };
+    var bks = db.all('bookings');
+    var out = { me: me, today: t, now: stamp(), rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
+      stocklog: db.all('stocklog').slice(-15).reverse(),
+      toBuy: items.filter(function (i) { return i.track && Number(i.stock) < Number(i.low); }).map(function (i) { return { item: i.item, stock: i.stock, low: i.low, buy: Math.max(1, Number(i.low) * 2 - Number(i.stock)) }; }),
+      pending: bks.filter(function (b) { return b.status === 'Pending'; }).length,
+      arrivals: bks.filter(function (b) { return b.status === 'Confirmed' && b.checkin <= t; }).map(function (b) { return bookingView(b, me); }) };
     if (mgr) {
-      var pays = db.all('payments').filter(function (p) { return String(p.at).slice(0, 10) === t; });
+      var pays = db.all('payments').filter(function (p) { return String(p.at).slice(0, 10) === t && p.method !== FROM_ADV; });
       var byMethod = {};
       METHODS.forEach(function (m) { byMethod[m] = 0; });
       pays.forEach(function (p) { byMethod[p.method] = (byMethod[p.method] || 0) + Number(p.amount || 0); });
@@ -207,12 +269,13 @@ function deskCore(db) {
     if (dayNum(cout) <= dayNum(cin)) fail('bad_dates');
     var rate = money(req.rate); if (!(rate > 0)) fail('rate_required');
     var adv = req.advance === '' || req.advance == null ? 0 : money(req.advance); if (isNaN(adv)) fail('invalid_amount');
+    var clash = roomClash(r.room, cin, cout); if (clash) clashFail(r.room, clash);
     var s = db.add('stays', { id: id('S'), room: r.room, guest: guest, phone: phoneOk(req.phone), guests: guests, checkin: cin, checkout: cout,
       nights: nightsBetween(cin, cout), rate: rate, rateNote: text(req.rateNote, 160), status: 'In house', roomTotal: 0, extras: 0, paid: 0, balance: 0,
-      notes: text(req.notes, 300), inBy: me.name, inAt: stamp(), outBy: '', outAt: '' });
+      notes: text(req.notes, 300), inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: '' });
     if (adv > 0) {
       if (METHODS.indexOf(req.method) < 0) fail('method_required');
-      db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: r.room, amount: adv, method: req.method, note: 'Advance at check-in', by: me.name });
+      db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: r.room, amount: adv, method: req.method, note: 'Paid at check-in', by: me.name, booking: '', ref: text(req.ref, 40) });
     }
     recompute(s);
     db.set('rooms', r, { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
@@ -232,6 +295,8 @@ function deskCore(db) {
     var cin = req.checkin != null ? String(req.checkin) : s.checkin, cout = req.checkout != null ? String(req.checkout) : s.checkout;
     if (!isYmd(cin) || !isYmd(cout) || dayNum(cout) <= dayNum(cin)) fail('bad_dates');
     p.checkin = cin; p.checkout = cout; p.nights = nightsBetween(cin, cout);
+    var targetRoom = req.room != null ? Number(req.room) : Number(s.room);
+    if (s.status === 'In house') { var cl = roomClash(targetRoom, cin, cout, { stay: s.id, booking: s.booking }); if (cl) clashFail(targetRoom, cl); }
     if (req.room != null && Number(req.room) !== Number(s.room)) {
       if (s.status !== 'In house') fail('not_in_house');
       var to = room(req.room); if (to.status !== 'Ready') fail(to.status === 'Occupied' ? 'room_occupied' : 'room_not_clean');
@@ -251,6 +316,7 @@ function deskCore(db) {
     var r = room(req.room);
     if (r.status !== 'Occupied' || !r.stay) fail('room_not_occupied');
     var s = stay(r.stay), it = item(req.item);
+    if (!sellable(it)) fail('no_item');
     var qty = Math.round(Number(req.qty || 1)); if (!(qty >= 1 && qty <= 50)) fail('bad_qty');
     var free = !!req.free;
     var price = Number(it.price || 0);
@@ -289,7 +355,7 @@ function deskCore(db) {
     var s = stay(req.id);
     var amt = money(req.amount); if (!(amt > 0)) fail('invalid_amount');
     if (METHODS.indexOf(req.method) < 0) fail('method_required');
-    db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: s.room, amount: amt, method: req.method, note: text(req.note, 120), by: me.name });
+    db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: s.room, amount: amt, method: req.method, note: text(req.note, 120), by: me.name, booking: s.booking || '', ref: text(req.ref, 40) });
     recompute(s);
     return { stay: stayView(s, me) };
   };
@@ -364,9 +430,206 @@ function deskCore(db) {
     var low = Math.max(0, Math.round(Number(req.low || 0)));
     var old = req.original ? find('items', 'item', req.original) : null;
     if (!old && find('items', 'item', name)) fail('name_taken');
-    var p = { item: name, price: price, track: req.track ? 'Yes' : 'No', low: low, active: req.active === false ? 'No' : 'Yes' };
+    var p = { item: name, price: price, track: req.track ? 'Yes' : 'No', low: low, active: req.active === false ? 'No' : 'Yes', sell: req.sell === false ? 'No' : 'Yes' };
     if (old) db.set('items', old, p); else { p.stock = 0; db.add('items', p); }
     return {};
+  };
+
+  /* ================= Bookings ================= */
+  function bookingInput(req, b) {
+    var p = {};
+    var guest = text(req.guest != null ? req.guest : b && b.guest, 80); if (!guest) fail('name_required'); p.guest = guest;
+    p.phone = phoneOk(req.phone != null ? req.phone : b && b.phone); if (!p.phone) fail('phone_required');
+    p.email = text(req.email != null ? req.email : b && b.email, 80);
+    p.guests = Math.round(Number(req.guests != null ? req.guests : b && b.guests)); if (!(p.guests >= 1 && p.guests <= 33)) fail('bad_guests');
+    var minRooms = Math.ceil(p.guests / 3);
+    p.roomsNeeded = Math.round(Number(req.roomsNeeded != null ? req.roomsNeeded : b ? b.roomsNeeded : minRooms)) || minRooms;
+    if (p.roomsNeeded < minRooms) p.roomsNeeded = minRooms;
+    if (p.roomsNeeded > 11) fail('max_guests');
+    p.roomType = text(req.roomType != null ? req.roomType : b && b.roomType, 40) || 'Any';
+    p.checkin = String(req.checkin != null ? req.checkin : b && b.checkin); p.checkout = String(req.checkout != null ? req.checkout : b && b.checkout);
+    if (!isYmd(p.checkin) || !isYmd(p.checkout) || dayNum(p.checkout) <= dayNum(p.checkin)) fail('bad_dates');
+    if (dayNum(p.checkout) - dayNum(p.checkin) > 60) fail('bad_dates');
+    var rate = req.rate != null && req.rate !== '' ? money(req.rate) : b ? Number(b.rate) : NaN;
+    if (isNaN(rate) || rate <= 0) rate = /twin/i.test(p.roomType) ? 4500 : 5000;
+    p.rate = rate;
+    p.notes = text(req.notes != null ? req.notes : b && b.notes, 400);
+    return p;
+  }
+
+  /* Public: the website's Advance Booking Form sends this (no login). Lands as Pending; never blocks rooms. */
+  api.bookingRequest = function (req) {
+    var n = Number(db.kvGet('web_bookings') || 0);
+    if (n >= 30) fail('too_many_requests');
+    db.kvSet('web_bookings', String(n + 1), 3600);
+    var p = bookingInput({ guest: req.guest, phone: req.phone, email: req.email, guests: req.guests, roomsNeeded: req.roomsNeeded, roomType: req.roomType,
+      checkin: req.checkin, checkout: req.checkout, notes: req.notes });
+    if (dayNum(p.checkin) < dayNum(today()) || dayNum(p.checkin) > dayNum(today()) + 400) fail('bad_dates');
+    var dup = db.all('bookings').filter(function (b) { return b.status === 'Pending' && b.phone === p.phone && b.checkin === p.checkin && b.checkout === p.checkout; })[0];
+    if (dup) return { id: dup.id, duplicate: true };
+    var b = db.add('bookings', Object.assign(p, { id: id('B'), status: 'Pending', source: 'Website', rooms: '', nights: 0, total: 0, advanceDue: 0, advancePaid: 0, refunded: 0,
+      created: stamp(), createdBy: 'Website form', confirmedBy: '', confirmedAt: '', closedBy: '', closedAt: '', closeNote: '' }));
+    recomputeBooking(b);
+    return { id: b.id };
+  };
+
+  api.bookings = function (req) {
+    var me = auth(req), t = today();
+    var all = db.all('bookings').slice().reverse();
+    var open = all.filter(function (b) { return b.status === 'Pending' || b.status === 'Confirmed'; })
+      .sort(function (a, b) { return a.status === b.status ? (a.checkin < b.checkin ? -1 : 1) : a.status === 'Pending' ? -1 : 1; });
+    var closed = all.filter(function (b) { return b.status !== 'Pending' && b.status !== 'Confirmed'; }).slice(0, 25);
+    void t;
+    return { open: open.map(function (b) { return bookingView(b, me); }), closed: closed.map(function (b) { return bookingView(b, me); }) };
+  };
+
+  api.booking = function (req) {
+    var me = auth(req);
+    return { booking: bookingView(find('bookings', 'id', req.id) || fail('no_booking'), me) };
+  };
+
+  api.bookingCreate = function (req) {
+    var me = auth(req); needMgr(me);
+    var p = bookingInput(req);
+    if (dayNum(p.checkin) < dayNum(today()) - 1) fail('bad_dates');
+    var src = ['Phone', 'WhatsApp', 'Walk-in', 'Website', 'Other'].indexOf(req.source) >= 0 ? req.source : 'Phone';
+    var b = db.add('bookings', Object.assign(p, { id: id('B'), status: 'Pending', source: src, rooms: '', nights: 0, total: 0, advanceDue: 0, advancePaid: 0, refunded: 0,
+      created: stamp(), createdBy: me.name, confirmedBy: '', confirmedAt: '', closedBy: '', closedAt: '', closeNote: '' }));
+    recomputeBooking(b);
+    return { booking: bookingView(b, me) };
+  };
+
+  api.bookingUpdate = function (req) {
+    var me = auth(req); needMgr(me);
+    var b = find('bookings', 'id', req.id) || fail('no_booking');
+    if (b.status !== 'Pending' && b.status !== 'Confirmed') fail('booking_closed');
+    var p = bookingInput(req, b);
+    if (b.status === 'Confirmed') {
+      var rooms = req.rooms != null ? req.rooms.map(Number) : roomList(b.rooms);
+      if (!rooms.length) fail('pick_rooms');
+      rooms.forEach(function (n) { room(n); var c = roomClash(n, p.checkin, p.checkout, { booking: b.id }); if (c) clashFail(n, c); });
+      p.rooms = rooms.join(', '); p.roomsNeeded = rooms.length;
+      if (rooms.length * 3 < p.guests) fail('max_guests');
+    }
+    db.set('bookings', b, p);
+    recomputeBooking(b);
+    return { booking: bookingView(b, me) };
+  };
+
+  /* Reception confirms ONLY after money is received: amount, method and reference are recorded with their name. */
+  api.bookingConfirm = function (req) {
+    var me = auth(req); needMgr(me);
+    var b = find('bookings', 'id', req.id) || fail('no_booking');
+    if (b.status !== 'Pending') fail('booking_closed');
+    var rooms = (req.rooms || []).map(Number).filter(function (n, i, a) { return n && a.indexOf(n) === i; });
+    if (!rooms.length) fail('pick_rooms');
+    if (rooms.length * 3 < Number(b.guests)) fail('max_guests');
+    if (req.rate != null && req.rate !== '') { var rt = money(req.rate); if (!(rt > 0)) fail('rate_required'); db.set('bookings', b, { rate: rt }); }
+    rooms.forEach(function (n) { room(n); var c = roomClash(n, b.checkin, b.checkout, { booking: b.id }); if (c) clashFail(n, c); });
+    var amt = money(req.amount); if (!(amt > 0)) fail('advance_required');
+    if (METHODS.indexOf(req.method) < 0) fail('method_required');
+    var ref = text(req.ref, 40);
+    if ((req.method === 'UPI' || req.method === 'Bank transfer') && !ref) fail('ref_required');
+    db.set('bookings', b, { rooms: rooms.join(', '), roomsNeeded: rooms.length, status: 'Confirmed', confirmedBy: me.name, confirmedAt: stamp() });
+    db.add('payments', { id: id('P'), at: stamp(), stay: '', room: rooms.join(', '), amount: amt, method: req.method, note: 'Booking advance', by: me.name, booking: b.id, ref: ref });
+    recomputeBooking(b);
+    return { booking: bookingView(b, me) };
+  };
+
+  api.bookingPay = function (req) {
+    var me = auth(req); needMgr(me);
+    var b = find('bookings', 'id', req.id) || fail('no_booking');
+    if (b.status !== 'Confirmed') fail('booking_closed');
+    var amt = money(req.amount); if (!(amt > 0)) fail('invalid_amount');
+    if (METHODS.indexOf(req.method) < 0) fail('method_required');
+    var ref = text(req.ref, 40);
+    if ((req.method === 'UPI' || req.method === 'Bank transfer') && !ref) fail('ref_required');
+    db.add('payments', { id: id('P'), at: stamp(), stay: '', room: b.rooms, amount: amt, method: req.method, note: text(req.note, 120) || 'Booking payment', by: me.name, booking: b.id, ref: ref });
+    recomputeBooking(b);
+    return { booking: bookingView(b, me) };
+  };
+
+  /* Cancellation policy: 3+ days before check-in = full advance refunded; later, same day or no-show = nothing back.
+     Only the Owner may give back a different amount (recorded with a note). */
+  api.bookingCancel = function (req) {
+    var me = auth(req); needMgr(me);
+    var b = find('bookings', 'id', req.id) || fail('no_booking');
+    if (b.status !== 'Pending' && b.status !== 'Confirmed') fail('booking_closed');
+    var reason = text(req.reason, 160);
+    var policyRefund = b.status === 'Confirmed' && daysBefore(b) >= DESK_POLICY.freeCancelDays ? Number(b.advancePaid || 0) - Number(b.refunded || 0) : 0;
+    var refund = policyRefund;
+    if (req.refund != null && req.refund !== '' && Number(req.refund) !== policyRefund) {
+      needOwner(me);
+      refund = money(req.refund); if (isNaN(refund) || refund > Number(b.advancePaid || 0)) fail('invalid_amount');
+      reason = text((reason ? reason + ' · ' : '') + 'Owner changed refund from ₹' + policyRefund + ' to ₹' + refund, 200);
+    }
+    if (refund > 0) {
+      if (METHODS.indexOf(req.method) < 0) fail('method_required');
+      var ref = text(req.ref, 40);
+      if ((req.method === 'UPI' || req.method === 'Bank transfer') && !ref) fail('ref_required');
+      db.add('payments', { id: id('P'), at: stamp(), stay: '', room: b.rooms, amount: -refund, method: req.method, note: 'Refund on cancellation', by: me.name, booking: b.id, ref: ref });
+    }
+    var kept = Number(b.advancePaid || 0) - Number(b.refunded || 0) - refund;
+    db.set('bookings', b, { status: 'Cancelled', closedBy: me.name, closedAt: stamp(),
+      closeNote: text((reason ? reason + ' · ' : '') + (b.status === 'Confirmed' ? daysBefore(b) + ' days before check-in · refunded ₹' + refund + (kept > 0 ? ' · ₹' + kept + ' kept (policy)' : '') : 'Not confirmed'), 300) });
+    recomputeBooking(b);
+    return { booking: bookingView(b, me) };
+  };
+
+  api.bookingNoShow = function (req) {
+    var me = auth(req); needMgr(me);
+    var b = find('bookings', 'id', req.id) || fail('no_booking');
+    if (b.status !== 'Confirmed') fail('booking_closed');
+    if (b.checkin > today()) fail('not_arrival_day');
+    db.set('bookings', b, { status: 'No-show', closedBy: me.name, closedAt: stamp(), closeNote: text('No-show · advance ₹' + b.advancePaid + ' kept (policy) ' + text(req.reason, 120), 300) });
+    return { booking: bookingView(b, me) };
+  };
+
+  /* Guest arrives: one stay per room; the advance moves onto the room bills (split evenly). */
+  api.bookingCheckIn = function (req) {
+    var me = auth(req); needMgr(me);
+    var b = find('bookings', 'id', req.id) || fail('no_booking');
+    if (b.status !== 'Confirmed') fail('booking_closed');
+    if (b.checkin > today()) fail('too_early');
+    var rooms = roomList(b.rooms);
+    rooms.forEach(function (n) { var r = room(n); if (r.status !== 'Ready') fail(r.status === 'Occupied' ? 'room_occupied' : 'room_not_clean'); });
+    var cin = b.checkin < today() ? today() : b.checkin;
+    if (dayNum(b.checkout) <= dayNum(cin)) fail('bad_dates');
+    var left = Number(b.advancePaid || 0) - Number(b.refunded || 0), each = Math.floor(left / rooms.length), guestsLeft = Number(b.guests);
+    var made = [];
+    rooms.forEach(function (n, i) {
+      var g = Math.min(3, Math.max(1, Math.ceil(guestsLeft / (rooms.length - i)))); guestsLeft -= g;
+      var s = db.add('stays', { id: id('S'), room: n, guest: b.guest, phone: b.phone, guests: g, checkin: cin, checkout: b.checkout, nights: nightsBetween(cin, b.checkout),
+        rate: b.rate, rateNote: 'Booking ' + b.id + (rooms.length > 1 ? ' · ' + rooms.length + ' rooms' : ''), status: 'In house', roomTotal: 0, extras: 0, paid: 0, balance: 0,
+        notes: b.notes, inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: b.id });
+      var share = i === 0 ? left - each * (rooms.length - 1) : each;
+      if (share > 0) db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: n, amount: share, method: FROM_ADV, note: 'Advance from booking ' + b.id, by: me.name, booking: b.id, ref: '' });
+      recompute(s);
+      db.set('rooms', room(n), { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
+      made.push(s.id);
+    });
+    db.set('bookings', b, { status: 'Checked in', closedBy: me.name, closedAt: stamp(), closeNote: 'Checked in to room ' + rooms.join(', ') });
+    return { stays: made, booking: bookingView(b, me) };
+  };
+
+  /* Calendar: every room, what holds it on each day from `from` for `days` days. */
+  api.calendar = function (req) {
+    var me = auth(req), mgr = isMgr(me);
+    var from = isYmd(req.from) ? req.from : today(), days = Math.min(62, Math.max(1, Math.round(Number(req.days || 31)))), to = addDays(from, days);
+    function nm(g) { return mgr ? g : String(g || '').split(/\s+/)[0]; }
+    var bars = [];
+    db.all('stays').forEach(function (s) {
+      var end = s.status === 'In house' && s.checkout <= today() ? addDays(today(), 1) : s.checkout;
+      if ((s.status === 'In house' || s.status === 'Checked out') && overlaps(s.checkin, end, from, to))
+        bars.push({ room: Number(s.room), kind: s.status === 'In house' ? 'stay' : 'past', id: s.id, guest: nm(s.guest), guests: s.guests, from: s.checkin, to: end });
+    });
+    db.all('bookings').forEach(function (b) {
+      if (b.status === 'Confirmed' && overlaps(b.checkin, b.checkout, from, to))
+        roomList(b.rooms).forEach(function (n) { bars.push({ room: n, kind: 'booked', id: b.id, guest: nm(b.guest), guests: b.guests, from: b.checkin, to: b.checkout }); });
+    });
+    var pending = db.all('bookings').filter(function (b) { return b.status === 'Pending' && overlaps(b.checkin, b.checkout, from, to); }).map(function (b) { return bookingView(b, me); });
+    var rooms = db.all('rooms').map(function (r) { return { room: r.room, type: r.type, beds: r.beds, status: r.status }; }).sort(function (a, b) { return a.room - b.room; });
+    return { from: from, days: days, today: today(), rooms: rooms, bars: bars, pending: pending };
   };
 
   return api;
