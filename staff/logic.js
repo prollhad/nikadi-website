@@ -6,6 +6,18 @@
 
 var DESK_TZ_MIN = 330; // India Standard Time, UTC+5:30 (no daylight saving)
 var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
+var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
+var DESK_BILL_PREFIX = 'NGH'; // invoice numbers: NGH/26-27/0001 (restarts every financial year, 1 April)
+/* Government codes for things sold to rooms. Used when the Items sheet has no code of its own.
+   [HSN/SAC, GST %, unit, name printed on the bill] */
+var DESK_HSN = {
+  'Water bottle': ['2201', 5, 'Btl', 'Packaged drinking water (1 L)'],
+  'Dental kit': ['3306', 5, 'Nos', 'Dental kit'],
+  'Extra mattress': ['996311', 5, 'Nos', 'Extra mattress'],
+  'Late checkout': ['996311', 5, 'Nos', 'Late check-out'],
+  'Laundry': ['999712', 5, 'Pcs', 'Laundry'],
+  _default: ['996311', 5, 'Nos', '']
+};
 var DESK_POLICY = {
   advancePct: 50,      // advance needed to confirm a booking
   freeCancelDays: 3,   // cancel at least this many days before check-in = full refund of the advance
@@ -20,7 +32,7 @@ var DESK_SCHEMA = {
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
     ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't'],
-    ['booking', 'Booking ID']] },
+    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.']] },
   bookings: { sheet: 'Bookings', cols: [['id', 'Booking ID'], ['status', 'Status'], ['source', 'Source'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['email', 'Email'],
     ['guests', 'Guests', 'n'], ['roomsNeeded', 'Rooms needed', 'n'], ['roomType', 'Room preference'], ['rooms', 'Room numbers', 's'], ['checkin', 'Check-in date', 'd'],
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
@@ -33,7 +45,9 @@ var DESK_SCHEMA = {
     ['method', 'Method'], ['note', 'Note'], ['by', 'Taken by'], ['booking', 'Booking ID'], ['ref', 'Reference no.', 's'], ['voided', 'Voided']] },
   requests: { sheet: 'Approval requests', cols: [['id', 'Request ID'], ['at', 'Date', 't'], ['by', 'Requested by'], ['type', 'Type'], ['summary', 'What'],
     ['reason', 'Reason'], ['status', 'Status'], ['decidedBy', 'Decided by'], ['decidedAt', 'Decided at', 't'], ['decisionNote', 'Decision note'], ['payload', 'Details (system)', 's']] },
-  items: { sheet: 'Items', cols: [['item', 'Item'], ['price', 'Price (₹)', 'n'], ['track', 'Track stock'], ['stock', 'In stock', 'n'], ['low', 'Warn below', 'n'], ['active', 'Active'], ['sell', 'Sold to rooms']] },
+  items: { sheet: 'Items', cols: [['item', 'Item'], ['price', 'Price (₹)', 'n'], ['track', 'Track stock'], ['stock', 'In stock', 'n'], ['low', 'Warn below', 'n'], ['active', 'Active'], ['sell', 'Sold to rooms'], ['hsn', 'HSN / SAC code', 's'], ['gst', 'GST %', 'n']] },
+  bills: { sheet: 'Bills', cols: [['id', 'Bill link ID', 's'], ['no', 'Invoice no.'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'],
+    ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
   staff: { sheet: 'Staff', cols: [['name', 'Name'], ['pin', 'PIN', 's'], ['role', 'Role'], ['active', 'Active']] },
   sessions: { sheet: 'Staff sessions', hidden: true, cols: [['token', 'Token', 's'], ['name', 'Name'], ['role', 'Role'], ['expires', 'Expires', 't']] }
@@ -46,10 +60,10 @@ var DESK_DEFAULTS = {
       rate: twin ? 4500 : 5000, status: 'Ready', stay: '', updated: '', by: '' };
   }),
   items: [
-    { item: 'Water bottle', price: 20, track: 'Yes', stock: 0, low: 24, active: 'Yes', sell: 'Yes' },
-    { item: 'Dental kit', price: 150, track: 'Yes', stock: 0, low: 10, active: 'Yes', sell: 'Yes' },
-    { item: 'Extra mattress', price: 500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes' },
-    { item: 'Late checkout', price: 1500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes' },
+    { item: 'Water bottle', price: 20, track: 'Yes', stock: 0, low: 24, active: 'Yes', sell: 'Yes', hsn: '2201', gst: 5 },
+    { item: 'Dental kit', price: 30, track: 'Yes', stock: 0, low: 10, active: 'Yes', sell: 'Yes', hsn: '3306', gst: 5 },
+    { item: 'Extra mattress', price: 500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes', hsn: '996311', gst: 5 },
+    { item: 'Late checkout', price: 1500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes', hsn: '996311', gst: 5 },
     { item: 'Morning kit (free)', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'No' },
     { item: 'Toilet roll', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'No' }
   ],
@@ -190,9 +204,9 @@ function deskCore(db, hooks) {
       return o;
     }).reverse();
     var mem = s.status === 'In house' ? memberOf(s.phone) : null;
-    if (mem) v.member = { name: mem.name, tier: mem.tier, tierKey: mem.tierKey, discount: mem.discount, onsite: mem.onsite };
+    if (mem) v.member = { name: mem.name, tier: mem.tier, tierKey: mem.tierKey, discount: mem.discount, onsite: mem.onsite, email: mgr ? mem.email || '' : '' };
     if (mgr) {
-      v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes;
+      v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes; v.email = s.email || ''; v.gstin = s.gstin || ''; v.company = s.company || ''; v.bill = s.bill || '';
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
@@ -200,6 +214,94 @@ function deskCore(db, hooks) {
       v.guest = String(s.guest || '').split(/\s+/)[0];
     }
     return v;
+  }
+
+  /* ---- GST bills ---- */
+  function fyOf(ymd) { var y = +ymd.slice(0, 4), m = +ymd.slice(5, 7), a = m >= 4 ? y : y - 1; return String(a).slice(2) + '-' + String(a + 1).slice(2); }
+  function newBillNo() {
+    var pre = DESK_BILL_PREFIX + '/' + fyOf(today()) + '/', n = 0;
+    db.all('bills').forEach(function (b) { if (String(b.no).indexOf(pre) === 0) n = Math.max(n, Number(String(b.no).slice(pre.length)) || 0); });
+    var x = String(n + 1); while (x.length < 4) x = '0' + x;
+    return pre + x;
+  }
+  function newBillId() {
+    if (hooks.newId) return hooks.newId();
+    var a = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789', o = '';
+    for (var i = 0; i < 22; i++) o += a.charAt(Math.floor(Math.random() * a.length));
+    return o;
+  }
+  function itemMeta(name) {
+    var it = find('items', 'item', name), f = DESK_HSN[name] || DESK_HSN._default;
+    return { hsn: (it && String(it.hsn || '').trim()) || f[0], gst: it && it.gst !== '' && it.gst != null && Number(it.gst) > 0 ? Number(it.gst) : f[1], unit: f[2], label: f[3] || name };
+  }
+  function billOfStay(sid) { var a = db.all('bills').filter(function (b) { return b.stay === sid; }); return a[a.length - 1] || null; }
+  function prettyPhone(p) { p = String(p || ''); return p.length === 10 ? '+91 ' + p.slice(0, 5) + ' ' + p.slice(5) : p; }
+  /* Everything printed on the bill, frozen at the time it is made. */
+  function billData(s, me, old) {
+    var r = find('rooms', 'room', s.room) || {}, usual = Number(r.rate || 0), rate = Number(s.rate || 0), nights = Number(s.nights || 0);
+    var tariff = usual > rate ? usual : rate, discounts = [];
+    if (usual > rate) {
+      var mem = memberOf(s.phone), pct = Math.round((usual - rate) / usual * 100), note = String(s.rateNote || '');
+      var label = mem ? mem.tier + ' member discount (' + pct + '%)' : note && !/^Booking /.test(note) ? note : 'Discount (' + pct + '%)';
+      discounts.push({ label: label, note: 'On room tariff of ₹' + (usual * nights).toLocaleString('en-IN'), amount: (usual - rate) * nights });
+    }
+    var items = [], byKey = {};
+    chargesOf(s.id).forEach(function (c) {
+      if (c.free === 'Yes' || !(Number(c.total) > 0)) return; // free things (like the 2 waters) are not printed
+      var k = c.item + '|' + c.price;
+      if (!byKey[k]) { var m = itemMeta(c.item); byKey[k] = { label: m.label, hsn: m.hsn, gst: m.gst, unit: m.unit, qty: 0, rate: Number(c.price) }; items.push(byKey[k]); }
+      byKey[k].qty += Number(c.qty || 0);
+    });
+    var payments = [], refunds = [];
+    paymentsOf(s.id).forEach(function (p) {
+      var amt = Number(p.amount || 0);
+      if (amt < 0) { refunds.push({ date: p.at, method: p.method, ref: p.ref, amount: -amt }); return; }
+      if (p.method === FROM_ADV) {
+        var orig = bookingPays(s.booking).filter(function (x) { return Number(x.amount) > 0; });
+        var sumOrig = orig.reduce(function (a, x) { return a + Number(x.amount); }, 0);
+        if (orig.length && sumOrig === amt) orig.forEach(function (x) { payments.push({ date: x.at, label: 'Advance · booking ' + s.booking, method: x.method, ref: x.ref, amount: Number(x.amount) }); });
+        else payments.push({ date: (orig[0] || p).at, label: 'Advance (share for this room) · booking ' + s.booking, method: orig[0] ? orig[0].method : 'Advance', ref: orig[0] ? orig[0].ref : '', amount: amt });
+        return;
+      }
+      payments.push({ date: p.at, label: p.note || 'Payment received', method: p.method, ref: p.ref, amount: amt });
+    });
+    return { no: old ? old.no : '', id: old ? old.id : '', date: old ? old.date : today(), booking: s.booking || '',
+      guest: { name: s.guest, phone: prettyPhone(s.phone), email: s.email || '', gstin: s.gstin || '', company: s.company || '' },
+      room: { no: s.room, type: (r.type || '') + (r.beds ? ' (' + r.beds + ')' : '') }, checkin: s.checkin, checkout: s.checkout, inAt: s.inAt, outAt: s.outAt,
+      nights: nights, guests: Number(s.guests || 1), tariff: tariff, discounts: discounts, items: items, payments: payments, refunds: refunds,
+      member: old ? old.member : null, staff: s.outBy || (me && me.name) || '' };
+  }
+  function billTotal(d) {
+    var t = d.tariff * d.nights;
+    d.discounts.forEach(function (x) { t -= x.amount; });
+    d.items.forEach(function (x) { t += x.qty * x.rate; });
+    return t;
+  }
+  function saveBill(s, me, member) {
+    var row = billOfStay(s.id), old = row ? JSON.parse(row.data) : null;
+    var d = billData(s, me, old);
+    if (member) d.member = member;
+    if (!row) {
+      d.no = newBillNo(); d.id = newBillId();
+      row = db.add('bills', { id: d.id, no: d.no, at: stamp(), stay: s.id, room: s.room, guest: s.guest, phone: s.phone, email: s.email || '', total: billTotal(d), by: me.name, sent: '', data: JSON.stringify(d) });
+      db.set('stays', s, { bill: d.no });
+    } else db.set('bills', row, { guest: s.guest, email: s.email || '', total: billTotal(d), data: JSON.stringify(d) });
+    d.url = DESK_BILL_URL + d.id;
+    return { row: row, data: d };
+  }
+  function sendBill(b, to) {
+    if (!hooks.sendBill) fail('email_unavailable');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) fail('invalid_email');
+    hooks.sendBill(b.data, to);
+    db.set('bills', b.row, { sent: stamp() + ' → ' + to });
+  }
+  function billInfo(s, b) { return b ? { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', data: b.data } : null; }
+  function billFields(s, req) {
+    var p = {};
+    if (req.email != null) { p.email = text(req.email, 80); if (p.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p.email)) fail('invalid_email'); }
+    if (req.gstin != null) { p.gstin = text(req.gstin, 15).toUpperCase(); if (p.gstin && !/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/.test(p.gstin)) fail('invalid_gstin'); }
+    if (req.company != null) p.company = text(req.company, 80);
+    if (Object.keys(p).length) db.set('stays', s, p);
   }
 
   var api = {};
@@ -452,11 +554,49 @@ function deskCore(db, hooks) {
     recompute(s);
     var r = find('rooms', 'room', s.room);
     if (r && r.stay === s.id) db.set('rooms', r, { status: 'Needs cleaning', stay: '', updated: stamp(), by: me.name });
-    var member = null;
+    var member = null, memBefore = memberOf(s.phone);
     if (hooks.onCheckout && s.phone) {
       try { member = hooks.onCheckout({ id: s.id, phone: s.phone, guest: s.guest, room: s.room, nights: nights, roomTotal: Number(s.roomTotal || 0), checkin: s.checkin, checkout: s.checkout }); } catch (e) { member = null; }
     }
-    return { stay: stayView(s, me), member: member };
+    billFields(s, req);
+    if (!s.email && memBefore && memBefore.email) db.set('stays', s, { email: memBefore.email });
+    var bm = memBefore ? { level: memBefore.tier, earned: member ? member.points : null, balance: member ? member.balance : memBefore.points } : null;
+    if (bm) { var r0 = find('rooms', 'room', s.room); if (r0 && Number(r0.rate) > Number(s.rate)) bm.saved = (Number(r0.rate) - Number(s.rate)) * nights; }
+    var b = saveBill(s, me, bm), sentTo = '';
+    if (s.email && req.sendEmail !== false && hooks.sendBill) { try { sendBill(b, s.email); sentTo = s.email; } catch (e) { sentTo = ''; } }
+    return { stay: stayView(s, me), member: member, bill: billInfo(s, b), emailed: sentTo };
+  };
+
+  /* Bill for a checked-out stay: view it, fix the guest's email / GSTIN / company name, and make it again. */
+  api.bill = function (req) {
+    var me = auth(req); needMgr(me);
+    var s = stay(req.id);
+    if (s.status !== 'Checked out') fail('not_checked_out');
+    billFields(s, req);
+    var b = saveBill(s, me, null);
+    return { bill: billInfo(s, b) };
+  };
+  api.billSend = function (req) {
+    var me = auth(req); needMgr(me);
+    var s = stay(req.id);
+    if (s.status !== 'Checked out') fail('not_checked_out');
+    if (req.email != null) billFields(s, { email: req.email });
+    var b = saveBill(s, me, null);
+    sendBill(b, String(s.email || ''));
+    return { bill: billInfo(s, b), emailed: s.email };
+  };
+  /* Recent bills for the front desk list. */
+  api.bills = function (req) {
+    var me = auth(req); needMgr(me);
+    return { bills: db.all('bills').slice(-60).reverse().map(function (b) { return { no: b.no, at: b.at, stay: b.stay, room: b.room, guest: b.guest, total: b.total, sent: b.sent, url: DESK_BILL_URL + b.id }; }) };
+  };
+  /* Public: the QR code / link on a bill. Only the secret bill id opens it. */
+  api.billView = function (req) {
+    var key = String(req.id || '');
+    if (!/^[A-Za-z0-9]{12,40}$/.test(key)) fail('no_bill');
+    var b = find('bills', 'id', key); if (!b) fail('no_bill');
+    var d = JSON.parse(b.data); d.id = b.id;
+    return { bill: d };
   };
 
   api.roomStatus = function (req) {

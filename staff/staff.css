@@ -456,3 +456,14 @@ main.view{flex:1}
 .brand-logo{display:block;height:36px;width:auto}.brand-row{display:flex!important;align-items:center;gap:12px}.brand-row>span{margin:0!important;padding-left:12px;border-left:1px solid var(--line)}
 .login .brand-logo.big{height:auto;width:min(220px,60vw);margin:0 auto 6px}
 .side .brand-row{flex-direction:column;align-items:flex-start;gap:8px}.side .brand-row>span{border-left:0;padding-left:0}.side .brand-logo{height:40px}
+
+/* bills */
+.billx{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:12px 0}
+.billx summary{cursor:pointer;font-weight:500;color:var(--gold-hi,#e0be7a);padding:4px 0}
+.billx[open] summary{margin-bottom:8px}
+.btn-col{display:grid;gap:10px;margin:14px 0}
+.btn-col .btn{width:100%;text-align:center;justify-content:center}
+.btn.off{opacity:.45}
+.ok-note{background:rgba(80,170,120,.12);border:1px solid rgba(80,170,120,.35);color:#9fdcb8;border-radius:10px;padding:10px 12px;margin:12px 0}
+.bl-btn{width:100%;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.bl-btn .t small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}

@@ -147,6 +147,7 @@
 
   /* ---------- shell: side menu on computers, tabs at the bottom on phones ---------- */
   var ICON = {
+    bills: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2.5h12v19l-3-2-3 2-3-2-3 2z"/><path d="M9 7.5h6M9 11h6M9 14.5h4"/></svg>',
     today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
     rooms: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>',
     calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7 13.5h3M14 13.5h3M7 17h3"/></svg>',
@@ -158,10 +159,10 @@
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales' };
+  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills' };
   function navFor(desk) {
     if (!mgr()) return ['rooms', 'calendar', 'add', 'stock'];
-    if (desk) return ['today', 'rooms', 'calendar', 'bookings', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'settings'] : []);
+    if (desk) return ['today', 'rooms', 'calendar', 'bookings', 'bills', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
@@ -179,7 +180,7 @@
   }
   function go(tab) {
     closeAllSheetsQuiet();
-    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; nav(); render(); window.scrollTo(0, 0);
+    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; nav(); render(); window.scrollTo(0, 0);
     if (tab === 'calendar' || tab === 'bookings') loadExtra();
   }
 
@@ -198,7 +199,7 @@
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -213,7 +214,7 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports }[S.tab] || viewRooms)(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills }[S.tab] || viewRooms)(v);
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -482,8 +483,13 @@
     var n = Math.max(1, nights(s.checkin, S.st.today));
     body.innerHTML = '<div class="note"><b>' + esc(s.guest) + '</b>In since ' + esc(dShort(s.checkin)) + ' · planned check-out ' + esc(dShort(s.checkout)) + '</div>' +
       '<div class="field"><span>Nights to charge</span>' + stepper('f-n', n, 1, 365) + '</div>' +
-      '<div class="bill" id="sum"></div><p class="err" id="err" role="alert"></p><div id="conf"></div>' +
-      '<button class="btn btn-gold big-cta" id="go" type="button">Check out</button>' +
+      '<div class="bill" id="sum"></div>' +
+      '<details class="billx"' + (s.gstin || s.company ? ' open' : '') + '><summary>Bill details · email, company, GSTIN</summary>' +
+      field('Guest email (the bill is emailed at check-out)', '<input class="input" id="b-mail" type="email" inputmode="email" autocomplete="off" maxlength="80" value="' + esc(s.email || (s.member && s.member.email) || '') + '" placeholder="Optional">') +
+      field('Company / billing name', '<input class="input" id="b-co" maxlength="80" value="' + esc(s.company || '') + '" placeholder="Only if the bill should be in a company name">') +
+      field('Guest GSTIN', '<input class="input" id="b-gst" maxlength="15" autocomplete="off" style="text-transform:uppercase" value="' + esc(s.gstin || '') + '" placeholder="Only for business guests">') + '</details>' +
+      '<p class="err" id="err" role="alert"></p><div id="conf"></div>' +
+      '<button class="btn btn-gold big-cta" id="go" type="button">Check out and make bill</button>' +
       '<p class="small">After check-out the room turns red until someone marks it as cleaned.</p>';
     function bal() { var nn = Number($('#f-n', body).textContent); return nn * s.rate + s.extras - s.paid; }
     function sum() {
@@ -494,8 +500,10 @@
       $('#conf', body).innerHTML = ''; var g = $('#go', body); if (g) g.hidden = false;
     }
     wireSteppers(body, sum); sum();
+    function billArgs() { return { email: $('#b-mail', body).value.trim(), company: $('#b-co', body).value.trim(), gstin: $('#b-gst', body).value.trim().toUpperCase() }; }
+    function outDone(res) { vibrate(); toast('Checked out. Room ' + s.room + ' needs cleaning.'); after(2); if (res && res.bill) setTimeout(function () { openBill(res.bill, res.emailed); }, 350); }
     function doOut(btn) {
-      submit(btn, $('#err', body), 'deskCheckOut', { id: s.id, nights: Number($('#f-n', body).textContent) }, function () { vibrate(); toast('Checked out. Room ' + s.room + ' needs cleaning.'); after(2); });
+      submit(btn, $('#err', body), 'deskCheckOut', Object.assign({ id: s.id, nights: Number($('#f-n', body).textContent) }, billArgs()), outDone);
     }
     $('#go', body).onclick = function () {
       var b = bal(), btn = this;
@@ -515,8 +523,8 @@
         $('#pgo', pb).onclick = function () {
           var x = this; busy(x, true);
           api('deskPay', { id: s.id, amount: $('#p-amt', pb).value.replace(/\D/g, ''), method: segVal(pb, 'method'), ref: $('#p-ref', pb).value, note: 'At check-out' })
-            .then(function () { return api('deskCheckOut', { id: s.id, nights: nn }); })
-            .then(function () { vibrate(); toast('Paid and checked out. Room ' + s.room + ' needs cleaning.'); after(3); }, function (e) { busy(x, false); $('#perr', pb).textContent = errText(e); });
+            .then(function () { return api('deskCheckOut', Object.assign({ id: s.id, nights: nn }, billArgs())); })
+            .then(function (res) { vibrate(); toast('Paid and checked out. Room ' + s.room + ' needs cleaning.'); after(3); if (res && res.bill) setTimeout(function () { openBill(res.bill, res.emailed); }, 350); }, function (e) { busy(x, false); $('#perr', pb).textContent = errText(e); });
         };
       };
       $('#cgo', body).onclick = function () { doOut(this); };
@@ -1153,9 +1161,71 @@
       '<div class="sec-h"><h2>Money received by method</h2></div><div class="list">' + (Object.keys(m.byMethod).length ? Object.keys(m.byMethod).map(function (k) { return '<div class="bl"><span class="t">' + esc(k) + '</span><span class="a">' + inr(m.byMethod[k]) + '</span></div>'; }).join('') : '<div class="bl"><span class="d">No payments this month</span></div>') + '</div>';
   }
 
+  /* ---------- Bills (GST tax invoices) ---------- */
+  function showBill(b) {
+    var d = Object.assign({}, b.data, { url: b.url });
+    if (!demo) { window.open(b.url, '_blank', 'noopener'); return; }
+    var w = window.open('', '_blank'); if (!w) { toast('Allow pop-ups to see the bill'); return; }
+    w.document.open(); w.document.write(NikadiBill.billHTML(d, { toolbar: true, logo: '../img/brand/logo.png' })); w.document.close();
+  }
+  function openBill(b, emailed) {
+    var body = openSheet('Bill ' + b.no);
+    function draw(b, msg) {
+      var d = Object.assign({}, b.data, { url: b.url }), c = NikadiBill.compute(d), ph = String(b.phone || '').replace(/\D/g, '').slice(-10);
+      body.innerHTML = '<div class="note"><b>' + esc(d.guest.company || d.guest.name) + '</b>Room ' + esc(d.room.no) + ' · ' + esc(dShort(d.checkin)) + ' – ' + esc(dShort(d.checkout)) + ' · Tax invoice ' + esc(b.no) + '</div>' +
+        '<div class="bill"><div class="bl"><span class="t">Total (incl. GST)</span><span class="a">' + inr(c.total) + '</span></div>' +
+        '<div class="bl"><span class="t">GST included</span><span class="a">₹' + c.gstTotal.toFixed(2) + '</span></div>' +
+        '<div class="bl paid"><span class="t">Paid</span><span class="a">' + inr(c.paid - c.refunded) + '</span></div>' +
+        '<div class="bl due"><span class="t">' + (Math.abs(c.due) < 0.5 ? 'Fully paid' : c.due > 0 ? 'Still due' : 'To refund') + '</span><span class="a">' + inr(Math.abs(c.due)) + '</span></div></div>' +
+        (msg ? '<p class="ok-note">' + esc(msg) + '</p>' : '') +
+        '<div class="btn-col"><button class="btn btn-gold" type="button" id="bv">View / print bill</button>' +
+        '<a class="btn btn-line" id="bw" target="_blank" rel="noopener" href="' + (ph ? 'https://wa.me/91' + ph + '?text=' + encodeURIComponent(NikadiBill.billWhatsApp(d)) : '#') + '">Send on WhatsApp</a></div>' +
+        '<div class="sec-h"><h2>Email the bill</h2></div>' +
+        field('Email', '<input class="input" id="be" type="email" inputmode="email" maxlength="80" value="' + esc(b.email || d.guest.email || '') + '">') +
+        '<p class="err" id="berr" role="alert"></p><button class="btn btn-line" type="button" id="bs">' + (b.sent ? 'Send again' : 'Send email') + '</button>' +
+        (b.sent ? '<p class="small">Last emailed ' + esc(b.sent) + '</p>' : '') +
+        '<details class="billx"><summary>Change company name or GSTIN</summary>' +
+        field('Company / billing name', '<input class="input" id="bc" maxlength="80" value="' + esc(b.company || '') + '">') +
+        field('Guest GSTIN', '<input class="input" id="bg" maxlength="15" style="text-transform:uppercase" value="' + esc(b.gstin || '') + '">') +
+        '<p class="err" id="uerr" role="alert"></p><button class="btn btn-line" type="button" id="bu">Update bill</button><p class="small">The invoice number and the QR code stay the same.</p></details>' +
+        '<p class="small">The QR code on the bill opens it on www.nikadiguesthouse.com. Anyone with the link can see this bill, so share it only with the guest.</p>';
+      if (!ph) { var a = $('#bw', body); a.classList.add('off'); a.onclick = function (e) { e.preventDefault(); toast('No phone number for this guest'); }; }
+      $('#bv', body).onclick = function () { showBill(b); };
+      $('#bs', body).onclick = function () {
+        var x = this, em = $('#be', body).value.trim(); if (!em) { $('#berr', body).textContent = 'Enter the guest\'s email.'; return; }
+        busy(x, true); $('#berr', body).textContent = '';
+        api('deskBillSend', { id: d.stay || b.stay, email: em }).then(function (r) { draw(r.bill, 'Bill emailed to ' + r.emailed + (demo ? ' (demo: no real email is sent)' : '')); }, function (e) { busy(x, false); $('#berr', body).textContent = errText(e); });
+      };
+      $('#bu', body).onclick = function () {
+        var x = this; busy(x, true);
+        api('deskBill', { id: d.stay || b.stay, company: $('#bc', body).value.trim(), gstin: $('#bg', body).value.trim().toUpperCase() })
+          .then(function (r) { draw(r.bill, 'Bill updated'); }, function (e) { busy(x, false); $('#uerr', body).textContent = errText(e); });
+      };
+    }
+    if (!b.data) {
+      body.innerHTML = '<div class="loading">Loading bill…</div>';
+      api('deskBill', { id: b.stay }).then(function (r) { r.bill.stay = b.stay; draw(r.bill); }, function (e) { body.innerHTML = '<p class="err">' + esc(errText(e)) + '</p>'; });
+    } else draw(b, emailed ? 'Bill emailed to ' + emailed + (demo ? ' (demo: no real email is sent)' : '') : '');
+  }
+  var BILLS = { list: null };
+  function viewBills(v) {
+    if (!BILLS.list) {
+      v.innerHTML = '<div><p class="kicker">Front desk</p><h1>Bills</h1></div><div class="loading">Loading bills…</div>';
+      api('deskBills').then(function (r) { BILLS.list = r.bills; if (S.tab === 'bills') render(); }, function (e) { toast(errText(e)); });
+      return;
+    }
+    var L = BILLS.list;
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Front desk · last ' + L.length + '</p><h1>Bills</h1></div><button class="btn btn-quiet" type="button" id="brf">Refresh</button></div>' +
+      (L.length ? '<div class="list">' + L.map(function (b, i) {
+        return '<button type="button" class="bl bl-btn" data-i="' + i + '"><span class="t"><b>' + esc(b.guest) + '</b><small>' + esc(b.no) + ' · Room ' + esc(b.room) + ' · ' + esc(dShort(b.at)) + (b.sent ? ' · emailed' : '') + '</small></span><span class="a">' + inr(b.total) + '</span></button>';
+      }).join('') + '</div>' : '<p class="small">No bills yet. A bill is made automatically when a guest checks out.</p>');
+    $('#brf', v).onclick = function () { BILLS.list = null; render(); };
+    $$('[data-i]', v).forEach(function (x) { x.onclick = function () { openBill({ stay: L[+x.dataset.i].stay, no: L[+x.dataset.i].no }); }; });
+  }
+
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
-    var list = [['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
+    var list = [['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';

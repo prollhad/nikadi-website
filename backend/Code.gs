@@ -319,7 +319,7 @@ function memberDesk_(phone) {
   var m = findMember_(phone);
   if (!m || m.status === 'Blocked') return null;
   var t = tierOf_(m);
-  return { name: m.name, tier: t.tier.name, tierKey: t.tier.key, discount: t.tier.discount, points: m.points,
+  return { name: m.name, email: m.email || '', tier: t.tier.name, tierKey: t.tier.key, discount: t.tier.discount, points: m.points,
     onsite: tierPerks_(t.tier).filter(function (p) { return p.onsite; }).map(function (p) { return p.text; }),
     rates: Object.keys(BASE_RATES).reduce(function (o, k) { o[k] = Math.round(BASE_RATES[k] * (100 - t.tier.discount) / 100); return o; }, {}) };
 }

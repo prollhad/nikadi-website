@@ -2,7 +2,7 @@
    Runs the real staff logic (logic.js) on sample data kept only on this phone.
    Demo PINs: 1111 Owner · 2222 Reception (Manager) · 3333 Housekeeping (Staff) */
 (function (root) {
-  var KEY = 'nikadi-staff-demo-v5';
+  var KEY = 'nikadi-staff-demo-v6';
 
   function memoryDb(data) {
     return {
@@ -107,7 +107,7 @@
   /* sample Nikadi members for the demo (the real app reads the membership sheet) */
   function demoMember(phone) {
     var M = {
-      '9876543210': { name: 'Radha Devi Sharma', tier: 'Gold', tierKey: 'gold', discount: 10, points: 335,
+      '9876543210': { name: 'Radha Devi Sharma', email: 'radha.sharma@example.com', tier: 'Gold', tierKey: 'gold', discount: 10, points: 335,
         onsite: ['Early check-in from 9 AM, when available'], rates: { 'Deluxe Double (King)': 4500, 'Deluxe Twin': 4050, 'Large Twin': 4500 } },
       '9830012345': { name: 'Gopal Krishna Das', tier: 'Platinum', tierKey: 'platinum', discount: 15, points: 1240,
         onsite: ['Early check-in from 9 AM, when available', 'Free late check-out till 11 AM (usually ₹1,500)', 'Free room upgrade, when available', 'Free dental kit every stay'],
@@ -121,7 +121,7 @@
     return new Promise(function (resolve, reject) {
       setTimeout(function () {
         try {
-          var api = deskCore(memoryDb(world), { memberInfo: demoMember });
+          var api = deskCore(memoryDb(world), { memberInfo: demoMember, sendBill: function () {} });
           if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
           var clean = JSON.parse(JSON.stringify(req || {}));
           Object.keys(clean).forEach(function (k) { if (k.charAt(0) === '_') delete clean[k]; });

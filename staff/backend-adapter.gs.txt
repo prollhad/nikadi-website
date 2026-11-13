@@ -4,7 +4,25 @@
 
 function deskDb_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), cache = {};
-  function sh(t) { var s = ss.getSheetByName(DESK_SCHEMA[t].sheet); if (!s) throw new Error('not_setup'); return s; }
+  var checked = {};
+  function sh(t) {
+    var def = DESK_SCHEMA[t], s = ss.getSheetByName(def.sheet);
+    if (!s) {
+      if (t !== 'bills') throw new Error('not_setup');
+      s = ss.insertSheet(def.sheet); s.appendRow(def.cols.map(function (c) { return c[1]; }));
+      s.getRange(1, 1, 1, def.cols.length).setFontWeight('bold').setBackground('#1b1714').setFontColor('#e0be7a'); s.setFrozenRows(1);
+    }
+    if (!checked[t]) { // add headings for columns added in newer versions
+      checked[t] = true;
+      var have = s.getLastColumn();
+      if (have < def.cols.length) {
+        s.getRange(1, have + 1, 1, def.cols.length - have).setValues([def.cols.slice(have).map(function (c) { return c[1]; })])
+          .setFontWeight('bold').setBackground('#1b1714').setFontColor('#e0be7a');
+        def.cols.forEach(function (c, j) { if (j >= have && c[2] === 's') s.getRange(1, j + 1, s.getMaxRows(), 1).setNumberFormat('@'); });
+      }
+    }
+    return s;
+  }
   function read(v, type) {
     if (v instanceof Date) return Utilities.formatDate(v, 'Asia/Kolkata', type === 'd' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm');
     if (type === 'n') return v === '' || v == null ? 0 : Number(v);
@@ -55,9 +73,19 @@ function deskHandle_(req) {
   var clean = {};
   Object.keys(req).forEach(function (k) { if (k.charAt(0) !== '_') clean[k] = req[k]; }); // private flags only from inside the script
   var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null,
-    memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null });
+    memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
+    newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
+    sendBill: deskSendBill_ });
   if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
   return api[name](clean);
+}
+
+/** Emails a guest their bill (HTML email with a link to the full bill and its QR code). */
+function deskSendBill_(d, to) {
+  MailApp.sendEmail({ to: to, name: 'Nikadi Guest House', replyTo: 'nikadiguesthouse@gmail.com',
+    subject: 'Your tax invoice ' + d.no + ' · Nikadi Guest House',
+    htmlBody: NikadiBill.billEmail(d),
+    body: NikadiBill.billWhatsApp(d).replace(/\*/g, '') });
 }
 
 /** Creates the staff app tabs. Called from setup() in Code.gs; safe to run again. */

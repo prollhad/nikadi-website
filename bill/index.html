@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Your bill · Nikadi Guest House</title>
+<link rel="icon" type="image/png" sizes="48x48" href="../app/icons/favicon-48.png">
+<style>
+  body{margin:0;background:#e9ecee;color:#1d2326;font:15px/1.5 "Helvetica Neue",Helvetica,Arial,sans-serif}
+  .msg{max-width:440px;margin:12vh auto;padding:32px 28px;background:#fff;border-top:5px solid #156b82;text-align:center}
+  .msg img{width:140px;height:auto}
+  .msg h1{font-size:19px;margin:18px 0 6px}
+  .msg p{color:#52606a;margin:0 0 8px}
+  .msg a{color:#156b82;font-weight:600}
+  .spin{width:28px;height:28px;margin:22px auto 0;border:3px solid #cfd6d9;border-top-color:#156b82;border-radius:50%;animation:s 0.8s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="msg" id="msg">
+  <img src="../img/brand/logo.png" alt="Nikadi Guest House">
+  <h1>Opening your bill…</h1>
+  <div class="spin" aria-hidden="true"></div>
+</div>
+<script>var NIKADI_API_URL = "https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec";</script>
+<script src="../staff/qr.js"></script>
+<script src="../staff/bill.js"></script>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search), id = (q.get('id') || '').trim();
+  function fail(title, text) {
+    document.getElementById('msg').innerHTML = '<img src="../img/brand/logo.png" alt="Nikadi Guest House"><h1>' + title + '</h1><p>' + text + '</p>' +
+      '<p>Questions about a bill? Call <b>+91 75011 01137</b> or email <b>nikadiguesthouse@gmail.com</b>.</p><p><a href="../">www.nikadiguesthouse.com</a></p>';
+  }
+  function show(d) {
+    d.url = location.origin + location.pathname + '?id=' + encodeURIComponent(d.id);
+    var html = NikadiBill.billHTML(d, { toolbar: true, logo: '../img/brand/logo.png' });
+    var go = function () { document.open(); document.write(html); document.close(); };
+    if (document.readyState === 'complete') go(); else window.addEventListener('load', function () { setTimeout(go, 0); });
+  }
+  if (q.get('demo') === '1') return show(SAMPLE());
+  if (!/^[A-Za-z0-9]{12,40}$/.test(id)) return fail('Bill not found', 'This link is incomplete. Please scan the QR code on your bill again, or use the link we sent you.');
+  if (!window.NIKADI_API_URL) return fail('Bills are not available yet', 'Please try again later.');
+  fetch(NIKADI_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'deskBillView', id: id }), redirect: 'follow' })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (j && j.ok && j.bill) show(j.bill);
+      else fail('Bill not found', 'We could not find a bill for this link. It may have been replaced by a newer copy. Please check the latest link we sent you.');
+    }, function () { fail('Could not open the bill', 'Please check your internet connection and try again.'); });
+
+  function SAMPLE() {
+    return { id: 'SAMPLE', no: 'NGH/26-27/0142', date: '2026-11-17', booking: 'BMJ4K2Q',
+      guest: { name: 'Radha Sharma', phone: '+91 98765 43210', email: 'radha.sharma@example.com', address: 'Salt Lake, Kolkata, West Bengal' },
+      room: { no: 3, type: 'Deluxe Double (King bed)' }, checkin: '2026-11-14', checkout: '2026-11-17', inAt: '2026-11-14 12:40', outAt: '2026-11-17 10:15', nights: 3, guests: 2,
+      tariff: 5000, discounts: [{ label: 'Gold member discount (10%)', note: 'On room tariff of ₹15,000', amount: 1500 }],
+      items: [{ label: 'Packaged drinking water (1 L)', hsn: '2201', gst: 5, qty: 3, rate: 20, unit: 'Btl' }, { label: 'Dental kit', hsn: '3306', gst: 5, qty: 2, rate: 30, unit: 'Nos' }],
+      payments: [{ date: '2026-11-08', label: 'Advance (50%) · booking BMJ4K2Q', method: 'UPI', ref: '431287650921', amount: 6750 },
+                 { date: '2026-11-17', label: 'Balance at check-out', method: 'Card', ref: 'XXXX 4417', amount: 6870 }],
+      member: { level: 'Gold', saved: 1500, earned: 202, balance: 1352 }, staff: 'Priya (Reception)' };
+  }
+})();
+</script>
+</body>
+</html>
