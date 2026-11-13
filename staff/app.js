@@ -107,7 +107,7 @@
     closeAllSheets();
     var pin = '';
     app.innerHTML = (demo ? '<div class="demo-flag">Demo mode · sample data · PINs 1111 owner · 2222 reception · 3333 staff</div>' : '') +
-      '<div class="login"><div class="brand"><b>NIKADI</b><span>Staff</span></div>' +
+      '<div class="login"><div class="brand"><img class="brand-logo big" src="../img/brand/logo-light.png" alt="Nikadi Guest House"><span>Staff</span></div>' +
       '<p class="sub" id="lp">' + esc(msg || 'Enter your PIN') + '</p><div class="dots" id="dots"></div>' +
       '<div class="pad3" id="pad">' + [1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return '<button type="button" data-k="' + n + '">' + n + '</button>'; }).join('') +
       '<button type="button" class="ghost" data-k="c">Clear</button><button type="button" data-k="0">0</button><button type="button" class="ghost" data-k="go">Enter</button></div>' +
@@ -187,10 +187,10 @@
     document.onkeydown = null;
     if (!S.st) S.tab = mgr() ? (isDesk() ? 'today' : 'rooms') : 'rooms';
     app.innerHTML = '<div class="app-frame">' +
-      '<aside class="side" aria-label="Menu"><a class="brand" href="./"><b>NIKADI</b><span>Staff</span></a>' + (demo ? '<p class="side-demo">Demo · sample data</p>' : '') +
+      '<aside class="side" aria-label="Menu"><a class="brand brand-row" href="./"><img class="brand-logo" src="../img/brand/lockup-light.png" alt="Nikadi Guest House"><span>Staff</span></a>' + (demo ? '<p class="side-demo">Demo · sample data</p>' : '') +
       '<nav id="side-nav"></nav><div class="side-me"><div class="chip-me"><b>' + esc(S.me.name) + '</b>' + esc(S.me.role) + '</div><button class="iconbtn" id="out2" type="button">Log out</button></div></aside>' +
       '<div class="shell">' + (demo ? '<div class="demo-flag">Demo mode · sample data on this device only</div>' : '') +
-      '<header class="bar pad"><a class="brand" href="./"><b>NIKADI</b><span>Staff</span></a><div class="who"><div class="chip-me"><b>' + esc(S.me.name) + '</b>' + esc(S.me.role) + '</div>' +
+      '<header class="bar pad"><a class="brand brand-row" href="./"><img class="brand-logo" src="../img/brand/lockup-light.png" alt="Nikadi Guest House"><span>Staff</span></a><div class="who"><div class="chip-me"><b>' + esc(S.me.name) + '</b>' + esc(S.me.role) + '</div>' +
       '<button class="iconbtn" id="out" type="button">Log out</button></div></header>' +
       '<main class="pad view" id="view"><div class="loading">Loading…</div></main>' +
       '<nav class="tabs" id="tabs" role="tablist"></nav></div></div>';

@@ -246,3 +246,6 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 .cmp td.no{color:#6d645a}
 .cmp .me{background:rgba(201,163,90,.1)}
 .cmp thead th.me{color:var(--gold-hi)}
+
+.brand-logo{display:block;height:36px;width:auto}.brand-row{display:flex!important;align-items:center;gap:12px}.brand-row>span{margin:0!important;padding-left:12px;border-left:1px solid var(--line)}
+.login .brand-logo.big{height:auto;width:min(220px,60vw);margin:0 auto 6px}

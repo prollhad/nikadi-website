@@ -452,3 +452,7 @@ main.view{flex:1}
 .tbl.rep tr.tot td{background:var(--band);border-top:1px solid var(--line)}
 .tbl.rep tbody tr{cursor:pointer}
 @media (max-width:700px){.hide-s{display:none}.tbl.rep th,.tbl.rep td{padding:10px 8px;font-size:.8rem}.bars{height:180px;gap:3px}.bar-v{font-size:.5rem}}
+
+.brand-logo{display:block;height:36px;width:auto}.brand-row{display:flex!important;align-items:center;gap:12px}.brand-row>span{margin:0!important;padding-left:12px;border-left:1px solid var(--line)}
+.login .brand-logo.big{height:auto;width:min(220px,60vw);margin:0 auto 6px}
+.side .brand-row{flex-direction:column;align-items:flex-start;gap:8px}.side .brand-row>span{border-left:0;padding-left:0}.side .brand-logo{height:40px}

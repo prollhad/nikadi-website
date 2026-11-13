@@ -1,6 +1,6 @@
 /* Nikadi member app — offline shell. Bump VERSION whenever app files change. */
-var VERSION = "nikadi-app-v7";
-var SHELL = ["./", "index.html", "app.css", "core.js", "demo.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
+var VERSION = "nikadi-app-v8";
+var SHELL = ["./", "index.html", "app.css", "core.js", "demo.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "../img/brand/lockup-light.png"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));

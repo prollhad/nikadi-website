@@ -4,13 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nikadi Guest House</title>
-<link rel="icon" type="image/png" href="app/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="48x48" href="app/icons/favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="app/icons/icon-192.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.nikadiguesthouse.com/img/brand/og-thumb.jpg">
 <link rel="apple-touch-icon" href="app/icons/apple-touch-icon.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <meta name="description" content="Nikadi Guest House, Mayapur. Premium AC deluxe rooms opposite ISKCON Gate No. 4, an 8 minute walk from the Main ISKCON Temple.">
 <meta property="og:title" content="Nikadi Guest House · Wake up steps from the Mayapur temple">
 <meta property="og:description" content="Premium AC rooms opposite ISKCON Gate No. 4, an 8 minute walk to the Main ISKCON Temple.">
-<meta property="og:image" content="https://www.nikadiguesthouse.com/img/facade-night.jpg">
+<meta property="og:image" content="https://www.nikadiguesthouse.com/img/brand/og-thumb.jpg">
 <meta property="og:url" content="https://www.nikadiguesthouse.com/">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,6 +66,9 @@ strong{font-weight:500}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:rgba(20,17,15,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
 .brand{text-decoration:none;display:grid;line-height:1}
+.brand-logo{display:block;height:50px;width:auto}.foot-logo{height:52px}
+.brand-row{display:flex;align-items:center;gap:14px}.brand-row .brand-logo{height:34px}.brand-row>span{margin:0;padding-left:14px;border-left:1px solid var(--line)}
+@media (max-width:420px){.brand-row>span{display:none}.brand-logo{height:38px}}
 .brand b{font-family:var(--display);font-weight:600;font-size:1.55rem;letter-spacing:.06em}
 .brand span{font-size:.62rem;letter-spacing:.38em;text-transform:uppercase;color:var(--gold);margin-top:5px}
 nav.main{display:flex;gap:28px;font-size:.78rem;letter-spacing:.16em;text-transform:uppercase}
@@ -465,7 +473,7 @@ footer .brand b{font-size:1.2rem}
 
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="#home"><b>NIKADI</b><span>Guest House · Mayapur</span></a>
+    <a class="brand" href="#home"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"></a>
     <nav class="main" aria-label="Sections">
       <a href="#rooms">Rooms</a><a href="#gallery">Gallery</a><a href="#amenities">Amenities</a><a href="#booking">Booking</a><a href="#membership">Membership</a><a href="app/">Member login</a><a href="#location">Location</a><a href="#contact">Contact</a>
     </nav>
@@ -846,14 +854,14 @@ footer .brand b{font-size:1.2rem}
 
 <footer>
   <div class="wrap">
-    <span class="brand"><b>NIKADI</b></span>
+    <span class="brand"><img class="brand-logo foot-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"></span>
     <span>A unit of Nikadi Projects Pvt. Ltd. · GSTIN 19AAHCN7789F1ZR<br>Sri Dham Mayapur, Opp. Namahatta Bhavan &amp; ISKCON Gate No. 4, Nadia, WB 741313</span>
     <span>© 2026 Nikadi Guest House</span>
   </div>
 </footer>
 
 <section class="sheet" id="advance-booking" hidden aria-label="Advance Booking Form">
-  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Advance Booking</span></span><a class="btn btn-line" href="#forms">Close</a></div></div>
+  <div class="sheet-bar"><div class="wrap"><span class="brand brand-row"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"><span>Advance Booking</span></span><a class="btn btn-line" href="#forms">Close</a></div></div>
   <div class="wrap form-wrap">
     <div class="form-intro">
       <p class="kicker rule">Online form</p>
@@ -930,7 +938,7 @@ footer .brand b{font-size:1.2rem}
 </section>
 
 <section class="sheet" id="guest-registration" hidden aria-label="Guest Registration Card">
-  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Guest Registration</span></span><a class="btn btn-line" href="#forms">Close</a></div></div>
+  <div class="sheet-bar"><div class="wrap"><span class="brand brand-row"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"><span>Guest Registration</span></span><a class="btn btn-line" href="#forms">Close</a></div></div>
   <div class="wrap form-wrap">
     <div class="form-intro">
       <p class="kicker rule">Online form</p>
@@ -1051,7 +1059,7 @@ footer .brand b{font-size:1.2rem}
 </section>
 
 <section class="sheet" id="membership-join" hidden aria-label="Join Nikadi Membership">
-  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Membership</span></span><a class="btn btn-line" href="#membership">Close</a></div></div>
+  <div class="sheet-bar"><div class="wrap"><span class="brand brand-row"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"><span>Membership</span></span><a class="btn btn-line" href="#membership">Close</a></div></div>
   <div class="wrap form-wrap">
     <div class="form-intro">
       <p class="kicker rule">Free to join</p>
@@ -1092,7 +1100,7 @@ footer .brand b{font-size:1.2rem}
 </section>
 
 <section class="sheet" id="room-deluxe-double" hidden aria-label="Deluxe Double room details">
-  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Deluxe Double</span></span><a class="btn btn-line" href="#rooms">Close</a></div></div>
+  <div class="sheet-bar"><div class="wrap"><span class="brand brand-row"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"><span>Deluxe Double</span></span><a class="btn btn-line" href="#rooms">Close</a></div></div>
   <div class="wrap rd">
     <div class="rd-gal" data-gallery>
       <div class="rd-main">
@@ -1193,7 +1201,7 @@ footer .brand b{font-size:1.2rem}
 </section>
 
 <section class="sheet" id="room-deluxe-twin" hidden aria-label="Deluxe Twin room details">
-  <div class="sheet-bar"><div class="wrap"><span class="brand"><b>NIKADI</b><span>Deluxe Twin</span></span><a class="btn btn-line" href="#rooms">Close</a></div></div>
+  <div class="sheet-bar"><div class="wrap"><span class="brand brand-row"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"><span>Deluxe Twin</span></span><a class="btn btn-line" href="#rooms">Close</a></div></div>
   <div class="wrap rd">
     <div class="rd-gal" data-gallery>
       <div class="rd-main">
