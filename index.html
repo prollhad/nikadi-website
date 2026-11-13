@@ -343,6 +343,42 @@ footer .brand b{font-size:1.2rem}
 .mem-eg{font-size:.92rem;color:var(--muted);border-left:2px solid var(--gold);padding-left:14px}
 .mem-eg strong{color:var(--ink)}
 .mem-acts{display:flex;flex-wrap:wrap;gap:12px}
+.tiers{display:grid;gap:8px;list-style:none;padding:0;margin:0}
+.tiers li{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;border:1px solid var(--line);background:var(--bg);padding:12px 16px;border-radius:12px}
+.tiers b{font-weight:500}
+.tiers small{display:block;font-size:.8rem;color:var(--muted)}
+.t-perk{text-align:right}
+.t-perk b{color:var(--gold-hi)}
+.t-dot{width:16px;height:16px;border-radius:50%}
+.t-silver .t-dot{background:linear-gradient(135deg,#f4f5f7,#a3a9b2)}
+.t-gold .t-dot{background:linear-gradient(135deg,#f7e3a8,#b8904a)}
+.t-platinum .t-dot{background:linear-gradient(135deg,#eef2f6,#6f7d90)}
+.t-plus .t-dot{background:#0f0f12;box-shadow:0 0 0 2px #c9a35a}
+.t-plus{border-color:rgba(201,163,90,.5)!important;background:linear-gradient(90deg,rgba(201,163,90,.1),var(--bg))!important}
+.mrate{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;text-decoration:none;color:var(--ink);font-size:.86rem;border:1px dashed rgba(201,163,90,.55);border-radius:10px;padding:9px 12px;margin-top:-4px}
+.mrate:hover{border-style:solid;background:rgba(201,163,90,.07)}
+.mrate-tag{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);border-radius:999px;padding:3px 8px}
+.hero-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.pill-link{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gold);border-radius:999px;padding:9px 16px;color:var(--ink);text-decoration:none;font-size:.86rem;background:rgba(20,17,15,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.pill-link b{color:var(--gold-hi);font-weight:500}
+.pill-link.ghost{border-color:rgba(255,255,255,.25)}
+.pill-link:hover{background:rgba(201,163,90,.15)}
+/* membership pop-up */
+.joinpop{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(10,8,7,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:jpfade .25s ease}
+.joinpop[hidden]{display:none}
+@keyframes jpfade{from{opacity:0}to{opacity:1}}
+@keyframes jpup{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.jp-card{position:relative;width:min(440px,100%);border:1px solid rgba(201,163,90,.5);border-radius:18px;background:linear-gradient(160deg,#241d17,#14110f 70%);box-shadow:0 30px 70px -20px rgba(0,0,0,.9);padding:30px 26px 22px;display:grid;gap:14px;animation:jpup .3s ease}
+.jp-x{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(20,17,15,.8);color:var(--ink);font-size:1.3rem;line-height:1;cursor:pointer;display:grid;place-items:center}
+.jp-x:hover{border-color:var(--gold);color:var(--gold-hi)}
+.jp-card h3{font-size:clamp(1.8rem,6vw,2.3rem);line-height:1.1;padding-right:30px}
+.jp-card h3 em{color:var(--gold-hi);font-style:normal}
+.jp-card ul{list-style:none;padding:0;margin:0;display:grid;gap:8px;font-size:.93rem;color:var(--muted)}
+.jp-card li{display:flex;gap:10px;align-items:baseline}
+.jp-card li::before{content:"";flex:none;width:6px;height:6px;background:var(--gold);transform:rotate(45deg) translateY(-2px)}
+.jp-acts{display:grid;gap:10px;margin-top:4px}
+.jp-later{background:none;border:0;color:var(--muted);font:inherit;font-size:.82rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;justify-self:center}
+@media (max-width:600px){.joinpop{place-items:end center;padding:0}.jp-card{border-radius:20px 20px 0 0;width:100%;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}@keyframes jpup{from{transform:translateY(100%)}to{transform:none}}}
 .mem-side{display:grid;gap:22px;justify-items:center;min-width:0}
 .mcard{width:100%;max-width:400px;aspect-ratio:1.586;border-radius:14px;padding:22px 24px;display:grid;grid-template-rows:auto 1fr auto;color:#1a1206;
   background:linear-gradient(135deg,#e6c98b 0%,#c9a35a 38%,#a9823e 62%,#dcbc7a 100%);box-shadow:0 24px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.4);position:relative;overflow:hidden;transform:rotate(-3deg)}
@@ -436,6 +472,7 @@ footer .brand b{font-size:1.2rem}
     <p class="kicker rule">Sri Dham Mayapur</p>
     <h1 style="margin-top:18px">Wake up <em>steps from the Mayapur&nbsp;temple</em></h1>
     <p class="lede">Air-conditioned deluxe rooms directly opposite ISKCON Gate No. 4, an 8 minute walk from the Main Temple and Govinda's. Book direct on WhatsApp for the best rate.</p>
+    <div class="hero-links"><a class="pill-link" href="app/?join=1"><b>Members save up to 20%</b> · Join free</a><a class="pill-link ghost" href="app/">Member login</a></div>
 
     <form class="book" id="bookForm" autocomplete="off">
       <div class="f"><label for="ci">Check-in</label><input type="date" id="ci" required></div>
@@ -501,6 +538,7 @@ footer .brand b{font-size:1.2rem}
         <p>A spacious room with a king-size bed, sofa corner, work desk and a private bathroom with rain shower.</p>
         <ul class="specs"><li>King bed</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
         <div class="price"><span class="from">Per night</span><b>₹5,000</b><span class="n">Offer rates from ₹3,500 on select dates</span></div>
+        <a class="mrate" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>₹4,750 to ₹4,000 a night · save 5–20%</span></a>
         <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-double">View room</a><a class="btn btn-line" href="#home" data-room="0">Book this room</a></div>
       </div>
     </article>
@@ -514,6 +552,7 @@ footer .brand b{font-size:1.2rem}
         <p>Two separate beds, a sofa corner and a private bathroom with rain shower. Well suited to friends, family or devotees travelling together.</p>
         <ul class="specs"><li>2 single beds</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
         <div class="price"><span class="from">Per night</span><b>₹4,500</b><span class="n">Offer rates from ₹3,000 on select dates</span></div>
+        <a class="mrate" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>₹4,275 to ₹3,600 a night · save 5–20%</span></a>
         <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-twin">View room</a><a class="btn btn-line" href="#home" data-room="1">Book this room</a></div>
       </div>
     </article>
@@ -593,23 +632,29 @@ footer .brand b{font-size:1.2rem}
     <div class="mem-grid">
       <div class="mem-copy">
         <p class="kicker rule">Nikadi Membership</p>
-        <h2>Stay with us, earn your next night free</h2>
-        <p class="mem-lede">Join free and collect points every time you stay. Use them for discounts on your rooms or a free night on your next visit to Sri Dham Mayapur.</p>
+        <h2>Stay more. Rise higher.</h2>
+        <p class="mem-lede">Join free and enjoy member rates on every booking, points on every stay, and four levels that reward the devotees who come back to Sri Dham Mayapur with us.</p>
+        <ol class="tiers">
+          <li class="t-silver"><span class="t-dot"></span><div><b>Silver</b><small>When you join</small></div><div class="t-perk"><b>5% off</b><small>1 point / ₹100</small></div></li>
+          <li class="t-gold"><span class="t-dot"></span><div><b>Gold</b><small>15 nights in 2 years</small></div><div class="t-perk"><b>10% off</b><small>1.5 points / ₹100</small></div></li>
+          <li class="t-platinum"><span class="t-dot"></span><div><b>Platinum</b><small>40 nights in 2 years</small></div><div class="t-perk"><b>15% off</b><small>2 points / ₹100</small></div></li>
+          <li class="t-plus"><span class="t-dot"></span><div><b>Platinum Plus</b><small>80 nights in total · kept for 10 years</small></div><div class="t-perk"><b>20% off</b><small>4 points / ₹100</small></div></li>
+        </ol>
         <ul class="mem-facts">
           <li><b>100</b><span>Welcome points when you join</span></li>
-          <li><b>1 pt</b><span>For every ₹100 of room tariff</span></li>
           <li><b>₹500</b><span>Off your booking for every 100 points</span></li>
           <li><b>500 pts</b><span>One free night in any room</span></li>
+          <li><b>Your history</b><span>Every stay and booking in the app</span></li>
         </ul>
-        <p class="mem-eg">Example: join and stay 3 nights in a Deluxe Twin. You earn 135 points plus 100 welcome points, which is <strong>₹1,000 off</strong> your next stay.</p>
         <div class="mem-acts">
-          <a class="btn btn-gold" href="app/?join=1">Join free</a>
-          <a class="btn btn-line" href="app/">Member app · check points</a>
+          <a class="btn btn-gold" href="app/?join=1">Join free · 100 points</a>
+          <a class="btn btn-line" href="app/?book=1">Book at member rate</a>
+          <a class="btn btn-line" href="app/">Member login</a>
         </div>
       </div>
       <div class="mem-side">
         <div class="mcard" aria-hidden="true">
-          <div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Member</span></div>
+          <div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Platinum Plus</span></div>
           <div class="mcard-pts"><b>100</b><span>points</span></div>
           <div class="mcard-bot"><span>Your mobile number is your member ID</span><span>Sri Dham Mayapur</span></div>
         </div>
@@ -617,9 +662,12 @@ footer .brand b{font-size:1.2rem}
           <summary>Membership terms</summary>
           <ul>
             <li>Membership is free. Your registered mobile number is your member ID.</li>
-            <li>Points are earned on room tariff paid, and added to your account after check-out.</li>
+            <li>Points are earned on room tariff paid, and added to your account after check-out: 1 point per ₹100 for Silver, 1.5 for Gold, 2 for Platinum and 4 for Platinum Plus.</li>
+            <li>Member rates (5%, 10%, 15% or 20% off, by level) apply to bookings made through the Nikadi member app or the front desk.</li>
+            <li>Gold and Platinum count nights stayed in the last 2 years. Platinum Plus is reached at 80 nights in total and is then kept for 10 years.</li>
             <li>Points are not earned on fines, damages or other extra charges.</li>
             <li>To redeem, tell us when you book. 100 points = ₹500 off; 500 points = 1 free night in any room.</li>
+            <li>Nikadi Guest House has one location, in Sri Dham Mayapur. Points and benefits are used here.</li>
             <li>Free nights are subject to availability.</li>
             <li>Points cannot be exchanged for cash or transferred to another person.</li>
             <li>Nikadi Guest House may update the membership terms from time to time.</li>
@@ -1067,6 +1115,7 @@ footer .brand b{font-size:1.2rem}
 
       <div class="rd-book">
         <div class="price"><span class="from">Per night</span><b>₹5,000</b><span class="n">Offer rates from ₹3,500 on select dates</span></div>
+        <a class="mrate" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>₹4,750 to ₹4,000 a night · save 5–20%</span></a>
         <div class="rd-btns">
           <a class="btn btn-gold" href="#home" data-room="0">Book this room</a>
           <a class="btn btn-line" href="#advance-booking">Fill booking form</a>
@@ -1161,6 +1210,7 @@ footer .brand b{font-size:1.2rem}
 
       <div class="rd-book">
         <div class="price"><span class="from">Per night</span><b>₹4,500</b><span class="n">Offer rates from ₹3,000 on select dates</span></div>
+        <a class="mrate" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>₹4,275 to ₹3,600 a night · save 5–20%</span></a>
         <div class="rd-btns">
           <a class="btn btn-gold" href="#home" data-room="1">Book this room</a>
           <a class="btn btn-line" href="#advance-booking">Fill booking form</a>
@@ -1458,6 +1508,45 @@ var WA = "917501101137";
   function stop(){clearInterval(timer);timer=null;}
   document.addEventListener('visibilitychange',function(){document.hidden?stop():start();});
   L[0].style.transformOrigin=O[0]; preload(1); start();
+})();
+</script>
+<div class="joinpop" id="joinpop" hidden role="dialog" aria-modal="true" aria-labelledby="jpTitle">
+  <div class="jp-card">
+    <button class="jp-x" type="button" id="jpClose" aria-label="Close">&times;</button>
+    <p class="kicker">Nikadi Membership · free</p>
+    <h3 id="jpTitle">Join today and get <em>100 points</em></h3>
+    <ul>
+      <li>Member rates on every booking, from 5% up to 20% off</li>
+      <li>Earn up to 4 points for every ₹100, and turn 500 points into a free night</li>
+      <li>See all your stays and bookings in one place</li>
+    </ul>
+    <div class="jp-acts"><a class="btn btn-gold" href="app/?join=1" id="jpJoin">Join free</a><a class="btn btn-line" href="app/">I'm a member · log in</a></div>
+    <button class="jp-later" type="button" id="jpLater">Maybe later</button>
+  </div>
+</div>
+<script>
+/* ---- Membership pop-up: once, after the visitor starts scrolling ---- */
+(function(){
+  var pop=document.getElementById('joinpop');if(!pop)return;
+  var KEY='nk_joinpop_until';
+  function get(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function set(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  if(get('nk_token'))return;                       // already logged in to the member app
+  var until=+get(KEY)||0;if(until>Date.now())return;
+  var shown=false,lastFocus=null;
+  function open(){
+    if(shown||document.querySelector('.sheet:not([hidden])'))return;
+    shown=true;lastFocus=document.activeElement;pop.hidden=false;document.getElementById('jpClose').focus();
+    window.removeEventListener('scroll',onScroll);
+  }
+  function close(days){pop.hidden=true;set(KEY,String(Date.now()+(days||3)*864e5));if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+  function onScroll(){if(window.scrollY>Math.min(700,window.innerHeight*0.8))setTimeout(open,400);}
+  window.addEventListener('scroll',onScroll,{passive:true});
+  document.getElementById('jpClose').onclick=function(){close(3);};
+  document.getElementById('jpLater').onclick=function(){close(3);};
+  document.getElementById('jpJoin').addEventListener('click',function(){set(KEY,String(Date.now()+30*864e5));});
+  pop.addEventListener('click',function(e){if(e.target===pop)close(3);});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!pop.hidden)close(3);});
 })();
 </script>
 <script>
