@@ -1,5 +1,5 @@
 /* Nikadi member app — offline shell. Bump VERSION whenever app files change. */
-var VERSION = "nikadi-app-v5";
+var VERSION = "nikadi-app-v6";
 var SHELL = ["./", "index.html", "app.css", "core.js", "demo.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", function (e) {

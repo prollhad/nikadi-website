@@ -25,8 +25,9 @@
     <button class="iconbtn" id="topBtn" type="button" hidden></button>
   </header>
   <main class="pad" id="view" aria-live="polite"></main>
-  <nav class="tabs t4" id="tabs" role="tablist" hidden>
+  <nav class="tabs t5" id="tabs" role="tablist" hidden>
     <button class="tab" role="tab" data-tab="card" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>Card</button>
+    <button class="tab" role="tab" data-tab="benefits" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/></svg>Benefits</button>
     <button class="tab" role="tab" data-tab="book" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M12 13v5M9.5 15.5h5"/></svg>Book</button>
     <button class="tab" role="tab" data-tab="stays" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 18v-6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v6M3 14h18M6 9V6h4v3"/></svg>Stays</button>
     <button class="tab" role="tab" data-tab="rewards" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-3-6-1s4 1 6 1c2 0 6 1 6-1s-4-3-6 1z"/></svg>Rewards</button>
@@ -38,7 +39,11 @@
 <script>
 (function(){
   var view=document.getElementById('view'),tabs=document.getElementById('tabs'),topBtn=document.getElementById('topBtn');
-  var TIERS=[{key:'silver',name:'Silver',nights:0,discount:5,earn:1},{key:'gold',name:'Gold',nights:15,discount:10,earn:1.5},{key:'platinum',name:'Platinum',nights:40,discount:15,earn:2},{key:'plus',name:'Platinum Plus',nights:80,discount:20,earn:4}];
+  var TIERS=[
+    {key:'silver',name:'Silver',nights:0,discount:5,earn:1,birthday:50,perks:[{id:'rate',text:'5% member rate on every booking'},{id:'points',text:'1 point for every ₹100 of room tariff'},{id:'welcome',text:'100 welcome points when you join'},{id:'offers',text:'Member-only offers on WhatsApp'},{id:'birthday',text:'50 bonus points in your birthday month'}]},
+    {key:'gold',name:'Gold',nights:15,discount:10,earn:1.5,birthday:100,perks:[{id:'rate',text:'10% member rate on every booking'},{id:'points',text:'1.5 points for every ₹100 of room tariff'},{id:'earlyci',text:'Early check-in from 9 AM, when available',onsite:true},{id:'birthday',text:'100 bonus points in your birthday month'}]},
+    {key:'platinum',name:'Platinum',nights:40,discount:15,earn:2,birthday:100,perks:[{id:'rate',text:'15% member rate on every booking'},{id:'points',text:'2 points for every ₹100 of room tariff'},{id:'latecheckout',text:'Free late check-out till 11 AM (usually ₹1,500)',onsite:true},{id:'upgrade',text:'Free room upgrade, when available',onsite:true},{id:'dental',text:'Free dental kit every stay',onsite:true}]},
+    {key:'plus',name:'Platinum Plus',nights:80,discount:20,earn:4,birthday:100,perks:[{id:'rate',text:'20% member rate on every booking'},{id:'points',text:'4 points for every ₹100 of room tariff'},{id:'latecheckout',text:'Free late check-out till 12 noon',onsite:true},{id:'mattress',text:'Free extra mattress when needed',onsite:true},{id:'festival',text:'Priority booking for festivals (Gaura Purnima, Kartik)'},{id:'hold',text:'Your level is kept for 10 years'}]}];
   var RATES={'Deluxe Double (King)':5000,'Deluxe Twin':4500,'Large Twin':5000};
   var S={token:nkStore('nk_token'),member:null,history:[],stays:{stays:[],bookings:[]},cfg:{pointsPer100:1,welcome:100,discountPoints:100,discountValue:500,freeNightPoints:500,channel:'email',tiers:TIERS,rates:RATES,plusYears:10,windowYears:2},tab:'card'};
   if(NIKADI.demo)document.getElementById('demoFlag').hidden=false;
@@ -88,10 +93,55 @@
   function animateFill(){setTimeout(function(){document.querySelectorAll('.fill').forEach(function(f){f.style.width=f.dataset.w+'%';});},60);}
   function ladderHTML(cur){
     return '<div class="ladder">'+tiers().map(function(t){
-      return '<div class="rung tier-'+t.key+(cur===t.key?' on':'')+'"><span class="rung-dot"></span><div><b>'+nkEsc(t.name)+(cur===t.key?' <em>· you</em>':'')+'</b><small>'+(t.nights?(t.key==='plus'?t.nights+' nights in total · kept '+S.cfg.plusYears+' years':t.nights+' nights in '+S.cfg.windowYears+' years'):'When you join')+'</small></div>'+
+      return '<div class="rung tier-'+t.key+(cur===t.key?' on':'')+'" role="button" tabindex="0" data-rung="'+t.key+'"><span class="rung-dot"></span><div><b>'+nkEsc(t.name)+(cur===t.key?' <em>· you</em>':'')+'</b><small>'+(t.nights?(t.key==='plus'?t.nights+' nights in total · kept '+S.cfg.plusYears+' years':t.nights+' nights in '+S.cfg.windowYears+' years'):'When you join')+'</small></div>'+
         '<div class="rung-perk"><b>'+t.discount+'% off</b><small>'+earnTxt(t.earn)+' / ₹100</small></div></div>';
     }).join('')+'</div>';
   }
+  /* ---------- benefits ---------- */
+  function perksOf(key){var out=[],idx={},ts=tiers();for(var i=0;i<ts.length;i++){(ts[i].perks||[]).forEach(function(p){var row={id:p.id,text:p.text,onsite:!!p.onsite,from:ts[i].key,fromName:ts[i].name};if(idx.hasOwnProperty(p.id))out[idx[p.id]]=row;else{idx[p.id]=out.length;out.push(row);}});if(ts[i].key===key)break;}return out;}
+  function tierIndex(k){var ts=tiers();for(var i=0;i<ts.length;i++)if(ts[i].key===k)return i;return 0;}
+  var ICON_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var ICON_LOCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  function benefitsHTML(sel,mine){
+    var ts=tiers(),t=tierBy(sel),si=tierIndex(sel),mi=mine?tierIndex(mine):-1,m=S.member;
+    var minePerks=mine?perksOf(mine):[],mineText={};minePerks.forEach(function(p){mineText[p.id]=p.text;});
+    var status;
+    if(!mine)status=t.nights?(t.key==='plus'?'Reach '+t.nights+' nights in total':'Stay '+t.nights+' nights in '+S.cfg.windowYears+' years'):'Yours as soon as you join';
+    else if(si===mi)status='Your level'+(t.key==='plus'&&m.plusUntil?' · kept until '+nkEsc(m.plusUntil):'');
+    else if(si<mi)status='Included in your '+nkEsc(tierBy(mine).name)+' benefits';
+    else{var cur=t.key==='plus'?m.nightsAll:m.nights2y,need=Math.max(0,t.nights-cur);status=need+' more night'+(need===1?'':'s')+' to unlock'+(t.key==='plus'?'':' (in '+S.cfg.windowYears+' years)');}
+    var locked=mine&&si>mi;
+    var list=perksOf(sel).map(function(p){
+      var isNew=p.from===sel&&si>0,better=locked&&mineText[p.id]!==p.text;
+      return '<li class="perk'+(locked?' locked':'')+(isNew?' new':'')+'"><span class="pk-ic">'+(locked&&better?ICON_LOCK:ICON_CHECK)+'</span><span class="pk-t">'+nkEsc(p.text)+
+        (isNew?'<em>New at '+nkEsc(t.name)+'</em>':p.from!==sel?'<small>from '+nkEsc(p.fromName)+'</small>':'')+(locked&&better?'<em class="up">Better than yours</em>':'')+'</span></li>';
+    }).join('');
+    return '<div class="lvl-tabs" role="tablist">'+ts.map(function(x,i){return '<button type="button" role="tab" class="lt tier-'+x.key+'" data-lvl="'+x.key+'" aria-selected="'+(x.key===sel)+'"><span class="lt-dot"></span>'+nkEsc(x.name.replace('Platinum Plus','Plat. Plus'))+(mine&&i===mi?'<i>You</i>':'')+'</button>';}).join('')+'</div>'+
+      '<div class="lvl-head tier-'+t.key+'"><div><p class="kicker">'+nkEsc(t.name)+'</p><h2>'+t.discount+'% off · '+earnTxt(t.earn)+' / ₹100</h2><p class="lvl-status'+(locked?' locked':'')+'">'+(locked?ICON_LOCK:ICON_CHECK)+status+'</p></div></div>'+
+      '<p class="small">'+(si>0?'Everything in '+nkEsc(ts[si-1].name)+' is included. New and better benefits are marked.':'Every member starts here.')+'</p>'+
+      '<ul class="perks-list">'+list+'</ul>';
+  }
+  function compareHTML(mine){
+    var ts=tiers(),ids=[['rate','Member rate'],['points','Points per ₹100'],['earlyci','Early check-in'],['latecheckout','Late check-out'],['upgrade','Room upgrade'],['dental','Dental kit'],['mattress','Extra mattress'],['festival','Festival priority'],['birthday','Birthday points']];
+    var short={rate:function(t){return t.discount+'%';},points:function(t){return String(t.earn);},birthday:function(t){return String(t.birthday||'');}};
+    var per=ts.map(function(t){var o={};perksOf(t.key).forEach(function(p){o[p.id]=p.text;});return o;});
+    return '<div class="cmp-wrap"><table class="cmp"><thead><tr><th></th>'+ts.map(function(t){return '<th class="tier-'+t.key+(mine===t.key?' me':'')+'"><span class="lt-dot"></span>'+nkEsc({silver:'Silver',gold:'Gold',platinum:'Plat.',plus:'Plus'}[t.key]||t.name)+'</th>';}).join('')+'</tr></thead><tbody>'+
+      ids.map(function(r){return '<tr><th>'+r[1]+'</th>'+ts.map(function(t,i){var v=per[i][r[0]];var cell=short[r[0]]?short[r[0]](t):v?(r[0]==='latecheckout'?(/12/.test(v)?'12 noon':'11 AM'):'✓'):'–';return '<td class="'+(mine===t.key?'me':'')+(v?'':' no')+'">'+cell+'</td>';}).join('')+'</tr>';}).join('')+
+      '</tbody></table></div>';
+  }
+  function levelsScreen(sel){
+    tabs.hidden=true;setTop('Back',home);
+    show('<div style="display:grid;gap:8px"><p class="kicker">Nikadi Membership</p><h1 class="title">Levels &amp; benefits</h1><p class="sub">Four levels. The more nights you stay with us, the more you get.</p></div>'+
+      '<div id="lvlBox">'+benefitsHTML(sel||'silver','')+'</div>'+
+      '<div style="display:grid;gap:10px"><p class="kicker">Compare all levels</p>'+compareHTML('')+'</div>'+
+      '<button class="btn btn-gold" type="button" id="lvJoin">Join free · '+S.cfg.welcome+' points</button>');
+    wireLevels('');$('lvJoin').onclick=function(){join();};
+  }
+  function wireLevels(mine){
+    var box=$('lvlBox');if(!box)return;
+    box.onclick=function(e){var b=e.target.closest('[data-lvl]');if(!b)return;box.innerHTML=benefitsHTML(b.dataset.lvl,mine);};
+  }
+
   function phoneField(id,label){return '<label class="field"><span>'+label+'</span><div class="phonewrap"><span class="cc">+91</span><input class="input" id="'+id+'" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" placeholder="10-digit mobile number"></div></label>';}
   function pwField(id,label,auto){return '<label class="field"><span>'+label+'</span><div class="pwwrap"><input class="input" id="'+id+'" type="password" autocomplete="'+(auto||'current-password')+'" maxlength="64"><button type="button" class="pwshow" data-for="'+id+'" aria-label="Show password">Show</button></div></label>';}
   function wirePw(){document.querySelectorAll('.pwshow').forEach(function(b){b.onclick=function(){var i=$(b.dataset.for);var on=i.type==='password';i.type=on?'text':'password';b.textContent=on?'Hide':'Show';};});}
@@ -109,12 +159,14 @@
         '<p class="err" id="lgErr"></p><button class="btn btn-gold" id="lgBtn" type="submit">Log in</button>'+
         '<button class="linkbtn" type="button" id="forgot">Forgot password, or first time logging in?</button></form>'+
       '<div class="join-cta"><div><b>Not a member yet?</b><span>Join free and get '+S.cfg.welcome+' welcome points.</span></div><button class="btn btn-line" type="button" id="goJoin">Join free</button></div>'+
-      '<div style="display:grid;gap:12px"><p class="kicker">Membership levels</p>'+ladderHTML('')+'</div>'+
+      '<div style="display:grid;gap:12px"><div class="sec-row"><p class="kicker">Membership levels</p><button class="linkbtn" type="button" id="seeLevels">See all benefits</button></div>'+ladderHTML('')+'<p class="small">Tap a level to see its benefits.</p></div>'+
       installHTML()+
       '<div class="links"><a class="btn btn-quiet" href="../#home">Website</a><a class="btn btn-quiet" href="'+nkWa('Hare Krishna! I have a question about Nikadi Membership.')+'" target="_blank" rel="noopener">WhatsApp us</a></div>'+
       '<p class="foot">Nikadi Guest House · Opp. ISKCON Gate No. 4, Sri Dham Mayapur</p>'
     );
     $('goJoin').onclick=function(){join();};wireInstall();wirePw();
+    view.querySelectorAll('[data-rung]').forEach(function(r){r.onclick=function(){levelsScreen(r.dataset.rung);};});
+    $('seeLevels').onclick=function(){levelsScreen('silver');};
     $('forgot').onclick=function(){passFlow(nkPhoneOk($('lgPhone').value)||'');};
     $('loginForm').onsubmit=function(e){
       e.preventDefault();var p=nkPhoneOk($('lgPhone').value),pw=$('lgPw').value,err=$('lgErr'),b=$('lgBtn');err.textContent='';
@@ -216,8 +268,20 @@
         '<div class="perks"><div><b>'+t.discount+'%</b><span>off every booking</span></div><div><b>'+(t.earn%1?t.earn.toFixed(1):t.earn)+'</b><span>points per ₹100</span></div><div><b>'+m.nights2y+'</b><span>nights in '+S.cfg.windowYears+' years</span></div></div>'+
         (upcoming.length?'<div style="display:grid;gap:10px"><p class="kicker">Your next stay</p>'+bookingHTML(upcoming.slice().sort(function(x,y){return x.checkin<y.checkin?-1:1;})[0])+'</div>':'')+
         '<div class="links"><button class="btn btn-gold" type="button" id="bookNow">Book at your member rate</button><a class="btn btn-line" href="'+nkWa('Hare Krishna! I am a Nikadi '+(m.tier||'')+' member ('+m.masked+').')+'" target="_blank" rel="noopener">WhatsApp us</a></div>'+
-        '<div style="display:grid;gap:12px"><p class="kicker">Levels</p>'+ladderHTML(m.tierKey)+'</div>'+installHTML());
+        '<div style="display:grid;gap:10px"><div class="sec-row"><p class="kicker">Your '+nkEsc(m.tier)+' benefits</p><button class="linkbtn" type="button" id="allBen">All levels</button></div>'+
+          '<ul class="perks-list compact">'+perksOf(m.tierKey).slice(0,6).map(function(p){return '<li class="perk"><span class="pk-ic">'+ICON_CHECK+'</span><span class="pk-t">'+nkEsc(p.text)+'</span></li>';}).join('')+'</ul>'+
+          '<button class="btn btn-line" type="button" id="benMore">See all your benefits</button></div>'+
+        '<div style="display:grid;gap:12px"><p class="kicker">Levels</p>'+ladderHTML(m.tierKey)+'<p class="small">Tap a level to see what it includes.</p></div>'+installHTML());
       animateFill();wireInstall();$('bookNow').onclick=function(){dash('book');};
+      $('allBen').onclick=$('benMore').onclick=function(){S.lvl=m.tierKey;dash('benefits');};
+      view.querySelectorAll('[data-rung]').forEach(function(r){r.onclick=function(){S.lvl=r.dataset.rung;dash('benefits');};});
+    } else if(S.tab==='benefits'){
+      var sel=S.lvl||m.tierKey;S.lvl=null;
+      show('<div style="display:grid;gap:6px"><p class="kicker">Your level: '+nkEsc(m.tier)+'</p><h1 class="title">Benefits</h1><p class="sub">Tap any level to see what it includes and what you would unlock next.</p></div>'+
+        '<div id="lvlBox">'+benefitsHTML(sel,m.tierKey)+'</div>'+
+        '<div class="note"><b>Using your benefits</b>Show your member card at reception, or mention it when you book. Benefits marked “when available” depend on the day\'s rooms.</div>'+
+        '<div style="display:grid;gap:10px"><p class="kicker">Compare all levels</p>'+compareHTML(m.tierKey)+'</div>');
+      wireLevels(m.tierKey);
     } else if(S.tab==='book'){
       var t0=today(),types=Object.keys(S.cfg.rates||RATES);
       show('<div style="display:grid;gap:6px"><p class="kicker">'+nkEsc(m.tier)+' member rate · '+t.discount+'% off</p><h1 class="title">Book your stay</h1></div>'+

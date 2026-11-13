@@ -11,6 +11,7 @@
    It never touches a sheet or the browser directly: it only uses the small `db` object it is given. */
 
 var DESK_TZ_MIN = 330; // India Standard Time, UTC+5:30 (no daylight saving)
+var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
 var DESK_POLICY = {
   advancePct: 50,      // advance needed to confirm a booking
   freeCancelDays: 3,   // cancel at least this many days before check-in = full refund of the advance
@@ -168,6 +169,12 @@ function deskCore(db, hooks) {
     db.add('stocklog', { at: stamp(), item: it.item, change: change, left: left, reason: reason, room: roomNo || '', by: by });
   }
 
+  /* every room gets free water at check-in: take it out of stock (no charge) */
+  function freeWater(roomNo, by) {
+    var it = find('items', 'item', 'Water bottle');
+    if (it && yes(it.track) && DESK_FREE_WATER > 0) moveStock(it, -DESK_FREE_WATER, 'Free at check-in (' + DESK_FREE_WATER + ' per room)', roomNo, by);
+  }
+
   /* ---- bills ---- */
   function chargesOf(sid) { return db.all('charges').filter(function (c) { return c.stay === sid && !c.removed; }); }
   function paymentsOf(sid) { return db.all('payments').filter(function (p) { return p.stay === sid && !p.voided; }); }
@@ -178,6 +185,7 @@ function deskCore(db, hooks) {
     db.set('stays', s, { roomTotal: roomTotal, extras: extras, paid: paid, balance: roomTotal + extras - paid });
   }
 
+  function memberOf(phone) { if (!hooks.memberInfo || !phone) return null; try { return hooks.memberInfo(String(phone)); } catch (e) { return null; } }
   function stayView(s, me) {
     var mgr = isMgr(me);
     var v = { id: s.id, room: s.room, guest: s.guest, guests: s.guests, checkin: s.checkin, checkout: s.checkout, nights: s.nights, status: s.status,
@@ -187,6 +195,8 @@ function deskCore(db, hooks) {
       if (mgr) { o.price = c.price; o.total = c.total; }
       return o;
     }).reverse();
+    var mem = s.status === 'In house' ? memberOf(s.phone) : null;
+    if (mem) v.member = { name: mem.name, tier: mem.tier, tierKey: mem.tierKey, discount: mem.discount, onsite: mem.onsite };
     if (mgr) {
       v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes;
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
@@ -274,6 +284,15 @@ function deskCore(db, hooks) {
     return out;
   };
 
+  /* Is this phone number a Nikadi member? (shows the level, member rates and perks at check-in) */
+  api.member = function (req) {
+    auth(req);
+    var ph = String(req.phone || '').replace(/\D/g, '');
+    if (ph.length === 12 && ph.indexOf('91') === 0) ph = ph.slice(2);
+    if (!/^[6-9]\d{9}$/.test(ph)) return { member: null };
+    return { member: memberOf(ph) };
+  };
+
   api.stay = function (req) {
     var me = auth(req);
     return { stay: stayView(stay(req.id), me) };
@@ -300,6 +319,7 @@ function deskCore(db, hooks) {
     }
     recompute(s);
     db.set('rooms', r, { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
+    freeWater(r.room, me.name);
     return { stay: stayView(s, me) };
   };
 
@@ -690,6 +710,7 @@ function deskCore(db, hooks) {
       if (share > 0) db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: n, amount: share, method: FROM_ADV, note: 'Advance from booking ' + b.id, by: me.name, booking: b.id, ref: '' });
       recompute(s);
       db.set('rooms', room(n), { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
+      freeWater(n, me.name);
       made.push(s.id);
     });
     db.set('bookings', b, { status: 'Checked in', closedBy: me.name, closedAt: stamp(), closeNote: 'Checked in to room ' + rooms.join(', ') });
@@ -713,6 +734,56 @@ function deskCore(db, hooks) {
     db.add('payments', { id: id('P'), at: stamp(), stay: '', room: b.rooms, amount: -amt, method: req.method, note: 'Refund: ' + text(req.reason, 120), by: who(me, req), booking: b.id, ref: ref, voided: '' });
     recomputeBooking(b);
     return { booking: bookingView(b, me) };
+  };
+
+  /* ================= Sales report (Owner only) ================= */
+  /* Sales = room + extras of stays, counted in the month the guest checked out.
+     Collected = money received (net of refunds), counted on the day it was received. */
+  api.report = function (req) {
+    var me = auth(req); needOwner(me);
+    var year = String(req.year || today().slice(0, 4)).replace(/\D/g, '').slice(0, 4);
+    var nRooms = db.all('rooms').length || 11, years = {};
+    function blank(m) { return { month: m, rooms: 0, extras: 0, sales: 0, nights: 0, stays: 0, guests: 0, collected: 0, refunds: 0, byMethod: {}, occupancy: 0, adr: 0 }; }
+    var months = []; for (var i = 1; i <= 12; i++) months.push(blank(i));
+    var items = {};
+    db.all('stays').forEach(function (st) {
+      if (st.status !== 'Checked out' || !st.checkout) return;
+      var y = String(st.checkout).slice(0, 4); years[y] = 1;
+      if (y !== year) return;
+      var mo = months[Number(String(st.checkout).slice(5, 7)) - 1];
+      mo.rooms += Number(st.roomTotal || 0); mo.extras += Number(st.extras || 0); mo.nights += Number(st.nights || 0); mo.stays++; mo.guests += Number(st.guests || 0);
+    });
+    db.all('charges').forEach(function (c) {
+      if (c.removed || String(c.at).slice(0, 4) !== year) return;
+      var k = c.item; items[k] = items[k] || { item: k, qty: 0, free: 0, amount: 0 };
+      if (c.free === 'Yes') items[k].free += Number(c.qty || 0); else { items[k].qty += Number(c.qty || 0); items[k].amount += Number(c.total || 0); }
+    });
+    db.all('payments').forEach(function (p) {
+      if (p.voided || p.method === FROM_ADV || !p.at) return;
+      var y = String(p.at).slice(0, 4); years[y] = 1;
+      if (y !== year) return;
+      var mo = months[Number(String(p.at).slice(5, 7)) - 1], a = Number(p.amount || 0);
+      if (a >= 0) mo.collected += a; else mo.refunds += -a;
+      mo.byMethod[p.method] = (mo.byMethod[p.method] || 0) + a;
+    });
+    var tot = blank(0); tot.byMethod = {};
+    months.forEach(function (mo) {
+      mo.sales = mo.rooms + mo.extras;
+      var dim = new Date(Date.UTC(Number(year), mo.month, 0)).getUTCDate();
+      mo.occupancy = Math.round(mo.nights / (nRooms * dim) * 1000) / 10;
+      mo.adr = mo.nights ? Math.round(mo.rooms / mo.nights) : 0;
+      ['rooms', 'extras', 'sales', 'nights', 'stays', 'guests', 'collected', 'refunds'].forEach(function (k) { tot[k] += mo[k]; });
+      Object.keys(mo.byMethod).forEach(function (k) { tot.byMethod[k] = (tot.byMethod[k] || 0) + mo.byMethod[k]; });
+    });
+    var leap = Number(year) % 4 === 0 && (Number(year) % 100 !== 0 || Number(year) % 400 === 0);
+    tot.occupancy = Math.round(tot.nights / (nRooms * (leap ? 366 : 365)) * 1000) / 10;
+    tot.adr = tot.nights ? Math.round(tot.rooms / tot.nights) : 0;
+    years[today().slice(0, 4)] = 1;
+    var bk = db.all('bookings').filter(function (b) { return String(b.created).slice(0, 4) === year; });
+    return { year: year, years: Object.keys(years).sort().reverse(), months: months, total: tot, rooms: nRooms,
+      items: Object.keys(items).map(function (k) { return items[k]; }).sort(function (a, b) { return b.amount - a.amount; }),
+      bookings: { made: bk.length, cancelled: bk.filter(function (b) { return b.status === 'Cancelled'; }).length, noShow: bk.filter(function (b) { return b.status === 'No-show'; }).length },
+      partial: today().slice(0, 4) === year };
   };
 
   /* ================= Approvals ================= */
@@ -821,7 +892,8 @@ function deskHandle_(req) {
   name = name.charAt(0).toLowerCase() + name.slice(1);
   var clean = {};
   Object.keys(req).forEach(function (k) { if (k.charAt(0) !== '_') clean[k] = req[k]; }); // private flags only from inside the script
-  var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null });
+  var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null,
+    memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null });
   if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
   return api[name](clean);
 }

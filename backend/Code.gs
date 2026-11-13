@@ -23,12 +23,46 @@ var SHEET_NAMES = { members: 'Members', tx: 'Transactions', otps: 'Otps', sessio
 
 /* Membership levels. Gold and Platinum count nights in the last 2 years (they renew).
    Platinum Plus: 80 nights in total; once reached it is kept for 10 years. */
+/* Benefits: each level lists what it ADDS or IMPROVES (same id = replaces the lower level's line).
+   onsite = staff must honour it during the stay (shown in the staff app). */
 var TIERS = [
-  { key: 'silver', name: 'Silver', nights: 0, discount: 5, earn: 1 },
-  { key: 'gold', name: 'Gold', nights: 15, discount: 10, earn: 1.5 },
-  { key: 'platinum', name: 'Platinum', nights: 40, discount: 15, earn: 2 },
-  { key: 'plus', name: 'Platinum Plus', nights: 80, discount: 20, earn: 4 }
+  { key: 'silver', name: 'Silver', nights: 0, discount: 5, earn: 1, birthday: 50, perks: [
+    { id: 'rate', text: '5% member rate on every booking' },
+    { id: 'points', text: '1 point for every ₹100 of room tariff' },
+    { id: 'welcome', text: '100 welcome points when you join' },
+    { id: 'offers', text: 'Member-only offers on WhatsApp' },
+    { id: 'birthday', text: '50 bonus points in your birthday month' }] },
+  { key: 'gold', name: 'Gold', nights: 15, discount: 10, earn: 1.5, birthday: 100, perks: [
+    { id: 'rate', text: '10% member rate on every booking' },
+    { id: 'points', text: '1.5 points for every ₹100 of room tariff' },
+    { id: 'earlyci', text: 'Early check-in from 9 AM, when available', onsite: true },
+    { id: 'birthday', text: '100 bonus points in your birthday month' }] },
+  { key: 'platinum', name: 'Platinum', nights: 40, discount: 15, earn: 2, birthday: 100, perks: [
+    { id: 'rate', text: '15% member rate on every booking' },
+    { id: 'points', text: '2 points for every ₹100 of room tariff' },
+    { id: 'latecheckout', text: 'Free late check-out till 11 AM (usually ₹1,500)', onsite: true },
+    { id: 'upgrade', text: 'Free room upgrade, when available', onsite: true },
+    { id: 'dental', text: 'Free dental kit every stay', onsite: true }] },
+  { key: 'plus', name: 'Platinum Plus', nights: 80, discount: 20, earn: 4, birthday: 100, perks: [
+    { id: 'rate', text: '20% member rate on every booking' },
+    { id: 'points', text: '4 points for every ₹100 of room tariff' },
+    { id: 'latecheckout', text: 'Free late check-out till 12 noon', onsite: true },
+    { id: 'mattress', text: 'Free extra mattress when needed', onsite: true },
+    { id: 'festival', text: 'Priority booking for festivals (Gaura Purnima, Kartik)' },
+    { id: 'hold', text: 'Your level is kept for 10 years' }] }
 ];
+/** All benefits a level has, including what it inherits from the levels below. */
+function tierPerks_(tier) {
+  var out = [], idx = {};
+  for (var i = 0; i < TIERS.length; i++) {
+    TIERS[i].perks.forEach(function (p) {
+      var row = { id: p.id, text: p.text, onsite: !!p.onsite, from: TIERS[i].key };
+      if (idx.hasOwnProperty(p.id)) out[idx[p.id]] = row; else { idx[p.id] = out.length; out.push(row); }
+    });
+    if (TIERS[i].key === tier.key) break;
+  }
+  return out;
+}
 var TIER_WINDOW_DAYS = 730;   // Gold / Platinum: nights in the last 2 years
 var PLUS_HOLD_YEARS = 10;     // Platinum Plus is kept this long once reached
 var BASE_RATES = { 'Deluxe Double (King)': 5000, 'Deluxe Twin': 4500, 'Large Twin': 5000 };
@@ -171,7 +205,7 @@ function publicMember_(m) {
   var s = settings_();
   var t = tierOf_(m);
   return {
-    tier: t.tier.name, tierKey: t.tier.key, discount: t.tier.discount, earn: t.tier.earn, nights2y: t.nights2y, nightsAll: t.nightsAll,
+    tier: t.tier.name, tierKey: t.tier.key, discount: t.tier.discount, earn: t.tier.earn, nights2y: t.nights2y, nightsAll: t.nightsAll, perks: tierPerks_(t.tier),
     plusUntil: t.plusUntil ? Utilities.formatDate(t.plusUntil, 'Asia/Kolkata', 'd MMM yyyy') : '',
     next: t.next ? { name: t.next.name, need: t.need, nights: t.next.nights } : null, hasPassword: !!m.pass,
     phone: m.phone, masked: maskPhone_(m.phone), name: m.name, firstName: firstName_(m.name), email: m.email, city: m.city,
@@ -252,6 +286,7 @@ function memberStayPoints_(st) {
   var phone; try { phone = normPhone_(st.phone); } catch (e) { return null; }
   var m = findMember_(phone);
   if (!m || m.status === 'Blocked' || !(st.roomTotal > 0)) return null;
+  birthdayBonus_(m);
   var t = tierOf_(m, st.id); // the level held before this stay decides the earning rate
   var pts = Math.floor(st.roomTotal / 100 * num_(settings_().POINTS_PER_100, 1) * t.tier.earn);
   addTx_(m, 'Stay', st.roomTotal, pts, 'Room ' + st.room + ' · ' + st.nights + (st.nights > 1 ? ' nights' : ' night') + ' · ' + st.checkin + ' to ' + st.checkout + ' · ' + t.tier.name + ' ×' + t.tier.earn, 'Staff app');
@@ -259,6 +294,34 @@ function memberStayPoints_(st) {
   notify_(m, 'Thank you for staying with us! ' + pts + ' points added for your stay in room ' + st.room + '. Your balance: ' + m.points + ' points. Level: ' + after.tier.name +
     (after.tier.key !== t.tier.key ? ' (congratulations, you moved up!)' : '') + '.');
   return { name: m.name, points: pts, balance: m.points, tier: after.tier.name };
+}
+
+/** Birthday bonus: once a year, in the member's birthday month, the next time they use the app or check out. */
+function birthdayBonus_(m) {
+  try {
+    if (!m || !m.dob || m.status === 'Blocked') return;
+    var dob = m.dob instanceof Date ? Utilities.formatDate(m.dob, 'Asia/Kolkata', 'yyyy-MM-dd') : String(m.dob);
+    var mm = dob.slice(5, 7), now = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM');
+    if (!/^\d{2}$/.test(mm) || now.slice(5, 7) !== mm) return;
+    var year = now.slice(0, 4), sh = sheet_('tx'), n = sh.getLastRow();
+    if (n > 1) {
+      var rows = sh.getRange(2, 1, n - 1, 8).getValues();
+      for (var i = 0; i < rows.length; i++) if (String(rows[i][1]).replace(/^'/, '') === m.phone && rows[i][3] === 'Birthday' && String(rows[i][7]).indexOf(year) >= 0) return;
+    }
+    var t = tierOf_(m);
+    addTx_(m, 'Birthday', '', t.tier.birthday, 'Birthday bonus ' + year + ' · ' + t.tier.name, 'Automatic');
+    notify_(m, 'Happy birthday from Nikadi Guest House! ' + t.tier.birthday + ' bonus points have been added. Your balance: ' + m.points + ' points.');
+  } catch (e) {}
+}
+
+/** For the staff app: is this phone a member, at what level, and which perks must staff honour? */
+function memberDesk_(phone) {
+  var m = findMember_(phone);
+  if (!m || m.status === 'Blocked') return null;
+  var t = tierOf_(m);
+  return { name: m.name, tier: t.tier.name, tierKey: t.tier.key, discount: t.tier.discount, points: m.points,
+    onsite: tierPerks_(t.tier).filter(function (p) { return p.onsite; }).map(function (p) { return p.text; }),
+    rates: Object.keys(BASE_RATES).reduce(function (o, k) { o[k] = Math.round(BASE_RATES[k] * (100 - t.tier.discount) / 100); return o; }, {}) };
 }
 
 /* ---------------- Passwords ---------------- */
@@ -453,6 +516,7 @@ function apiLogin_(req) {
   if (!m.pass) throw new Error('no_password');
   if (!pwCheck_(m, req.password)) { cache.put(k, String(fails + 1), 900); throw new Error('wrong_password'); }
   cache.remove(k);
+  birthdayBonus_(m);
   return { token: sessionCreate_(phone, 'member', 60), member: publicMember_(m), history: history_(phone, 50), stays: memberStays_(phone) };
 }
 
@@ -537,6 +601,7 @@ function apiMe_(req) {
   var phone = sessionGet_(req.token, 'member');
   var m = findMember_(phone);
   if (!m) throw new Error('not_member');
+  birthdayBonus_(m);
   return { member: publicMember_(m), history: history_(phone, 50), stays: memberStays_(phone) };
 }
 

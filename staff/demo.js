@@ -2,7 +2,7 @@
    Runs the real staff logic (logic.js) on sample data kept only on this phone.
    Demo PINs: 1111 Owner · 2222 Reception (Manager) · 3333 Housekeeping (Staff) */
 (function (root) {
-  var KEY = 'nikadi-staff-demo-v3';
+  var KEY = 'nikadi-staff-demo-v5';
 
   function memoryDb(data) {
     return {
@@ -15,6 +15,7 @@
     };
   }
 
+  function ist0() { return new Date(Date.now() + DESK_TZ_MIN * 60000); }
   function ymd(offset) {
     var d = new Date(Date.now() + DESK_TZ_MIN * 60000 + (offset || 0) * 864e5);
     return d.toISOString().slice(0, 10);
@@ -73,6 +74,25 @@
     api.pay({ token: rc, id: r3.id, amount: 6000, method: 'UPI', ref: 'UPI 220011998877', note: 'Balance' });
     api.refund({ token: rc, id: r3.id, amount: 770, method: 'Cash', reason: 'Guest overpaid by UPI, returning the extra in cash' });
     void w1;
+    // a year of past stays and payments, so the owner's Sales report has something to show
+    (function () {
+      var now = ist0(), y = now.getUTCFullYear(), mNow = now.getUTCMonth(), seedN = 7;
+      function rnd() { seedN = (seedN * 9301 + 49297) % 233280; return seedN / 233280; }
+      var methods = ['Cash', 'UPI', 'UPI', 'Bank transfer', 'Card'];
+      for (var yy = y - 1; yy <= y; yy++) for (var mo = 0; mo < 12; mo++) {
+        if (yy === y && mo >= mNow) break;
+        var festival = mo === 2 || mo === 9 || mo === 10, count = Math.round((festival ? 26 : 12) + rnd() * 10) - (yy < y ? 3 : 0);
+        for (var k = 0; k < count; k++) {
+          var day = 1 + Math.floor(rnd() * 26), nights = 1 + Math.floor(rnd() * (festival ? 5 : 3)), rate = [3500, 4000, 4500, 5000][Math.floor(rnd() * 4)];
+          var cin = yy + '-' + String(mo + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+          var cd = new Date(Date.UTC(yy, mo, day + nights)), cout = cd.toISOString().slice(0, 10), extras = rnd() < .5 ? 20 * Math.floor(rnd() * 6) : rnd() < .3 ? 500 : 0;
+          var sid = 'SH' + yy + mo + k, total = nights * rate;
+          db.add('stays', { id: sid, room: 1 + Math.floor(rnd() * 11), guest: 'Guest ' + (k + 1), phone: '', guests: 1 + Math.floor(rnd() * 3), checkin: cin, checkout: cout, nights: nights, rate: rate, rateNote: '',
+            status: 'Checked out', roomTotal: total, extras: extras, paid: total + extras, balance: 0, notes: '', inBy: 'Reception', inAt: cin + ' 11:30', outBy: 'Reception', outAt: cout + ' 08:40', booking: '' });
+          db.add('payments', { id: 'PH' + yy + mo + k, at: cout + ' 08:40', stay: sid, room: 1, amount: total + extras, method: methods[Math.floor(rnd() * methods.length)], note: '', by: 'Reception', booking: '', ref: '', voided: '' });
+        }
+      }
+    })();
     data.tables.sessions = [];
     return data;
   }
@@ -84,13 +104,24 @@
   function save(data) { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} }
 
   var world = null;
+  /* sample Nikadi members for the demo (the real app reads the membership sheet) */
+  function demoMember(phone) {
+    var M = {
+      '9876543210': { name: 'Radha Devi Sharma', tier: 'Gold', tierKey: 'gold', discount: 10, points: 335,
+        onsite: ['Early check-in from 9 AM, when available'], rates: { 'Deluxe Double (King)': 4500, 'Deluxe Twin': 4050, 'Large Twin': 4500 } },
+      '9830012345': { name: 'Gopal Krishna Das', tier: 'Platinum', tierKey: 'platinum', discount: 15, points: 1240,
+        onsite: ['Early check-in from 9 AM, when available', 'Free late check-out till 11 AM (usually ₹1,500)', 'Free room upgrade, when available', 'Free dental kit every stay'],
+        rates: { 'Deluxe Double (King)': 4250, 'Deluxe Twin': 3825, 'Large Twin': 4250 } }
+    };
+    return M[String(phone)] || null;
+  }
   root.nikadiStaffDemo = function (action, req) {
     if (!world) world = load();
     var name = action.charAt(4).toLowerCase() + action.slice(5);
     return new Promise(function (resolve, reject) {
       setTimeout(function () {
         try {
-          var api = deskCore(memoryDb(world));
+          var api = deskCore(memoryDb(world), { memberInfo: demoMember });
           if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
           var clean = JSON.parse(JSON.stringify(req || {}));
           Object.keys(clean).forEach(function (k) { if (k.charAt(0) === '_') delete clean[k]; });

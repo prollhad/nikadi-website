@@ -426,3 +426,29 @@ main.view{flex:1}
 .install-ios{border:1px solid var(--line-soft);background:var(--panel);border-radius:var(--r-sm);padding:12px 14px;font-size:.86rem;color:var(--muted);display:grid;gap:4px;max-width:340px;text-align:center}
 .install-ios b{color:var(--ink);font-weight:500}
 .ios-share{display:inline-flex;vertical-align:-3px;color:var(--blue)}
+
+/* Nikadi member box */
+.mem-box{border:1px solid rgba(201,163,90,.5);border-radius:var(--r-sm,10px);background:linear-gradient(90deg,rgba(201,163,90,.12),var(--panel));padding:12px 14px;display:grid;gap:8px}
+.mem-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mem-h b{font-weight:500;color:var(--gold-hi)}
+.mem-h span:last-child{font-size:.82rem;color:var(--muted)}
+.mem-dot{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,#f7e3a8,#b8904a)}
+.mem-box.tier-silver .mem-dot{background:linear-gradient(135deg,#f4f5f7,#a3a9b2)}
+.mem-box.tier-platinum .mem-dot{background:linear-gradient(135deg,#eef2f6,#6f7d90)}
+.mem-box.tier-plus .mem-dot{background:#0f0f12;box-shadow:0 0 0 2px #c9a35a}
+.mem-l{font-size:.78rem;color:var(--muted)}
+.mem-box ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:.9rem}
+
+/* Sales report */
+.bars{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;align-items:end;height:220px;padding-top:6px}
+.bar-col{display:grid;grid-template-rows:auto 1fr auto;gap:6px;height:100%;background:none;border:0;padding:0;cursor:pointer;color:var(--muted);font:inherit;min-width:0}
+.bar-v{font-size:.6rem;text-align:center;white-space:nowrap;overflow:hidden;color:var(--ink)}
+.bar-track{position:relative;display:block;border-radius:6px;background:rgba(255,255,255,.03)}
+.bar-fill{position:absolute;left:0;right:0;bottom:0;border-radius:6px;background:linear-gradient(180deg,var(--gold-hi),var(--gold));transition:height .4s ease}
+.bar-col.now .bar-fill{background:linear-gradient(180deg,#9ad1ad,var(--green))}
+.bar-col.fut{opacity:.35}
+.bar-col:hover .bar-track{background:rgba(201,163,90,.08)}
+.bar-m{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;text-align:center}
+.tbl.rep tr.tot td{background:var(--band);border-top:1px solid var(--line)}
+.tbl.rep tbody tr{cursor:pointer}
+@media (max-width:700px){.hide-s{display:none}.tbl.rep th,.tbl.rep td{padding:10px 8px;font-size:.8rem}.bars{height:180px;gap:3px}.bar-v{font-size:.5rem}}

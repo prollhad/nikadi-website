@@ -154,13 +154,14 @@
     add: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
     stock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>',
     approvals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l2.5 2.5L16 9"/><path d="M12 21s-7-3.5-7-9.5V5l7-2.5L19 5v6.5C19 17.5 12 21 12 21z"/></svg>',
+    reports: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/><path d="M15 6l3-2 3 2"/></svg>',
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More' };
+  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales' };
   function navFor(desk) {
     if (!mgr()) return ['rooms', 'calendar', 'add', 'stock'];
-    if (desk) return ['today', 'rooms', 'calendar', 'bookings', 'approvals', 'add', 'stock'].concat(owner() ? ['settings'] : []);
+    if (desk) return ['today', 'rooms', 'calendar', 'bookings', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
@@ -178,7 +179,7 @@
   }
   function go(tab) {
     closeAllSheetsQuiet();
-    S.tab = tab; if (tab === 'approvals') REQ = null; nav(); render(); window.scrollTo(0, 0);
+    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; nav(); render(); window.scrollTo(0, 0);
     if (tab === 'calendar' || tab === 'bookings') loadExtra();
   }
 
@@ -197,7 +198,7 @@
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -212,7 +213,7 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore }[S.tab] || viewRooms)(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports }[S.tab] || viewRooms)(v);
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -298,6 +299,7 @@
       '<div><dt>Check-in</dt><dd>' + esc(dShort(s.checkin)) + '</dd></div><div><dt>Check-out</dt><dd>' + esc(dShort(s.checkout)) + '</dd></div>' +
       (m ? '<div><dt>Phone</dt><dd>' + (s.phone ? '<a href="tel:+91' + esc(s.phone) + '">' + esc(s.phone) + '</a>' : '—') + '</dd></div><div><dt>Checked in by</dt><dd>' + esc(s.inBy) + '</dd></div>' : '') +
       '</dl>';
+    if (s.member) h += memberBox(s.member, false);
     if (m && s.notes) h += '<div class="note"><b>Notes</b>' + esc(s.notes) + '</div>';
     if (m && s.booking) h += '<button class="linkbtn" type="button" id="b-bk">From booking ' + esc(s.booking) + ' →</button>';
     if (m) {
@@ -337,6 +339,15 @@
     });
   }
 
+  /* ---------- Nikadi members ---------- */
+  function memberBox(mem, withRates) {
+    if (!mem) return '';
+    return '<div class="mem-box tier-' + esc(mem.tierKey) + '"><div class="mem-h"><span class="mem-dot"></span><b>' + esc(mem.tier) + ' member</b><span>' + esc(mem.name) + (mem.points != null ? ' · ' + mem.points + ' pts' : '') + '</span></div>' +
+      (mem.onsite && mem.onsite.length ? '<p class="mem-l">Please give this guest:</p><ul>' + mem.onsite.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '<p class="mem-l">Member rate ' + mem.discount + '% off. No extra in-stay perks at this level.</p>') +
+      (withRates ? '<div id="mem-rate"></div>' : '') + '</div>';
+  }
+  var RATE_KEY = { 'Deluxe Double': 'Deluxe Double (King)', 'Deluxe Twin': 'Deluxe Twin', 'Large Twin': 'Large Twin' };
+
   /* ---------- forms ---------- */
   function field(label, html, req) { return '<label class="field"><span>' + esc(label) + (req ? ' <i>*</i>' : '') + '</span>' + html + '</label>'; }
   function seg(name, opts, val) { return '<div class="seg" data-seg="' + name + '">' + opts.map(function (o) { return '<button type="button" data-v="' + esc(o) + '" aria-pressed="' + (o === val) + '">' + esc(o) + '</button>'; }).join('') + '</div>'; }
@@ -371,6 +382,7 @@
     body.innerHTML = '<p class="small">' + esc(r.type + ' · ' + r.beds) + '</p>' +
       field('Guest name', '<input class="input" id="f-guest" autocomplete="off" maxlength="80">', true) +
       field('Phone (optional)', '<div class="phonewrap"><span class="cc">+91</span><input class="input" id="f-phone" inputmode="numeric" maxlength="14" autocomplete="off"></div>') +
+      '<div id="f-mem"></div>' +
       '<div class="field"><span>Guests in this room <i>*</i></span>' + stepper('f-guests', 2, 1, 3) + '</div>' +
       '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="f-in" value="' + t + '">', true) +
       field('Check-out', '<input class="input" type="date" id="f-out" value="' + addDays(t, 1) + '">', true) + '</div>' +
@@ -387,6 +399,23 @@
     }
     ['#f-in', '#f-out', '#f-rate'].forEach(function (s) { $(s, body).addEventListener('input', calc); });
     wireSegs(body); wireSteppers(body); calc();
+    var lastPh = '';
+    $('#f-phone', body).addEventListener('input', function () {
+      var ph = this.value.replace(/\D/g, '').slice(-10);
+      if (ph.length !== 10 || ph === lastPh) { if (ph.length !== 10) $('#f-mem', body).innerHTML = ''; return; }
+      lastPh = ph;
+      api('deskMember', { phone: ph }).then(function (res) {
+        var mem = res.member, box = $('#f-mem', body); if (!box) return;
+        if (!mem) { box.innerHTML = '<p class="small">Not a Nikadi member. You can invite them to join for 100 free points.</p>'; return; }
+        box.innerHTML = memberBox(mem, mgr());
+        if (!$('#f-guest', body).value) $('#f-guest', body).value = mem.name;
+        var mr = mem.rates && mem.rates[RATE_KEY[r.type]];
+        if (mr && mgr()) {
+          $('#mem-rate', body).innerHTML = '<button type="button" class="btn btn-line" id="use-mr">Use ' + esc(mem.tier) + ' member rate: ' + inr(mr) + ' / night</button>';
+          $('#use-mr', body).onclick = function () { $('#f-rate', body).value = mr; $('#f-rnote', body).value = mem.tier + ' member rate (' + mem.discount + '% off)'; calc(); toast('Member rate applied'); };
+        }
+      }, function () {});
+    });
     $('#go', body).onclick = function () {
       submit(this, $('#err', body), 'deskCheckIn', {
         room: r.room, guest: $('#f-guest', body).value, phone: $('#f-phone', body).value, guests: Number($('#f-guests', body).textContent),
@@ -1073,10 +1102,61 @@
   }
   function loadReq() { api('deskRequests').then(function (r) { REQ = r; if (S.tab === 'approvals') render(); }, function (e) { toast(errText(e)); }); }
 
+  /* ---------- Sales report (owner only) ---------- */
+  var REP = { year: null, data: null };
+  function viewReports(v) {
+    if (!owner()) { S.tab = 'rooms'; return render(); }
+    var yr = REP.year || S.st.today.slice(0, 4);
+    if (!REP.data || REP.data.year !== yr) {
+      v.innerHTML = '<div><p class="kicker">Owner only</p><h1>Sales</h1></div><div class="loading">Adding up ' + esc(yr) + '…</div>';
+      api('deskReport', { year: yr }).then(function (r) { REP.data = r; REP.year = r.year; if (S.tab === 'reports') render(); }, function (e) { toast(errText(e)); });
+      return;
+    }
+    var d = REP.data, t = d.total, max = Math.max.apply(null, d.months.map(function (m) { return m.sales; }).concat([1]));
+    var curM = d.partial ? Number(S.st.today.slice(5, 7)) : 12, best = d.months.reduce(function (a, m) { return m.sales > a.sales ? m : a; }, d.months[0]);
+    function short(n) { return n >= 100000 ? '₹' + (n / 100000).toFixed(n >= 1000000 ? 0 : 1) + 'L' : n >= 1000 ? '₹' + Math.round(n / 1000) + 'k' : '₹' + n; }
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Owner only · ' + (d.partial ? 'so far this year' : 'full year') + '</p><h1>Sales ' + esc(d.year) + '</h1></div>' +
+      '<div class="upd">' + d.years.map(function (y) { return '<button type="button" class="refresh' + (y === d.year ? ' gold' : '') + '" data-year="' + esc(y) + '">' + esc(y) + '</button>'; }).join('') + '<button class="refresh" type="button" id="rf">Refresh</button></div></div>' +
+      '<div class="kpis">' +
+      '<div class="kpi cash"><span>Total sales</span><b>' + inr(t.sales) + '</b><small>Rooms ' + inr(t.rooms) + ' · extras ' + inr(t.extras) + '</small></div>' +
+      '<div class="kpi cash"><span>Money collected</span><b>' + inr(t.collected - t.refunds) + '</b><small>' + (t.refunds ? 'after ' + inr(t.refunds) + ' refunds' : 'no refunds') + '</small></div>' +
+      '<div class="kpi c-occ"><span>Room nights sold</span><b>' + t.nights + '</b><small>' + t.stays + ' stays · ' + t.guests + ' guests</small></div>' +
+      '<div class="kpi c-arr"><span>Occupancy</span><b>' + t.occupancy + '<small>%</small></b><small>of ' + d.rooms + ' rooms × the year</small></div>' +
+      '<div class="kpi c-ready"><span>Average room rate</span><b>' + inr(t.adr) + '</b><small>per night sold</small></div>' +
+      '<div class="kpi c-dirty"><span>Best month</span><b>' + (best.sales ? MON[best.month - 1] : '–') + '</b><small>' + (best.sales ? inr(best.sales) : 'no sales yet') + '</small></div></div>' +
+      '<div class="panel"><div class="sec-h"><h2>Sales by month</h2><span class="small">tap a month for details</span></div><div class="bars">' + d.months.map(function (m) {
+        var h = m.sales ? Math.max(3, Math.round(m.sales / max * 100)) : 0, fut = d.partial && m.month > curM;
+        return '<button type="button" class="bar-col' + (m.month === curM && d.partial ? ' now' : '') + (fut ? ' fut' : '') + '" data-month="' + m.month + '" aria-label="' + MON[m.month - 1] + ' ' + inr(m.sales) + '"><span class="bar-v">' + (m.sales ? short(m.sales) : '') + '</span><span class="bar-track"><span class="bar-fill" style="height:' + h + '%"></span></span><span class="bar-m">' + MON[m.month - 1] + '</span></button>';
+      }).join('') + '</div></div>' +
+      '<div class="tbl-wrap"><table class="tbl rep"><thead><tr><th>Month</th><th class="r">Sales</th><th class="r hide-s">Rooms</th><th class="r hide-s">Extras</th><th class="r">Nights</th><th class="r hide-s">Occ.</th><th class="r hide-s">Avg rate</th><th class="r">Collected</th><th class="r hide-s">Refunds</th></tr></thead><tbody>' +
+      d.months.filter(function (m) { return !(d.partial && m.month > curM); }).map(function (m) {
+        return '<tr data-month="' + m.month + '"><td><b>' + MON[m.month - 1] + '</b></td><td class="r">' + inr(m.sales) + '</td><td class="r hide-s">' + inr(m.rooms) + '</td><td class="r hide-s">' + inr(m.extras) + '</td><td class="r">' + m.nights + '</td><td class="r hide-s">' + m.occupancy + '%</td><td class="r hide-s">' + (m.adr ? inr(m.adr) : '–') + '</td><td class="r">' + inr(m.collected - m.refunds) + '</td><td class="r hide-s">' + (m.refunds ? inr(m.refunds) : '–') + '</td></tr>';
+      }).join('') +
+      '<tr class="tot"><td><b>' + esc(d.year) + '</b></td><td class="r"><b>' + inr(t.sales) + '</b></td><td class="r hide-s">' + inr(t.rooms) + '</td><td class="r hide-s">' + inr(t.extras) + '</td><td class="r"><b>' + t.nights + '</b></td><td class="r hide-s">' + t.occupancy + '%</td><td class="r hide-s">' + inr(t.adr) + '</td><td class="r"><b>' + inr(t.collected - t.refunds) + '</b></td><td class="r hide-s">' + (t.refunds ? inr(t.refunds) : '–') + '</td></tr>' +
+      '</tbody></table></div>' +
+      '<div class="dash"><div class="dcol"><div class="panel"><div class="sec-h"><h2>Money by method</h2></div><div class="list">' + Object.keys(t.byMethod).map(function (k) {
+        return '<div class="bl"><span class="t">' + esc(k) + '</span><span class="a">' + inr(t.byMethod[k]) + '</span></div>'; }).join('') + (Object.keys(t.byMethod).length ? '' : '<div class="bl"><span class="d">No payments yet</span></div>') + '</div></div></div>' +
+      '<div class="dcol"><div class="panel"><div class="sec-h"><h2>Items sold</h2></div><div class="list">' + (d.items.length ? d.items.map(function (i) {
+        return '<div class="bl"><span class="t">' + esc(i.item) + '</span><span class="d">' + i.qty + ' sold' + (i.free ? ' · ' + i.free + ' given free' : '') + '</span><span class="a">' + inr(i.amount) + '</span></div>'; }).join('') : '<div class="bl"><span class="d">Nothing yet</span></div>') + '</div></div>' +
+      '<div class="panel"><div class="sec-h"><h2>Bookings</h2></div><div class="list"><div class="bl"><span class="t">Bookings made</span><span class="a">' + d.bookings.made + '</span></div><div class="bl"><span class="t">Cancelled</span><span class="a">' + d.bookings.cancelled + '</span></div><div class="bl"><span class="t">No-shows</span><span class="a">' + d.bookings.noShow + '</span></div></div></div></div></div>' +
+      '<p class="small">Sales count each stay (room + extras) in the month the guest checked out. Money collected counts payments on the day they were received, after refunds. Guests staying now are added when they check out.</p>';
+    $$('[data-year]', v).forEach(function (b) { b.onclick = function () { REP.year = b.dataset.year; REP.data = null; render(); }; });
+    $('#rf', v).onclick = function () { REP.data = null; render(); };
+    $$('[data-month]', v).forEach(function (b) { b.onclick = function () { monthSheet(d, Number(b.dataset.month)); }; });
+  }
+  function monthSheet(d, mn) {
+    var m = d.months[mn - 1], body = openSheet(MON[mn - 1] + ' ' + d.year);
+    body.innerHTML = '<div class="kpis"><div class="kpi cash"><span>Sales</span><b>' + inr(m.sales) + '</b><small>' + m.stays + ' stays</small></div><div class="kpi cash"><span>Collected</span><b>' + inr(m.collected - m.refunds) + '</b><small>' + (m.refunds ? inr(m.refunds) + ' refunded' : 'no refunds') + '</small></div></div>' +
+      '<div class="list">' +
+      [['Room charges', inr(m.rooms)], ['Extras (water, kits, mattress, late check-out)', inr(m.extras)], ['Room nights sold', m.nights], ['Guests', m.guests], ['Occupancy', m.occupancy + '%'], ['Average room rate', m.adr ? inr(m.adr) : '–']]
+        .map(function (r) { return '<div class="bl"><span class="t">' + r[0] + '</span><span class="a">' + r[1] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="sec-h"><h2>Money received by method</h2></div><div class="list">' + (Object.keys(m.byMethod).length ? Object.keys(m.byMethod).map(function (k) { return '<div class="bl"><span class="t">' + esc(k) + '</span><span class="a">' + inr(m.byMethod[k]) + '</span></div>'; }).join('') : '<div class="bl"><span class="d">No payments this month</span></div>') + '</div>';
+  }
+
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
     var list = [['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
-      ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
+      ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
     }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button>';

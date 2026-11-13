@@ -343,8 +343,18 @@ footer .brand b{font-size:1.2rem}
 .mem-eg{font-size:.92rem;color:var(--muted);border-left:2px solid var(--gold);padding-left:14px}
 .mem-eg strong{color:var(--ink)}
 .mem-acts{display:flex;flex-wrap:wrap;gap:12px}
-.tiers{display:grid;gap:8px;list-style:none;padding:0;margin:0}
-.tiers li{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;border:1px solid var(--line);background:var(--bg);padding:12px 16px;border-radius:12px}
+.tiers{display:grid;gap:8px}
+.tier{border:1px solid var(--line);background:var(--bg);border-radius:12px;overflow:hidden}
+.tier summary{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:12px 16px;cursor:pointer;list-style:none}
+.tier summary::-webkit-details-marker{display:none}
+.t-chev{width:9px;height:9px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg) translateY(-3px);transition:transform .2s}
+.tier[open] .t-chev{transform:rotate(225deg) translate(-2px,-1px)}
+.tier[open]{border-color:rgba(201,163,90,.5)}
+.t-body{padding:0 16px 14px 46px;display:grid;gap:8px;font-size:.9rem;color:var(--muted)}
+.t-body ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.t-body li{display:flex;gap:10px;align-items:baseline;color:var(--ink)}
+.t-body li::before{content:"✓";color:#74c08c;font-size:.85rem}
+.tiers-hint{font-size:.8rem;color:var(--muted);margin-top:-6px}
 .tiers b{font-weight:500}
 .tiers small{display:block;font-size:.8rem;color:var(--muted)}
 .t-perk{text-align:right}
@@ -354,7 +364,7 @@ footer .brand b{font-size:1.2rem}
 .t-gold .t-dot{background:linear-gradient(135deg,#f7e3a8,#b8904a)}
 .t-platinum .t-dot{background:linear-gradient(135deg,#eef2f6,#6f7d90)}
 .t-plus .t-dot{background:#0f0f12;box-shadow:0 0 0 2px #c9a35a}
-.t-plus{border-color:rgba(201,163,90,.5)!important;background:linear-gradient(90deg,rgba(201,163,90,.1),var(--bg))!important}
+.t-plus{border-color:rgba(201,163,90,.5)!important;background:linear-gradient(90deg,rgba(201,163,90,.08),var(--bg))!important}
 .mrate{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;text-decoration:none;color:var(--ink);font-size:.86rem;border:1px dashed rgba(201,163,90,.55);border-radius:10px;padding:9px 12px;margin-top:-4px}
 .mrate:hover{border-style:solid;background:rgba(201,163,90,.07)}
 .mrate-tag{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);border-radius:999px;padding:3px 8px}
@@ -634,12 +644,25 @@ footer .brand b{font-size:1.2rem}
         <p class="kicker rule">Nikadi Membership</p>
         <h2>Stay more. Rise higher.</h2>
         <p class="mem-lede">Join free and enjoy member rates on every booking, points on every stay, and four levels that reward the devotees who come back to Sri Dham Mayapur with us.</p>
-        <ol class="tiers">
-          <li class="t-silver"><span class="t-dot"></span><div><b>Silver</b><small>When you join</small></div><div class="t-perk"><b>5% off</b><small>1 point / ₹100</small></div></li>
-          <li class="t-gold"><span class="t-dot"></span><div><b>Gold</b><small>15 nights in 2 years</small></div><div class="t-perk"><b>10% off</b><small>1.5 points / ₹100</small></div></li>
-          <li class="t-platinum"><span class="t-dot"></span><div><b>Platinum</b><small>40 nights in 2 years</small></div><div class="t-perk"><b>15% off</b><small>2 points / ₹100</small></div></li>
-          <li class="t-plus"><span class="t-dot"></span><div><b>Platinum Plus</b><small>80 nights in total · kept for 10 years</small></div><div class="t-perk"><b>20% off</b><small>4 points / ₹100</small></div></li>
-        </ol>
+        <div class="tiers">
+          <details class="tier t-silver" open>
+            <summary><span class="t-dot"></span><div><b>Silver</b><small>When you join</small></div><div class="t-perk"><b>5% off</b><small>1 point / ₹100</small></div><span class="t-chev" aria-hidden="true"></span></summary>
+            <div class="t-body"><ul><li>5% member rate on every booking</li><li>1 point for every ₹100 of room tariff</li><li>100 welcome points when you join</li><li>Member-only offers on WhatsApp</li><li>50 bonus points in your birthday month</li></ul></div>
+          </details>
+          <details class="tier t-gold">
+            <summary><span class="t-dot"></span><div><b>Gold</b><small>15 nights in 2 years</small></div><div class="t-perk"><b>10% off</b><small>1.5 points / ₹100</small></div><span class="t-chev" aria-hidden="true"></span></summary>
+            <div class="t-body"><p>Everything in Silver, plus:</p><ul><li>10% member rate on every booking</li><li>1.5 points for every ₹100 of room tariff</li><li>Early check-in from 9 AM, when available</li><li>100 bonus points in your birthday month</li></ul></div>
+          </details>
+          <details class="tier t-platinum">
+            <summary><span class="t-dot"></span><div><b>Platinum</b><small>40 nights in 2 years</small></div><div class="t-perk"><b>15% off</b><small>2 points / ₹100</small></div><span class="t-chev" aria-hidden="true"></span></summary>
+            <div class="t-body"><p>Everything in Gold, plus:</p><ul><li>15% member rate on every booking</li><li>2 points for every ₹100 of room tariff</li><li>Free late check-out till 11 AM (usually ₹1,500)</li><li>Free room upgrade, when available</li><li>Free dental kit every stay</li></ul></div>
+          </details>
+          <details class="tier t-plus">
+            <summary><span class="t-dot"></span><div><b>Platinum Plus</b><small>80 nights in total · kept for 10 years</small></div><div class="t-perk"><b>20% off</b><small>4 points / ₹100</small></div><span class="t-chev" aria-hidden="true"></span></summary>
+            <div class="t-body"><p>Everything in Platinum, plus:</p><ul><li>20% member rate on every booking</li><li>4 points for every ₹100 of room tariff</li><li>Free late check-out till 12 noon</li><li>Free extra mattress when needed</li><li>Priority booking for festivals (Gaura Purnima, Kartik)</li><li>Your level is kept for 10 years</li></ul></div>
+          </details>
+        </div>
+        <p class="tiers-hint">Tap a level to see its benefits.</p>
         <ul class="mem-facts">
           <li><b>100</b><span>Welcome points when you join</span></li>
           <li><b>₹500</b><span>Off your booking for every 100 points</span></li>
