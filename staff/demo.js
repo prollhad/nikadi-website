@@ -26,6 +26,8 @@
     Object.keys(DESK_DEFAULTS).forEach(function (t) { DESK_DEFAULTS[t].forEach(function (o) { db.add(t, JSON.parse(JSON.stringify(o))); }); });
     db.add('staff', { name: 'Housekeeping', pin: '3333', role: 'Staff', active: 'Yes' });
     db.add('staff', { name: 'Bablu', pin: '4444', role: 'Staff', active: 'Yes' });
+    db.add('staff', { name: 'Manager', pin: '5555', role: 'Manager', active: 'Yes' });
+    db.add('staff', { name: 'Reception 2', pin: '6666', role: 'Receptionist', active: 'Yes' });
     db.all('items').forEach(function (i) { if (i.item === 'Water bottle') i.stock = 96; if (i.item === 'Dental kit') i.stock = 14; });
     var api = deskCore(db), owner = api.login({ pin: '1111' }).token, hk = api.login({ pin: '3333' }).token;
     function inn(room, guest, phone, guests, from, to, rate, note, adv, method) {
@@ -62,6 +64,14 @@
     api.bookingCancel({ token: owner, id: c4, reason: 'Change of plans' });
     var c5 = bk({ guest: 'Meera Krishnan', phone: '9822233344', guests: 3, roomType: 'Large Twin', checkin: ymd(8), checkout: ymd(11), rate: 5000, source: 'Phone' });
     api.bookingConfirm({ token: owner, id: c5, rooms: [10], amount: 7500, method: 'UPI', ref: 'UPI 778812300045' });
+    // sample approval requests from reception
+    var rc = api.login({ pin: '2222' }).token;
+    var mat = db.all('charges').filter(function (c) { return c.room === 10 && c.item === 'Extra mattress'; })[0];
+    api.pay({ token: rc, id: mat.stay, amount: 300, method: 'Cash', note: 'Extra mattress' });
+    api.editCharge({ token: rc, id: mat.id, remove: true, refundAmount: 300, method: 'Cash', reason: 'Guest did not use the mattress and asked for the ₹300 back' });
+    var r3 = db.all('stays').filter(function (x) { return x.room === 3 && x.status === 'In house'; })[0];
+    api.pay({ token: rc, id: r3.id, amount: 6000, method: 'UPI', ref: 'UPI 220011998877', note: 'Balance' });
+    api.refund({ token: rc, id: r3.id, amount: 770, method: 'Cash', reason: 'Guest overpaid by UPI, returning the extra in cash' });
     void w1;
     data.tables.sessions = [];
     return data;

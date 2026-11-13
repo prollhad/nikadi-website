@@ -1,5 +1,5 @@
 /* Nikadi Staff — offline shell. Bump VERSION whenever staff app files change. */
-var VERSION = "nikadi-staff-v2";
+var VERSION = "nikadi-staff-v3";
 var SHELL = ["./", "index.html", "staff.css", "app.js", "logic.js", "demo.js", "manifest.webmanifest", "../app/app.css", "../app/core.js", "../app/icons/icon-192.png"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));

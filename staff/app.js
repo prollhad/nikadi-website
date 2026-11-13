@@ -24,6 +24,10 @@
     pick_rooms: 'Choose which room numbers this booking gets.', advance_required: 'Enter the amount received. A booking is confirmed only after money is received.',
     ref_required: 'Enter the UPI or bank transaction reference number.', booking_closed: 'This booking is already closed.', no_booking: 'Booking not found.',
     not_arrival_day: 'A booking can be marked as no-show only on or after its check-in date.',
+    reason_required: 'Please write the reason. The manager sees it.', refund_too_much: 'That is more than the guest has paid.',
+    no_payment: 'This payment cannot be changed.', no_request: 'Request not found.', request_done: 'Someone already decided this request.',
+    refund_from_room: 'The guest has checked in: refund from their room bill instead.',
+    ask_manager_nights: 'Charging fewer nights than the guest stayed needs a manager. Ask the manager or owner to check this guest out.',
     too_early: 'This booking starts on a later date. If the guest came early, edit the booking dates first.', too_many_requests: 'Too many requests. Try again later.'
   };
   function errText(c) { return ERR[c] || ERR.server_error; }
@@ -59,7 +63,12 @@
   }
   function addDays(ymd, n) { var p = ymd.split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)).toISOString().slice(0, 10); }
   function nights(a, b) { var x = Date.parse(a + 'T00:00:00Z'), y = Date.parse(b + 'T00:00:00Z'); return Math.round((y - x) / 864e5); }
-  function mgr() { return S.me && (S.me.role === 'Owner' || S.me.role === 'Manager'); }
+  function mgr() { return S.me && (S.me.role === 'Owner' || S.me.role === 'Manager' || S.me.role === 'Receptionist'); } // front desk, sees money
+  function approver() { return S.me && (S.me.role === 'Owner' || S.me.role === 'Manager'); }
+  function rcp() { return S.me && S.me.role === 'Receptionist'; }
+  function reasonField(id, ph) { return field(rcp() ? 'Reason for the manager' : 'Reason', '<input class="input" id="' + id + '" maxlength="200" placeholder="' + esc(ph || 'Why is this needed?') + '">', true); }
+  function approvalNote() { return rcp() ? '<div class="note gold"><b>Needs approval</b>Money already recorded can only be changed by a manager. This will be sent to the manager, and it happens once they approve it.</div>' : ''; }
+  function goLabel(txt) { return rcp() ? 'Send for approval' : txt; }
   function owner() { return S.me && S.me.role === 'Owner'; }
   function kind(r) { return r.status === 'Needs cleaning' ? 'dirty' : r.status === 'Occupied' ? (r.stay && r.stay.leavesToday ? 'out' : 'occ') : r.arriving ? 'arr' : 'ready'; }
   var KLABEL = { ready: 'Ready', occ: 'Occupied', out: 'Leaves today', dirty: 'Needs cleaning', arr: 'Arriving today' };
@@ -122,28 +131,32 @@
     bookings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-6-3.5L6 21V3z"/><path d="M9.5 8.5h5M9.5 12h5"/></svg>',
     add: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
     stock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>',
+    approvals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l2.5 2.5L16 9"/><path d="M12 21s-7-3.5-7-9.5V5l7-2.5L19 5v6.5C19 17.5 12 21 12 21z"/></svg>',
+    more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings' };
+  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More' };
   function navFor(desk) {
     if (!mgr()) return ['rooms', 'calendar', 'add', 'stock'];
-    if (desk) return ['today', 'rooms', 'calendar', 'bookings', 'add', 'stock'].concat(owner() ? ['settings'] : []);
-    return ['today', 'rooms', 'calendar', 'bookings', 'stock'];
+    if (desk) return ['today', 'rooms', 'calendar', 'bookings', 'approvals', 'add', 'stock'].concat(owner() ? ['settings'] : []);
+    return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
+  function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
   function badge(t) {
     if (!S.st) return '';
-    var n = t === 'bookings' ? S.st.pending : t === 'stock' ? (S.st.toBuy || []).length : t === 'today' ? (S.st.arrivals || []).length : 0;
+    var n = t === 'bookings' ? S.st.pending : t === 'stock' ? (S.st.toBuy || []).length : t === 'today' ? (S.st.arrivals || []).length
+      : t === 'approvals' ? (S.st.approvals || S.st.myRequests || 0) : t === 'more' ? (S.st.approvals || S.st.myRequests || 0) : 0;
     return n ? '<em class="badge">' + n + '</em>' : '';
   }
   function nav() {
     var side = $('#side-nav'), tabs = $('#tabs');
-    if (side) side.innerHTML = navFor(true).map(function (t) { return '<button type="button" class="side-item" data-tab="' + t + '" aria-current="' + (S.tab === t) + '">' + ICON[t] + '<span>' + NAMES[t] + '</span>' + badge(t) + '</button>'; }).join('');
-    if (tabs) { var list = navFor(false); tabs.className = 'tabs t' + list.length; tabs.innerHTML = list.map(function (t) { return '<button class="tab" role="tab" type="button" data-tab="' + t + '" aria-selected="' + (S.tab === t) + '">' + ICON[t] + NAMES[t] + badge(t) + '</button>'; }).join(''); }
+    if (side) side.innerHTML = navFor(true).map(function (t) { return '<button type="button" class="side-item" data-tab="' + t + '" aria-current="' + (S.tab === t) + '">' + ICON[t] + '<span>' + navName(t) + '</span>' + badge(t) + '</button>'; }).join('');
+    if (tabs) { var list = navFor(false); tabs.className = 'tabs t' + list.length; tabs.innerHTML = list.map(function (t) { return '<button class="tab" role="tab" type="button" data-tab="' + t + '" aria-selected="' + (S.tab === t) + '">' + ICON[t] + navName(t) + badge(t) + '</button>'; }).join(''); }
     $$('[data-tab]').forEach(function (b) { b.onclick = function () { go(b.dataset.tab); }; });
   }
   function go(tab) {
     closeAllSheetsQuiet();
-    S.tab = tab; nav(); render(); window.scrollTo(0, 0);
+    S.tab = tab; if (tab === 'approvals') REQ = null; nav(); render(); window.scrollTo(0, 0);
     if (tab === 'calendar' || tab === 'bookings') loadExtra();
   }
 
@@ -162,7 +175,7 @@
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0) S.tab = 'rooms'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -177,7 +190,7 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings }[S.tab] || viewRooms)(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore }[S.tab] || viewRooms)(v);
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -274,12 +287,13 @@
         }).join('') +
         '<div class="bl sum"><span class="t">Total</span><span class="d">Room ' + inr(s.roomTotal) + ' + extras ' + inr(s.extras) + '</span><span class="a">' + inr(s.roomTotal + s.extras) + '</span></div>' +
         s.payments.map(function (p) {
-          return '<div class="bl paid"><span class="t">' + (p.method === 'From advance' ? 'Advance (booking)' : 'Paid · ' + esc(p.method)) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + (p.note ? ' · ' + esc(p.note) : '') + '</span><span class="a">− ' + inr(p.amount) + '</span></div>';
+          return '<div class="bl ' + (p.amount < 0 ? 'refund' : 'paid') + (p.method === 'From advance' ? '' : ' tap') + '" data-pay="' + esc(p.id) + '"><span class="t">' + (p.method === 'From advance' ? 'Advance (booking)' : (p.amount < 0 ? 'Refunded · ' : 'Paid · ') + esc(p.method)) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + (p.note ? ' · ' + esc(p.note) : '') + '</span><span class="a">' + (p.amount < 0 ? '+ ' + inr(-p.amount) : '− ' + inr(p.amount)) + '</span></div>';
         }).join('') +
         '<div class="bl due"><span class="t">' + (s.balance > 0 ? 'Balance due' : s.balance < 0 ? 'Refund due to guest' : 'Fully paid') + '</span><span class="a">' + inr(Math.abs(s.balance)) + '</span></div></div>' +
-        (s.charges.length ? '<p class="small">Tap an extra to change its price or remove it.</p>' : '');
+        '<p class="small">Tap an extra to change or remove it. Tap a payment to correct a mistake.' + (rcp() ? ' Changes to recorded money go to the manager for approval.' : '') + '</p>';
       h += '<div class="btns">' + (inHouse ? '<button class="btn btn-gold" id="b-add" type="button">Add item</button>' : '') +
         '<button class="btn btn-line" id="b-pay" type="button">Take payment</button>' +
+        (s.paid > 0 ? '<button class="btn btn-quiet" id="b-ref" type="button">' + (s.balance < 0 ? 'Refund ' + inr(-s.balance) : 'Refund money') + '</button>' : '') +
         (inHouse ? '<button class="btn btn-quiet" id="b-edit" type="button">Edit / extend</button><button class="btn btn-quiet" id="b-out" type="button">Check out</button>' : '') + '</div>';
     } else {
       h += '<div class="bill"><h3>Items given</h3>' + (s.charges.length ? s.charges.map(function (c) {
@@ -293,6 +307,8 @@
     if ((b = $('#b-bk', body))) b.onclick = function () { openBooking(s.booking); };
     if ((b = $('#b-pay', body))) b.onclick = function () { openPay(s, body); };
     if ((b = $('#b-edit', body))) b.onclick = function () { openEdit(s, body); };
+    if ((b = $('#b-ref', body))) b.onclick = function () { openRefund('stay', s, body); };
+    if (m) $$('[data-pay].tap', body).forEach(function (row) { row.onclick = function () { var p = s.payments.filter(function (x) { return x.id === row.dataset.pay; })[0]; if (p) openVoid(p, 'stay', body); }; });
     if ((b = $('#b-out', body))) b.onclick = function () { openCheckOut(s, body); };
     if (m) $$('[data-charge]', body).forEach(function (row) {
       row.onclick = function () { var c = s.charges.filter(function (x) { return x.id === row.dataset.charge; })[0]; if (c) openEditCharge(c, s, body); };
@@ -321,7 +337,11 @@
   }
   function submit(btn, errEl, action, data, done) {
     errEl.textContent = ''; busy(btn, true);
-    api(action, data).then(function (r) { busy(btn, false); done(r); }, function (e) { busy(btn, false); errEl.textContent = errText(e); vibrate(); });
+    api(action, data).then(function (r) {
+      busy(btn, false);
+      if (r && r.requested) { vibrate(); toast('Sent to the manager for approval'); closeSheet(); refresh(); return; }
+      done(r);
+    }, function (e) { busy(btn, false); errEl.textContent = errText(e); vibrate(); });
   }
 
   function openCheckIn(r) {
@@ -380,6 +400,7 @@
       '<div class="btns"><button class="btn btn-quiet" type="button" id="x1">+1 night</button><button class="btn btn-quiet" type="button" id="x2">+2 nights</button></div>' +
       field('Agreed rate per night (₹)', '<input class="input" id="f-rate" inputmode="numeric" value="' + s.rate + '">') +
       field('Rate note', '<input class="input" id="f-rnote" maxlength="160" value="' + esc(s.rateNote || '') + '">') +
+      (rcp() ? '<p class="small">Changing the rate needs a manager\'s approval. Write why below.</p>' + field('Reason for a rate change', '<input class="input" id="f-why" maxlength="200">') : '') +
       '<div class="calc" id="calc"></div>' +
       field('Move to another room', '<select class="input" id="f-room"><option value="">Stay in room ' + s.room + '</option>' + free.map(function (r) { return '<option value="' + r.room + '">Room ' + r.room + ' · ' + esc(r.type) + '</option>'; }).join('') + '</select>') +
       field('Notes', '<textarea class="input" id="f-notes" rows="2" maxlength="300">' + esc(s.notes || '') + '</textarea>') +
@@ -395,6 +416,7 @@
     $('#go', body).onclick = function () {
       var d = { id: s.id, guest: $('#f-guest', body).value, phone: $('#f-phone', body).value, guests: Number($('#f-guests', body).textContent),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''), rateNote: $('#f-rnote', body).value, notes: $('#f-notes', body).value };
+      if ($('#f-why', body)) d.reason = $('#f-why', body).value;
       if ($('#f-room', body).value) d.room = Number($('#f-room', body).value);
       submit(this, $('#err', body), 'deskUpdateStay', d, function (res) {
         toast(d.room ? 'Moved to room ' + d.room + '. Room ' + s.room + ' needs cleaning.' : 'Stay updated');
@@ -427,8 +449,10 @@
     $('#go', body).onclick = function () {
       var b = bal(), btn = this;
       if (b === 0) return doOut(btn);
-      $('#conf', body).innerHTML = '<div class="conf">' + (b > 0 ? inr(b) + ' is still due. Take the payment first, or check out anyway?' : 'The guest has paid ' + inr(-b) + ' more than the bill. Check out anyway?') +
-        '<div class="btns">' + (b > 0 ? '<button class="btn btn-line" type="button" id="cpay">Take ' + inr(b) + '</button>' : '') + '<button class="btn btn-quiet" type="button" id="cgo">Check out anyway</button></div></div>';
+      $('#conf', body).innerHTML = '<div class="conf">' + (b > 0 ? inr(b) + ' is still due. Take the payment first, or check out anyway?' : 'The guest has paid ' + inr(-b) + ' more than the bill. Refund it first, or check out and refund later?') +
+        '<div class="btns">' + (b > 0 ? '<button class="btn btn-line" type="button" id="cpay">Take ' + inr(b) + '</button>' : '<button class="btn btn-line" type="button" id="cref">Refund ' + inr(-b) + '</button>') + '<button class="btn btn-quiet" type="button" id="cgo">Check out anyway</button></div></div>';
+      var cr = $('#cref', body);
+      if (cr) cr.onclick = function () { openRefund('stay', Object.assign({}, s, { balance: b }), null, -b); };
       btn.hidden = true;
       var cp = $('#cpay', body);
       if (cp) cp.onclick = function () {
@@ -455,16 +479,24 @@
       '<div class="field"><span>Quantity</span>' + stepper('f-q', c.qty, 1, 50) + '</div>' +
       field('Price each (₹)', '<input class="input" id="f-p" inputmode="numeric" value="' + (c.free ? 0 : c.price) + '">') +
       '<label class="toggle"><span>Free (no charge)</span><input type="checkbox" id="f-free"' + (c.free ? ' checked' : '') + '></label>' +
-      '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">Save</button><button class="btn btn-danger" id="rm" type="button">Remove from bill</button>';
-    wireSteppers(body);
+      (!c.free && s.paid > 0 ? '<div class="refund-box"><label class="toggle"><span>When removing, also give the guest money back</span><input type="checkbox" id="f-back"></label>' +
+        '<div id="f-backf" hidden>' + field('Amount to give back (₹)', '<input class="input" id="f-bamt" inputmode="numeric" value="' + Math.min(c.total, s.paid) + '">') +
+        '<div class="field"><span>Paid back by</span>' + seg('method', S.st.methods, 'Cash') + '</div>' + refField('f-bref') + '</div></div>' : '') +
+      approvalNote() + (rcp() ? reasonField('f-why', 'e.g. Guest returned the mattress') : field('Reason (optional)', '<input class="input" id="f-why" maxlength="200">')) +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">' + goLabel('Save') + '</button><button class="btn btn-danger" id="rm" type="button">' + (rcp() ? 'Request removal' : 'Remove from bill') + '</button>' +
+      '';
+    wireSteppers(body); wireSegs(body);
+    var bk = $('#f-back', body); if (bk) bk.onchange = function () { $('#f-backf', body).hidden = !bk.checked; $('#rm', body).textContent = rcp() ? 'Request removal' + (bk.checked ? ' + refund' : '') : 'Remove' + (bk.checked ? ' and refund' : ' from bill'); };
     $('#go', body).onclick = function () {
-      submit(this, $('#err', body), 'deskEditCharge', { id: c.id, qty: Number($('#f-q', body).textContent), price: $('#f-p', body).value.replace(/\D/g, '') || '0', free: $('#f-free', body).checked },
+      submit(this, $('#err', body), 'deskEditCharge', { id: c.id, qty: Number($('#f-q', body).textContent), price: $('#f-p', body).value.replace(/\D/g, '') || '0', free: $('#f-free', body).checked, reason: $('#f-why', body).value },
         function (r) { toast('Saved'); closeSheet(); drawStay(parentBody, r.stay); });
     };
     $('#rm', body).onclick = function () {
       var b = this;
-      if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Tap again to remove'; return; }
-      submit(b, $('#err', body), 'deskEditCharge', { id: c.id, remove: true }, function (r) { toast('Removed'); closeSheet(); drawStay(parentBody, r.stay); });
+      if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = rcp() ? 'Tap again to send' : 'Tap again to remove'; return; }
+      var d = { id: c.id, remove: true, reason: $('#f-why', body).value };
+      if (bk && bk.checked) { d.refundAmount = $('#f-bamt', body).value.replace(/\D/g, ''); d.method = segVal(body, 'method'); d.ref = $('#f-bref', body).value; }
+      submit(b, $('#err', body), 'deskEditCharge', d, function (r) { toast('Removed'); closeSheet(); drawStay(parentBody, r.stay); });
     };
   }
 
@@ -572,6 +604,8 @@
     var stayingP = '<div class="panel"><div class="sec-h"><h2>Staying now</h2></div><div class="list">' + (inHouse.length ? inHouse.filter(function (r) { return !r.stay.leavesToday; }).map(row).join('') || '<div class="bl"><span class="d">Everyone staying leaves today</span></div>' : '<div class="bl"><span class="d">No guests</span></div>') + '</div></div>';
     var pendingP = '<div class="panel"><div class="sec-h"><h2>Waiting for payment</h2><button class="linkbtn" type="button" data-go="bookings">All bookings →</button></div>' +
       '<div class="list"><div class="bl tap" data-go="bookings"><span class="t">' + st.pending + ' pending ' + (st.pending === 1 ? 'booking' : 'bookings') + '</span><span class="d">Not on the calendar until the advance is received and confirmed</span><span class="a">' + (st.pending ? '<span class="pill">Review</span>' : '') + '</span></div></div></div>';
+    var apprP = approver() && st.approvals ? '<div class="panel attn"><div class="sec-h"><h2>Needs your approval</h2><button class="linkbtn" type="button" data-go="approvals">Review →</button></div>' +
+      '<div class="list"><div class="bl tap" data-go="approvals"><span class="t">' + st.approvals + ' request' + (st.approvals > 1 ? 's' : '') + ' from reception</span><span class="d">Refunds, removed items, rate changes, corrections</span><span class="a"><span class="pill gold">Review</span></span></div></div></div>' : '';
     var buyP = '<div class="panel"><div class="sec-h"><h2>To buy</h2><button class="linkbtn" type="button" data-go="stock">Stock →</button></div><div class="list">' + (st.toBuy.length ? st.toBuy.map(function (b) {
       return '<div class="bl"><span class="t">' + esc(b.item) + '</span><span class="d">' + b.stock + ' left</span><span class="a">Buy ~' + b.buy + '</span></div>'; }).join('') : '<div class="bl"><span class="d">Nothing running low</span></div>') + '</div></div>';
     var recentP = '<div class="panel"><div class="sec-h"><h2>Recent check-outs</h2></div><div class="list">' + (st.recent.length ? st.recent.slice(0, 8).map(function (s) {
@@ -586,7 +620,7 @@
       '<div class="kpi c-dirty"><span>To clean</span><b>' + dirty.length + '</b><small>' + (st.rooms.length - inHouse.length - dirty.length) + ' rooms ready</small></div>' +
       '<div class="kpi cash"><span>Collected today</span><b>' + inr(sm.collected) + '</b><small>' + st.methods.filter(function (m) { return sm.byMethod[m]; }).map(function (m) { return m + ' ' + inr(sm.byMethod[m]); }).join(' · ') + '</small></div>' +
       '<div class="kpi cash"><span>Still due</span><b>' + inr(sm.outstanding) + '</b><small>from guests in house</small></div></div>' +
-      '<div class="dash"><div class="dcol">' + arrivals + leavingP + stayingP + '</div><div class="dcol">' + pendingP + buyP + recentP + '</div></div>' +
+      '<div class="dash"><div class="dcol">' + arrivals + leavingP + stayingP + '</div><div class="dcol">' + apprP + pendingP + buyP + recentP + '</div></div>' +
       '<p class="small">Every entry is saved in the Google Sheet with the name of the person who made it.</p>';
     $('#rf', v).onclick = function () { refresh(this); };
     $('#nb', v).onclick = function () { openBookingForm(null); };
@@ -758,7 +792,7 @@
       '<div class="bill"><h3>Money</h3>' +
       '<div class="bl sum"><span class="t">' + b.nights + (b.nights > 1 ? ' nights' : ' night') + ' × ' + Math.max(b.rooms.length, b.roomsNeeded) + (Math.max(b.rooms.length, b.roomsNeeded) > 1 ? ' rooms' : ' room') + ' × ' + inr(b.rate) + '</span><span class="d">Rate per room per night</span><span class="a">' + inr(b.total) + '</span></div>' +
       '<div class="bl"><span class="t">Advance needed (50%)</span><span class="a">' + inr(b.advanceDue) + '</span></div>' +
-      b.payments.map(function (p) { return '<div class="bl ' + (p.amount < 0 ? '' : 'paid') + '"><span class="t">' + (p.amount < 0 ? 'Refunded · ' : 'Received · ') + esc(p.method) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + '</span><span class="a">' + (p.amount < 0 ? '+ ' + inr(-p.amount) : '− ' + inr(p.amount)) + '</span></div>'; }).join('') +
+      b.payments.map(function (p) { return '<div class="bl tap ' + (p.amount < 0 ? 'refund' : 'paid') + '" data-pay="' + esc(p.id) + '"><span class="t">' + (p.amount < 0 ? 'Refunded · ' : 'Received · ') + esc(p.method) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + '</span><span class="a">' + (p.amount < 0 ? '+ ' + inr(-p.amount) : '− ' + inr(p.amount)) + '</span></div>'; }).join('') +
       (b.status === 'Pending' ? '<div class="bl due"><span class="t">Not confirmed yet</span><span class="a">' + inr(b.advanceDue) + ' to receive</span></div>'
         : b.status === 'Confirmed' ? '<div class="bl due"><span class="t">Balance at check-in</span><span class="a">' + inr(bal) + '</span></div>' : '') + '</div>' +
       (b.closeNote ? '<div class="note"><b>' + esc(b.status) + (b.closedBy ? ' · ' + esc(b.closedBy) : '') + '</b>' + esc(b.closeNote) + '</div>' : '') +
@@ -768,8 +802,11 @@
       h += '<div class="btns">' + (b.checkin <= t ? '<button class="btn btn-gold wide big-cta" id="k-in" type="button">Guest arrived: check in</button>' : '') +
         '<a class="btn btn-line" id="k-wa" target="_blank" rel="noopener" href="' + (b.phone ? 'https://wa.me/91' + esc(b.phone) + '?text=' + encodeURIComponent(waText(b)) : '#') + '">Send WhatsApp confirmation</a>' +
         '<button class="btn btn-quiet" id="k-pay" type="button">Add payment</button><button class="btn btn-quiet" id="k-edit" type="button">Edit dates or rooms</button>' +
+        (b.advancePaid - b.refunded > 0 ? '<button class="btn btn-quiet" id="k-ref" type="button">Refund part of advance</button>' : '') +
         '<button class="btn btn-danger" id="k-cancel" type="button">Cancel booking</button>' + (b.checkin <= t ? '<button class="btn btn-danger" id="k-ns" type="button">Guest did not come</button>' : '') + '</div>';
     }
+    if ((b.status === 'Cancelled' || b.status === 'No-show') && b.advancePaid - b.refunded > 0) h += '<div class="btns"><button class="btn btn-quiet" id="k-ref" type="button">Refund money (' + inr(b.advancePaid - b.refunded) + ' kept)</button></div>';
+    if (b.payments.length) h += '<p class="small">Tap a payment to correct a mistake.' + (rcp() ? ' Changes go to the manager for approval.' : '') + '</p>';
     if (open) h += '<div class="policy"><b>Cancellation policy</b>' + esc(S.st.policy.text) + '</div>';
     body.innerHTML = h;
     var q = function (sel) { return $(sel, body); };
@@ -777,6 +814,8 @@
     if (q('#k-edit')) q('#k-edit').onclick = function () { openBookingForm(b, body); };
     if (q('#k-cancel')) q('#k-cancel').onclick = function () { openCancel(b, body); };
     if (q('#k-pay')) q('#k-pay').onclick = function () { openBookingPay(b, body); };
+    if (q('#k-ref')) q('#k-ref').onclick = function () { openRefund('booking', b, body); };
+    $$('[data-pay]', body).forEach(function (row) { row.onclick = function () { var p = b.payments.filter(function (x) { return x.id === row.dataset.pay; })[0]; if (p) openVoid(p, 'booking', body); }; });
     if (q('#k-in')) q('#k-in').onclick = function () {
       var x = this; busy(x, true);
       api('deskBookingCheckIn', { id: b.id }).then(function (r) { vibrate(); toast(b.guest + ' checked in to room ' + b.rooms.join(', ')); after(sheets.length); void r; },
@@ -808,6 +847,7 @@
       field('Rate per room per night (₹)', '<input class="input" id="b-rate" inputmode="numeric" value="' + (pre.rate || (pre.roomPick && roomOf(pre.roomPick) ? roomOf(pre.roomPick).rate : 5000)) + '">', true) +
       (isNew ? '<div class="field"><span>Booked by</span>' + seg('src', ['Phone', 'WhatsApp', 'Walk-in', 'Website', 'Other'], 'Phone') + '</div>' : '') +
       field('Notes', '<textarea class="input" id="b-notes" rows="2" maxlength="400" placeholder="Arrival time, requests, negotiation…">' + esc(pre.notes || '') + '</textarea>') +
+      (rcp() && pre.status === 'Confirmed' ? '<p class="small">Changing the rate of a confirmed booking needs a manager\'s approval.</p>' + field('Reason for a rate change', '<input class="input" id="b-why" maxlength="200">') : '') +
       '<div class="calc" id="b-calc"></div><p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">' + (isNew ? 'Save booking (pending)' : 'Save changes') + '</button>';
     wireSegs(body);
     var picked = (pre.rooms || []).slice();
@@ -839,6 +879,7 @@
       if ($('#b-rooms', body)) d.roomsNeeded = $('#b-rooms', body).value.replace(/\D/g, '');
       if ($('#b-type', body)) d.roomType = $('#b-type', body).value;
       if (pre.status === 'Confirmed') d.rooms = picked;
+      if ($('#b-why', body)) d.reason = $('#b-why', body).value;
       if (isNew) { d.source = segVal(body, 'src'); if (pre.roomPick) d.notes = (d.notes ? d.notes + ' · ' : '') + 'Asked for room ' + pre.roomPick; }
       else d.id = pre.id;
       submit(this, $('#err', body), isNew ? 'deskBookingCreate' : 'deskBookingUpdate', d, function (r) {
@@ -927,13 +968,14 @@
         '<div id="x-how"' + (refund > 0 ? '' : ' hidden') + '><div class="field"><span>Refunded by</span>' + seg('method', S.st.methods, 'UPI') + '</div>' + refField('x-ref') + '</div>' : '') +
       field('Reason', '<input class="input" id="x-why" maxlength="160" placeholder="e.g. Guest changed plans">') +
       '<div class="policy"><b>Cancellation policy</b>' + esc(S.st.policy.text) + '</div>' +
-      '<p class="err" id="err" role="alert"></p><button class="btn btn-danger big-cta" id="go" type="button">Cancel this booking</button>';
+      (rcp() && b.status === 'Confirmed' ? '<div class="note gold"><b>Needs approval</b>This booking has money recorded, so the cancellation is sent to the manager. It is cancelled when they approve it.</div>' : '') +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-danger big-cta" id="go" type="button">' + (rcp() && b.status === 'Confirmed' ? 'Send cancellation for approval' : 'Cancel this booking') + '</button>';
     wireSegs(body);
     var amtEl = $('#x-amt', body);
     if (amtEl) amtEl.addEventListener('input', function () { $('#x-how', body).hidden = !(Number(amtEl.value.replace(/\D/g, '')) > 0); });
     $('#go', body).onclick = function () {
       var x = this;
-      if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = 'Tap again to cancel the booking'; return; }
+      if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = 'Tap again to confirm'; return; }
       var d = { id: b.id, reason: $('#x-why', body).value };
       if (amtEl) d.refund = amtEl.value.replace(/\D/g, '');
       if ($('#x-how', body)) { d.method = segVal(body, 'method'); d.ref = $('#x-ref', body).value; }
@@ -941,11 +983,91 @@
     };
   }
 
+  /* ---------- Refunds and corrections ---------- */
+  function openRefund(kind, o, parentBody, preset) {
+    var max = kind === 'stay' ? o.paid : o.advancePaid - o.refunded;
+    var body = openSheet(kind === 'stay' ? 'Refund · Room ' + o.room : 'Refund advance');
+    body.innerHTML = '<div class="calc">' + (kind === 'stay' ? 'Paid on this bill: <b>' + inr(o.paid) + '</b>' + (o.balance < 0 ? ' · guest overpaid by <b>' + inr(-o.balance) + '</b>' : '') : 'Advance held: <b>' + inr(max) + '</b>') + '</div>' +
+      approvalNote() +
+      field('Amount to give back (₹)', '<input class="input" id="r-amt" inputmode="numeric" value="' + (preset || (o.balance < 0 ? -o.balance : '')) + '">', true) +
+      '<div class="field"><span>Paid back by</span>' + seg('method', S.st.methods, 'Cash') + '</div>' + refField('r-ref') +
+      reasonField('r-why', 'e.g. Extra mattress cancelled, guest overpaid') +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">' + goLabel('Record refund') + '</button>' +
+      '<p class="small">The refund is saved with your name and appears on the bill and in the Payments tab of the sheet.</p>';
+    wireSegs(body);
+    $('#go', body).onclick = function () {
+      var amt = Number($('#r-amt', body).value.replace(/\D/g, '')) || 0;
+      if (amt > max) { $('#err', body).textContent = 'That is more than ' + inr(max) + '.'; return; }
+      submit(this, $('#err', body), kind === 'stay' ? 'deskRefund' : 'deskBookingRefund', { id: o.id, amount: String(amt), method: segVal(body, 'method'), ref: $('#r-ref', body).value, reason: $('#r-why', body).value },
+        function (r) { toast('Refund recorded'); closeSheet(); if (parentBody) { if (r.stay) drawStay(parentBody, r.stay); else drawBooking(parentBody, r.booking); } else refresh(); });
+    };
+  }
+
+  function openVoid(p, kind, parentBody) {
+    var body = openSheet('Correct a payment');
+    body.innerHTML = '<div class="bill"><div class="bl ' + (p.amount < 0 ? 'refund' : 'paid') + '"><span class="t">' + (p.amount < 0 ? 'Refund · ' : 'Payment · ') + esc(p.method) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + (p.note ? ' · ' + esc(p.note) : '') + '</span><span class="a">' + inr(Math.abs(p.amount)) + '</span></div></div>' +
+      '<p class="small">Use this only if the entry is wrong, for example the wrong amount or entered twice. The entry is cancelled (it stays visible in the sheet as voided). Then record the correct amount again.</p>' +
+      approvalNote() + reasonField('v-why', 'e.g. Entered twice by mistake') +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-danger big-cta" id="go" type="button">' + goLabel('Cancel this entry') + '</button>';
+    $('#go', body).onclick = function () {
+      var x = this;
+      if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = 'Tap again to confirm'; return; }
+      submit(x, $('#err', body), 'deskVoidPayment', { id: p.id, reason: $('#v-why', body).value }, function (r) {
+        toast('Entry cancelled'); closeSheet(); if (r.stay) drawStay(parentBody, r.stay); else if (r.booking) drawBooking(parentBody, r.booking); });
+    };
+    void kind;
+  }
+
+  /* ---------- Approvals (managers) / My requests (reception) ---------- */
+  var TYPE_LABEL = { editCharge: 'Bill item', refund: 'Refund', voidPayment: 'Payment correction', updateStay: 'Rate change', bookingUpdate: 'Rate change', bookingCancel: 'Cancellation', bookingRefund: 'Refund' };
+  var REQ = null;
+  function viewApprovals(v) {
+    var title = approver() ? 'Approvals' : 'My requests';
+    if (!REQ) { v.innerHTML = '<div><p class="kicker">Money changes</p><h1>' + title + '</h1></div><div class="loading">Loading…</div>'; loadReq(); return; }
+    function card(r, live) {
+      return '<article class="req' + (live ? ' live' : '') + '"><header><span class="st-pill s-' + (r.status === 'Pending' ? 'pend' : r.status === 'Approved' ? 'conf' : 'canc') + '">' + esc(r.status) + '</span>' +
+        '<span class="req-type">' + esc(TYPE_LABEL[r.type] || r.type) + '</span><time>' + esc(tShort(r.at)) + '</time></header>' +
+        '<p class="req-what">' + esc(r.summary) + '</p><p class="req-why"><b>' + esc(r.by) + ':</b> “' + esc(r.reason) + '”</p>' +
+        (r.status !== 'Pending' ? '<p class="small">' + esc(r.status) + ' by ' + esc(r.decidedBy) + ' · ' + esc(tShort(r.decidedAt)) + (r.decisionNote ? ' · ' + esc(r.decisionNote) : '') + '</p>' : '') +
+        (live ? '<div class="req-act"><input class="input" placeholder="Note (optional)" maxlength="200" data-note="' + esc(r.id) + '"><button class="btn btn-ok" type="button" data-ok="' + esc(r.id) + '">Approve</button><button class="btn btn-danger" type="button" data-no="' + esc(r.id) + '">Reject</button></div><p class="err" data-err="' + esc(r.id) + '"></p>' : '') +
+        '</article>';
+    }
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Money changes</p><h1>' + title + '</h1></div><button class="refresh" id="rf" type="button">Refresh</button></div>' +
+      (approver() ? '<p class="sub">Receptionists cannot change money that is already recorded. Their requests wait here. When you approve, the change is made at once and saved with both names.</p>'
+        : '<p class="sub">Changes to recorded money (refunds, removing paid items, rate changes, corrections) are sent to the manager. You see their decision here.</p>') +
+      '<div class="sec-h"><h2>Waiting</h2><span class="small">' + REQ.pending.length + '</span></div>' +
+      (REQ.pending.length ? '<div class="reqs">' + REQ.pending.map(function (r) { return card(r, approver()); }).join('') + '</div>' : '<div class="note ok"><b>All clear</b>Nothing is waiting for approval.</div>') +
+      '<div class="sec-h"><h2>Decided</h2></div>' + (REQ.done.length ? '<div class="reqs">' + REQ.done.map(function (r) { return card(r, false); }).join('') + '</div>' : '<div class="empty">Nothing yet.</div>');
+    $('#rf', v).onclick = function () { REQ = null; render(); };
+    $$('[data-ok],[data-no]', v).forEach(function (b) {
+      b.onclick = function () {
+        var idv = b.dataset.ok || b.dataset.no, ok = !!b.dataset.ok, err = $('[data-err="' + idv + '"]', v);
+        busy(b, true); err.textContent = '';
+        api('deskRequestDecide', { id: idv, approve: ok, note: $('[data-note="' + idv + '"]', v).value }).then(function (r) {
+          vibrate(); toast(ok ? 'Approved and done' : 'Rejected'); REQ = r; render(); refresh(); X.cal = null; X.bookings = null;
+        }, function (e) { busy(b, false); err.textContent = errText(e); });
+      };
+    });
+  }
+  function loadReq() { api('deskRequests').then(function (r) { REQ = r; if (S.tab === 'approvals') render(); }, function (e) { toast(errText(e)); }); }
+
+  /* ---------- More (phones) ---------- */
+  function viewMore(v) {
+    var list = [['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
+      ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
+    v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
+      return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
+    }).join('') + '</div><button class="btn btn-quiet" type="button" id="lo">Log out</button>';
+    $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
+    $('#lo', v).onclick = function () { logout(false); };
+  }
+
   function openTeam() {
     var body = openSheet('Team & PINs');
     body.innerHTML = '<div class="loading">Loading…</div>';
     function draw(team) {
-      body.innerHTML = '<p class="small">Owner sees everything and manages the team. Manager (reception) sees bills and money. Staff see rooms, add items and mark cleaning, without any money.</p>' +
+      body.innerHTML = '<div class="roles"><p><b>Owner</b> Everything, plus team, PINs and prices.</p><p><b>Manager</b> Everything at the desk, and approves reception\'s money changes.</p>' +
+        '<p><b>Receptionist</b> Check-ins, bookings, payments and bills. Cannot change money once recorded: refunds, removing paid items and corrections need a manager\'s approval.</p><p><b>Staff</b> Rooms, add items, cleaning and stock. No money.</p></div>' +
         '<div class="list">' + team.map(function (p, i) {
           return '<div class="bl tap" data-i="' + i + '"><span class="t">' + esc(p.name) + (p.active ? '' : ' · <span class="small">inactive</span>') + '</span><span class="d">' + esc(p.role) + ' · PIN ' + esc(p.pin) + '</span><span class="a">Edit</span></div>';
         }).join('') + '</div><button class="btn btn-gold" type="button" id="add">Add a person</button>';
@@ -956,7 +1078,7 @@
       var b2 = openSheet(p ? 'Edit ' + p.name : 'Add a person');
       b2.innerHTML = field('Name', '<input class="input" id="t-name" maxlength="40" value="' + esc(p ? p.name : '') + '">', true) +
         field('PIN (4–6 digits)', '<input class="input" id="t-pin" inputmode="numeric" maxlength="6" value="' + esc(p ? p.pin : '') + '">', true) +
-        '<div class="field"><span>Role</span>' + seg('role', ['Owner', 'Manager', 'Staff'], p ? p.role : 'Staff') + '</div>' +
+        '<div class="field"><span>Role</span>' + seg('role', ['Owner', 'Manager', 'Receptionist', 'Staff'], p ? p.role : 'Staff') + '</div>' +
         '<label class="toggle"><span>Active (can log in)</span><input type="checkbox" id="t-act"' + (!p || p.active ? ' checked' : '') + '></label>' +
         '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">Save</button>';
       wireSegs(b2);
