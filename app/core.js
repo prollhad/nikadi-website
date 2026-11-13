@@ -28,7 +28,7 @@ var NIKADI_ERRORS = {
   not_logged_in: "Please log in again.",
   session_expired: "Your session has ended. Please log in again.",
   wrong_pin: "Wrong PIN. Please try again.",
-  too_many_attempts: "Too many wrong PINs. Please wait 15 minutes.",
+  too_many_attempts: "Too many wrong attempts. Please wait 15 minutes.",
   insufficient_points: "Not enough points for this reward.",
   invalid_amount: "Please enter the stay amount in rupees.",
   invalid_points: "Please enter the number of points.",
@@ -36,7 +36,16 @@ var NIKADI_ERRORS = {
   invalid_reward: "Please choose a reward.",
   network: "No connection. Please check your internet and try again.",
   server_error: "Something went wrong on our side. Please try again.",
-  not_setup: "The membership system is being set up. Please check back soon."
+  not_setup: "The membership system is being set up. Please check back soon.",
+  wrong_password: "Wrong password. Please try again, or tap “Forgot password”.",
+  no_password: "You have not set a password yet. We will email you a code to set one.",
+  weak_password: "Please choose a password of at least 6 characters.",
+  password_required: "Please choose a password.",
+  bad_dates: "Please check your dates. Check-out must be after check-in.",
+  bad_guests: "Please check the number of guests.",
+  max_guests: "That is too many guests for our rooms. Please contact us on WhatsApp.",
+  too_many_requests: "Too many requests right now. Please try again later.",
+  phone_required: "Please enter your phone number."
 };
 
 function nkError(code) { return NIKADI_ERRORS[code] || NIKADI_ERRORS.server_error; }

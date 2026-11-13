@@ -64,7 +64,8 @@ var DESK_DEFAULTS = {
   ]
 };
 
-function deskCore(db) {
+function deskCore(db, hooks) {
+  hooks = hooks || {};
   var METHODS = ['Cash', 'UPI', 'Bank transfer', 'Card'];
   var FROM_ADV = 'From advance'; // internal: moves a booking advance onto a room bill at check-in (not new money)
   var ROLES = ['Owner', 'Manager', 'Receptionist', 'Staff'];
@@ -437,7 +438,11 @@ function deskCore(db) {
     recompute(s);
     var r = find('rooms', 'room', s.room);
     if (r && r.stay === s.id) db.set('rooms', r, { status: 'Needs cleaning', stay: '', updated: stamp(), by: me.name });
-    return { stay: stayView(s, me) };
+    var member = null;
+    if (hooks.onCheckout && s.phone) {
+      try { member = hooks.onCheckout({ id: s.id, phone: s.phone, guest: s.guest, room: s.room, nights: nights, roomTotal: Number(s.roomTotal || 0), checkin: s.checkin, checkout: s.checkout }); } catch (e) { member = null; }
+    }
+    return { stay: stayView(s, me), member: member };
   };
 
   api.roomStatus = function (req) {
@@ -531,12 +536,12 @@ function deskCore(db) {
     if (n >= 30) fail('too_many_requests');
     db.kvSet('web_bookings', String(n + 1), 3600);
     var p = bookingInput({ guest: req.guest, phone: req.phone, email: req.email, guests: req.guests, roomsNeeded: req.roomsNeeded, roomType: req.roomType,
-      checkin: req.checkin, checkout: req.checkout, notes: req.notes });
+      checkin: req.checkin, checkout: req.checkout, notes: req.notes, rate: req._internal ? req.rate : null });
     if (dayNum(p.checkin) < dayNum(today()) || dayNum(p.checkin) > dayNum(today()) + 400) fail('bad_dates');
     var dup = db.all('bookings').filter(function (b) { return b.status === 'Pending' && b.phone === p.phone && b.checkin === p.checkin && b.checkout === p.checkout; })[0];
     if (dup) return { id: dup.id, duplicate: true };
-    var b = db.add('bookings', Object.assign(p, { id: id('B'), status: 'Pending', source: 'Website', rooms: '', nights: 0, total: 0, advanceDue: 0, advancePaid: 0, refunded: 0,
-      created: stamp(), createdBy: 'Website form', confirmedBy: '', confirmedAt: '', closedBy: '', closedAt: '', closeNote: '' }));
+    var b = db.add('bookings', Object.assign(p, { id: id('B'), status: 'Pending', source: req._internal && req.source ? text(req.source, 30) : 'Website', rooms: '', nights: 0, total: 0, advanceDue: 0, advancePaid: 0, refunded: 0,
+      created: stamp(), createdBy: req._internal && req.source ? text(req.source, 30) : 'Website form', confirmedBy: '', confirmedAt: '', closedBy: '', closedAt: '', closeNote: '' }));
     recomputeBooking(b);
     return { id: b.id };
   };
@@ -814,9 +819,11 @@ function deskDb_() {
 function deskHandle_(req) {
   var name = String(req.action).slice(4);
   name = name.charAt(0).toLowerCase() + name.slice(1);
-  var api = deskCore(deskDb_());
+  var clean = {};
+  Object.keys(req).forEach(function (k) { if (k.charAt(0) !== '_') clean[k] = req[k]; }); // private flags only from inside the script
+  var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null });
   if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
-  return api[name](req);
+  return api[name](clean);
 }
 
 /** Creates the staff app tabs. Called from setup() in Code.gs; safe to run again. */

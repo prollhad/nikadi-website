@@ -25,10 +25,11 @@
     <button class="iconbtn" id="topBtn" type="button" hidden></button>
   </header>
   <main class="pad" id="view" aria-live="polite"></main>
-  <nav class="tabs" id="tabs" role="tablist" hidden>
+  <nav class="tabs t4" id="tabs" role="tablist" hidden>
     <button class="tab" role="tab" data-tab="card" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>Card</button>
+    <button class="tab" role="tab" data-tab="book" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M12 13v5M9.5 15.5h5"/></svg>Book</button>
+    <button class="tab" role="tab" data-tab="stays" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 18v-6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v6M3 14h18M6 9V6h4v3"/></svg>Stays</button>
     <button class="tab" role="tab" data-tab="rewards" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-3-6-1s4 1 6 1c2 0 6 1 6-1s-4-3-6 1z"/></svg>Rewards</button>
-    <button class="tab" role="tab" data-tab="activity" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Activity</button>
   </nav>
 </div>
 
@@ -37,67 +38,94 @@
 <script>
 (function(){
   var view=document.getElementById('view'),tabs=document.getElementById('tabs'),topBtn=document.getElementById('topBtn');
-  var S={token:nkStore('nk_token'),member:null,history:[],cfg:{pointsPer100:1,welcome:100,discountPoints:100,discountValue:500,freeNightPoints:500,channel:'email'},tab:'card'};
+  var TIERS=[{key:'silver',name:'Silver',nights:0,discount:5,earn:1},{key:'gold',name:'Gold',nights:15,discount:10,earn:1.5},{key:'platinum',name:'Platinum',nights:40,discount:15,earn:2},{key:'plus',name:'Platinum Plus',nights:80,discount:20,earn:4}];
+  var RATES={'Deluxe Double (King)':5000,'Deluxe Twin':4500,'Large Twin':5000};
+  var S={token:nkStore('nk_token'),member:null,history:[],stays:{stays:[],bookings:[]},cfg:{pointsPer100:1,welcome:100,discountPoints:100,discountValue:500,freeNightPoints:500,channel:'email',tiers:TIERS,rates:RATES,plusYears:10,windowYears:2},tab:'card'};
   if(NIKADI.demo)document.getElementById('demoFlag').hidden=false;
   var installEvt=null;
   window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;var b=document.getElementById('installBox');if(b)b.hidden=false;});
   var standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
   var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  var POLICY='To confirm a booking we need an advance of 50% of the total room price. Cancel 3 or more days before check-in and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are not refunded.';
 
-  /* ---------- small helpers ---------- */
   function $(id){return document.getElementById(id);}
   function busy(btn,on){if(btn){btn.classList.toggle('busy',on);btn.disabled=on;}}
   function toast(t){var d=document.createElement('div');d.className='toast fade';d.textContent=t;document.body.appendChild(d);setTimeout(function(){d.remove();},2600);}
   function show(html){view.innerHTML='<div class="fade" style="display:grid;gap:22px">'+html+'</div>';window.scrollTo(0,0);}
   function setTop(label,fn){topBtn.hidden=!label;topBtn.textContent=label||'';topBtn.onclick=fn||null;}
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function dS(ymd){if(!ymd)return '';var p=String(ymd).slice(0,10).split('-');return (+p[2])+' '+MON[+p[1]-1]+' '+p[0];}
+  function today(){return new Date(Date.now()+330*60000).toISOString().slice(0,10);}
+  function addDays(ymd,n){var p=ymd.split('-');return new Date(Date.UTC(+p[0],+p[1]-1,+p[2]+n)).toISOString().slice(0,10);}
+  function nightsOf(a,b){return Math.round((Date.parse(b)-Date.parse(a))/864e5);}
+  function tiers(){return S.cfg.tiers||TIERS;}
+  function tierBy(k){return tiers().filter(function(t){return t.key===k;})[0]||tiers()[0];}
+  function earnTxt(e){return (e%1?e.toFixed(1):e)+' point'+(e===1?'':'s');}
 
+  /* ---------- card + progress ---------- */
   function cardHTML(m,ghost){
-    var pts=m?m.points:0,val=Math.floor(pts/S.cfg.discountPoints)*S.cfg.discountValue;
-    return '<div class="mcard'+(ghost?' ghost':'')+'" role="img" aria-label="'+(m?nkEsc(m.firstName)+'\'s membership card, '+pts+' points':'Nikadi membership card')+'">'+
-      '<div class="mc-top"><span class="mc-brand">NIKADI</span><span class="mc-tier">Member</span></div>'+
+    var pts=m?m.points:0,val=Math.floor(pts/S.cfg.discountPoints)*S.cfg.discountValue,tk=m&&m.tierKey?m.tierKey:'silver';
+    return '<div class="mcard tier-'+(ghost?'ghost':tk)+(ghost?' ghost':'')+'" role="img" aria-label="'+(m?nkEsc(m.firstName)+'\'s '+nkEsc(m.tier||'Silver')+' membership card, '+pts+' points':'Nikadi membership card')+'">'+
+      '<div class="mc-top"><span class="mc-brand">NIKADI</span><span class="mc-tier">'+(m?nkEsc(m.tier||'Silver'):'Member')+'</span></div>'+
       '<div class="mc-mid"><div class="mc-pts"><b>'+(m?pts.toLocaleString('en-IN'):'—')+'</b><span>points</span></div>'+
       (m?'<span class="mc-val">'+(val>0?'Worth '+nkInr(val)+' off your next stay':'Keep earning to unlock rewards')+'</span>':'<span class="mc-val">Join free to get '+S.cfg.welcome+' welcome points</span>')+'</div>'+
       '<div class="mc-bot"><div><div class="mc-name">'+(m?nkEsc(m.name||m.firstName):'Your name')+'</div><div class="mc-id">'+(m?'+91 '+nkEsc(m.masked):'+91 ••••• •••••')+'</div></div>'+
-      '<div class="mc-since">'+(m&&m.joined?'Member since<br>'+nkEsc(String(m.joined).replace(/,.*$/,'')):'Sri Dham<br>Mayapur')+'</div></div></div>';
+      '<div class="mc-since">'+(m&&m.tierKey==='plus'&&m.plusUntil?'Platinum Plus<br>until '+nkEsc(m.plusUntil):m&&m.joined?'Member since<br>'+nkEsc(String(m.joined).replace(/,.*$/,'')):'Sri Dham<br>Mayapur')+'</div></div></div>';
   }
-  function progressHTML(pts){
-    var goal=S.cfg.freeNightPoints,left=Math.max(0,goal-pts%goal),pct=Math.min(100,(pts%goal)/goal*100);
-    var nights=Math.floor(pts/goal);
+  function tierProgress(m){
+    if(m.tierKey==='plus')return '<div class="prog"><div class="prog-top"><span><b>Platinum Plus</b>, our highest level, is yours until '+nkEsc(m.plusUntil||'')+'.</span></div><div class="track"><div class="fill" data-w="100"></div></div></div>';
+    var n=m.next;if(!n)return '';
+    var cur=n.name==='Platinum Plus'?m.nightsAll:m.nights2y,pct=Math.min(100,cur/n.nights*100);
+    return '<div class="prog"><div class="prog-top"><span><b>'+n.need+'</b> more night'+(n.need===1?'':'s')+' to <b>'+nkEsc(n.name)+'</b></span><span class="small">'+cur+'/'+n.nights+'</span></div>'+
+      '<div class="track"><div class="fill" data-w="'+pct.toFixed(1)+'"></div></div>'+
+      '<p class="small">'+(n.name==='Platinum Plus'?'Counts every night you have ever stayed with us.':'Counts nights stayed in the last '+S.cfg.windowYears+' years.')+'</p></div>';
+  }
+  function pointsProgress(pts){
+    var goal=S.cfg.freeNightPoints,left=Math.max(0,goal-pts%goal),pct=Math.min(100,(pts%goal)/goal*100),nights=Math.floor(pts/goal);
     return '<div class="prog"><div class="prog-top"><span>'+(nights>0?'<b>'+nights+' free night'+(nights>1?'s':'')+' available.</b> ':'')+(left>0?'<b>'+left+'</b> points to '+(nights>0?'another':'a')+' free night':'')+'</span><span class="small">'+(pts%goal)+'/'+goal+'</span></div>'+
       '<div class="track"><div class="fill" data-w="'+pct.toFixed(1)+'"></div></div></div>';
   }
   function animateFill(){setTimeout(function(){document.querySelectorAll('.fill').forEach(function(f){f.style.width=f.dataset.w+'%';});},60);}
+  function ladderHTML(cur){
+    return '<div class="ladder">'+tiers().map(function(t){
+      return '<div class="rung tier-'+t.key+(cur===t.key?' on':'')+'"><span class="rung-dot"></span><div><b>'+nkEsc(t.name)+(cur===t.key?' <em>· you</em>':'')+'</b><small>'+(t.nights?(t.key==='plus'?t.nights+' nights in total · kept '+S.cfg.plusYears+' years':t.nights+' nights in '+S.cfg.windowYears+' years'):'When you join')+'</small></div>'+
+        '<div class="rung-perk"><b>'+t.discount+'% off</b><small>'+earnTxt(t.earn)+' / ₹100</small></div></div>';
+    }).join('')+'</div>';
+  }
   function phoneField(id,label){return '<label class="field"><span>'+label+'</span><div class="phonewrap"><span class="cc">+91</span><input class="input" id="'+id+'" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" placeholder="10-digit mobile number"></div></label>';}
+  function pwField(id,label,auto){return '<label class="field"><span>'+label+'</span><div class="pwwrap"><input class="input" id="'+id+'" type="password" autocomplete="'+(auto||'current-password')+'" maxlength="64"><button type="button" class="pwshow" data-for="'+id+'" aria-label="Show password">Show</button></div></label>';}
+  function wirePw(){document.querySelectorAll('.pwshow').forEach(function(b){b.onclick=function(){var i=$(b.dataset.for);var on=i.type==='password';i.type=on?'text':'password';b.textContent=on?'Hide':'Show';};});}
+  function signedIn(r,msg){S.token=r.token;nkStore('nk_token',r.token);S.member=r.member;S.history=r.history||[];S.stays=r.stays||{stays:[],bookings:[]};dash('card');if(msg)toast(msg);}
 
   /* ---------- logged-out home ---------- */
   function home(){
-    tabs.hidden=true;setTop('Log in',login);
+    tabs.hidden=true;setTop('Join',function(){join();});
     var ready=!!NIKADI_API_URL||NIKADI.demo;
     show(
-      (ready?'':'<div class="note"><b>Launching soon</b>The Nikadi member app is being set up. You can still join on WhatsApp and we will add your points.</div>')+
-      '<div style="display:grid;gap:8px"><p class="kicker">Nikadi Membership</p><h1 class="title">Earn points every stay. Redeem a free night.</h1>'+
-      '<p class="sub">Your mobile number is your member ID. '+S.cfg.welcome+' welcome points when you join, 1 point for every ₹100, and '+S.cfg.freeNightPoints+' points for a free night.</p></div>'+
-      '<div id="cardSlot">'+cardHTML(null,true)+'</div>'+
-      '<form class="panel" id="lookupForm" novalidate><h2>Check your points</h2>'+phoneField('lkPhone','Registered mobile number')+
-        '<p class="err" id="lkErr"></p><button class="btn btn-gold" id="lkBtn" type="submit">Check points</button></form>'+
-      '<div class="row"><button class="btn btn-line" type="button" id="goLogin">Log in</button><button class="btn btn-line" type="button" id="goJoin">Join free</button></div>'+
-      '<p class="small" style="text-align:center">Log in with an OTP to see your full stay history and rewards.</p>'+
+      (ready?'':'<div class="note"><b>Launching soon</b>The Nikadi member app is being set up.</div>')+
+      '<div style="display:grid;gap:8px"><p class="kicker">Nikadi Membership</p><h1 class="title">Stay more. Rise higher.</h1>'+
+      '<p class="sub">Member rates on every booking, points on every stay, and four levels from Silver to Platinum Plus.</p></div>'+
+      '<form class="panel" id="loginForm" novalidate><h2>Member login</h2>'+phoneField('lgPhone','Mobile number')+pwField('lgPw','Password')+
+        '<p class="err" id="lgErr"></p><button class="btn btn-gold" id="lgBtn" type="submit">Log in</button>'+
+        '<button class="linkbtn" type="button" id="forgot">Forgot password, or first time logging in?</button></form>'+
+      '<div class="join-cta"><div><b>Not a member yet?</b><span>Join free and get '+S.cfg.welcome+' welcome points.</span></div><button class="btn btn-line" type="button" id="goJoin">Join free</button></div>'+
+      '<div style="display:grid;gap:12px"><p class="kicker">Membership levels</p>'+ladderHTML('')+'</div>'+
       installHTML()+
-      '<div class="links"><a class="btn btn-quiet" href="../#home">Book a stay</a><a class="btn btn-quiet" href="'+nkWa('Hare Krishna! I have a question about Nikadi Membership.')+'" target="_blank" rel="noopener">WhatsApp us</a></div>'+
+      '<div class="links"><a class="btn btn-quiet" href="../#home">Website</a><a class="btn btn-quiet" href="'+nkWa('Hare Krishna! I have a question about Nikadi Membership.')+'" target="_blank" rel="noopener">WhatsApp us</a></div>'+
       '<p class="foot">Nikadi Guest House · Opp. ISKCON Gate No. 4, Sri Dham Mayapur</p>'
     );
-    $('goLogin').onclick=login;$('goJoin').onclick=join;wireInstall();
-    $('lookupForm').onsubmit=function(e){
-      e.preventDefault();var p=nkPhoneOk($('lkPhone').value),err=$('lkErr'),b=$('lkBtn');err.textContent='';
+    $('goJoin').onclick=function(){join();};wireInstall();wirePw();
+    $('forgot').onclick=function(){passFlow(nkPhoneOk($('lgPhone').value)||'');};
+    $('loginForm').onsubmit=function(e){
+      e.preventDefault();var p=nkPhoneOk($('lgPhone').value),pw=$('lgPw').value,err=$('lgErr'),b=$('lgBtn');err.textContent='';
       if(!p){err.textContent=nkError('invalid_phone');return;}
+      if(!pw){err.textContent='Please enter your password.';return;}
       busy(b,true);
-      nkApi('lookup',{phone:p}).then(function(r){
-        busy(b,false);
-        if(!r.found){err.innerHTML=nkEsc(nkError('not_member'))+' <a href="#" id="jl" style="color:var(--gold-hi)">Join now</a>';$('jl').onclick=function(ev){ev.preventDefault();join(p);};return;}
-        var m=r.member;S.cfg.freeNightPoints=m.freeNightPoints;S.cfg.discountPoints=m.discountPoints;S.cfg.discountValue=m.discountValue;
-        $('cardSlot').innerHTML=cardHTML({firstName:m.firstName,name:'Hare Krishna, '+m.firstName,masked:m.masked,points:m.points})+'<div style="margin-top:16px">'+progressHTML(m.points)+'</div>';
-        animateFill();$('cardSlot').scrollIntoView({behavior:'smooth',block:'start'});
-      },function(c){busy(b,false);err.textContent=nkError(c);});
+      nkApi('login',{phone:p,password:pw}).then(function(r){busy(b,false);signedIn(r,'Welcome back, '+r.member.firstName+'!');},function(c){
+        busy(b,false);err.textContent=nkError(c);
+        if(c==='no_password'){err.innerHTML=nkEsc(nkError(c))+' <a href="#" id="np" style="color:var(--gold-hi)">Set my password</a>';$('np').onclick=function(ev){ev.preventDefault();passFlow(p);};}
+        if(c==='not_member'){err.innerHTML+=' <a href="#" id="jl" style="color:var(--gold-hi)">Join now</a>';$('jl').onclick=function(ev){ev.preventDefault();join(p);};}
+      });
     };
   }
   function installHTML(){
@@ -107,100 +135,149 @@
   }
   function wireInstall(){var b=$('installBtn');if(b)b.onclick=function(){if(!installEvt)return;installEvt.prompt();installEvt.userChoice.then(function(){installEvt=null;$('installBox').hidden=true;});};}
 
-  /* ---------- login with OTP ---------- */
-  function login(prefill){
+  /* ---------- set / reset password with an emailed code ---------- */
+  function passFlow(prefill){
     tabs.hidden=true;setTop('Back',home);
-    show('<div style="display:grid;gap:8px"><p class="kicker">Member login</p><h1 class="title">Log in with OTP</h1><p class="sub">We will send a one-time code to your registered '+(S.cfg.channel==='sms'?'mobile number':'email address')+'.</p></div>'+
-      '<form class="panel" id="otpForm" novalidate>'+phoneField('lgPhone','Registered mobile number')+
-      '<div id="codeStep" hidden><label class="field"><span>6-digit code</span><input class="input otp" id="lgCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"></label><p class="small" id="sentTo" style="margin-top:8px"></p></div>'+
-      '<p class="err" id="lgErr"></p><button class="btn btn-gold" id="lgBtn" type="submit">Send code</button>'+
-      '<button class="btn btn-quiet" id="resend" type="button" hidden>Send a new code</button></form>'+
-      '<p class="small" style="text-align:center">Not a member yet? <a href="#" id="toJoin" style="color:var(--gold-hi)">Join free</a></p>');
-    if(typeof prefill==='string')$('lgPhone').value=prefill;
-    $('toJoin').onclick=function(e){e.preventDefault();join();};
+    show('<div style="display:grid;gap:8px"><p class="kicker">Password</p><h1 class="title">Set a new password</h1><p class="sub">We will email a 6-digit code to the address on your membership.</p></div>'+
+      '<form class="panel" id="pwForm" novalidate>'+phoneField('psPhone','Member mobile number')+
+      '<div id="psStep" hidden><label class="field"><span>6-digit code</span><input class="input otp" id="psCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"></label><p class="small" id="psTo"></p>'+
+      pwField('psPw','New password (at least 6 characters)','new-password')+'</div>'+
+      '<p class="err" id="psErr"></p><button class="btn btn-gold" id="psBtn" type="submit">Email me a code</button></form>');
+    wirePw();if(prefill)$('psPhone').value=prefill;
     var phone='',step=1;
-    function send(){
-      var err=$('lgErr'),b=$('lgBtn');err.textContent='';phone=nkPhoneOk($('lgPhone').value);
-      if(!phone){err.textContent=nkError('invalid_phone');return;}
-      busy(b,true);
-      nkApi('otpSend',{phone:phone}).then(function(r){
-        busy(b,false);step=2;$('codeStep').hidden=false;$('resend').hidden=false;$('lgPhone').readOnly=true;
-        $('sentTo').textContent='Code sent by '+(r.channel==='sms'?'SMS':'email')+' to '+r.to+'. It is valid for 10 minutes.';
-        b.textContent='Verify and log in';$('lgCode').focus();
-      },function(c){busy(b,false);err.textContent=nkError(c);if(c==='not_member'){err.innerHTML+=' <a href="#" id="jl2" style="color:var(--gold-hi)">Join now</a>';$('jl2').onclick=function(ev){ev.preventDefault();join(phone);};}});
-    }
-    $('resend').onclick=function(){$('lgCode').value='';send();};
-    $('otpForm').onsubmit=function(e){
-      e.preventDefault();if(step===1)return send();
-      var code=$('lgCode').value.replace(/\D/g,''),err=$('lgErr'),b=$('lgBtn');err.textContent='';
+    $('pwForm').onsubmit=function(e){
+      e.preventDefault();var err=$('psErr'),b=$('psBtn');err.textContent='';
+      if(step===1){
+        phone=nkPhoneOk($('psPhone').value);if(!phone){err.textContent=nkError('invalid_phone');return;}
+        busy(b,true);
+        nkApi('passStart',{phone:phone}).then(function(r){busy(b,false);step=2;$('psStep').hidden=false;$('psPhone').readOnly=true;$('psTo').textContent='Code sent to '+r.to+'. It is valid for 10 minutes.';b.textContent='Save password and log in';$('psCode').focus();},
+          function(c){busy(b,false);err.textContent=nkError(c);});
+        return;
+      }
+      var code=$('psCode').value.replace(/\D/g,''),pw=$('psPw').value;
       if(code.length!==6){err.textContent='Please enter the 6-digit code.';return;}
+      if(pw.length<6){err.textContent=nkError('weak_password');return;}
       busy(b,true);
-      nkApi('otpVerify',{phone:phone,code:code}).then(function(r){
-        S.token=r.token;nkStore('nk_token',r.token);S.member=r.member;S.history=r.history||[];busy(b,false);dash('card');toast('Welcome back, '+r.member.firstName+'!');
-      },function(c){busy(b,false);err.textContent=nkError(c);});
+      nkApi('passSet',{phone:phone,code:code,password:pw}).then(function(r){busy(b,false);signedIn(r,'Password saved. Welcome, '+r.member.firstName+'!');},function(c){busy(b,false);err.textContent=nkError(c);});
     };
   }
 
   /* ---------- join ---------- */
   function join(prefill){
     tabs.hidden=true;setTop('Back',home);
-    var needEmail=S.cfg.channel!=='sms';
-    show('<div style="display:grid;gap:8px"><p class="kicker">Free to join</p><h1 class="title">Become a Nikadi member</h1><p class="sub">Get '+S.cfg.welcome+' welcome points right away. Your mobile number becomes your member ID.</p></div>'+
+    show('<div style="display:grid;gap:8px"><p class="kicker">Free to join</p><h1 class="title">Become a Nikadi member</h1><p class="sub">Get '+S.cfg.welcome+' welcome points and Silver member rates (5% off) right away. Your mobile number is your member ID.</p></div>'+
       '<form class="panel" id="joinForm" novalidate>'+
       '<label class="field"><span>Full name <i>*</i></span><input class="input" id="jName" autocomplete="name"></label>'+
       phoneField('jPhone','Mobile number <i>*</i>')+
-      '<label class="field"><span>Email'+(needEmail?' <i>*</i>':'')+'</span><input class="input" id="jEmail" type="email" autocomplete="email" inputmode="email">'+(needEmail?'<span class="small">Your login codes are sent here.</span>':'')+'</label>'+
+      '<label class="field"><span>Email <i>*</i></span><input class="input" id="jEmail" type="email" autocomplete="email" inputmode="email"><span class="small">For your booking updates and password resets.</span></label>'+
+      pwField('jPw','Choose a password <i>*</i>','new-password')+
       '<label class="field"><span>City <i>*</i></span><input class="input" id="jCity" autocomplete="address-level2"></label>'+
       '<label class="field"><span>Date of birth (optional)</span><input class="input" id="jDob" type="date"></label>'+
       '<label class="check"><input type="checkbox" id="jAgree"> I agree to the Nikadi Membership terms. Points are earned on room tariff paid and added after check-out.</label>'+
-      '<p class="err" id="jErr"></p><button class="btn btn-gold" id="jBtn" type="submit">Join and get '+S.cfg.welcome+' points</button></form>');
-    if(typeof prefill==='string')$('jPhone').value=prefill;
+      '<p class="err" id="jErr"></p><button class="btn btn-gold" id="jBtn" type="submit">Join and get '+S.cfg.welcome+' points</button></form>'+
+      '<p class="small" style="text-align:center">Already a member? <a href="#" id="toLogin" style="color:var(--gold-hi)">Log in</a></p>');
+    wirePw();if(typeof prefill==='string')$('jPhone').value=prefill;
+    $('toLogin').onclick=function(e){e.preventDefault();home();};
     $('joinForm').onsubmit=function(e){
       e.preventDefault();var err=$('jErr'),b=$('jBtn');err.textContent='';
-      var d={name:$('jName').value.trim(),phone:nkPhoneOk($('jPhone').value),email:$('jEmail').value.trim(),city:$('jCity').value.trim(),dob:$('jDob').value};
+      var d={name:$('jName').value.trim(),phone:nkPhoneOk($('jPhone').value),email:$('jEmail').value.trim(),password:$('jPw').value,city:$('jCity').value.trim(),dob:$('jDob').value};
       if(d.name.length<2)return err.textContent=nkError('name_required');
       if(!d.phone)return err.textContent=nkError('invalid_phone');
-      if(needEmail&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email))return err.textContent='Please enter your email. We send your login codes there.';
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email))return err.textContent='Please enter your email address.';
+      if(d.password.length<6)return err.textContent=nkError('weak_password');
       if(!d.city)return err.textContent='Please enter your city.';
       if(!$('jAgree').checked)return err.textContent='Please agree to the membership terms.';
       busy(b,true);
-      nkApi('join',d).then(function(r){
-        busy(b,false);
-        show('<div style="display:grid;gap:8px;text-align:center;justify-items:center"><p class="kicker">Welcome to Nikadi</p><h1 class="title">Hare Krishna, '+nkEsc(r.member.firstName)+'!</h1><p class="sub">You are now a member. '+r.member.points+' welcome points have been added to your card.</p></div>'+
-          cardHTML(r.member)+progressHTML(r.member.points)+
-          '<button class="btn btn-gold" type="button" id="afterLogin">Log in to your account</button><a class="btn btn-line" href="../#home">Book your stay</a>');
-        animateFill();$('afterLogin').onclick=function(){login(r.member.phone);};
-      },function(c){busy(b,false);err.textContent=nkError(c);if(c==='already_member'){err.innerHTML+=' <a href="#" id="tl" style="color:var(--gold-hi)">Log in</a>';$('tl').onclick=function(ev){ev.preventDefault();login(d.phone);};}});
+      nkApi('join',d).then(function(r){busy(b,false);signedIn(r,'Welcome to Nikadi, '+r.member.firstName+'! '+r.member.points+' points added.');},
+        function(c){busy(b,false);err.textContent=nkError(c);if(c==='already_member'){err.innerHTML+=' <a href="#" id="tl" style="color:var(--gold-hi)">Log in</a>';$('tl').onclick=function(ev){ev.preventDefault();home();};}});
     };
   }
 
   /* ---------- dashboard ---------- */
+  var BST={Pending:'Waiting for payment',Confirmed:'Confirmed','Checked in':'Stayed',Cancelled:'Cancelled','No-show':'No-show'};
+  function bookingHTML(b){
+    return '<div class="stay"><div class="stay-top"><b>'+nkEsc(dS(b.checkin))+' → '+nkEsc(dS(b.checkout))+'</b><span class="chip s-'+nkEsc(String(b.status).toLowerCase().replace(/\s+/g,'-'))+'">'+nkEsc(BST[b.status]||b.status)+'</span></div>'+
+      '<p>'+b.nights+' night'+(b.nights>1?'s':'')+' · '+b.guests+' guest'+(b.guests>1?'s':'')+' · '+(b.rooms?'Room '+nkEsc(b.rooms):nkEsc(b.roomType))+'</p>'+
+      '<p class="stay-money"><span>'+nkInr(b.rate)+' / night · total '+nkInr(b.total)+'</span><span>'+(b.status==='Pending'?'Advance '+nkInr(b.advanceDue)+' to confirm':b.advancePaid?'Paid '+nkInr(b.advancePaid-(b.refunded||0)):'')+'</span></p></div>';
+  }
+  function stayHTML(s){
+    return '<div class="stay"><div class="stay-top"><b>'+nkEsc(dS(s.checkin))+' → '+nkEsc(dS(s.checkout))+'</b><span class="chip">'+(s.status==='In house'?'Staying now':'Room '+nkEsc(s.room))+'</span></div>'+
+      '<p>'+s.nights+' night'+(s.nights>1?'s':'')+' · '+nkInr(s.rate)+' per night</p>'+
+      '<p class="stay-money"><span>Room '+nkInr(s.roomTotal)+(s.extras?' + extras '+nkInr(s.extras):'')+'</span><span>Paid '+nkInr(s.paid)+'</span></p></div>';
+  }
   function dash(tab){
     S.tab=tab||S.tab;tabs.hidden=false;setTop('Log out',logout);
     tabs.querySelectorAll('.tab').forEach(function(t){t.setAttribute('aria-selected',t.dataset.tab===S.tab?'true':'false');});
-    var m=S.member;
+    var m=S.member,t=tierBy(m.tierKey||'silver');
+    var upcoming=(S.stays.bookings||[]).filter(function(b){return (b.status==='Pending'||b.status==='Confirmed')&&b.checkout>=today();});
     if(S.tab==='card'){
-      var last=S.history[0];
       show('<div style="display:grid;gap:6px"><p class="kicker">Hare Krishna</p><h1 class="title">'+nkEsc(m.firstName)+'</h1></div>'+
-        cardHTML(m)+progressHTML(m.points)+
-        '<div class="note"><b>How to redeem</b>Tell us when you book or at the front desk. We send a one-time code to your '+(S.cfg.channel==='sms'?'phone':'email')+', you share it with our staff, and the reward is applied to your bill.</div>'+
-        (last?'<div style="display:grid;gap:10px"><p class="kicker">Latest activity</p><div class="acts">'+actHTML(last)+'</div></div>':'')+
-        '<div class="links"><a class="btn btn-gold" href="../#home">Book a stay</a><a class="btn btn-line" href="'+nkWa('Hare Krishna! I am a Nikadi member ('+m.masked+') and want to redeem my points on my next booking.')+'" target="_blank" rel="noopener">Redeem on WhatsApp</a></div>'+installHTML());
-      animateFill();wireInstall();
-    } else if(S.tab==='rewards'){
-      var dp=S.cfg.discountPoints,np=S.cfg.freeNightPoints;
-      var discCount=Math.floor(m.points/dp);
+        cardHTML(m)+tierProgress(m)+
+        '<div class="perks"><div><b>'+t.discount+'%</b><span>off every booking</span></div><div><b>'+(t.earn%1?t.earn.toFixed(1):t.earn)+'</b><span>points per ₹100</span></div><div><b>'+m.nights2y+'</b><span>nights in '+S.cfg.windowYears+' years</span></div></div>'+
+        (upcoming.length?'<div style="display:grid;gap:10px"><p class="kicker">Your next stay</p>'+bookingHTML(upcoming.slice().sort(function(x,y){return x.checkin<y.checkin?-1:1;})[0])+'</div>':'')+
+        '<div class="links"><button class="btn btn-gold" type="button" id="bookNow">Book at your member rate</button><a class="btn btn-line" href="'+nkWa('Hare Krishna! I am a Nikadi '+(m.tier||'')+' member ('+m.masked+').')+'" target="_blank" rel="noopener">WhatsApp us</a></div>'+
+        '<div style="display:grid;gap:12px"><p class="kicker">Levels</p>'+ladderHTML(m.tierKey)+'</div>'+installHTML());
+      animateFill();wireInstall();$('bookNow').onclick=function(){dash('book');};
+    } else if(S.tab==='book'){
+      var t0=today(),types=Object.keys(S.cfg.rates||RATES);
+      show('<div style="display:grid;gap:6px"><p class="kicker">'+nkEsc(m.tier)+' member rate · '+t.discount+'% off</p><h1 class="title">Book your stay</h1></div>'+
+        '<form class="panel" id="bkForm" novalidate>'+
+        '<div class="field"><span>Room</span><div class="roompick" id="bkRoom">'+types.map(function(k,i){var base=S.cfg.rates[k],mr=Math.round(base*(100-t.discount)/100);
+          return '<button type="button" data-room="'+nkEsc(k)+'" aria-pressed="'+(i===0)+'"><b>'+nkEsc(k)+'</b><span><s>'+nkInr(base)+'</s> '+nkInr(mr)+' / night</span></button>';}).join('')+'</div></div>'+
+        '<div class="row2"><label class="field"><span>Check-in</span><input class="input" type="date" id="bkIn" min="'+t0+'" value="'+addDays(t0,1)+'"></label>'+
+        '<label class="field"><span>Check-out</span><input class="input" type="date" id="bkOut" min="'+addDays(t0,1)+'" value="'+addDays(t0,3)+'"></label></div>'+
+        '<label class="field"><span>Guests</span><input class="input" id="bkGuests" inputmode="numeric" value="2"><span class="small" id="bkHint">Up to 3 guests per room.</span></label>'+
+        '<label class="field"><span>Notes (optional)</span><textarea class="input" id="bkNotes" rows="2" maxlength="200" placeholder="Arrival time, special requests…"></textarea></label>'+
+        '<div class="sum" id="bkSum"></div>'+
+        '<div class="note"><b>Advance and cancellation</b>'+POLICY+'</div>'+
+        '<p class="err" id="bkErr"></p><button class="btn btn-gold" id="bkBtn" type="submit">Send booking request</button>'+
+        '<p class="small">We check availability and send payment details on WhatsApp. Your booking is confirmed once the 50% advance is received.</p></form>');
+      var room=types[0];
+      function sum(){
+        var n=nightsOf($('bkIn').value,$('bkOut').value),g=Math.max(1,+$('bkGuests').value.replace(/\D/g,'')||1),rn=Math.ceil(g/3),base=S.cfg.rates[room],mr=Math.round(base*(100-t.discount)/100);
+        $('bkHint').textContent=g>3?g+' guests need '+rn+' rooms (up to 3 per room).':'Up to 3 guests per room.';
+        $('bkSum').innerHTML=n>0?'<div><span>'+n+' night'+(n>1?'s':'')+' × '+rn+' room'+(rn>1?'s':'')+' × '+nkInr(mr)+'</span><b>'+nkInr(n*rn*mr)+'</b></div>'+
+          '<div class="save"><span>You save as '+nkEsc(m.tier)+'</span><b>'+nkInr(n*rn*(base-mr))+'</b></div><div><span>Advance to confirm (50%)</span><b>'+nkInr(Math.ceil(n*rn*mr/2))+'</b></div>'+
+          '<div><span>Points you will earn</span><b>~'+Math.floor(n*rn*mr/100*t.earn)+'</b></div>':'<div><span>Check-out must be after check-in</span></div>';
+      }
+      $('bkRoom').onclick=function(e){var b=e.target.closest('button');if(!b)return;room=b.dataset.room;$('bkRoom').querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b);});sum();};
+      ['bkIn','bkOut','bkGuests'].forEach(function(id){$(id).addEventListener('input',sum);});sum();
+      $('bkForm').onsubmit=function(e){
+        e.preventDefault();var err=$('bkErr'),b=$('bkBtn');err.textContent='';
+        var d={token:S.token,roomType:room,checkin:$('bkIn').value,checkout:$('bkOut').value,guests:Math.max(1,+$('bkGuests').value.replace(/\D/g,'')||1),notes:$('bkNotes').value};
+        d.roomsNeeded=Math.ceil(d.guests/3);
+        if(nightsOf(d.checkin,d.checkout)<1||d.checkin<today())return err.textContent=nkError('bad_dates');
+        busy(b,true);
+        nkApi('book',d).then(function(r){
+          busy(b,false);S.stays=r.stays||S.stays;
+          show('<div style="display:grid;gap:8px;text-align:center;justify-items:center"><p class="kicker">Request sent</p><h1 class="title">Thank you, '+nkEsc(m.firstName)+'!</h1>'+
+            '<p class="sub">We have your request for '+nkEsc(dS(d.checkin))+' to '+nkEsc(dS(d.checkout))+' at your '+nkEsc(m.tier)+' rate of '+nkInr(r.rate)+' per night. We will message you on WhatsApp with availability and payment details.</p></div>'+
+            '<a class="btn btn-gold" target="_blank" rel="noopener" href="'+nkWa('Hare Krishna! I just sent booking request '+r.booking+' from the member app ('+dS(d.checkin)+' to '+dS(d.checkout)+', '+d.guests+' guests).')+'">Message us on WhatsApp</a>'+
+            '<button class="btn btn-line" type="button" id="toStays">See my bookings</button>');
+          $('toStays').onclick=function(){dash('stays');};
+        },function(c){busy(b,false);err.textContent=nkError(c);});
+      };
+    } else if(S.tab==='stays'){
+      var bk=S.stays.bookings||[],st=S.stays.stays||[];
+      var spent=st.reduce(function(a,s){return a+Number(s.roomTotal||0)+Number(s.extras||0);},0);
+      show('<div style="display:grid;gap:6px"><p class="kicker">Your stays</p><h1 class="title">History</h1></div>'+
+        '<div class="perks"><div><b>'+m.nightsAll+'</b><span>nights with us</span></div><div><b>'+st.length+'</b><span>stays</span></div><div><b>'+nkInr(spent)+'</b><span>total</span></div></div>'+
+        '<div style="display:grid;gap:10px"><p class="kicker">Bookings</p>'+(bk.length?bk.map(bookingHTML).join(''):'<div class="empty">No bookings yet. <a href="#" id="toBook" style="color:var(--gold-hi)">Book a stay</a></div>')+'</div>'+
+        '<div style="display:grid;gap:10px"><p class="kicker">Past stays</p>'+(st.length?st.map(stayHTML).join(''):'<div class="empty">Your stays appear here after check-out.</div>')+'</div>');
+      var tb=$('toBook');if(tb)tb.onclick=function(e){e.preventDefault();dash('book');};
+    } else {
+      var dp=S.cfg.discountPoints,np=S.cfg.freeNightPoints,discCount=Math.floor(m.points/dp);
       show('<div style="display:grid;gap:6px"><p class="kicker">Rewards</p><h1 class="title">Use your '+m.points.toLocaleString('en-IN')+' points</h1></div>'+
+        pointsProgress(m.points)+
         '<div class="rewards">'+
         rewardHTML('<path d="M7 7h.01M3 12l9-9h7v7l-9 9z"/>',nkInr(S.cfg.discountValue)+' off',dp+' points · any booking',m.points>=dp?(discCount>1?discCount+' available':'Available'):(dp-m.points)+' to go',m.points>=dp)+
         rewardHTML('<path d="M3 18v-6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v6M3 14h18M6 9V6h4v3"/>','Free night',np+' points · any room',m.points>=np?'Available':(np-m.points)+' to go',m.points>=np)+
         '</div>'+
-        '<div class="panel"><h2>Earning points</h2><p class="sub">You earn '+S.cfg.pointsPer100+' point for every ₹100 of room tariff. Points are added after check-out. They are not earned on fines or extra charges.</p></div>'+
-        '<div class="panel"><h2>Redeeming</h2><p class="sub">Tell us when you book, or at the front desk. Our staff start the redemption and you receive a one-time code. Share it with them to confirm, and the reward is applied to your bill. Free nights are subject to availability.</p>'+
-        '<a class="btn btn-line" href="'+nkWa('Hare Krishna! I am a Nikadi member ('+m.masked+') and want to redeem my points.')+'" target="_blank" rel="noopener">Ask to redeem on WhatsApp</a></div>');
-    } else {
-      show('<div style="display:grid;gap:6px"><p class="kicker">Activity</p><h1 class="title">Your points history</h1><p class="sub">Lifetime points earned: '+(m.lifetime||0).toLocaleString('en-IN')+'</p></div>'+
-        (S.history.length?'<div class="acts">'+S.history.map(actHTML).join('')+'</div>':'<div class="empty">No activity yet. Your stays and rewards will appear here.</div>'));
+        '<div class="panel"><h2>Redeeming</h2><p class="sub">Tell us when you book, or at the front desk. We email you a one-time code; share it with our staff and the reward is applied to your bill. Free nights are subject to availability.</p>'+
+        '<a class="btn btn-line" href="'+nkWa('Hare Krishna! I am a Nikadi member ('+m.masked+') and want to redeem my points.')+'" target="_blank" rel="noopener">Ask to redeem on WhatsApp</a></div>'+
+        '<div style="display:grid;gap:10px"><p class="kicker">Points history · lifetime '+(m.lifetime||0).toLocaleString('en-IN')+'</p>'+
+        (S.history.length?'<div class="acts">'+S.history.map(actHTML).join('')+'</div>':'<div class="empty">No activity yet.</div>')+'</div>');
+      animateFill();
     }
   }
   function rewardHTML(path,title,sub,tag,on){return '<div class="reward"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg></span><div><h3>'+title+'</h3><p>'+sub+'</p></div><span class="tag'+(on?' on':'')+'">'+tag+'</span></div>';}
@@ -214,12 +291,13 @@
 
   /* ---------- start ---------- */
   function start(){
-    var cfg=nkApi('config').then(function(c){['pointsPer100','welcome','discountPoints','discountValue','freeNightPoints','channel'].forEach(function(k){if(c[k]!=null)S.cfg[k]=c[k];});}).catch(function(){});
-    if(!S.token){home();if(/[?&]join=1/.test(location.search)||location.hash==='#join')cfg.then(function(){join();});return;}
+    var cfg=nkApi('config').then(function(c){['pointsPer100','welcome','discountPoints','discountValue','freeNightPoints','channel','tiers','rates','plusYears','windowYears'].forEach(function(k){if(c[k]!=null)S.cfg[k]=c[k];});}).catch(function(){});
+    var want=/[?&]join=1/.test(location.search)||location.hash==='#join',wantBook=/[?&]book=1/.test(location.search)||location.hash==='#book';
+    if(!S.token){home();cfg.then(function(){if(!S.token){if(want)join();else home();}});return;}
     tabs.hidden=true;setTop('',null);
     view.innerHTML='<div class="mcard ghost" style="opacity:.6" aria-label="Loading your card"></div><p class="small" style="text-align:center">Loading your membership…</p>';
     cfg.then(function(){return nkApi('me',{token:S.token});})
-      .then(function(r){S.member=r.member;S.history=r.history||[];dash('card');},function(c){S.token=null;nkStore('nk_token',null);home();if(c!=='network')toast(nkError(c));});
+      .then(function(r){S.member=r.member;S.history=r.history||[];S.stays=r.stays||{stays:[],bookings:[]};dash(wantBook?'book':'card');},function(c){S.token=null;nkStore('nk_token',null);home();if(c!=='network')toast(nkError(c));});
   }
   start();
 })();

@@ -12,13 +12,26 @@
  */
 
 var TABS = {
-  members: ['Phone', 'Name', 'Email', 'City', 'Date of birth', 'Joined', 'Points', 'Lifetime points', 'Status', 'Notes'],
+  members: ['Phone', 'Name', 'Email', 'City', 'Date of birth', 'Joined', 'Points', 'Lifetime points', 'Status', 'Notes',
+    'Password (hashed)', 'Tier', 'Platinum Plus until', 'Nights (last 2 years)', 'Lifetime nights'],
   tx: ['Date', 'Phone', 'Name', 'Type', 'Amount (₹)', 'Points', 'Balance after', 'Note', 'By'],
   otps: ['Phone', 'Hash', 'Purpose', 'Expires', 'Attempts', 'Payload'],
   sessions: ['Token', 'Phone', 'Role', 'Expires'],
   settings: ['Key', 'Value', 'What it means']
 };
 var SHEET_NAMES = { members: 'Members', tx: 'Transactions', otps: 'Otps', sessions: 'Sessions', settings: 'Settings' };
+
+/* Membership levels. Gold and Platinum count nights in the last 2 years (they renew).
+   Platinum Plus: 80 nights in total; once reached it is kept for 10 years. */
+var TIERS = [
+  { key: 'silver', name: 'Silver', nights: 0, discount: 5, earn: 1 },
+  { key: 'gold', name: 'Gold', nights: 15, discount: 10, earn: 1.5 },
+  { key: 'platinum', name: 'Platinum', nights: 40, discount: 15, earn: 2 },
+  { key: 'plus', name: 'Platinum Plus', nights: 80, discount: 20, earn: 4 }
+];
+var TIER_WINDOW_DAYS = 730;   // Gold / Platinum: nights in the last 2 years
+var PLUS_HOLD_YEARS = 10;     // Platinum Plus is kept this long once reached
+var BASE_RATES = { 'Deluxe Double (King)': 5000, 'Deluxe Twin': 4500, 'Large Twin': 5000 };
 
 var DEFAULT_SETTINGS = [
   ['STAFF_PIN', '2468', 'PIN for the staff panel. CHANGE THIS to your own 4–8 digit PIN.'],
@@ -47,10 +60,13 @@ function setup() {
     var sh = ss.getSheetByName(name) || ss.insertSheet(name);
     if (sh.getLastRow() === 0) {
       sh.appendRow(TABS[k]);
-      sh.getRange(1, 1, 1, TABS[k].length).setFontWeight('bold').setBackground('#1b1714').setFontColor('#e0be7a');
       sh.setFrozenRows(1);
+    } else if (sh.getLastColumn() < TABS[k].length) {
+      sh.getRange(1, 1, 1, TABS[k].length).setValues([TABS[k]]); // new columns added in a later version
     }
+    sh.getRange(1, 1, 1, TABS[k].length).setFontWeight('bold').setBackground('#1b1714').setFontColor('#e0be7a');
   });
+  ss.getSheetByName('Members').getRange('K:K').setNumberFormat('@');
   // Phone columns are plain text so leading digits are never lost
   ss.getSheetByName('Members').getRange('A:A').setNumberFormat('@');
   ss.getSheetByName('Transactions').getRange('B:B').setNumberFormat('@');
@@ -79,6 +95,7 @@ function doPost(e) {
   try { req = JSON.parse(e.postData.contents || '{}'); } catch (err) { return json_({ ok: false, error: 'bad_request' }); }
   var actions = {
     config: apiConfig_, lookup: apiLookup_, join: apiJoin_, otpSend: apiOtpSend_, otpVerify: apiOtpVerify_, me: apiMe_,
+    login: apiLogin_, passStart: apiPassStart_, passSet: apiPassSet_, book: apiBook_,
     staffLogin: staffLogin_, staffMember: staffMember_, staffCreate: staffCreate_, staffAddStay: staffAddStay_,
     staffRedeemStart: staffRedeemStart_, staffRedeemConfirm: staffRedeemConfirm_, staffAdjust: staffAdjust_, staffRecent: staffRecent_
   };
@@ -142,16 +159,21 @@ function findMember_(phone) {
   if (n < 2) return null;
   var vals = sh.getRange(2, 1, n - 1, TABS.members.length).getValues();
   for (var i = 0; i < vals.length; i++) {
-    if (String(vals[i][0]) === phone) {
+    if (String(vals[i][0]).replace(/^'/, '') === phone) {
       var r = vals[i];
-      return { row: i + 2, phone: phone, name: r[1], email: r[2], city: r[3], dob: r[4], joined: r[5], points: num_(r[6], 0), lifetime: num_(r[7], 0), status: r[8] || 'Active' };
+      return { row: i + 2, phone: phone, name: r[1], email: r[2], city: r[3], dob: r[4], joined: r[5], points: num_(r[6], 0), lifetime: num_(r[7], 0), status: r[8] || 'Active',
+        pass: String(r[10] || ''), tierName: String(r[11] || ''), plusUntil: r[12] ? new Date(r[12]) : null, nights2y: num_(r[13], 0), nightsAll: num_(r[14], 0) };
     }
   }
   return null;
 }
 function publicMember_(m) {
   var s = settings_();
+  var t = tierOf_(m);
   return {
+    tier: t.tier.name, tierKey: t.tier.key, discount: t.tier.discount, earn: t.tier.earn, nights2y: t.nights2y, nightsAll: t.nightsAll,
+    plusUntil: t.plusUntil ? Utilities.formatDate(t.plusUntil, 'Asia/Kolkata', 'd MMM yyyy') : '',
+    next: t.next ? { name: t.next.name, need: t.need, nights: t.next.nights } : null, hasPassword: !!m.pass,
     phone: m.phone, masked: maskPhone_(m.phone), name: m.name, firstName: firstName_(m.name), email: m.email, city: m.city,
     joined: m.joined ? fmtDate_(m.joined) : '', points: m.points, lifetime: m.lifetime, status: m.status,
     freeNightPoints: num_(s.FREE_NIGHT_POINTS, 500), discountPoints: num_(s.DISCOUNT_POINTS, 100), discountValue: num_(s.DISCOUNT_VALUE, 500)
@@ -182,6 +204,78 @@ function addTx_(m, type, amount, points, note, by) {
   return newBal;
 }
 
+/* ---------------- Levels (tiers) ---------------- */
+
+/** Nights a member has stayed: checked-out stays in the staff app (matched by phone) + manual "Nights" entries. */
+function memberNights_(phone, skipStay) {
+  var out = [];
+  if (typeof deskDb_ === 'function') {
+    try {
+      deskDb_().all('stays').forEach(function (st) {
+        if (String(st.phone) === phone && st.status === 'Checked out' && st.id !== skipStay) out.push({ date: st.checkout, nights: num_(st.nights, 0) });
+      });
+    } catch (e) {}
+  }
+  var sh = sheet_('tx'), n = sh.getLastRow();
+  if (n > 1) sh.getRange(2, 1, n - 1, 5).getValues().forEach(function (r) {
+    if (String(r[1]).replace(/^'/, '') === phone && r[3] === 'Nights') out.push({ date: Utilities.formatDate(new Date(r[0]), 'Asia/Kolkata', 'yyyy-MM-dd'), nights: num_(r[4], 0) });
+  });
+  return out;
+}
+
+function tierOf_(m, skipStay) {
+  var list = memberNights_(m.phone, skipStay), now = new Date();
+  var since = Utilities.formatDate(new Date(now.getTime() - TIER_WINDOW_DAYS * 864e5), 'Asia/Kolkata', 'yyyy-MM-dd');
+  var nightsAll = 0, nights2y = 0;
+  list.forEach(function (x) { nightsAll += x.nights; if (x.date >= since) nights2y += x.nights; });
+  var plus = TIERS[3], plusUntil = m.plusUntil && !isNaN(m.plusUntil) ? m.plusUntil : null, tier;
+  if (plusUntil && plusUntil > now) tier = plus;
+  else {
+    // Platinum Plus: 80 nights counted after any earlier Platinum Plus period ended
+    var from = plusUntil ? Utilities.formatDate(plusUntil, 'Asia/Kolkata', 'yyyy-MM-dd') : '0000';
+    var forPlus = 0; list.forEach(function (x) { if (x.date >= from) forPlus += x.nights; });
+    if (forPlus >= plus.nights) { tier = plus; plusUntil = new Date(now.getTime()); plusUntil.setFullYear(plusUntil.getFullYear() + PLUS_HOLD_YEARS); }
+    else tier = nights2y >= TIERS[2].nights ? TIERS[2] : nights2y >= TIERS[1].nights ? TIERS[1] : TIERS[0];
+  }
+  var next = tier.key === 'plus' ? null : tier.key === 'platinum' ? plus : TIERS[TIERS.indexOf(tier) + 1];
+  var need = next ? (next.key === 'plus' ? Math.max(0, plus.nights - nightsAll) : Math.max(0, next.nights - nights2y)) : 0;
+  // keep the sheet columns readable for the owner (only write when something changed)
+  if (m.row && !skipStay && (m.tierName !== tier.name || m.nights2y !== nights2y || m.nightsAll !== nightsAll || String(m.plusUntil || '') !== String(tier.key === 'plus' ? plusUntil : m.plusUntil || ''))) {
+    sheet_('members').getRange(m.row, 12, 1, 4).setValues([[tier.name, tier.key === 'plus' ? plusUntil : (m.plusUntil || ''), nights2y, nightsAll]]);
+    m.tierName = tier.name; m.nights2y = nights2y; m.nightsAll = nightsAll; if (tier.key === 'plus') m.plusUntil = plusUntil;
+  }
+  return { tier: tier, next: next, need: need, nights2y: nights2y, nightsAll: nightsAll, plusUntil: tier.key === 'plus' ? plusUntil : null };
+}
+
+/** Staff app check-out → points for members (room tariff only, × level multiplier). Called from Staff.gs. */
+function memberStayPoints_(st) {
+  var phone; try { phone = normPhone_(st.phone); } catch (e) { return null; }
+  var m = findMember_(phone);
+  if (!m || m.status === 'Blocked' || !(st.roomTotal > 0)) return null;
+  var t = tierOf_(m, st.id); // the level held before this stay decides the earning rate
+  var pts = Math.floor(st.roomTotal / 100 * num_(settings_().POINTS_PER_100, 1) * t.tier.earn);
+  addTx_(m, 'Stay', st.roomTotal, pts, 'Room ' + st.room + ' · ' + st.nights + (st.nights > 1 ? ' nights' : ' night') + ' · ' + st.checkin + ' to ' + st.checkout + ' · ' + t.tier.name + ' ×' + t.tier.earn, 'Staff app');
+  var after = tierOf_(m);
+  notify_(m, 'Thank you for staying with us! ' + pts + ' points added for your stay in room ' + st.room + '. Your balance: ' + m.points + ' points. Level: ' + after.tier.name +
+    (after.tier.key !== t.tier.key ? ' (congratulations, you moved up!)' : '') + '.');
+  return { name: m.name, points: pts, balance: m.points, tier: after.tier.name };
+}
+
+/* ---------------- Passwords ---------------- */
+function pwHash_(pw, salt) { var h = salt + ':' + pw; for (var i = 0; i < 150; i++) h = hash_(salt + h); return h; }
+function pwMake_(pw) {
+  pw = String(pw || '');
+  if (pw.length < 6 || pw.length > 64) throw new Error('weak_password');
+  var salt = Utilities.getUuid().replace(/-/g, '').slice(0, 16);
+  return salt + '$' + pwHash_(pw, salt);
+}
+function pwCheck_(m, pw) {
+  if (!m.pass) return false;
+  var parts = m.pass.split('$');
+  return parts.length === 2 && pwHash_(String(pw || ''), parts[0]) === parts[1];
+}
+function pwSet_(m, pw) { var v = pwMake_(pw); sheet_('members').getRange(m.row, 11).setValue(v); m.pass = v; }
+
 function createMember_(d, by) {
   var phone = normPhone_(d.phone);
   if (findMember_(phone)) throw new Error('already_member');
@@ -190,8 +284,10 @@ function createMember_(d, by) {
   var email = clean_(d.email, 120);
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('invalid_email');
   var ms = sheet_('members');
-  ms.appendRow(["'" + phone, name, email, clean_(d.city, 80), clean_(d.dob, 20), new Date(), 0, 0, 'Active', clean_(d.note, 200)]);
+  if (d.password != null && d.password !== '') pwMake_(d.password); // validate before saving anything
+  ms.appendRow(["'" + phone, name, email, clean_(d.city, 80), clean_(d.dob, 20), new Date(), 0, 0, 'Active', clean_(d.note, 200), '', 'Silver', '', 0, 0]);
   var m = findMember_(phone);
+  if (d.password) pwSet_(m, d.password);
   var s = settings_(), wp = num_(s.WELCOME_POINTS, 100);
   if (wp > 0) addTx_(m, 'Welcome', '', wp, 'Welcome bonus', by || 'Website');
   notify_(m, 'Welcome to Nikadi Membership! ' + wp + ' welcome points have been added. Your balance: ' + m.points + ' points.');
@@ -327,7 +423,8 @@ function apiConfig_() {
   var s = settings_();
   return {
     pointsPer100: num_(s.POINTS_PER_100, 1), welcome: num_(s.WELCOME_POINTS, 100), discountPoints: num_(s.DISCOUNT_POINTS, 100),
-    discountValue: num_(s.DISCOUNT_VALUE, 500), freeNightPoints: num_(s.FREE_NIGHT_POINTS, 500), channel: String(s.OTP_CHANNEL || 'email')
+    discountValue: num_(s.DISCOUNT_VALUE, 500), freeNightPoints: num_(s.FREE_NIGHT_POINTS, 500), channel: String(s.OTP_CHANNEL || 'email'),
+    tiers: TIERS, rates: BASE_RATES, plusYears: PLUS_HOLD_YEARS, windowYears: TIER_WINDOW_DAYS / 365
   };
 }
 
@@ -337,12 +434,85 @@ function apiLookup_(req) {
   var m = findMember_(phone);
   if (!m) return { found: false };
   var p = publicMember_(m);
-  return { found: true, member: { firstName: p.firstName, masked: p.masked, points: p.points, freeNightPoints: p.freeNightPoints, discountPoints: p.discountPoints, discountValue: p.discountValue, status: p.status } };
+  return { found: true, member: { firstName: p.firstName, masked: p.masked, points: p.points, tier: p.tier, freeNightPoints: p.freeNightPoints, discountPoints: p.discountPoints, discountValue: p.discountValue, status: p.status } };
 }
 
 function apiJoin_(req) {
+  if (!req.password) throw new Error('password_required');
   var m = createMember_(req, 'Website');
-  return { member: publicMember_(m) };
+  return { token: sessionCreate_(m.phone, 'member', 60), member: publicMember_(m), history: history_(m.phone, 50), stays: memberStays_(m.phone) };
+}
+
+/** Phone number + password. */
+function apiLogin_(req) {
+  var phone = normPhone_(req.phone);
+  var cache = CacheService.getScriptCache(), k = 'pwfail_' + phone, fails = num_(cache.get(k), 0);
+  if (fails >= 8) throw new Error('too_many_attempts');
+  var m = findMember_(phone);
+  if (!m) throw new Error('not_member');
+  if (!m.pass) throw new Error('no_password');
+  if (!pwCheck_(m, req.password)) { cache.put(k, String(fails + 1), 900); throw new Error('wrong_password'); }
+  cache.remove(k);
+  return { token: sessionCreate_(phone, 'member', 60), member: publicMember_(m), history: history_(phone, 50), stays: memberStays_(phone) };
+}
+
+/** Forgot / set password: a code is emailed, then code + new password. */
+function apiPassStart_(req) {
+  var phone = normPhone_(req.phone);
+  var m = findMember_(phone);
+  if (!m) throw new Error('not_member');
+  otpRate_(phone);
+  var code = otpCreate_(phone, 'reset');
+  var ch = sendOtpMessage_(m, code, 'to set your Nikadi member app password');
+  return { channel: ch, to: ch === 'email' ? m.email.replace(/^(.).*(@.*)$/, '$1***$2') : maskPhone_(phone) };
+}
+function apiPassSet_(req) {
+  var phone = normPhone_(req.phone);
+  pwMake_(req.password);
+  otpCheck_(phone, 'reset', req.code);
+  var m = findMember_(phone);
+  if (!m) throw new Error('not_member');
+  pwSet_(m, req.password);
+  CacheService.getScriptCache().remove('pwfail_' + phone);
+  return { token: sessionCreate_(phone, 'member', 60), member: publicMember_(m), history: history_(phone, 50), stays: memberStays_(phone) };
+}
+
+/** A member's stays (from the staff app) and bookings, newest first. */
+function memberStays_(phone) {
+  if (typeof deskDb_ !== 'function') return { stays: [], bookings: [] };
+  var db = deskDb_(), stays = [], bookings = [];
+  try {
+    db.all('stays').forEach(function (s) {
+      if (String(s.phone) !== phone || (s.status !== 'Checked out' && s.status !== 'In house')) return;
+      stays.push({ id: s.id, room: s.room, checkin: s.checkin, checkout: s.checkout, nights: s.nights, rate: s.rate, roomTotal: s.roomTotal, extras: s.extras,
+        paid: s.paid, balance: s.balance, status: s.status });
+    });
+    db.all('bookings').forEach(function (b) {
+      if (String(b.phone) !== phone) return;
+      bookings.push({ id: b.id, status: b.status, checkin: b.checkin, checkout: b.checkout, nights: b.nights, guests: b.guests, rooms: b.rooms, roomsNeeded: b.roomsNeeded,
+        roomType: b.roomType, rate: b.rate, total: b.total, advanceDue: b.advanceDue, advancePaid: b.advancePaid, refunded: b.refunded, created: b.created });
+    });
+  } catch (e) {}
+  return { stays: stays.reverse(), bookings: bookings.reverse() };
+}
+
+/** Members book in the app: lands in the staff app as Pending with their member rate. */
+function apiBook_(req) {
+  var phone = sessionGet_(req.token, 'member');
+  var m = findMember_(phone);
+  if (!m) throw new Error('not_member');
+  if (typeof deskCore !== 'function') throw new Error('server_error');
+  var t = tierOf_(m), type = BASE_RATES[req.roomType] ? req.roomType : 'Deluxe Double (King)';
+  var rate = Math.round(BASE_RATES[type] * (100 - t.tier.discount) / 100);
+  var api = deskCore(deskDb_());
+  var r = api.bookingRequest({ _internal: true, source: 'Member app', rate: rate, guest: m.name, phone: phone, email: m.email, guests: req.guests, roomsNeeded: req.roomsNeeded,
+    roomType: type, checkin: req.checkin, checkout: req.checkout,
+    notes: [t.tier.name + ' member · ' + t.tier.discount + '% member rate (₹' + rate + ' instead of ₹' + BASE_RATES[type] + ')', clean_(req.notes, 200)].filter(Boolean).join(' · ') });
+  try {
+    var s = settings_();
+    if (s.OWNER_EMAIL) MailApp.sendEmail(String(s.OWNER_EMAIL), 'New member booking: ' + m.name, m.name + ' (' + t.tier.name + ', ' + phone + ') asked to book ' + type + ' from ' + req.checkin + ' to ' + req.checkout + '. Open the staff app → Bookings to confirm after the advance is paid.');
+  } catch (e) {}
+  return { booking: r.id, duplicate: !!r.duplicate, rate: rate, stays: memberStays_(phone) };
 }
 
 function apiOtpSend_(req) {
@@ -360,14 +530,14 @@ function apiOtpVerify_(req) {
   otpCheck_(phone, 'login', req.code);
   var m = findMember_(phone);
   if (!m) throw new Error('not_member');
-  return { token: sessionCreate_(phone, 'member', 60), member: publicMember_(m), history: history_(phone, 50) };
+  return { token: sessionCreate_(phone, 'member', 60), member: publicMember_(m), history: history_(phone, 50), stays: memberStays_(phone) };
 }
 
 function apiMe_(req) {
   var phone = sessionGet_(req.token, 'member');
   var m = findMember_(phone);
   if (!m) throw new Error('not_member');
-  return { member: publicMember_(m), history: history_(phone, 50) };
+  return { member: publicMember_(m), history: history_(phone, 50), stays: memberStays_(phone) };
 }
 
 /* ------------------------------------------------------------------ */

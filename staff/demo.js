@@ -92,7 +92,9 @@
         try {
           var api = deskCore(memoryDb(world));
           if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
-          var out = api[name](JSON.parse(JSON.stringify(req || {})));
+          var clean = JSON.parse(JSON.stringify(req || {}));
+          Object.keys(clean).forEach(function (k) { if (k.charAt(0) === '_') delete clean[k]; });
+          var out = api[name](clean);
           save(world);
           resolve(Object.assign({ ok: true }, out));
         } catch (e) { reject(String(e && e.message || e)); }

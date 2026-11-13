@@ -52,9 +52,11 @@ function deskDb_() {
 function deskHandle_(req) {
   var name = String(req.action).slice(4);
   name = name.charAt(0).toLowerCase() + name.slice(1);
-  var api = deskCore(deskDb_());
+  var clean = {};
+  Object.keys(req).forEach(function (k) { if (k.charAt(0) !== '_') clean[k] = req[k]; }); // private flags only from inside the script
+  var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null });
   if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
-  return api[name](req);
+  return api[name](clean);
 }
 
 /** Creates the staff app tabs. Called from setup() in Code.gs; safe to run again. */
