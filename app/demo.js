@@ -6,7 +6,7 @@
     {key:'silver',name:'Silver',nights:0,discount:5,earn:1,birthday:50,perks:[{id:'rate',text:'5% member rate on every booking'},{id:'points',text:'1 point for every ₹100 of room tariff'},{id:'welcome',text:'100 welcome points when you join'},{id:'offers',text:'Member-only offers on WhatsApp'},{id:'birthday',text:'50 bonus points in your birthday month'}]},
     {key:'gold',name:'Gold',nights:15,discount:10,earn:1.5,birthday:100,perks:[{id:'rate',text:'10% member rate on every booking'},{id:'points',text:'1.5 points for every ₹100 of room tariff'},{id:'earlyci',text:'Early check-in from 9 AM, when available',onsite:true},{id:'birthday',text:'100 bonus points in your birthday month'}]},
     {key:'platinum',name:'Platinum',nights:40,discount:15,earn:2,birthday:100,perks:[{id:'rate',text:'15% member rate on every booking'},{id:'points',text:'2 points for every ₹100 of room tariff'},{id:'latecheckout',text:'Free late check-out till 11 AM (usually ₹1,500)',onsite:true},{id:'upgrade',text:'Free room upgrade, when available',onsite:true},{id:'dental',text:'Free dental kit every stay',onsite:true}]},
-    {key:'plus',name:'Platinum Plus',nights:80,discount:20,earn:4,birthday:100,perks:[{id:'rate',text:'20% member rate on every booking'},{id:'points',text:'4 points for every ₹100 of room tariff'},{id:'latecheckout',text:'Free late check-out till 12 noon',onsite:true},{id:'mattress',text:'Free extra mattress when needed',onsite:true},{id:'festival',text:'Priority booking for festivals (Gaura Purnima, Kartik)'},{id:'hold',text:'Your level is kept for 10 years'}]}];
+    {key:'plus',name:'Platinum Plus',nights:100,discount:20,earn:4,birthday:100,perks:[{id:'rate',text:'20% member rate on every booking'},{id:'points',text:'4 points for every ₹100 of room tariff'},{id:'latecheckout',text:'Free late check-out till 12 noon',onsite:true},{id:'mattress',text:'Free extra mattress when needed',onsite:true},{id:'festival',text:'Priority booking for festivals (Gaura Purnima, Kartik)'},{id:'hold',text:'Your level is kept for 10 years'}]}];
   var RATES = { "Deluxe Double (King)": 5000, "Deluxe Twin": 4500, "Large Twin": 5000 };
   var cfg = { pointsPer100: 1, welcome: 100, discountPoints: 100, discountValue: 500, freeNightPoints: 500, channel: "email", tiers: TIERS, rates: RATES, plusYears: 10, windowYears: 2 };
   var members = {
@@ -27,7 +27,7 @@
   var pending = null;
   function mask(p) { return p.slice(0, 2) + "******" + p.slice(-2); }
   function tierOf(m) {
-    var n = m.nights || 0, t = n >= 80 ? TIERS[3] : n >= 40 ? TIERS[2] : n >= 15 ? TIERS[1] : TIERS[0], i = TIERS.indexOf(t), next = TIERS[i + 1];
+    var n = m.nights || 0, t = n >= 100 ? TIERS[3] : n >= 40 ? TIERS[2] : n >= 15 ? TIERS[1] : TIERS[0], i = TIERS.indexOf(t), next = TIERS[i + 1];
     return { t: t, next: next ? { name: next.name, need: next.nights - n, nights: next.nights } : null };
   }
   function pub(m) { var x = tierOf(m); return { phone: m.phone, masked: mask(m.phone), name: m.name, firstName: m.name.split(" ")[0], city: m.city, email: m.email || "radha@example.com", joined: m.joined, points: m.points, lifetime: m.lifetime, status: m.status,

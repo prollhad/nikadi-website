@@ -22,7 +22,7 @@ var TABS = {
 var SHEET_NAMES = { members: 'Members', tx: 'Transactions', otps: 'Otps', sessions: 'Sessions', settings: 'Settings' };
 
 /* Membership levels. Gold and Platinum count nights in the last 2 years (they renew).
-   Platinum Plus: 80 nights in total; once reached it is kept for 10 years. */
+   Platinum Plus: 100 nights in total; once reached it is kept for 10 years. */
 /* Benefits: each level lists what it ADDS or IMPROVES (same id = replaces the lower level's line).
    onsite = staff must honour it during the stay (shown in the staff app). */
 var TIERS = [
@@ -43,7 +43,7 @@ var TIERS = [
     { id: 'latecheckout', text: 'Free late check-out till 11 AM (usually ₹1,500)', onsite: true },
     { id: 'upgrade', text: 'Free room upgrade, when available', onsite: true },
     { id: 'dental', text: 'Free dental kit every stay', onsite: true }] },
-  { key: 'plus', name: 'Platinum Plus', nights: 80, discount: 20, earn: 4, birthday: 100, perks: [
+  { key: 'plus', name: 'Platinum Plus', nights: 100, discount: 20, earn: 4, birthday: 100, perks: [
     { id: 'rate', text: '20% member rate on every booking' },
     { id: 'points', text: '4 points for every ₹100 of room tariff' },
     { id: 'latecheckout', text: 'Free late check-out till 12 noon', onsite: true },
@@ -265,7 +265,7 @@ function tierOf_(m, skipStay) {
   var plus = TIERS[3], plusUntil = m.plusUntil && !isNaN(m.plusUntil) ? m.plusUntil : null, tier;
   if (plusUntil && plusUntil > now) tier = plus;
   else {
-    // Platinum Plus: 80 nights counted after any earlier Platinum Plus period ended
+    // Platinum Plus: 100 nights counted after any earlier Platinum Plus period ended
     var from = plusUntil ? Utilities.formatDate(plusUntil, 'Asia/Kolkata', 'yyyy-MM-dd') : '0000';
     var forPlus = 0; list.forEach(function (x) { if (x.date >= from) forPlus += x.nights; });
     if (forPlus >= plus.nights) { tier = plus; plusUntil = new Date(now.getTime()); plusUntil.setFullYear(plusUntil.getFullYear() + PLUS_HOLD_YEARS); }
