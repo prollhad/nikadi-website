@@ -244,6 +244,9 @@ section.alt{background:var(--band)}
 .rules div{background:var(--bg);padding:28px 22px;display:grid;gap:8px;align-content:start}
 .rules h3{font-size:1.4rem;color:var(--gold-hi)}
 .rules p{color:var(--muted);font-size:.93rem}
+.rules .wide{grid-column:1/-1}
+.rules p b,.policy-box b{color:var(--ink);font-weight:500}
+.policy-box{grid-column:1/-1;border:1px solid var(--line);border-left:2px solid var(--gold);background:var(--panel);padding:18px 20px;display:grid;gap:8px;font-size:.93rem;color:var(--muted);line-height:1.6}
 @media (max-width:900px){.rules{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:520px){.rules{grid-template-columns:1fr}}
 
@@ -632,14 +635,15 @@ footer .brand b{font-size:1.2rem}
     <div class="head">
       <p class="kicker rule">Booking and payment</p>
       <h2>Reserve in three simple steps</h2>
-      <p>Pay securely by UPI from any app. Your booking is confirmed on WhatsApp once we receive the advance. You can also fill our booking and registration forms online, below.</p>
+      <p>Pay securely by UPI from any app. Your booking is confirmed on WhatsApp once we receive the 50% advance. You can also fill our booking and registration forms online, below.</p>
     </div>
     <div class="pay">
       <ol class="steps">
         <li><div><h3>Check availability</h3><p>Send your dates and room choice on WhatsApp using the booking bar above, or call +91 75011 01137.</p></div></li>
-        <li><div><h3>Pay the advance by UPI</h3><p>Once we confirm the room is free, scan the QR code or pay to our UPI ID from Google Pay, PhonePe, Paytm or any bank app.</p></div></li>
+        <li><div><h3>Pay the 50% advance</h3><p>Once we confirm the room is free, pay half of the total room price by UPI or bank transfer. Scan the QR code or pay to our UPI ID from Google Pay, PhonePe, Paytm or any bank app.</p></div></li>
         <li><div><h3>Send the payment screenshot</h3><p>Share the screenshot on WhatsApp. We send your booking confirmation right away. The balance is paid at check-in.</p></div></li>
       </ol>
+      <div class="policy-box" id="cancellation"><p class="kicker">Advance and cancellation policy</p><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b>not refunded</b>, and the advance cannot be moved to another date.</p></div>
       <div class="upi">
         <p class="kicker">Pay by UPI</p>
         <div class="qr" id="qr"><p class="wait">UPI QR code coming soon. Please message us on WhatsApp for payment details.</p></div>
@@ -735,6 +739,7 @@ footer .brand b{font-size:1.2rem}
       <div><h3>No intoxication</h3><p>No smoking, tobacco, gutka, pan or alcohol anywhere on the premises. ₹2,000 fine for any violation.</p></div>
       <div><h3>Timings</h3><p>Check-in from 11:00 AM. Check-out by 9:00 AM.</p></div>
       <div><h3>Room only</h3><p>Meals are not served. Govinda's is an 8 minute walk.</p></div>
+      <div class="wide"><h3>Advance and cancellation</h3><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b>not refunded</b>, and the advance cannot be moved to another date.</p></div>
     </div>
   </div>
 </section>
@@ -817,6 +822,7 @@ footer .brand b{font-size:1.2rem}
         <div class="grid">
           <label class="fld"><span>Room rate per night (₹)</span><input id="a_rate" readonly tabindex="-1" data-role="rate" data-l="Room rate per night"></label>
           <label class="fld"><span>Total at standard rate (₹)</span><input id="a_total" readonly tabindex="-1" data-role="total" data-l="Total at standard rate"><small>Offer rates may apply. We confirm the final amount on WhatsApp.</small></label>
+          <label class="fld"><span>Advance to confirm, 50% (₹)</span><input id="a_need" readonly tabindex="-1" data-role="adv50" data-l="Advance to confirm (50%)"><small>Half of the total. We confirm the exact amount on WhatsApp.</small></label>
           <label class="fld"><span>Advance paid (₹)</span><input id="a_adv" type="number" min="0" inputmode="numeric" data-l="Advance paid (₹)"></label>
           <div class="fld"><span>Payment mode</span>
             <div class="checks" data-l="Payment mode"><label><input type="radio" name="a_mode" id="a_m1" value="UPI"> UPI</label><label><input type="radio" name="a_mode" id="a_m2" value="Bank transfer"> Bank transfer</label><label><input type="radio" name="a_mode" id="a_m3" value="Not paid yet"> Not paid yet</label></div></div>
@@ -829,8 +835,10 @@ footer .brand b{font-size:1.2rem}
           <span>Photo ID is mandatory at check-in for every guest.</span>
           <span><b>No smoking, tobacco, gutka, pan or alcohol on the premises. ₹2,000 fine for any violation.</b></span>
         </div>
+        <div class="policy-box" style="margin-bottom:16px"><p class="kicker">Advance and cancellation policy</p><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b>not refunded</b>, and the advance cannot be moved to another date.</p></div>
         <div class="grid">
           <label class="agree full"><input type="checkbox" id="a_agree" required data-l="Agreed to house rules"> I confirm these details are correct and I agree to the house rules of Nikadi Guest House.</label>
+          <label class="agree full"><input type="checkbox" id="a_cpol" required data-l="Agreed to cancellation policy"> I agree to the advance and cancellation policy: 50% advance; full refund only if cancelled 3 or more days before check-in; no refund after that or for a no-show.</label>
           <label class="fld"><span>Type your full name as signature <i>*</i></span><input id="a_sig" required data-l="Guest signature (typed)"></label>
         </div>
       </fieldset>
@@ -1105,7 +1113,7 @@ footer .brand b{font-size:1.2rem}
 
       <div class="rd-note">
         <h3>Good to know</h3>
-        <p>Pure vegetarian property. No smoking, tobacco, gutka, pan or alcohol, with a ₹2,000 fine for any violation. Meals are not served; Govinda's is an 8 minute walk. A first aid kit is kept at reception.</p>
+        <p>Pure vegetarian property. No smoking, tobacco, gutka, pan or alcohol, with a ₹2,000 fine for any violation. Meals are not served; Govinda's is an 8 minute walk. A first aid kit is kept at reception. A 50% advance confirms your booking, refundable only if you cancel 3 or more days before check-in (<a href="#cancellation" style="color:var(--gold-hi)">policy</a>).</p>
         <a class="btn btn-line" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20have%20a%20question%20about%20the%20Deluxe%20Double%20room." target="_blank" rel="noopener">Ask about this room</a>
       </div>
     </div>
@@ -1199,7 +1207,7 @@ footer .brand b{font-size:1.2rem}
 
       <div class="rd-note">
         <h3>Good to know</h3>
-        <p>Pure vegetarian property. No smoking, tobacco, gutka, pan or alcohol, with a ₹2,000 fine for any violation. Meals are not served; Govinda's is an 8 minute walk. A first aid kit is kept at reception.</p>
+        <p>Pure vegetarian property. No smoking, tobacco, gutka, pan or alcohol, with a ₹2,000 fine for any violation. Meals are not served; Govinda's is an 8 minute walk. A first aid kit is kept at reception. A 50% advance confirms your booking, refundable only if you cancel 3 or more days before check-in (<a href="#cancellation" style="color:var(--gold-hi)">policy</a>).</p>
         <a class="btn btn-line" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20have%20a%20question%20about%20the%20Deluxe%20Twin%20room." target="_blank" rel="noopener">Ask about this room</a>
       </div>
     </div>
@@ -1266,6 +1274,7 @@ var WA = "917501101137";
 /* ---- Online forms (Advance Booking + Guest Registration) ---- */
 (function(){
   var WA_NO = "917501101137";
+  var BOOKING_API = ""; // Google Apps Script /exec URL. When set, Advance Booking Forms also arrive in the staff app as Pending.
   var sheets = [].slice.call(document.querySelectorAll('.sheet'));
   function iso(d){return d.toISOString().slice(0,10);}
   function pretty(v){var d=new Date(v+'T12:00:00');return isNaN(d)?v:d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
@@ -1289,7 +1298,8 @@ var WA = "917501101137";
       rooms.min=need;
       if(!rooms.dataset.manual||(+rooms.value||0)<need)rooms.value=need;
     }
-    if(total){var q=rooms?Math.max(1,+rooms.value||1):1;total.value=nights>0?inr(nights*r*q):'';}
+    if(total){var q=rooms?Math.max(1,+rooms.value||1):1;total.value=nights>0?inr(nights*r*q):'';
+      var a50=f.querySelector('[data-role=adv50]');if(a50)a50.value=nights>0?inr(Math.ceil(nights*r*q/2)):'';}
   }
   document.querySelectorAll('.wform').forEach(function(f){
     var t=new Date();t.setHours(12,0,0,0);
@@ -1359,7 +1369,7 @@ var WA = "917501101137";
           var v='';
           if(el.classList.contains('checks')){v=[].map.call(el.querySelectorAll('input:checked'),function(c){return c.value;}).join(', ');}
           else if(el.type==='checkbox'){v=el.checked?'Yes':'';}
-          else{v=el.value.trim();if(v&&el.type==='date')v=pretty(v);if(v&&el.type==='time')v=prettyTime(v);if(v&&el.id==='r_gst')v=v.toUpperCase();if(v&&el.dataset.role==='rate')v='₹'+v;if(v&&el.dataset.role==='total')v='₹'+v;}
+          else{v=el.value.trim();if(v&&el.type==='date')v=pretty(v);if(v&&el.type==='time')v=prettyTime(v);if(v&&el.id==='r_gst')v=v.toUpperCase();if(v&&el.dataset.role==='rate')v='₹'+v;if(v&&el.dataset.role==='total')v='₹'+v;if(v&&el.dataset.role==='adv50')v='₹'+v;}
           if(v)lines.push(el.dataset.l+': '+v);
         });
       }
@@ -1376,6 +1386,13 @@ var WA = "917501101137";
       if(!f.checkValidity()){f.reportValidity();return;}
       var text=build(f),url='https://wa.me/'+WA_NO+'?text='+encodeURIComponent(text);
       ta.value=text;again.href=url;
+      if(BOOKING_API&&f.querySelector('#a_ci')){
+        var g=function(id){var el=f.querySelector('#'+id);return el?el.value.trim():'';};
+        var extras=[].slice.call(f.querySelectorAll('#a_x1:checked,#a_x2:checked')).map(function(x){return x.value;}).join(', ');
+        var body={action:'deskBookingRequest',guest:g('a_name'),phone:g('a_mob'),email:g('a_email'),guests:(+g('a_ad')||0)+(+g('a_ch')||0),roomsNeeded:+g('a_rooms')||1,
+          roomType:g('a_room'),checkin:g('a_ci'),checkout:g('a_co'),notes:[g('a_city'),g('a_cit')?'Arrival '+g('a_cit'):'',extras,g('a_req')].filter(Boolean).join(' · ')};
+        try{fetch(BOOKING_API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).catch(function(){});}catch(err){}
+      }
       f.hidden=true;done.hidden=false;
       var sheet=f.closest('.sheet');if(sheet)sheet.scrollTop=0;
       var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
