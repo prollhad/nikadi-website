@@ -215,7 +215,7 @@
   /* ---------- start ---------- */
   function start(){
     var cfg=nkApi('config').then(function(c){['pointsPer100','welcome','discountPoints','discountValue','freeNightPoints','channel'].forEach(function(k){if(c[k]!=null)S.cfg[k]=c[k];});}).catch(function(){});
-    if(!S.token){home();return;}
+    if(!S.token){home();if(/[?&]join=1/.test(location.search)||location.hash==='#join')cfg.then(function(){join();});return;}
     tabs.hidden=true;setTop('',null);
     view.innerHTML='<div class="mcard ghost" style="opacity:.6" aria-label="Loading your card"></div><p class="small" style="text-align:center">Loading your membership…</p>';
     cfg.then(function(){return nkApi('me',{token:S.token});})
