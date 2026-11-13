@@ -2,7 +2,7 @@
 
 /* After deploying backend/Code.gs as a Google Apps Script web app,
    paste its URL here (ends with /exec). Leave empty until then. */
-var NIKADI_API_URL = "";
+var NIKADI_API_URL = "https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec";
 
 var NIKADI = {
   phone: "917501101137",

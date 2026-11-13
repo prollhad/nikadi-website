@@ -1274,7 +1274,7 @@ var WA = "917501101137";
 /* ---- Online forms (Advance Booking + Guest Registration) ---- */
 (function(){
   var WA_NO = "917501101137";
-  var BOOKING_API = ""; // Google Apps Script /exec URL. When set, Advance Booking Forms also arrive in the staff app as Pending.
+  var BOOKING_API = "https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec"; // Google Apps Script /exec URL. When set, Advance Booking Forms also arrive in the staff app as Pending.
   var sheets = [].slice.call(document.querySelectorAll('.sheet'));
   function iso(d){return d.toISOString().slice(0,10);}
   function pretty(v){var d=new Date(v+'T12:00:00');return isNaN(d)?v:d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
