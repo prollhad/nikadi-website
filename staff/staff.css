@@ -498,3 +498,5 @@ main.view{flex:1}
 .maplink{font-size:.75rem;color:var(--muted);margin-left:4px}
 .att-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}.att-filters .seg{flex:1 1 320px}.att-filters select{flex:0 1 200px}
 .tbl.att td small{display:block;margin-top:4px}.tbl.att td small.dev{color:var(--muted);font-size:.72rem}
+.bl .t > small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+.tbl.att tr.day td{font-weight:600;color:var(--gold-hi,#e0be7a);padding-top:14px}

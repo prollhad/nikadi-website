@@ -11,6 +11,7 @@ function deskDb_() {
       if (t !== 'bills' && t !== 'billpdfs' && !def.lazy) throw new Error('not_setup');
       s = ss.insertSheet(def.sheet); s.appendRow(def.cols.map(function (c) { return c[1]; }));
       s.getRange(1, 1, 1, def.cols.length).setFontWeight('bold').setBackground('#1b1714').setFontColor('#e0be7a'); s.setFrozenRows(1);
+      def.cols.forEach(function (c, j) { if (c[2] === 's') s.getRange(1, j + 1, s.getMaxRows(), 1).setNumberFormat('@'); });
       if (def.hidden) s.hideSheet();
     }
     if (!checked[t]) { // add headings for columns added in newer versions
