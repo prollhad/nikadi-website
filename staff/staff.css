@@ -500,3 +500,10 @@ main.view{flex:1}
 .tbl.att td small{display:block;margin-top:4px}.tbl.att td small.dev{color:var(--muted);font-size:.72rem}
 .bl .t > small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
 .tbl.att tr.day td{font-weight:600;color:var(--gold-hi,#e0be7a);padding-top:14px}
+/* panels stay open until ✕ */
+.sheet-scrim{position:fixed;inset:0;z-index:29;background:rgba(0,0,0,.45);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.sheet-bar .back.x{order:2;font-size:1.1rem}
+.sheet-ask{position:sticky;top:64px;z-index:3;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));padding:12px 14px;border-radius:12px;background:#3a1f1a;border:1px solid rgba(220,90,80,.5);color:#f6d2cc;font-size:.9rem}
+.sheet-ask span{flex:1 1 220px}
+.sheet.nudge{animation:nknudge .35s ease}
+@keyframes nknudge{20%{transform:translateX(-8px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}

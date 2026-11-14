@@ -268,10 +268,19 @@
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
+  /* never redraw the page while someone is filling something in */
+  var viewTouched = 0;
+  document.addEventListener('input', function (e) { if (e.target.closest && e.target.closest('#view')) viewTouched = Date.now(); }, true);
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#view') && e.target.closest('input,select,textarea,.field,.toggle,.seg,[data-seg],.pick,.items')) viewTouched = Date.now(); }, true);
+  function busyTyping() {
+    var a = document.activeElement;
+    return !!document.querySelector('.sheet') || (a && a.closest && a.closest('#view') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) ||
+      Date.now() - viewTouched < 180000 || ['add', 'settings'].indexOf(S.tab) >= 0 && Date.now() - viewTouched < 600000;
+  }
   setInterval(function () {
-    if (S.token && !document.hidden && !document.querySelector('.sheet')) { refresh(); if (S.tab === 'calendar' || S.tab === 'bookings') loadExtra(); }
+    if (S.token && !document.hidden && !busyTyping()) { refresh(); if (S.tab === 'calendar' || S.tab === 'bookings') loadExtra(); }
   }, 30000);
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && S.token && S.st && !document.querySelector('.sheet')) refresh(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && S.token && S.st && !busyTyping()) refresh(); });
 
   /* ---------- Rooms tab ---------- */
   function viewRooms(v) {
@@ -297,26 +306,53 @@
     $$('.tile', v).forEach(function (t) { t.onclick = function () { openRoom(Number(t.dataset.room)); }; });
   }
 
-  /* ---------- sheets (full-screen panels) ---------- */
-  var sheets = [];
+  /* ---------- sheets (panels) ----------
+     A panel stays open until ✕ (or a Save/Done button) closes it. Clicking or tapping outside does nothing,
+     and if something was typed, closing (✕, phone back gesture) first asks "Close without saving?". */
+  var sheets = [], closingOk = 0, scrim = null;
   function openSheet(title, k) {
-    var el = document.createElement('div'); el.className = 'sheet fade'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', title);
-    el.innerHTML = '<div class="sheet-in">' + (k ? '<div class="status-band k-' + k + '"></div>' : '') + '<div class="sheet-bar"><button class="back" type="button" aria-label="Back">&#8592;</button><h2>' + esc(title) + '</h2></div><div class="sheet-body"></div></div>';
+    var el = document.createElement('div'); el.className = 'sheet fade'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', title);
+    el.innerHTML = '<div class="sheet-in">' + (k ? '<div class="status-band k-' + k + '"></div>' : '') + '<div class="sheet-bar"><h2>' + esc(title) + '</h2><button class="back x" type="button" aria-label="Close">✕</button></div>' +
+      '<div class="sheet-ask" hidden><span>Close without saving? What you typed will be lost.</span><button type="button" class="btn btn-quiet sm" data-keep>Keep editing</button><button type="button" class="btn btn-line sm danger" data-drop>Close</button></div><div class="sheet-body"></div></div>';
+    if (!scrim) {
+      scrim = document.createElement('div'); scrim.className = 'sheet-scrim';
+      scrim.onclick = function () { var top = sheets[sheets.length - 1]; if (top) { top.classList.remove('nudge'); void top.offsetWidth; top.classList.add('nudge'); } toast('Use ✕ to close'); };
+      document.body.appendChild(scrim);
+    }
     document.body.appendChild(el); document.body.style.overflow = 'hidden';
     sheets.push(el);
     try { history.pushState({ sheet: sheets.length }, ''); } catch (e) {}
-    $('.back', el).onclick = function () { history.back(); };
+    el.addEventListener('input', function (e) { if (e.target.matches('input,textarea,select')) el.dataset.dirty = '1'; });
+    el.addEventListener('change', function (e) { if (e.target.matches('input,textarea,select')) el.dataset.dirty = '1'; });
+    el.addEventListener('click', function (e) { if (e.target.closest('.seg button,.field button,[data-seg] button,.pick button,.items button')) el.dataset.dirty = '1'; });
+    $('.back', el).onclick = function () { askClose(el); };
+    $('[data-keep]', el).onclick = function () { $('.sheet-ask', el).hidden = true; };
+    $('[data-drop]', el).onclick = function () { el.dataset.dirty = ''; closingOk++; history.back(); };
     return $('.sheet-body', el);
   }
-  function popSheet() { var el = sheets.pop(); if (el) el.remove(); if (!sheets.length) document.body.style.overflow = ''; }
-  function closeSheet() { if (sheets.length) history.back(); }
+  function askClose(el) {
+    if (el.dataset.dirty === '1') { var a = $('.sheet-ask', el); a.hidden = false; a.scrollIntoView({ block: 'nearest' }); return; }
+    closingOk++; history.back();
+  }
+  function popSheet() { var el = sheets.pop(); if (el) el.remove(); if (!sheets.length) { document.body.style.overflow = ''; if (scrim) { scrim.remove(); scrim = null; } } }
+  function closeSheet() { if (sheets.length) { closingOk++; history.back(); } }
   function closeAllSheets() { while (sheets.length) popSheet(); }
   window.addEventListener('popstate', function (e) {
     var target = (e.state && e.state.sheet) || 0;
-    if (sheets.length > target) { while (sheets.length > target) popSheet(); if (!sheets.length) refresh(); }
+    if (sheets.length <= target) return;
+    if (closingOk > 0) closingOk = Math.max(0, closingOk - 1);
+    else { // phone back gesture / browser back: don't lose what was typed
+      var top = sheets[sheets.length - 1];
+      if (top && top.dataset.dirty === '1' && sheets.length - target === 1) {
+        try { history.pushState({ sheet: sheets.length }, ''); } catch (er) {}
+        askClose(top); return;
+      }
+    }
+    while (sheets.length > target) popSheet();
+    if (!sheets.length) refresh();
   });
-  function after(n) { history.go(-Math.min(n, sheets.length)); }
-  document.addEventListener('click', function (e) { if (sheets.length && e.target === document.body) history.back(); });
+  function after(n) { var k = Math.min(n, sheets.length); if (!k) return; closingOk += 1; history.go(-k); }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheets.length) { e.preventDefault(); askClose(sheets[sheets.length - 1]); } });
 
   /* ---------- Room panel ---------- */
   function openRoom(n) {
@@ -1552,7 +1588,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 19</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 20</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
