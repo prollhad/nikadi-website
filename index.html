@@ -256,6 +256,19 @@ section.alt{background:var(--band)}
 .rules p{color:var(--muted);font-size:.93rem}
 .rules .wide{grid-column:1/-1}
 .rules p b,.policy-box b{color:var(--ink);font-weight:500}
+.cpol{grid-column:1/-1;border:1px solid var(--line);border-top:2px solid var(--gold);background:var(--panel);padding:clamp(20px,4vw,32px);display:grid;gap:18px}
+.cpol h3{font-family:var(--display);font-weight:400;font-size:clamp(1.5rem,4vw,2rem);margin:0;text-wrap:balance}
+.cpol-lead{margin:0;color:var(--muted)}.cpol b{color:var(--ink);font-weight:500}
+.cpol-time{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:640px){.cpol-time{grid-template-columns:1fr}}
+.cpol-card{border:1px solid var(--line);padding:18px;display:grid;gap:6px;background:var(--bg)}
+.cpol-card.ok{border-left:3px solid var(--gold)}.cpol-card.no{border-left:3px solid var(--muted)}
+.cpol-when{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.cpol-card b{font-family:var(--display);font-size:1.35rem;font-weight:400}.cpol-card.ok b{color:var(--gold-hi)}
+.cpol-card small{color:var(--muted);font-size:.85rem}
+.cpol-list{margin:0;display:grid;gap:14px}.cpol-list div{display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:640px){.cpol-list div{grid-template-columns:1fr;gap:4px}}
+.cpol-list dt{color:var(--ink);font-weight:500}.cpol-list dd{margin:0;color:var(--muted);line-height:1.6}
 .policy-box{grid-column:1/-1;border:1px solid var(--line);border-left:2px solid var(--gold);background:var(--panel);padding:18px 20px;display:grid;gap:8px;font-size:.93rem;color:var(--muted);line-height:1.6}
 @media (max-width:900px){.rules{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:520px){.rules{grid-template-columns:1fr}}
@@ -568,7 +581,7 @@ footer .brand b{font-size:1.2rem}
       <div class="tx">
         <p class="kicker">For friends and family</p>
         <h3>Deluxe Twin</h3>
-        <p class="room-size">Two single beds · Smart TV</p>
+        <p class="room-size">150 sq ft · 13.9 m²</p>
         <p>Two separate beds, a sofa corner and a private bathroom with rain shower. Well suited to friends, family or devotees travelling together.</p>
         <ul class="specs"><li>2 single beds</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
         <div class="price"><span class="from">Per night</span><b>₹4,500</b><span class="n">Offer rates from ₹3,000 on select dates</span></div>
@@ -728,7 +741,21 @@ footer .brand b{font-size:1.2rem}
         <li><div><h3>Pay the 50% advance</h3><p>Once we confirm the room is free, pay half of the total room price by UPI or bank transfer. Scan the QR code or pay to our UPI ID from Google Pay, PhonePe, Paytm or any bank app.</p></div></li>
         <li><div><h3>Send the payment screenshot</h3><p>Share the screenshot on WhatsApp. We send your booking confirmation right away. The balance is paid at check-in.</p></div></li>
       </ol>
-      <div class="policy-box" id="cancellation"><p class="kicker">Advance and cancellation policy</p><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b>not refunded</b>, and the advance cannot be moved to another date.</p></div>
+      <div class="cpol" id="cancellation">
+        <p class="kicker">Advance and cancellation policy</p>
+        <h3>Simple, fair and clear</h3>
+        <p class="cpol-lead">A <b>50% advance</b> holds your room for you. The balance is paid at check-in.</p>
+        <div class="cpol-time">
+          <div class="cpol-card ok"><span class="cpol-when">3 or more days before check-in</span><b>Full refund of your advance</b><small>For a 20 Nov check-in, cancel on or before 17 Nov.</small></div>
+          <div class="cpol-card no"><span class="cpol-when">Less than 3 days before, on the day of arrival, or no-show</span><b>The advance is not refunded</b><small>The room was held for you and turned away other guests.</small></div>
+        </div>
+        <dl class="cpol-list">
+          <div><dt>How to cancel</dt><dd>Send a WhatsApp message to +91 75011 01137 or an email to nikadiguesthouse@gmail.com with your name, booking reference and dates. The time we receive your message is your cancellation time, and we reply to confirm it.</dd></div>
+          <div><dt>Refunds</dt><dd>The full advance goes back to the same UPI ID or bank account you paid from.</dd></div>
+          <div><dt>Changing dates</dt><dd>The advance is for the dates you booked and cannot be moved to other dates. To change dates, cancel 3 or more days before check-in for a full refund, then make a new booking.</dd></div>
+          <div><dt>If we have to cancel</dt><dd>In the rare case that we cannot give you the room, we refund your full advance.</dd></div>
+        </dl>
+      </div>
       <div class="upi">
         <p class="kicker">Pay by UPI</p>
         <div class="qr" id="qr"><p class="wait">UPI QR code coming soon. Please message us on WhatsApp for payment details.</p></div>
@@ -824,7 +851,7 @@ footer .brand b{font-size:1.2rem}
       <div><h3>No intoxication</h3><p>No smoking, tobacco, gutka, pan or alcohol anywhere on the premises. ₹2,000 fine for any violation.</p></div>
       <div><h3>Timings</h3><p>Check-in from 11:00 AM. Check-out by 9:00 AM.</p></div>
       <div><h3>Room only</h3><p>Meals are not served. Govinda's is an 8 minute walk.</p></div>
-      <div class="wide"><h3>Advance and cancellation</h3><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b>not refunded</b>, and the advance cannot be moved to another date.</p></div>
+      <div class="wide"><h3>Advance and cancellation</h3><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b>not refunded</b>, and the advance cannot be moved to another date. <a href="#cancellation" style="color:var(--gold-hi)">Full policy</a></p></div>
     </div>
   </div>
 </section>
@@ -1255,7 +1282,7 @@ footer .brand b{font-size:1.2rem}
       <dl class="rd-facts">
         <div><dt>Beds</dt><dd>2 single<small>10 inch mattresses</small></dd></div>
         <div><dt>Guests</dt><dd>Up to 3<small>per room</small></dd></div>
-        <div><dt>TV</dt><dd>Smart TV<small>streaming apps</small></dd></div>
+        <div><dt>Room size</dt><dd>150 sq ft<small>13.9 m²</small></dd></div>
         <div><dt>Bathroom</dt><dd>Private<small>attached</small></dd></div>
       </dl>
 
