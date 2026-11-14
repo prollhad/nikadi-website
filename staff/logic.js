@@ -230,6 +230,7 @@ function deskCore(db, hooks) {
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
+      v.advancePays = s.booking ? bookingPays(s.booking).filter(function (p) { return Number(p.amount) > 0; }).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: 'Advance · booking ' + s.booking }; }) : [];
     } else {
       v.guest = String(s.guest || '').split(/\s+/)[0];
     }
@@ -610,6 +611,19 @@ function deskCore(db, hooks) {
     recompute(s);
     afterChange(s, me, s.roomTotal);
     return { stay: stayView(s, me) };
+  };
+
+  /* Add or correct the transaction / reference number of a payment (no money changes). After check-out: Manager / Owner only. */
+  api.paymentRef = function (req) {
+    var me = auth(req); needMgr(me);
+    var p = find('payments', 'id', req.id) || fail('no_payment');
+    if (p.voided || p.method === FROM_ADV) fail('no_payment');
+    var stays = p.stay ? [stay(p.stay)] : db.all('stays').filter(function (x) { return p.booking && x.booking === p.booking; });
+    stays.forEach(function (x) { lockedOut(me, x); });
+    db.set('payments', p, { ref: text(req.ref, 40) });
+    stays.forEach(function (x) { afterChange(x, me, x.roomTotal); });
+    if (p.stay) return { stay: stayView(stays[0], me) };
+    var b = find('bookings', 'id', p.booking); return b ? { booking: bookingView(b, me) } : {};
   };
 
   /* Cancel a payment that was entered by mistake (wrong amount, entered twice). It stays visible in the sheet as voided. */

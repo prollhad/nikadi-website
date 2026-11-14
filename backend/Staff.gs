@@ -236,6 +236,7 @@ function deskCore(db, hooks) {
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
+      v.advancePays = s.booking ? bookingPays(s.booking).filter(function (p) { return Number(p.amount) > 0; }).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: 'Advance · booking ' + s.booking }; }) : [];
     } else {
       v.guest = String(s.guest || '').split(/\s+/)[0];
     }
@@ -616,6 +617,19 @@ function deskCore(db, hooks) {
     recompute(s);
     afterChange(s, me, s.roomTotal);
     return { stay: stayView(s, me) };
+  };
+
+  /* Add or correct the transaction / reference number of a payment (no money changes). After check-out: Manager / Owner only. */
+  api.paymentRef = function (req) {
+    var me = auth(req); needMgr(me);
+    var p = find('payments', 'id', req.id) || fail('no_payment');
+    if (p.voided || p.method === FROM_ADV) fail('no_payment');
+    var stays = p.stay ? [stay(p.stay)] : db.all('stays').filter(function (x) { return p.booking && x.booking === p.booking; });
+    stays.forEach(function (x) { lockedOut(me, x); });
+    db.set('payments', p, { ref: text(req.ref, 40) });
+    stays.forEach(function (x) { afterChange(x, me, x.roomTotal); });
+    if (p.stay) return { stay: stayView(stays[0], me) };
+    var b = find('bookings', 'id', p.booking); return b ? { booking: bookingView(b, me) } : {};
   };
 
   /* Cancel a payment that was entered by mistake (wrong amount, entered twice). It stays visible in the sheet as voided. */
@@ -1203,6 +1217,7 @@ function deskCore(db, hooks) {
 
     var bar = opt.toolbar ? '<div class="toolbar"><span>Bill ' + esc(d.no) + '</span><span class="tb-btns">' +
       '<button type="button" onclick="if(window.nikadiPdf){window.nikadiPdf(this)}else{window.print()}">Download PDF</button>' +
+      '<button type="button" class="tb-print" onclick="window.print()">Print</button>' +
       '<button type="button" class="tb-share" onclick="if(navigator.share){navigator.share({title:document.title,url:location.href}).catch(function(){})}else{navigator.clipboard&&navigator.clipboard.writeText(location.href);this.textContent=\'Link copied\'}">Share</button></span></div>' : '';
 
     return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
@@ -1252,7 +1267,7 @@ function deskCore(db, hooks) {
         '</div>' +
       '</section>' +
 
-      (pays ? '<section class="pays"><div class="lbl">Payments received</div><div class="tbl-wrap"><table class="ptab"><thead><tr><th>Date</th><th>Particulars</th><th>Mode</th><th>Reference</th><th class="r">Amount (₹)</th></tr></thead><tbody>' + pays + '</tbody></table></div></section>' : '') +
+      (pays ? '<section class="pays"><div class="lbl">Payments received</div><div class="tbl-wrap"><table class="ptab"><thead><tr><th>Date</th><th>Particulars</th><th>Mode</th><th>Transaction / Ref. No.</th><th class="r">Amount (₹)</th></tr></thead><tbody>' + pays + '</tbody></table></div></section>' : '') +
 
       (m ? '<section class="member"><b>Nikadi Membership · ' + esc(m.level) + '</b>' +
         (m.saved ? '<span>Saved on this stay: <b>' + inr(m.saved) + '</b></span>' : '') +
@@ -1320,7 +1335,7 @@ function deskCore(db, hooks) {
     '.foot{margin-top:24px;padding-top:12px;border-top:1px solid #cfd6d9;text-align:center;font-size:10.5px;color:#66737a;line-height:1.6}',
     '.foot .gen{color:#8a9499}.foot .thanks{margin-top:6px;font-size:12.5px;color:#156b82;font-weight:600}',
     '.toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px max(16px,env(safe-area-inset-left,0px));background:#1d2326;color:#fff;font-weight:600}',
-    '.toolbar button{font:inherit;font-size:13px;border:0;border-radius:6px;padding:8px 14px;background:#156b82;color:#fff;cursor:pointer;margin-left:6px}.toolbar .tb-share{background:#3d474b}',
+    '.toolbar button{font:inherit;font-size:13px;border:0;border-radius:6px;padding:8px 14px;background:#156b82;color:#fff;cursor:pointer;margin-left:6px}.toolbar .tb-share,.toolbar .tb-print{background:#3d474b}',
     '@media (max-width:700px){.sheet{margin:0;padding:20px 16px;box-shadow:none}.top{grid-template-columns:1fr auto}.doc{grid-column:1/-1}.parties,.split{grid-template-columns:1fr}',
     '.qr-svg{width:96px;height:96px}.lines{font-size:11.5px}.lines th:nth-child(1),.lines td:nth-child(1),.lines th:nth-child(6),.lines td:nth-child(6){display:none}.sign{gap:18px}}',
     '@media print{' + PRINT + '@page{size:A4;margin:9mm 10mm}}'

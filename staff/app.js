@@ -60,7 +60,7 @@
   function wd(ymd) { return WD[new Date(String(ymd).slice(0, 10) + 'T00:00:00Z').getUTCDay()]; }
   function dLong(ymd) { return ymd ? wd(ymd) + ' ' + dShort(ymd) : ''; }
   function isDesk() { return window.matchMedia('(min-width: 1000px)').matches; }
-  function refField(id) { return field('UPI / transaction reference no.', '<input class="input" id="' + id + '" maxlength="40" autocomplete="off" placeholder="Needed for UPI and bank transfer">'); }
+  function refField(id) { return field('Transaction / reference no. (UPI, card or bank)', '<input class="input" id="' + id + '" maxlength="40" autocomplete="off" placeholder="Needed for UPI and bank transfer">'); }
   function dShort(ymd) { if (!ymd) return ''; var p = String(ymd).slice(0, 10).split('-'); return (+p[2]) + ' ' + MON[+p[1] - 1]; }
   function tShort(st) {
     if (!st) return ''; var t = String(st).slice(11, 16).split(':'), h = +t[0];
@@ -1073,9 +1073,16 @@
   function openVoid(p, kind, parentBody) {
     var body = openSheet('Correct a payment');
     body.innerHTML = '<div class="bill"><div class="bl ' + (p.amount < 0 ? 'refund' : 'paid') + '"><span class="t">' + (p.amount < 0 ? 'Refund · ' : 'Payment · ') + esc(p.method) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + (p.note ? ' · ' + esc(p.note) : '') + '</span><span class="a">' + inr(Math.abs(p.amount)) + '</span></div></div>' +
+      '<div class="sec-h"><h2>Transaction number</h2></div>' + field('Transaction / reference no.', '<input class="input" id="v-ref" maxlength="40" value="' + esc(p.ref || '') + '">') +
+      '<p class="err" id="rerr" role="alert"></p><button class="btn btn-line" type="button" id="sref">Save transaction no.</button>' +
+      '<div class="sec-h"><h2>Wrong amount?</h2></div>' +
       '<p class="small">Use this only if the entry is wrong, for example the wrong amount or entered twice. The entry is cancelled (it stays visible in the sheet as voided). Then record the correct amount again.</p>' +
       approvalNote() + reasonField('v-why', 'e.g. Entered twice by mistake') +
       '<p class="err" id="err" role="alert"></p><button class="btn btn-danger big-cta" id="go" type="button">' + goLabel('Cancel this entry') + '</button>';
+    $('#sref', body).onclick = function () {
+      submit(this, $('#rerr', body), 'deskPaymentRef', { id: p.id, ref: $('#v-ref', body).value.trim() }, function (r) {
+        toast('Transaction number saved'); closeSheet(); if (r.stay) drawStay(parentBody, r.stay); else if (r.booking) drawBooking(parentBody, r.booking); });
+    };
     $('#go', body).onclick = function () {
       var x = this;
       if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = 'Tap again to confirm'; return; }
@@ -1201,6 +1208,13 @@
     if (/^Failed/.test(st)) return { k: 'bad', t: 'The automatic email did not go through. ' + (approver() ? 'Use “Email now”.' : 'Ask a manager to send it.') };
     return { k: 'wait', t: st };
   }
+  function printBill(b) {
+    var d = Object.assign({}, b.data, { url: b.url });
+    if (!demo) { var w0 = window.open(b.url + '&print=1', '_blank'); if (!w0) toast('Allow pop-ups to print the bill'); return; }
+    var w = window.open('', '_blank'); if (!w) { toast('Allow pop-ups to print the bill'); return; }
+    w.document.open(); w.document.write(NikadiBill.billHTML(d, { logo: '../img/brand/logo.png' })); w.document.close();
+    setTimeout(function () { try { w.focus(); w.print(); } catch (e) {} }, 700);
+  }
   function openBill(b, o) {
     o = o || {};
     var body = openSheet('Bill ' + b.no), pdf = null, pdfJob = null, A = approver();
@@ -1275,9 +1289,11 @@
         };
         /* payments */
         ep.className = '';
-        ep.innerHTML = (st.payments.length ? '<div class="list">' + st.payments.map(function (pm, k) {
-            return '<div class="bl ed-row" data-p="' + k + '"><span class="t"><b>' + inr(pm.amount) + ' · ' + esc(pm.method) + '</b><small>' + esc(dShort(pm.at)) + (pm.ref ? ' · ' + esc(pm.ref) : '') + (pm.note ? ' · ' + esc(pm.note) : '') + '</small></span>' +
-              (pm.method === 'From advance' ? '' : '<span class="ed-ctl"><input class="input" data-why placeholder="Why cancel?" maxlength="120"><button class="btn btn-quiet sm danger" type="button" data-void>Cancel entry</button></span>') + '</div>';
+        var PAYS = (st.advancePays || []).map(function (p) { return Object.assign({ adv: true }, p); }).concat(st.payments.filter(function (p) { return p.method !== 'From advance'; }));
+        ep.innerHTML = (PAYS.length ? '<div class="list">' + PAYS.map(function (pm, k) {
+            return '<div class="bl ed-row" data-p="' + k + '"><span class="t"><b>' + inr(pm.amount) + ' · ' + esc(pm.method) + '</b><small>' + esc(dShort(pm.at)) + (pm.note ? ' · ' + esc(pm.note) : '') + '</small></span>' +
+              '<span class="ed-ctl"><input class="input" data-ref maxlength="40" value="' + esc(pm.ref || '') + '" placeholder="Transaction / ref. no." aria-label="Transaction number"><button class="btn btn-quiet sm" type="button" data-sref>Save no.</button></span>' +
+              (pm.adv ? '' : '<span class="ed-ctl"><input class="input" data-why placeholder="Why cancel?" maxlength="120"><button class="btn btn-quiet sm danger" type="button" data-void>Cancel entry</button></span>') + '</div>';
           }).join('') + '</div>' : '<p class="small">No payments recorded.</p>') +
           '<div class="sec-h"><h3>Add a payment</h3></div>' +
           field('Amount (₹)', '<input class="input" id="e-pamt" inputmode="numeric">') + '<div class="field"><span>Paid by</span>' + seg('epm', S.st.methods, 'UPI') + '</div>' + refField('e-pref') +
@@ -1289,7 +1305,13 @@
         wireSegs(ep);
         function perr(e) { $('#e-perr', ep).textContent = errText(e); }
         $$('[data-p]', ep).forEach(function (row) {
-          var pm = st.payments[+row.dataset.p], v = $('[data-void]', row); if (!v) return;
+          var pm = PAYS[+row.dataset.p], v = $('[data-void]', row);
+          $('[data-sref]', row).onclick = function () {
+            var x = this; busy(x, true);
+            api('deskPaymentRef', { id: pm.id, ref: $('[data-ref]', row).value.trim() })
+              .then(function () { return refresh(b, 'Transaction number saved on the bill.'); }, function (e) { busy(x, false); perr(e); });
+          };
+          if (!v) return;
           v.onclick = function () {
             var x = this; busy(x, true);
             api('deskVoidPayment', { id: pm.id, reason: $('[data-why]', row).value.trim() })
@@ -1319,7 +1341,7 @@
         '<p class="small">Message starts: “Dear ' + esc(NikadiBill.greetName(d.guest)) + ',”' + (b.edited ? ' · Last changed ' + esc(b.edited) : '') + '</p>' +
         (A ? '<button class="btn btn-line edit-cta" type="button" id="bedit">✎ Edit this bill: rate, nights, items, payments</button>' : '') +
         '<div class="btn-col"><button class="btn btn-gold" type="button" id="bw">' + ICON_SHARE + ' Send PDF on WhatsApp</button>' +
-        '<button class="btn btn-line" type="button" id="bd">' + ICON_DL + ' Download PDF</button>' +
+        '<div class="btn-row"><button class="btn btn-line" type="button" id="bd">' + ICON_DL + ' Download PDF</button><button class="btn btn-line" type="button" id="bp">🖨 Print bill</button></div>' +
         '<button class="btn btn-quiet" type="button" id="bv">View bill online</button></div>' +
         (A ? '<div class="sec-h"><h2>Email</h2></div><div class="btn-row">' +
             (b.email ? '<button class="btn btn-line" type="button" id="bnow">Email now</button>' : '') +
@@ -1347,6 +1369,7 @@
       var be = $('#bedit', body); if (be) be.onclick = function () { var dt = $('details[data-sec="room"]', body); dt.open = true; OPEN.room = true; dt.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
       $$('details[data-sec]', body).forEach(function (dt) { if (OPEN[dt.dataset.sec]) dt.open = true; dt.ontoggle = function () { OPEN[dt.dataset.sec] = dt.open; }; });
       $('#bv', body).onclick = function () { showBill(b); };
+      $('#bp', body).onclick = function () { printBill(b); };
       $('#bd', body).onclick = function () {
         var x = this; busy(x, true);
         makePdf(b).then(function (r) { busy(x, false); NikadiBillPdf.download(r); }, function (e) { busy(x, false); toast(errText(e)); });

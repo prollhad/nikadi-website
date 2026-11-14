@@ -42,7 +42,13 @@
       NikadiBillPdf.make(d, { base: '../staff/' }).then(function (r) { btn.textContent = t; btn.disabled = false; NikadiBillPdf.download(r); },
         function () { btn.textContent = t; btn.disabled = false; window.print(); });
     };
-    var go = function () { document.open(); document.write(html); document.close(); };
+    var go = function () {
+      document.open(); document.write(html); document.close();
+      if (q.get('print') === '1') { // opened from the staff app's Print button
+        var imgs = Array.prototype.slice.call(document.images);
+        Promise.all(imgs.map(function (im) { return im.complete ? 0 : new Promise(function (r) { im.onload = im.onerror = r; }); })).then(function () { setTimeout(function () { window.print(); }, 300); });
+      }
+    };
     if (document.readyState === 'complete') go(); else window.addEventListener('load', function () { setTimeout(go, 0); });
   }
   if (q.get('demo') === '1') return show(SAMPLE());
