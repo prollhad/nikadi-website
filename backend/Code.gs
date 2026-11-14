@@ -66,6 +66,29 @@ function tierPerks_(tier) {
 var TIER_WINDOW_DAYS = 730;   // Gold / Platinum: nights in the last 2 years
 var PLUS_HOLD_YEARS = 10;     // Platinum Plus is kept this long once reached
 var BASE_RATES = { 'Deluxe Double (King)': 5000, 'Deluxe Twin': 4500, 'Large Twin': 5000 };
+/* Room price by the date of each night. Same table as /pricing.js (website) and staff/logic.js (staff app): change all three together. */
+var RATE_PERIODS = [
+  { from: '2000-01-01', to: '2026-12-23', double: 3500, twin: 3000, offer: 'Special offer till 23 December' },
+  { from: '2026-12-24', to: '2027-05-05', double: 5000, twin: 4500, offer: '' },
+  { from: '2027-05-06', to: '9999-12-31', double: 3500, twin: 3000, offer: 'Summer Darshan Special' }
+];
+function rateKind_(type) { var t = String(type || ''); return /large/i.test(t) ? 'double' : /twin/i.test(t) ? 'twin' : 'double'; }
+function todayIst_() { return Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM-dd'); }
+function ratePeriod_(ymd) { ymd = String(ymd || todayIst_()).slice(0, 10); for (var i = 0; i < RATE_PERIODS.length; i++) if (ymd >= RATE_PERIODS[i].from && ymd <= RATE_PERIODS[i].to) return RATE_PERIODS[i]; return RATE_PERIODS[RATE_PERIODS.length - 1]; }
+function rateFor_(type, ymd) { return ratePeriod_(ymd)[rateKind_(type)]; }
+function addDayYmd_(ymd, n) { var p = ymd.split('-'); return Utilities.formatDate(new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n, 12)), 'UTC', 'yyyy-MM-dd'); }
+/** Price of a stay with every night priced on its own date; pct = member discount. */
+function stayQuote_(type, ci, co, rooms, pct) {
+  rooms = Math.max(1, Number(rooms) || 1);
+  var q = { nights: 0, total: 0, offerTotal: 0, rates: [], offer: '' }, d = String(ci || '').slice(0, 10), end = String(co || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !/^\d{4}-\d{2}-\d{2}$/.test(end) || end <= d) return q;
+  while (d < end && q.nights < 400) {
+    var per = ratePeriod_(d), r = per[rateKind_(type)], m = Math.round(r * (100 - (Number(pct) || 0)) / 100);
+    q.rates.push(m); q.total += m * rooms; q.offerTotal += r * rooms; if (per.offer && !q.offer) q.offer = per.offer;
+    q.nights++; d = addDayYmd_(d, 1);
+  }
+  return q;
+}
 
 var DEFAULT_SETTINGS = [
   ['STAFF_PIN', '2468', 'PIN for the staff panel. CHANGE THIS to your own 4–8 digit PIN.'],
@@ -130,6 +153,7 @@ function doPost(e) {
   var actions = {
     config: apiConfig_, lookup: apiLookup_, join: apiJoin_, otpSend: apiOtpSend_, otpVerify: apiOtpVerify_, me: apiMe_,
     login: apiLogin_, passStart: apiPassStart_, passSet: apiPassSet_, book: apiBook_,
+    payConfig: payConfig_, payOrder: payOrder_, payVerify: payVerify_,
     staffLogin: staffLogin_, staffMember: staffMember_, staffCreate: staffCreate_, staffAddStay: staffAddStay_,
     staffRedeemStart: staffRedeemStart_, staffRedeemConfirm: staffRedeemConfirm_, staffAdjust: staffAdjust_, staffRecent: staffRecent_
   };
@@ -348,7 +372,7 @@ function memberDesk_(phone) {
   var t = tierOf_(m);
   return { name: m.name, email: m.email || '', tier: t.tier.name, tierKey: t.tier.key, discount: t.tier.discount, points: m.points,
     onsite: tierPerks_(t.tier).filter(function (p) { return p.onsite; }).map(function (p) { return p.text; }),
-    rates: Object.keys(BASE_RATES).reduce(function (o, k) { o[k] = Math.round(BASE_RATES[k] * (100 - t.tier.discount) / 100); return o; }, {}) };
+    rates: Object.keys(BASE_RATES).reduce(function (o, k) { o[k] = Math.round(rateFor_(k) * (100 - t.tier.discount) / 100); return o; }, {}) };
 }
 
 /* ---------------- Passwords ---------------- */
@@ -514,7 +538,7 @@ function apiConfig_() {
   return {
     pointsPer100: num_(s.POINTS_PER_100, 1), welcome: num_(s.WELCOME_POINTS, 100), discountPoints: num_(s.DISCOUNT_POINTS, 100),
     discountValue: num_(s.DISCOUNT_VALUE, 500), freeNightPoints: num_(s.FREE_NIGHT_POINTS, 500), channel: String(s.OTP_CHANNEL || 'email'),
-    tiers: TIERS, rates: BASE_RATES, plusYears: PLUS_HOLD_YEARS, windowYears: TIER_WINDOW_DAYS / 365
+    tiers: TIERS, rates: Object.keys(BASE_RATES).reduce(function (o, k) { o[k] = rateFor_(k); return o; }, {}), standardRates: BASE_RATES, periods: RATE_PERIODS, plusYears: PLUS_HOLD_YEARS, windowYears: TIER_WINDOW_DAYS / 365
   };
 }
 
@@ -594,11 +618,13 @@ function apiBook_(req) {
   if (!m) throw new Error('not_member');
   if (typeof deskCore !== 'function') throw new Error('server_error');
   var t = tierOf_(m), type = BASE_RATES[req.roomType] ? req.roomType : 'Deluxe Double (King)';
-  var rate = Math.round(BASE_RATES[type] * (100 - t.tier.discount) / 100);
+  var q = stayQuote_(type, req.checkin, req.checkout, 1, t.tier.discount);
+  var rate = q.nights ? Math.round(q.total / q.nights) : Math.round(rateFor_(type, req.checkin) * (100 - t.tier.discount) / 100);
+  var mixed = q.rates.some(function (x) { return x !== q.rates[0]; });
   var api = deskCore(deskDb_());
   var r = api.bookingRequest({ _internal: true, source: 'Member app', rate: rate, guest: m.name, phone: phone, email: m.email, guests: req.guests, roomsNeeded: req.roomsNeeded,
     roomType: type, checkin: req.checkin, checkout: req.checkout,
-    notes: [t.tier.name + ' member · ' + t.tier.discount + '% member rate (₹' + rate + ' instead of ₹' + BASE_RATES[type] + ')', clean_(req.notes, 200)].filter(Boolean).join(' · ') });
+    notes: [t.tier.name + ' member · ' + t.tier.discount + '% off ' + (q.offer ? q.offer + ' price' : 'room price') + (mixed ? ' · nightly ₹' + q.rates.join(', ₹') + ' (average ₹' + rate + ')' : ' (₹' + rate + ' a night)'), clean_(req.notes, 200)].filter(Boolean).join(' · ') });
   try {
     var s = settings_();
     if (s.OWNER_EMAIL) MailApp.sendEmail(String(s.OWNER_EMAIL), 'New member booking: ' + m.name, m.name + ' (' + t.tier.name + ', ' + phone + ') asked to book ' + type + ' from ' + req.checkin + ' to ' + req.checkout + '. Open the staff app → Bookings to confirm after the advance is paid.');
@@ -721,4 +747,74 @@ function staffRecent_(req) {
   staff_(req);
   var ms = sheet_('members');
   return { recent: history_(null, 40), members: Math.max(0, ms.getLastRow() - 1) };
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Online payments (Razorpay)                                          */
+/* ------------------------------------------------------------------ */
+/* To switch on: Apps Script editor > Project Settings > Script properties, add
+     RAZORPAY_KEY_ID      rzp_live_xxxxxxxx   (or rzp_test_xxxxxxxx to try it first)
+     RAZORPAY_KEY_SECRET  the matching key secret
+   then Deploy > Manage deployments > edit > New version. The website shows "Pay online" by itself once the key is set.
+   Every payment is written to the "Online payments" tab and emailed to OWNER_EMAIL. */
+var PAY_TAB = 'Online payments';
+var PAY_COLS = ['Paid at', 'Status', 'Amount (₹)', 'Name', 'Phone', 'Email', 'Booking / note', 'Room', 'Check-in', 'Check-out', 'Razorpay order', 'Razorpay payment', 'Method'];
+function payKeys_() {
+  var p = PropertiesService.getScriptProperties();
+  return { id: String(p.getProperty('RAZORPAY_KEY_ID') || ''), secret: String(p.getProperty('RAZORPAY_KEY_SECRET') || '') };
+}
+function payConfig_() {
+  var k = payKeys_();
+  return { enabled: !!(k.id && k.secret), keyId: k.id && k.secret ? k.id : '', test: /^rzp_test_/.test(k.id) };
+}
+function paySheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(PAY_TAB);
+  if (!sh) { sh = ss.insertSheet(PAY_TAB); sh.appendRow(PAY_COLS); sh.setFrozenRows(1); sh.getRange(1, 1, 1, PAY_COLS.length).setFontWeight('bold'); }
+  return sh;
+}
+function payOrder_(req) {
+  var k = payKeys_();
+  if (!k.id || !k.secret) throw new Error('pay_not_setup');
+  var amount = Math.round(Number(req.amount) || 0);
+  if (!(amount >= 100 && amount <= 300000)) throw new Error('pay_bad_amount');
+  var phone = normPhone_(req.phone);
+  var name = clean_(req.name, 80);
+  if (!name) throw new Error('name_required');
+  var receipt = 'NGH' + Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+  var notes = { name: name, phone: phone, booking: clean_(req.note, 120), room: clean_(req.room, 40), checkin: clean_(req.checkin, 10), checkout: clean_(req.checkout, 10) };
+  var res = UrlFetchApp.fetch('https://api.razorpay.com/v1/orders', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { Authorization: 'Basic ' + Utilities.base64Encode(k.id + ':' + k.secret) },
+    payload: JSON.stringify({ amount: amount * 100, currency: 'INR', receipt: receipt, notes: notes })
+  });
+  if (res.getResponseCode() !== 200) { console.error(res.getContentText()); throw new Error('pay_failed'); }
+  var o = JSON.parse(res.getContentText());
+  paySheet_().appendRow([Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd MMM yyyy, h:mm a'), 'Started', amount, name, phone, clean_(req.email, 120), notes.booking, notes.room, notes.checkin, notes.checkout, o.id, '', '']);
+  return { order: o.id, amount: amount * 100, keyId: k.id, name: name, phone: phone };
+}
+function payVerify_(req) {
+  var k = payKeys_();
+  if (!k.secret) throw new Error('pay_not_setup');
+  var oid = String(req.order || ''), pid = String(req.payment || ''), sig = String(req.signature || '');
+  var mac = Utilities.computeHmacSha256Signature(oid + '|' + pid, k.secret).map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join('');
+  if (!oid || !pid || mac !== sig) throw new Error('pay_unverified');
+  var sh = paySheet_(), rows = sh.getDataRange().getValues(), row = -1;
+  for (var i = rows.length - 1; i >= 1; i--) if (rows[i][10] === oid) { row = i; break; }
+  var method = '';
+  try {
+    var pr = UrlFetchApp.fetch('https://api.razorpay.com/v1/payments/' + encodeURIComponent(pid), { headers: { Authorization: 'Basic ' + Utilities.base64Encode(k.id + ':' + k.secret) }, muteHttpExceptions: true });
+    if (pr.getResponseCode() === 200) method = String(JSON.parse(pr.getContentText()).method || '');
+  } catch (e) {}
+  if (row > 0) {
+    if (rows[row][1] !== 'Paid') { sh.getRange(row + 1, 1).setValue(Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd MMM yyyy, h:mm a')); sh.getRange(row + 1, 2).setValue('Paid'); sh.getRange(row + 1, 12, 1, 2).setValues([[pid, method]]); }
+    var r = rows[row];
+    try {
+      var s = settings_();
+      if (s.OWNER_EMAIL) MailApp.sendEmail(String(s.OWNER_EMAIL), 'Online payment received: ₹' + r[2] + ' from ' + r[3],
+        r[3] + ' (' + r[4] + ') paid ₹' + r[2] + ' online' + (method ? ' by ' + method : '') + '.\n' + (r[6] ? 'Booking / note: ' + r[6] + '\n' : '') + (r[7] ? 'Room: ' + r[7] + ' · ' + r[8] + ' to ' + r[9] + '\n' : '') + 'Razorpay payment: ' + pid + '\n\nAdd it to the booking in the staff app as an advance (method: Online).');
+    } catch (e2) {}
+    return { paid: true, amount: r[2], ref: pid };
+  }
+  return { paid: true, ref: pid };
 }

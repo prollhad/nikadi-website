@@ -58,7 +58,7 @@
         case "book":
           m = members[String(d.token).replace("demo-", "")]; if (!m) return fail("not_logged_in");
           if (!d.checkin || !d.checkout || d.checkout <= d.checkin) return fail("bad_dates");
-          var x = tierOf(m), base = RATES[d.roomType] || 5000, rate = Math.round(base * (100 - x.t.discount) / 100);
+          var x = tierOf(m), base = (window.NikadiRates ? NikadiRates.rate(d.roomType, d.checkin) : RATES[d.roomType] || 5000), rate = Math.round(base * (100 - x.t.discount) / 100);
           var nn = Math.round((Date.parse(d.checkout) - Date.parse(d.checkin)) / 864e5), rn = Math.max(+d.roomsNeeded || 1, Math.ceil((+d.guests || 1) / 3));
           var id = "B" + Math.random().toString(36).slice(2, 8).toUpperCase();
           m.stays.bookings.unshift({ id: id, status: "Pending", checkin: d.checkin, checkout: d.checkout, nights: nn, guests: +d.guests, rooms: "", roomsNeeded: rn, roomType: d.roomType, rate: rate, total: nn * rn * rate, advanceDue: Math.ceil(nn * rn * rate / 2), advancePaid: 0, refunded: 0 });

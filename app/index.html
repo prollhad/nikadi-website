@@ -35,6 +35,7 @@
   </nav>
 </div>
 
+<script src="../pricing.js"></script>
 <script src="core.js"></script>
 <script src="demo.js"></script>
 <script>
@@ -287,8 +288,8 @@
       var t0=today(),types=Object.keys(S.cfg.rates||RATES);
       show('<div style="display:grid;gap:6px"><p class="kicker">'+nkEsc(m.tier)+' member rate · '+t.discount+'% off</p><h1 class="title">Book your stay</h1></div>'+
         '<form class="panel" id="bkForm" novalidate>'+
-        '<div class="field"><span>Room</span><div class="roompick" id="bkRoom">'+types.map(function(k,i){var base=S.cfg.rates[k],mr=Math.round(base*(100-t.discount)/100);
-          return '<button type="button" data-room="'+nkEsc(k)+'" aria-pressed="'+(i===0)+'"><b>'+nkEsc(k)+'</b><span><s>'+nkInr(base)+'</s> '+nkInr(mr)+' / night</span></button>';}).join('')+'</div></div>'+
+        '<div class="field"><span>Room</span><div class="roompick" id="bkRoom">'+types.map(function(k,i){var std=NikadiRates.standard(k),now=NikadiRates.rate(k,addDays(t0,1)),mr=NikadiRates.memberRate(now,t.discount);
+          return '<button type="button" data-room="'+nkEsc(k)+'" aria-pressed="'+(i===0)+'"><b>'+nkEsc(k)+'</b><span><s>'+nkInr(std)+'</s> '+nkInr(mr)+' / night</span></button>';}).join('')+'</div></div>'+
         '<div class="row2"><label class="field"><span>Check-in</span><input class="input" type="date" id="bkIn" min="'+t0+'" value="'+addDays(t0,1)+'"></label>'+
         '<label class="field"><span>Check-out</span><input class="input" type="date" id="bkOut" min="'+addDays(t0,1)+'" value="'+addDays(t0,3)+'"></label></div>'+
         '<label class="field"><span>Guests</span><input class="input" id="bkGuests" inputmode="numeric" value="2"><span class="small" id="bkHint">Up to 3 guests per room.</span></label>'+
@@ -299,11 +300,12 @@
         '<p class="small">We check availability and send payment details on WhatsApp. Your booking is confirmed once the 50% advance is received.</p></form>');
       var room=types[0];
       function sum(){
-        var n=nightsOf($('bkIn').value,$('bkOut').value),g=Math.max(1,+$('bkGuests').value.replace(/\D/g,'')||1),rn=Math.ceil(g/3),base=S.cfg.rates[room],mr=Math.round(base*(100-t.discount)/100);
+        var n=nightsOf($('bkIn').value,$('bkOut').value),g=Math.max(1,+$('bkGuests').value.replace(/\D/g,'')||1),rn=Math.ceil(g/3),q=NikadiRates.quote(room,$('bkIn').value,$('bkOut').value,rn,t.discount);
         $('bkHint').textContent=g>3?g+' guests need '+rn+' rooms (up to 3 per room).':'Up to 3 guests per room.';
-        $('bkSum').innerHTML=n>0?'<div><span>'+n+' night'+(n>1?'s':'')+' × '+rn+' room'+(rn>1?'s':'')+' × '+nkInr(mr)+'</span><b>'+nkInr(n*rn*mr)+'</b></div>'+
-          '<div class="save"><span>You save as '+nkEsc(m.tier)+'</span><b>'+nkInr(n*rn*(base-mr))+'</b></div><div><span>Advance to confirm (50%)</span><b>'+nkInr(Math.ceil(n*rn*mr/2))+'</b></div>'+
-          '<div><span>Points you will earn</span><b>~'+Math.floor(n*rn*mr/100*t.earn)+'</b></div>':'<div><span>Check-out must be after check-in</span></div>';
+        $('bkSum').innerHTML=n>0?'<div><span>'+n+' night'+(n>1?'s':'')+' × '+rn+' room'+(rn>1?'s':'')+(q.mixed?' · price changes by date':' × '+nkInr(q.perNight[0].member))+'</span><b>'+nkInr(q.total)+'</b></div>'+
+          (q.offerName?'<div><span>'+nkEsc(q.offerName)+' included</span><b><s>'+nkInr(q.standard)+'</s></b></div>':'')+
+          '<div class="save"><span>You save as '+nkEsc(m.tier)+'</span><b>'+nkInr(q.offer-q.total)+'</b></div><div><span>Advance to confirm (50%)</span><b>'+nkInr(Math.ceil(q.total/2))+'</b></div>'+
+          '<div><span>Points you will earn</span><b>~'+Math.floor(q.total/100*t.earn)+'</b></div>':'<div><span>Check-out must be after check-in</span></div>';
       }
       $('bkRoom').onclick=function(e){var b=e.target.closest('button');if(!b)return;room=b.dataset.room;$('bkRoom').querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b);});sum();};
       ['bkIn','bkOut','bkGuests'].forEach(function(id){$(id).addEventListener('input',sum);});sum();

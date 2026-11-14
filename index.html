@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="app/icons/nikadi-apple-180.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <meta name="description" content="Nikadi Guest House, Mayapur. Premium AC deluxe rooms opposite ISKCON Gate No. 4, an 8 minute walk from the Main ISKCON Temple.">
-<meta property="og:title" content="Nikadi Guest House · Wake up steps from the Mayapur temple">
+<meta property="og:title" content="Nikadi Guest House · Wake up steps away from the Mayapur ISKCON Temple">
 <meta property="og:description" content="Premium AC rooms opposite ISKCON Gate No. 4, an 8 minute walk to the Main ISKCON Temple.">
 <meta property="og:image" content="https://www.nikadiguesthouse.com/img/brand/og-thumb.jpg">
 <meta property="og:url" content="https://www.nikadiguesthouse.com/">
@@ -80,37 +80,121 @@ nav.main a:hover{color:var(--ink)}
 @media (max-width:900px){nav.main{display:none}}
 
 /* hero */
-.hero{position:relative;min-height:min(86vh,760px);display:flex;align-items:flex-end;overflow:hidden}
-.hero .slides{position:absolute;inset:0;z-index:0;overflow:hidden;background:var(--bg)}
-.hero .slides img{position:absolute;inset:0;width:100%;height:100%;max-width:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease;will-change:opacity,transform;backface-visibility:hidden}
-.hero .slides img.on{opacity:1;z-index:2}
-.hero .slides img.prev{opacity:1;z-index:1;transition:none}
-.hero .slides picture{display:contents}
-@keyframes kbIn{from{transform:scale(1)}to{transform:scale(1.14)}}
-@keyframes kbOut{from{transform:scale(1.14)}to{transform:scale(1)}}
-.hero .slides img.zin{animation:kbIn 7.2s linear both}
-.hero .slides img.zout{animation:kbOut 7.2s linear both}
-@media (prefers-reduced-motion: reduce){.hero .slides img{animation:none!important}}
+/* hero: editorial split. Words and offer on the left, a framed portrait slideshow on the right (photos shown at full sharpness) */
+/* offer bar (date-driven, from pricing.js) */
+.offerbar{background:linear-gradient(90deg,#2a2017,#3a2b17 50%,#2a2017);border-bottom:1px solid rgba(201,163,90,.35);font-size:.82rem;color:var(--ink)}
+.offerbar .wrap{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding-block:8px;text-align:center}
+@media (max-width:620px){.offerbar{font-size:.76rem}.offerbar .wrap{gap:8px;padding-block:7px}.offerbar .ob-star{display:none}}
+nav.main{gap:24px}.top .btn{white-space:nowrap}
+.offerbar .ob-star{color:var(--gold-hi)}
+.offerbar a{color:var(--gold-hi);text-underline-offset:3px;white-space:nowrap}
+.top-acts{display:flex;align-items:center;gap:12px}
+.mem-chip{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:8px 14px 8px 10px;font:inherit;font-size:.8rem;cursor:pointer;white-space:nowrap;transition:border-color .2s,background .2s}
+.mem-chip:hover{border-color:var(--gold)}
+.mem-chip svg{width:18px;height:18px;color:var(--gold)}
+.mem-chip.on{border-color:rgba(201,163,90,.6);background:rgba(201,163,90,.08)}
+.mem-chip .tier{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);border-radius:999px;padding:2px 7px}
+@media (max-width:560px){.mem-chip #memChipTxt{display:none}.mem-chip{padding:8px}.mem-chip.on .tier{display:none}.top-acts .btn{padding:10px 14px;letter-spacing:.14em}}
 
-.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,17,15,.55) 0%,rgba(20,17,15,.35) 35%,rgba(20,17,15,.92) 82%,var(--bg) 100%)}
-.hero .wrap{position:relative;z-index:1;width:100%;padding-block:120px 40px}
-.hero h1{font-size:clamp(2.6rem,7vw,5rem);font-weight:500;max-width:13ch}
+/* hero layout */
+.hero{position:relative;overflow:hidden;background:radial-gradient(1200px 600px at 85% 20%,rgba(201,163,90,.10),transparent 60%),radial-gradient(900px 500px at 0% 100%,rgba(201,163,90,.06),transparent 60%),var(--bg)}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(201,163,90,.05) 1px,transparent 1px);background-size:100% 120px;mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent);-webkit-mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent);pointer-events:none}
+.hero-grid{position:relative;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:40px 64px;align-items:center;padding-block:56px 44px}
+.hero-grid .book,.hero-grid .book-sum{grid-column:1/-1}
+.hero-copy{min-width:0;display:grid;gap:0;align-content:center}
+.hero h1{font-size:clamp(2.4rem,4.2vw,3.7rem);font-weight:500;line-height:1.04;margin-top:22px;max-width:15ch}
 .hero h1 em{font-style:italic;color:var(--gold-hi)}
-.hero .lede{margin-top:18px;max-width:40em;font-size:1.08rem;color:var(--ink);opacity:.9}
-/* computers: full-width moving photos, headline on a dark fade to the left */
-@media (min-width:1000px){
-  .hero::after{background:linear-gradient(90deg,rgba(20,17,15,.94) 0%,rgba(20,17,15,.82) 30%,rgba(20,17,15,.35) 58%,rgba(20,17,15,.08) 100%),linear-gradient(180deg,rgba(20,17,15,.45) 0%,transparent 26%,transparent 60%,var(--bg) 100%)}
+.hero .lede{margin-top:22px;max-width:34em;font-size:1.06rem;color:var(--muted)}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.hero-cta .btn-line{color:var(--ink);border-color:rgba(239,231,218,.35)}
+.hero-cta .btn-line:hover{border-color:var(--gold);background:var(--gold);color:var(--gold-ink)}
+.hero-member{margin-top:16px;font-size:.9rem;color:var(--muted)}
+.hero-member span{color:var(--gold-hi)}
+.hero-member a,.linkish{color:var(--ink);text-underline-offset:3px}
+.linkish{background:none;border:0;padding:0;font:inherit;text-decoration:underline;cursor:pointer}
+/* the framed slideshow */
+.hero-media{position:relative;margin:0;justify-self:end;width:100%;max-width:520px}
+.hero-media::before{content:"";position:absolute;inset:-14px 14px 14px -14px;border:1px solid rgba(201,163,90,.55);pointer-events:none;z-index:0}
+.hero .slides{position:relative;z-index:1;aspect-ratio:4/5;overflow:hidden;background:var(--panel);box-shadow:0 40px 80px -40px rgba(0,0,0,.9)}
+.hero .slides img{position:absolute;inset:0;width:100%;height:100%;max-width:100%;object-fit:cover;opacity:0;transition:opacity 1.6s ease;transform:scale(1.001)}
+.hero .slides img.on{opacity:1;animation:heroZoom 7s ease-out both}
+@keyframes heroZoom{from{transform:scale(1.07)}to{transform:scale(1.001)}}
+@media (prefers-reduced-motion: reduce){.hero .slides img.on{animation:none}}
+.hero .slides::after{content:"";position:absolute;inset:auto 0 0;height:38%;background:linear-gradient(180deg,transparent,rgba(12,10,9,.78));z-index:3;pointer-events:none}
+.hero-cap{position:absolute;z-index:4;left:22px;right:22px;bottom:18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;color:var(--ink)}
+.hero-cap b{display:block;font-family:var(--display);font-weight:500;font-size:1.35rem;line-height:1.15}
+.hero-cap small{display:block;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-hi);margin-bottom:4px}
+.hero-cap .count{font-size:.75rem;letter-spacing:.18em;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.hero-cap .count b{display:inline;font-family:var(--body);font-size:.75rem;color:var(--ink)}
+.hero-prog{position:absolute;z-index:4;left:22px;right:22px;bottom:8px;height:1px;background:rgba(239,231,218,.18);overflow:hidden}
+.hero-prog i{display:block;height:100%;background:var(--gold-hi);transform-origin:left;animation:heroBar 6s linear both}
+@keyframes heroBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.hero-nav{position:absolute;z-index:5;top:50%;left:0;right:0;display:flex;justify-content:space-between;padding:0 10px;transform:translateY(-50%);pointer-events:none}
+.hero-nav button{pointer-events:auto;width:40px;height:40px;border-radius:50%;border:1px solid rgba(239,231,218,.35);background:rgba(20,17,15,.45);color:var(--ink);font-size:1.1rem;cursor:pointer;opacity:0;transition:opacity .3s,border-color .2s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hero-media:hover .hero-nav button,.hero-nav button:focus-visible{opacity:1}
+.hero-nav button:hover{border-color:var(--gold)}
+/* offer card (inside the left column) */
+.offer-card{position:relative;margin-top:30px;max-width:520px;border:1px solid rgba(201,163,90,.45);background:linear-gradient(135deg,rgba(201,163,90,.10),rgba(201,163,90,.02) 60%);padding:18px 20px;display:grid;gap:10px}
+.oc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.oc-tag{font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);padding:4px 9px}
+.oc-title{font-family:var(--display);font-size:1.3rem;line-height:1.1;color:var(--ink)}
+.oc-rows{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.oc-rows li{display:grid;gap:2px;padding:6px 0}
+.oc-rows li+li{border-left:1px solid var(--line);padding-left:18px}
+.oc-rows .oc-name{font-size:.8rem;color:var(--muted)}
+.oc-p{display:flex;align-items:baseline;gap:10px;line-height:1.1}
+.oc-p s{color:var(--muted);font-size:.9rem}
+.oc-p b{font-family:var(--display);font-size:2rem;font-weight:500;color:var(--gold-hi);font-variant-numeric:lining-nums}
+.oc-foot{font-size:.8rem;color:var(--muted)}
+@media (max-width:1000px){
+  .hero-grid{grid-template-columns:minmax(0,1fr);padding-block:0 36px;gap:28px}
+  .hero-media{order:-1;justify-self:stretch;width:auto;max-width:none;margin-left:calc(-1*max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1*max(16px,env(safe-area-inset-right,0px)))}
+  .hero-copy .rule::after{display:none}
+  .hero-media::before{display:none}
+  .hero .slides{aspect-ratio:auto;height:min(62vh,520px)}
+  .hero-nav{display:none}
+  .hero h1{margin-top:16px}
 }
-/* phones: moving photos on top, headline below them */
-@media (max-width:700px){
-  .hero .wrap{padding-top:300px}
-  .hero .slides{height:330px;bottom:auto}
-  .hero::after{background:linear-gradient(180deg,rgba(20,17,15,.2) 0,rgba(20,17,15,.05) 120px,rgba(20,17,15,.6) 250px,var(--bg) 320px)}
-}
+@media (max-width:520px){.oc-rows li+li{padding-left:12px}.oc-p{flex-direction:column;gap:0;align-items:flex-start}.oc-p b{font-size:1.75rem}.hero-cta .btn{flex:1 1 auto}}
+/* member price display */
+.price .was{color:var(--muted);font-size:1.15rem;text-decoration:line-through;text-decoration-color:rgba(224,190,122,.7)}
+.price .deal{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);padding:4px 8px;border-radius:2px;align-self:center}
+.mrate.mine{border-style:solid;background:rgba(201,163,90,.08)}
+.mrate b{color:var(--gold-hi);font-weight:500}
+.mrate s{color:var(--muted)}
 
+/* member sign-in dialog */
+.sdlg{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(10,8,7,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sdlg[hidden]{display:none!important}
+.sdlg-card{width:min(420px,100%);background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--gold);padding:28px 24px 24px;display:grid;gap:16px;position:relative;max-height:calc(100vh - 32px);overflow:auto}
+.sdlg-card h2{font-size:1.9rem}
+.sdlg-card p{color:var(--muted);font-size:.92rem}
+.sdlg-x{position:absolute;top:10px;right:10px;width:36px;height:36px;border:0;background:transparent;color:var(--muted);font-size:1.4rem;cursor:pointer}
+.sdlg label{display:grid;gap:6px;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.sdlg input{background:var(--bg);border:1px solid var(--line);color:var(--ink);font:inherit;font-size:16px;padding:12px 14px;letter-spacing:normal;text-transform:none}
+.sdlg input:focus{border-color:var(--gold);outline:0}
+.sdlg .btn{width:100%}
+.sdlg .err{color:var(--warn);font-size:.88rem;min-height:1.2em}
+.sdlg .alt{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.86rem}
+.sdlg .alt a{color:var(--gold-hi);text-underline-offset:3px}
+.mcard-mini{display:grid;gap:4px;padding:16px;border:1px solid rgba(201,163,90,.45);background:linear-gradient(135deg,rgba(201,163,90,.14),rgba(201,163,90,.02))}
+.mcard-mini b{font-family:var(--display);font-size:1.5rem;font-weight:500}
+.mcard-mini span{font-size:.86rem;color:var(--muted)}
+.sdlg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
+.payon{text-align:left;display:grid;gap:12px;padding:22px;border:1px solid rgba(201,163,90,.5);background:linear-gradient(160deg,rgba(201,163,90,.12),rgba(201,163,90,.02));margin-bottom:26px}
+.payon h3{font-size:1.6rem}
+.po-sub,.po-hint{font-size:.88rem;color:var(--muted)}
+.po-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.po-grid label{display:grid;gap:5px;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.po-grid label{grid-template-rows:auto auto 1fr}.po-grid label small{display:none}.po-grid label input{align-self:end}
+.po-grid input{background:var(--bg);border:1px solid var(--line);color:var(--ink);font:inherit;font-size:16px;padding:10px 12px;min-width:0;letter-spacing:normal;text-transform:none}
+.po-grid input:focus{border-color:var(--gold);outline:0}
+.payon .err{color:var(--warn);font-size:.88rem;min-height:1.1em}
+.po-ok{color:var(--gold-hi)}
+@media (max-width:520px){.po-grid{grid-template-columns:1fr}}
 /* booking bar */
-.book{margin-top:36px;background:rgba(27,23,20,.94);border:1px solid var(--line);border-top:2px solid var(--gold);display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:0}
+.book{margin-top:8px;background:rgba(27,23,20,.94);border:1px solid var(--line);border-top:2px solid var(--gold);display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:0}
 .book .f{padding:14px 18px;border-right:1px solid var(--line);display:grid;gap:4px;min-width:0}
 .book label{font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
 .book input,.book select{background:transparent;border:0;color:var(--ink);font-family:var(--body);font-size:1rem;padding:2px 0;width:100%;min-width:0;color-scheme:dark}
@@ -486,34 +570,54 @@ footer .brand b{font-size:1.2rem}
 </head>
 <body>
 
+<div class="offerbar" id="offerBar" hidden><div class="wrap"><span class="ob-star" aria-hidden="true">✦</span><span id="offerText">Special offer till 23 December</span><a href="#rooms" id="offerLink">See offer rates</a></div></div>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="#home"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"></a>
     <nav class="main" aria-label="Sections">
-      <a href="#rooms">Rooms</a><a href="#gallery">Gallery</a><a href="#amenities">Amenities</a><a href="#booking">Booking</a><a href="#membership">Membership</a><a href="app/">Member login</a><a href="#location">Location</a><a href="#contact">Contact</a>
+      <a href="#rooms">Rooms</a><a href="#gallery">Gallery</a><a href="#amenities">Amenities</a><a href="#membership">Membership</a><a href="#location">Location</a><a href="#contact">Contact</a>
     </nav>
-    <a class="btn btn-gold" href="#booking">Book now</a>
+    <div class="top-acts">
+      <button class="mem-chip" id="memChip" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg><span id="memChipTxt">Member sign in</span></button>
+      <a class="btn btn-gold" href="#booking">Book now</a>
+    </div>
   </div>
 </header>
 
 <section class="hero" id="home">
-  <div class="slides" role="img" aria-label="Photos of Nikadi Guest House: the building opposite ISKCON Gate No. 4, reception, staircases and the deluxe rooms">
-    <picture><source media="(max-width:700px)" srcset="img/hero/S/facade-day-hd.jpg"><img class="on zin" src="img/hero/L/facade-day-hd.jpg" alt="" fetchpriority="high"></picture>
-    <img alt="">
-  </div>
-  <div class="wrap">
-    <p class="kicker rule">Sri Dham Mayapur</p>
-    <h1 style="margin-top:18px">Wake up <em>steps from the Mayapur&nbsp;temple</em></h1>
-    <p class="lede">Air-conditioned deluxe rooms directly opposite ISKCON Gate No. 4, an 8 minute walk from the Main Temple and Govinda's. Book direct on WhatsApp for the best rate.</p>
-    <div class="hero-links"><a class="pill-link" href="app/?join=1"><b>Members save up to 20%</b> · Join free</a><a class="pill-link ghost" href="app/">Member login</a></div>
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="kicker rule">Sri Dham Mayapur · Opposite ISKCON Gate No.&nbsp;4</p>
+      <h1>Wake up <em>steps away from the Mayapur ISKCON&nbsp;Temple</em></h1>
+      <p class="lede">Quiet, air-conditioned deluxe rooms in a pure vegetarian home, an 8 minute walk from the Main Temple and Govinda's.</p>
+      <div class="hero-cta"><a class="btn btn-gold" href="#booking">Book your stay</a><a class="btn btn-line" href="#rooms">Explore the rooms</a></div>
+      <p class="hero-member" id="heroMember"><span>Members pay even less</span> · <a href="app/?join=1">Join free</a> or <button type="button" class="linkish" data-signin>sign in</button></p>
+      <aside class="offer-card" id="offerCard" aria-label="Room rates" hidden>
+        <div class="oc-head"><span class="oc-tag" id="ocTag">Special offer</span><span class="oc-title" id="ocTitle">Till 23 December</span></div>
+        <ul class="oc-rows">
+          <li><span class="oc-name">Deluxe Double · King bed</span><span class="oc-p"><s data-std="double"></s><b data-now="double"></b></span></li>
+          <li><span class="oc-name">Deluxe Twin · Two single beds</span><span class="oc-p"><s data-std="twin"></s><b data-now="twin"></b></span></li>
+        </ul>
+        <p class="oc-foot" id="ocFoot">Per room, per night.</p>
+      </aside>
+    </div>
+
+    <figure class="hero-media" aria-label="Photos of Nikadi Guest House">
+      <div class="slides" id="heroSlides">
+        <img class="on" src="img/hero/P/double-14.jpg" alt="Deluxe Double room with king bed, cove lighting and floor-length curtains" fetchpriority="high" width="1100" height="1375">
+      </div>
+      <figcaption class="hero-cap"><span><small id="capKick">Deluxe Double</small><b id="capText">King bed and warm cove lighting</b></span><span class="count"><b id="capNo">01</b> / <span id="capOf">07</span></span></figcaption>
+      <div class="hero-prog" aria-hidden="true"><i id="heroProg"></i></div>
+      <div class="hero-nav"><button type="button" id="heroPrev" aria-label="Previous photo">‹</button><button type="button" id="heroNext" aria-label="Next photo">›</button></div>
+    </figure>
 
     <form class="book" id="bookForm" autocomplete="off">
       <div class="f"><label for="ci">Check-in</label><input type="date" id="ci" required></div>
       <div class="f"><label for="co">Check-out</label><input type="date" id="co" required></div>
       <div class="f"><label for="rm">Room</label>
         <select id="rm">
-          <option value="Deluxe Double (King bed)" data-rate="5000">Deluxe Double</option>
-          <option value="Deluxe Twin" data-rate="4500">Deluxe Twin</option>
+          <option value="Deluxe Double (King bed)" data-kind="double">Deluxe Double</option>
+          <option value="Deluxe Twin" data-kind="twin">Deluxe Twin</option>
         </select></div>
       <div class="f"><label for="gu">Guests</label>
         <select id="gu"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
@@ -570,8 +674,8 @@ footer .brand b{font-size:1.2rem}
         <p class="room-size">190 sq ft · 17.7 m²</p>
         <p>A spacious room with a king-size bed, sofa corner, work desk and a private bathroom with rain shower.</p>
         <ul class="specs"><li>King bed</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
-        <div class="price"><span class="from">Per night</span><b>₹5,000</b><span class="n">Offer rates from ₹3,500 on select dates</span></div>
-        <a class="mrate" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>₹4,750 to ₹4,000 a night · save 5–20%</span></a>
+        <div class="price" data-kind="double"><span class="from">Per night</span><s class="was">₹5,000</s><b>₹3,500</b><span class="deal">Special offer</span><span class="n">till 23 December</span></div>
+        <a class="mrate" data-kind="double" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>Members save a further 5–20%</span></a>
         <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-double">View room</a><a class="btn btn-line" href="#home" data-room="0">Book this room</a></div>
       </div>
     </article>
@@ -584,8 +688,8 @@ footer .brand b{font-size:1.2rem}
         <p class="room-size">150 sq ft · 13.9 m²</p>
         <p>Two separate beds, a sofa corner and a private bathroom with rain shower. Well suited to friends, family or devotees travelling together.</p>
         <ul class="specs"><li>2 single beds</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
-        <div class="price"><span class="from">Per night</span><b>₹4,500</b><span class="n">Offer rates from ₹3,000 on select dates</span></div>
-        <a class="mrate" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>₹4,275 to ₹3,600 a night · save 5–20%</span></a>
+        <div class="price" data-kind="twin"><span class="from">Per night</span><s class="was">₹4,500</s><b>₹3,000</b><span class="deal">Special offer</span><span class="n">till 23 December</span></div>
+        <a class="mrate" data-kind="twin" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>Members save a further 5–20%</span></a>
         <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-twin">View room</a><a class="btn btn-line" href="#home" data-room="1">Book this room</a></div>
       </div>
     </article>
@@ -738,7 +842,7 @@ footer .brand b{font-size:1.2rem}
     <div class="pay">
       <ol class="steps">
         <li><div><h3>Check availability</h3><p>Send your dates and room choice on WhatsApp using the booking bar above, or call +91 75011 01137.</p></div></li>
-        <li><div><h3>Pay the 50% advance</h3><p>Once we confirm the room is free, pay half of the total room price by UPI or bank transfer. Scan the QR code or pay to our UPI ID from Google Pay, PhonePe, Paytm or any bank app.</p></div></li>
+        <li><div><h3>Pay the 50% advance</h3><p>Once we confirm the room is free, pay half of the total room price online, by UPI or by bank transfer. Scan the QR code or pay to our UPI ID from Google Pay, PhonePe, Paytm or any bank app.</p></div></li>
         <li><div><h3>Send the payment screenshot</h3><p>Share the screenshot on WhatsApp. We send your booking confirmation right away. The balance is paid at check-in.</p></div></li>
       </ol>
       <div class="cpol" id="cancellation">
@@ -757,6 +861,21 @@ footer .brand b{font-size:1.2rem}
         </dl>
       </div>
       <div class="upi">
+        <form class="payon" id="payOnline" hidden novalidate>
+          <p class="kicker">Pay online · secure</p>
+          <h3>Pay your advance here</h3>
+          <p class="po-sub">UPI, cards, netbanking or wallets, through Razorpay. You get a receipt by SMS and email, and we see your payment straight away.</p>
+          <div class="po-grid">
+            <label>Your name<input id="poName" autocomplete="name" required></label>
+            <label>Mobile<input id="poPhone" type="tel" inputmode="numeric" autocomplete="tel" required></label>
+            <label>Amount (₹)<input id="poAmt" type="number" min="100" inputmode="numeric" required></label>
+            <label>Booking ref. / dates<small>Optional</small><input id="poNote" maxlength="120" placeholder="e.g. 20–22 Dec, Deluxe Double"></label>
+          </div>
+          <p class="po-hint" id="poHint"></p>
+          <p class="err" id="poErr" aria-live="polite"></p>
+          <button class="btn btn-gold" type="submit" id="poGo">Pay securely</button>
+          <p class="po-ok" id="poOk" hidden></p>
+        </form>
         <p class="kicker">Pay by UPI</p>
         <div class="qr" id="qr"><p class="wait">UPI QR code coming soon. Please message us on WhatsApp for payment details.</p></div>
         <div class="id" id="upiId">Nikadi Guest House</div>
@@ -936,8 +1055,8 @@ footer .brand b{font-size:1.2rem}
           <label class="fld"><span>Children</span><input id="a_ch" type="number" min="0" max="20" value="0" data-role="children" data-l="Children"></label>
           <label class="fld"><span>Room type <i>*</i></span>
             <select id="a_room" required data-role="room" data-l="Room type">
-              <option value="Deluxe Double (King bed)" data-rate="5000">Deluxe Double (King bed)</option>
-              <option value="Deluxe Twin" data-rate="4500">Deluxe Twin</option>
+              <option value="Deluxe Double (King bed)" data-kind="double">Deluxe Double (King bed)</option>
+              <option value="Deluxe Twin" data-kind="twin">Deluxe Twin</option>
             </select></label>
           <label class="fld"><span>No. of rooms <i>*</i></span><input id="a_rooms" type="number" min="1" max="10" value="1" required data-role="rooms" data-l="No. of rooms"><small>Maximum 3 guests per room. Rooms are added automatically.</small></label>
           <div class="fld full"><span>Extras</span>
@@ -948,7 +1067,7 @@ footer .brand b{font-size:1.2rem}
       <fieldset><legend>Tariff &amp; Advance</legend>
         <div class="grid">
           <label class="fld"><span>Room rate per night (₹)</span><input id="a_rate" readonly tabindex="-1" data-role="rate" data-l="Room rate per night"></label>
-          <label class="fld"><span>Total at standard rate (₹)</span><input id="a_total" readonly tabindex="-1" data-role="total" data-l="Total at standard rate"><small>Offer rates may apply. We confirm the final amount on WhatsApp.</small></label>
+          <label class="fld"><span>Total room price (₹)</span><input id="a_total" readonly tabindex="-1" data-role="total" data-l="Total room price"><small>Each night is priced at the rate for that date, with your member discount if you are signed in. We confirm the final amount on WhatsApp.</small></label>
           <label class="fld"><span>Advance to confirm, 50% (₹)</span><input id="a_need" readonly tabindex="-1" data-role="adv50" data-l="Advance to confirm (50%)"><small>Half of the total. We confirm the exact amount on WhatsApp.</small></label>
           <label class="fld"><span>Advance paid (₹)</span><input id="a_adv" type="number" min="0" inputmode="numeric" data-l="Advance paid (₹)"></label>
           <div class="fld"><span>Payment mode</span>
@@ -1021,8 +1140,8 @@ footer .brand b{font-size:1.2rem}
           <label class="fld"><span>No. of nights</span><input id="r_n" readonly tabindex="-1" data-role="n" data-l="No. of nights"></label>
           <label class="fld"><span>Room type <i>*</i></span>
             <select id="r_room" required data-role="room" data-l="Room type">
-              <option value="Deluxe Double (King bed)" data-rate="5000">Deluxe Double (King bed)</option>
-              <option value="Deluxe Twin" data-rate="4500">Deluxe Twin</option>
+              <option value="Deluxe Double (King bed)" data-kind="double">Deluxe Double (King bed)</option>
+              <option value="Deluxe Twin" data-kind="twin">Deluxe Twin</option>
             </select></label>
           <label class="fld"><span>Adults <i>*</i></span><input id="r_ad" type="number" min="1" max="20" value="2" required data-role="adults" data-l="Adults"></label>
           <label class="fld"><span>Children</span><input id="r_ch" type="number" min="0" max="20" value="0" data-role="children" data-l="Children"></label>
@@ -1193,8 +1312,8 @@ footer .brand b{font-size:1.2rem}
       </dl>
 
       <div class="rd-book">
-        <div class="price"><span class="from">Per night</span><b>₹5,000</b><span class="n">Offer rates from ₹3,500 on select dates</span></div>
-        <a class="mrate" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>₹4,750 to ₹4,000 a night · save 5–20%</span></a>
+        <div class="price" data-kind="double"><span class="from">Per night</span><s class="was">₹5,000</s><b>₹3,500</b><span class="deal">Special offer</span><span class="n">till 23 December</span></div>
+        <a class="mrate" data-kind="double" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>Members save a further 5–20%</span></a>
         <div class="rd-btns">
           <a class="btn btn-gold" href="#home" data-room="0">Book this room</a>
           <a class="btn btn-line" href="#advance-booking">Fill booking form</a>
@@ -1288,8 +1407,8 @@ footer .brand b{font-size:1.2rem}
       </dl>
 
       <div class="rd-book">
-        <div class="price"><span class="from">Per night</span><b>₹4,500</b><span class="n">Offer rates from ₹3,000 on select dates</span></div>
-        <a class="mrate" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>₹4,275 to ₹3,600 a night · save 5–20%</span></a>
+        <div class="price" data-kind="twin"><span class="from">Per night</span><s class="was">₹4,500</s><b>₹3,000</b><span class="deal">Special offer</span><span class="n">till 23 December</span></div>
+        <a class="mrate" data-kind="twin" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>Members save a further 5–20%</span></a>
         <div class="rd-btns">
           <a class="btn btn-gold" href="#home" data-room="1">Book this room</a>
           <a class="btn btn-line" href="#advance-booking">Fill booking form</a>
@@ -1347,6 +1466,165 @@ footer .brand b{font-size:1.2rem}
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
 </a>
 
+<div class="sdlg" id="signDlg" hidden role="dialog" aria-modal="true" aria-labelledby="sdTitle">
+  <div class="sdlg-card">
+    <button class="sdlg-x" type="button" data-close aria-label="Close">×</button>
+    <div id="sdIn">
+      <p class="kicker">Nikadi Membership</p>
+      <h2 id="sdTitle" style="margin-top:8px">Sign in to see your price</h2>
+      <p style="margin-top:8px">Members save 5–20% on every night, even on offer rates. Sign in once and your price shows everywhere on this website.</p>
+      <form id="sdForm" style="display:grid;gap:14px;margin-top:18px" novalidate>
+        <label>Mobile number<input id="sdPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10-digit mobile number" required></label>
+        <label>Password<input id="sdPass" type="password" autocomplete="current-password" required></label>
+        <p class="err" id="sdErr" aria-live="polite"></p>
+        <button class="btn btn-gold" type="submit" id="sdGo">Sign in</button>
+        <div class="alt"><a href="app/">Forgot password or first time?</a><a href="app/?join=1">Join free</a></div>
+      </form>
+    </div>
+    <div id="sdOut" hidden>
+      <p class="kicker">Signed in</p>
+      <div class="mcard-mini" style="margin-top:12px"><b id="sdName"></b><span id="sdTier"></span></div>
+      <p id="sdSave" style="margin-top:14px"></p>
+      <div style="display:grid;gap:10px;margin-top:16px">
+        <a class="btn btn-gold" href="app/">Open my membership card</a>
+        <a class="btn btn-line" href="#booking" data-close>Book at my member price</a>
+        <button class="linkish" type="button" id="sdLogout" style="justify-self:center;color:var(--muted)">Sign out</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="pricing.js"></script>
+<script>
+/* ---- Offer prices (from pricing.js) + member sign-in across the whole website ---- */
+(function(){
+  var API="https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec";
+  var R=window.NikadiRates; if(!R) return;
+  function inr(n){return '₹'+Number(n).toLocaleString('en-IN');}
+  function store(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null;}}
+  function $(id){return document.getElementById(id);}
+  var today=R.today(), P=R.period(today), offer=P.offer;
+  /* the next offer period, for the 24 Dec – 5 May normal-rate months */
+  var nextOffer=null; R.PERIODS.forEach(function(x){if(!nextOffer&&x.offer&&x.from>today)nextOffer=x;});
+
+  function memberDiscount(){var m=window.NK_MEMBER;return m&&m.discount?m.discount:0;}
+  function paint(){
+    var m=window.NK_MEMBER||null, pct=memberDiscount();
+    /* offer bar + hero card */
+    if(offer){$('offerBar').hidden=false;$('offerText').textContent=matchMedia('(max-width:620px)').matches?(offer.short||offer.line):offer.line;}
+    var card=$('offerCard'); card.hidden=false;
+    $('ocTag').textContent=offer?offer.name:(m?m.tier+' member price':'Room rates');
+    $('ocTitle').textContent=offer?(offer.until?'Till '+offer.until:'Our best price of the year'):(m?'Your price, '+m.firstName:'Deluxe rooms, per night');
+    ['double','twin'].forEach(function(k){
+      var std=R.STANDARD[k], now=P[k], mine=R.memberRate(now,pct);
+      card.querySelectorAll('[data-std="'+k+'"]').forEach(function(el){el.textContent=(now<std||mine<std)?inr(std):'';});
+      card.querySelectorAll('[data-now="'+k+'"]').forEach(function(el){el.textContent=inr(pct?mine:now);});
+    });
+    $('ocFoot').textContent=pct?'Your '+m.tier+' discount of '+pct+'% is already taken off'+(offer?' the offer price.':'.'):(offer?'Per room, per night. Come and enjoy your nights at Nikadi. Members pay even less.':'Per room, per night. Members save 5–20% on every night.');
+    /* room cards and room pages */
+    document.querySelectorAll('.price[data-kind]').forEach(function(el){
+      var k=el.dataset.kind, std=R.STANDARD[k], now=P[k], mine=R.memberRate(now,pct);
+      var h='<span class="from">Per night</span>';
+      if(pct){h+='<s class="was">'+inr(std)+'</s><b>'+inr(mine)+'</b><span class="deal">'+m.tier+' price</span><span class="n">'+(offer?offer.name+' '+inr(now)+' less your '+pct+'%':'Standard '+inr(now)+' less your '+pct+'%')+'</span>';}
+      else if(now<std){h+='<s class="was">'+inr(std)+'</s><b>'+inr(now)+'</b><span class="deal">'+offer.name+'</span><span class="n">'+(offer.until?'till '+offer.until:'for a limited time')+'</span>';}
+      else{h+='<b>'+inr(now)+'</b>'+(nextOffer?'<span class="n">Members save 5–20%</span>':'');}
+      el.innerHTML=h;
+    });
+    document.querySelectorAll('.mrate[data-kind]').forEach(function(el){
+      var k=el.dataset.kind, now=P[k];
+      if(pct){el.classList.add('mine');el.href='#booking';el.innerHTML='<span class="mrate-tag">'+m.tier+'</span><span>Signed in as '+m.firstName+' · you pay <b>'+inr(R.memberRate(now,pct))+'</b> a night</span>';}
+      else{el.classList.remove('mine');el.href='app/?join=1';el.innerHTML='<span class="mrate-tag">Member rate</span><span>Members pay from <b>'+inr(R.memberRate(now,20))+'</b> to <b>'+inr(R.memberRate(now,5))+'</b> · <u data-signin>sign in</u> or join free</span>';}
+    });
+    /* header chip + hero line */
+    var chip=$('memChip');
+    if(m){chip.classList.add('on');$('memChipTxt').innerHTML=esc(m.firstName)+' <span class="tier">'+esc(m.tier)+'</span>';chip.setAttribute('aria-label','Signed in as '+m.firstName+', '+m.tier+' member');
+      $('heroMember').innerHTML='<span>Welcome back, '+esc(m.firstName)+'.</span> Your '+esc(m.tier)+' price is shown across the website.';}
+    else{chip.classList.remove('on');$('memChipTxt').textContent='Member sign in';chip.removeAttribute('aria-label');
+      $('heroMember').innerHTML='<span>Members pay even less</span> · <a href="app/?join=1">Join free</a> or <button type="button" class="linkish" data-signin>sign in</button>';}
+    if(window.nkBarUpdate)window.nkBarUpdate();
+    document.querySelectorAll('.wform').forEach(function(f){f.dispatchEvent(new Event('change'));});
+  }
+  function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+  /* member session: shared with the membership app (same website, same sign-in) */
+  function setMember(mm){
+    if(mm){window.NK_MEMBER={firstName:mm.firstName||String(mm.name||'').split(' ')[0],name:mm.name||mm.firstName,tier:mm.tier||'Silver',discount:Number(mm.discount)||0,points:mm.points||0};store('nk_site_member',JSON.stringify(window.NK_MEMBER));}
+    else{window.NK_MEMBER=null;store('nk_site_member',null);}
+    paint();
+  }
+  function api(action,data){
+    return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:action},data||{}))})
+      .then(function(r){return r.json();},function(){throw 'network';}).then(function(j){if(!j||!j.ok)throw (j&&j.error)||'server_error';return j;});
+  }
+  var token=store('nk_token');
+  try{var cached=JSON.parse(store('nk_site_member')||'null');if(cached&&token)window.NK_MEMBER=cached;}catch(e){}
+  paint();
+  if(token){api('me',{token:token}).then(function(r){setMember(r.member);},function(c){if(c!=='network'){store('nk_token',null);setMember(null);}});}
+
+  /* sign-in dialog */
+  var dlg=$('signDlg'), last=null;
+  var ERR={invalid_phone:'Please enter your 10-digit mobile number.',not_member:'This number is not a member yet. Join free to get member prices.',no_password:'Please set your password first in the membership app (tap “Forgot password or first time?”).',wrong_password:'Wrong password. Please try again.',too_many_attempts:'Too many wrong attempts. Please wait 15 minutes.',network:'No connection. Please check your internet.'};
+  function open(){last=document.activeElement;var m=window.NK_MEMBER;$('sdIn').hidden=!!m;$('sdOut').hidden=!m;
+    if(m){$('sdName').textContent=m.name;$('sdTier').textContent=m.tier+' member · '+m.discount+'% off every night'+(m.points?' · '+Number(m.points).toLocaleString('en-IN')+' points':'');
+      $('sdSave').textContent='Tonight you pay '+inr(R.memberRate(P.double,m.discount))+' for a Deluxe Double and '+inr(R.memberRate(P.twin,m.discount))+' for a Deluxe Twin.';}
+    dlg.hidden=false;document.documentElement.style.overflow='hidden';setTimeout(function(){var f=m?dlg.querySelector('.btn'):$('sdPhone');if(f)f.focus();},30);}
+  function close(){dlg.hidden=true;document.documentElement.style.overflow='';if(last&&last.focus)last.focus();}
+  $('memChip').addEventListener('click',open);
+  document.addEventListener('click',function(e){var t=e.target.closest('[data-signin]');if(t){e.preventDefault();open();}});
+  dlg.addEventListener('click',function(e){if(e.target===dlg||e.target.closest('[data-close]'))close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dlg.hidden)close();});
+  $('sdForm').addEventListener('submit',function(e){
+    e.preventDefault();var b=$('sdGo'),ph=$('sdPhone').value.replace(/\D/g,'').slice(-10),pw=$('sdPass').value;
+    if(!/^[6-9]\d{9}$/.test(ph)){$('sdErr').textContent=ERR.invalid_phone;return;}
+    if(!pw){$('sdErr').textContent='Please enter your password.';return;}
+    $('sdErr').textContent='';b.disabled=true;b.textContent='Signing in…';
+    api('login',{phone:ph,password:pw}).then(function(r){store('nk_token',r.token);setMember(r.member);$('sdPass').value='';b.disabled=false;b.textContent='Sign in';open();},
+      function(c){b.disabled=false;b.textContent='Sign in';$('sdErr').textContent=ERR[c]||'Something went wrong. Please try again.';});
+  });
+  $('sdLogout').addEventListener('click',function(){var t=store('nk_token');store('nk_token',null);setMember(null);close();});
+})();
+</script>
+<script>
+/* ---- Pay online (Razorpay). Shows only after the Razorpay keys are added in the Apps Script settings. ---- */
+(function(){
+  var API="https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec";
+  var f=document.getElementById('payOnline'); if(!f) return;
+  function $(id){return document.getElementById(id);}
+  function api(a,d){return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:a},d||{}))}).then(function(r){return r.json();},function(){throw 'network';}).then(function(j){if(!j||!j.ok)throw (j&&j.error)||'server_error';return j;});}
+  var cfg=null;
+  api('payConfig').then(function(c){if(!c.enabled)return;cfg=c;f.hidden=false;prefill();},function(){});
+  function prefill(){
+    var m=window.NK_MEMBER; if(m&&!$('poName').value)$('poName').value=m.name||'';
+    var ci=$('ci'),co=$('co'),rm=$('rm'),gu=$('gu');
+    if(ci&&co&&co.value>ci.value&&window.NikadiRates){var k=Math.max(1,Math.ceil((+gu.value||1)/3));var q=NikadiRates.quote(rm.value,ci.value,co.value,k,m?m.discount:0);
+      if(!$('poAmt').dataset.manual)$('poAmt').value=Math.ceil(q.total/2);
+      $('poHint').textContent='50% advance for '+q.nights+(q.nights>1?' nights':' night')+' in '+k+' × '+rm.options[rm.selectedIndex].text+' (from the booking bar above) is ₹'+Math.ceil(q.total/2).toLocaleString('en-IN')+'. Please pay after we confirm your room on WhatsApp.';
+      if(!$('poNote').dataset.manual){var fd=function(v){return new Date(v+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});};$('poNote').value=fd(ci.value)+' – '+fd(co.value)+' · '+rm.options[rm.selectedIndex].text;}}
+  }
+  ['ci','co','rm','gu'].forEach(function(id){var el=$(id);if(el)el.addEventListener('change',function(){if(cfg)prefill();});});
+  $('poAmt').addEventListener('input',function(){this.dataset.manual='1';});
+  $('poNote').addEventListener('input',function(){this.dataset.manual='1';});
+  var ERR={pay_bad_amount:'Please enter an amount between ₹100 and ₹3,00,000.',name_required:'Please enter your name.',invalid_phone:'Please enter a valid 10-digit mobile number.',pay_failed:'The payment could not start. Please try again or pay by UPI below.',network:'No connection. Please check your internet.',pay_unverified:'We could not confirm the payment. If money was taken, send us the Razorpay receipt on WhatsApp.'};
+  function loadRzp(){return new Promise(function(ok,no){if(window.Razorpay)return ok();var sc=document.createElement('script');sc.src='https://checkout.razorpay.com/v1/checkout.js';sc.onload=ok;sc.onerror=function(){no('network');};document.head.appendChild(sc);});}
+  f.addEventListener('submit',function(e){
+    e.preventDefault();var b=$('poGo');$('poErr').textContent='';
+    var ph=$('poPhone').value.replace(/\D/g,'').slice(-10);
+    if(!$('poName').value.trim()){$('poErr').textContent=ERR.name_required;return;}
+    if(!/^[6-9]\d{9}$/.test(ph)){$('poErr').textContent=ERR.invalid_phone;return;}
+    b.disabled=true;b.textContent='Opening secure payment…';
+    Promise.all([loadRzp(),api('payOrder',{name:$('poName').value,phone:ph,amount:$('poAmt').value,note:$('poNote').value,room:$('rm')?$('rm').value:'',checkin:$('ci')?$('ci').value:'',checkout:$('co')?$('co').value:''})]).then(function(x){
+      var o=x[1];
+      var rz=new Razorpay({key:o.keyId,order_id:o.order,amount:o.amount,currency:'INR',name:'Nikadi Guest House',description:'Booking advance',prefill:{name:o.name,contact:'+91'+o.phone},theme:{color:'#c9a35a'},
+        handler:function(r){b.textContent='Confirming…';api('payVerify',{order:r.razorpay_order_id,payment:r.razorpay_payment_id,signature:r.razorpay_signature}).then(function(v){
+          f.querySelectorAll('.po-grid,#poGo,.po-hint').forEach(function(el){el.hidden=true;});$('poOk').hidden=false;
+          $('poOk').textContent='Thank you! ₹'+Number(v.amount||$('poAmt').value).toLocaleString('en-IN')+' received (ref. '+v.ref+'). We will confirm your booking on WhatsApp shortly.';
+        },function(c){b.disabled=false;b.textContent='Pay securely';$('poErr').textContent=ERR[c]||ERR.pay_unverified;});},
+        modal:{ondismiss:function(){b.disabled=false;b.textContent='Pay securely';}}});
+      rz.on('payment.failed',function(){$('poErr').textContent='The payment did not go through. No money was taken, or it will be returned by your bank. Please try again.';});
+      rz.open();
+    },function(c){b.disabled=false;b.textContent='Pay securely';$('poErr').textContent=ERR[c]||ERR.pay_failed;});
+  });
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 // ---- Settings: update these to change payment details ----
@@ -1367,9 +1645,17 @@ var WA = "917501101137";
   function pretty(v){var d=new Date(v+'T12:00:00');return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
   function update(){
     if(ci.value){var m=new Date(ci.value);m.setDate(m.getDate()+1);co.min=iso(m);if(!co.value||co.value<=ci.value)co.value=iso(m);}
-    var n=nights(),r=+rm.options[rm.selectedIndex].dataset.rate,k=roomsFor(gu.value);
-    sum.innerHTML=n>0?n+(n>1?' nights':' night')+' · '+k+' × '+rm.options[rm.selectedIndex].text+(k>1?' rooms':' room')+' · standard rate <b>'+fmt(n*r*k)+'</b>'+(k>1?' (max 3 guests per room)':'')+'. Ask us about offer rates.':'Choose a check-out date after check-in.';
+    var n=nights(),k=roomsFor(gu.value),opt=rm.options[rm.selectedIndex],mem=window.NK_MEMBER||null;
+    if(n<=0){sum.innerHTML='Choose a check-out date after check-in.';return;}
+    var q=NikadiRates.quote(opt.value,ci.value,co.value,k,mem?mem.discount:0);
+    var h=n+(n>1?' nights':' night')+' · '+k+' × '+opt.text+(k>1?' rooms':' room')+' · ';
+    if(q.offer<q.standard)h+='<s>'+fmt(q.standard)+'</s> ';
+    h+='<b>'+fmt(q.offer)+'</b>'+(q.offerName?' '+q.offerName.toLowerCase():'');
+    if(mem&&mem.discount)h+=' · your '+mem.tier+' price <b>'+fmt(q.total)+'</b>';
+    if(k>1)h+=' (max 3 guests per room)';
+    sum.innerHTML=h+'.';
   }
+  window.nkBarUpdate=update;
   [ci,co,rm,gu].forEach(function(el){el.addEventListener('change',update);});
   update();
   document.getElementById('bookForm').addEventListener('submit',function(e){
@@ -1419,16 +1705,18 @@ var WA = "917501101137";
     if(ci.value){var m=new Date(ci.value+'T12:00:00');m.setDate(m.getDate()+1);co.min=iso(m);}
     var nights=(ci.value&&co.value)?Math.round((new Date(co.value)-new Date(ci.value))/864e5):0;
     n.value=nights>0?nights:'';
-    var r=+room.options[room.selectedIndex].dataset.rate;
-    rate.value=inr(r);
+    var rtype=room.value,mem=window.NK_MEMBER||null,pct=mem?mem.discount:0;
+    var qq=(nights>0)?NikadiRates.quote(rtype,ci.value,co.value,1,pct):null;
+    var r=qq?Math.round(qq.total/qq.nights):NikadiRates.memberRate(NikadiRates.rate(rtype,ci.value||NikadiRates.today()),pct);
+    rate.value=qq&&qq.mixed?qq.perNight.map(function(x){return inr(x.member);}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(' / '):inr(r);
     var ad=f.querySelector('[data-role=adults]'),ch=f.querySelector('[data-role=children]');
     if(rooms){
       var people=(+ad.value||0)+(+(ch&&ch.value)||0),need=Math.max(1,Math.ceil(people/3));
       rooms.min=need;
       if(!rooms.dataset.manual||(+rooms.value||0)<need)rooms.value=need;
     }
-    if(total){var q=rooms?Math.max(1,+rooms.value||1):1;total.value=nights>0?inr(nights*r*q):'';
-      var a50=f.querySelector('[data-role=adv50]');if(a50)a50.value=nights>0?inr(Math.ceil(nights*r*q/2)):'';}
+    if(total){var q=rooms?Math.max(1,+rooms.value||1):1,tt=qq?qq.total*q:0;total.value=nights>0?inr(tt):'';
+      var a50=f.querySelector('[data-role=adv50]');if(a50)a50.value=nights>0?inr(Math.ceil(tt/2)):'';}
   }
   document.querySelectorAll('.wform').forEach(function(f){
     var t=new Date();t.setHours(12,0,0,0);
@@ -1564,29 +1852,37 @@ var WA = "917501101137";
 <script>
 /* ---- Hero: moving photo slideshow, new photo every 5 seconds ---- */
 (function(){
-  var box=document.querySelector('.hero .slides'); if(!box) return;
-  var N=["facade-day-hd","hotel-reception","double-01","view-temple","twin-01","double-02","hotel-reception-stairs","twin-03","double-04","facade-night","double-14","twin-05","hotel-reception-wide","double-03","twin-02","stairs","hotel-stairs","hotel-stairs-landing","double-05"];
-  var O=['50% 50%','30% 40%','70% 45%','45% 65%','60% 35%','40% 55%'];
-  var L=box.querySelectorAll('img'), cur=0, i=0, timer=null, phone=matchMedia('(max-width:700px)');
-  function src(n){return 'img/hero/'+(phone.matches?'S':'L')+'/'+n+'.jpg';}
-  function kb(el,k){el.classList.remove('zin','zout');void el.offsetWidth;el.style.transformOrigin=O[k%O.length];el.classList.add(k%2?'zout':'zin');}
-  function preload(k){var p=new Image();p.src=src(N[k%N.length]);}
-  function next(){
-    var k=(i+1)%N.length, el=L[1-cur], old=L[cur], s=src(N[k]), p=new Image();
-    p.onload=p.onerror=function(){
-      var pic=box.querySelector('picture source'); if(pic){var f=box.querySelector('picture img'); f.src=f.currentSrc||f.src; box.querySelectorAll('picture source').forEach(function(x){x.remove();});}
-      el.src=s; kb(el,k);
-      old.classList.remove('on'); old.classList.add('prev');
-      el.classList.remove('prev'); el.classList.add('on');
-      setTimeout(function(){old.classList.remove('prev');},1500);
-      cur=1-cur; i=k; preload(k+1);
-    };
-    p.src=s;
+  var box=document.getElementById('heroSlides'); if(!box) return;
+  var S=[
+    ['double-14','Deluxe Double','King bed and warm cove lighting'],
+    ['facade-night','Nikadi by night','Opposite ISKCON Gate No. 4'],
+    ['double-02','Deluxe Double','190 sq ft of calm, with a sofa corner'],
+    ['twin-03','Deluxe Twin','Two single beds, morning light'],
+    ['facade-day','Nikadi Guest House','On Bhaktisiddhanta Saraswati Marg'],
+    ['reception','Reception','First floor, open 16 hours a day'],
+    ['double-04','Deluxe Double','Wake up to the window light']
+  ];
+  var ALT={'double-14':'Deluxe Double room with king bed','facade-night':'Nikadi Guest House lit up at night','double-02':'Deluxe Double room with sofa and wardrobe','twin-03':'Deluxe Twin room with two single beds','facade-day':'Nikadi Guest House building by day','reception':'Nikadi reception desk','double-04':'Deluxe Double room by the window'};
+  var imgs=[box.querySelector('img')], i=0, timer=null, loaded={0:true};
+  for(var k=1;k<S.length;k++){var im=document.createElement('img');im.alt=ALT[S[k][0]]||'';im.decoding='async';im.width=1100;im.height=1375;box.appendChild(im);imgs.push(im);}
+  function load(k){if(loaded[k])return;loaded[k]=true;imgs[k].src='img/hero/P/'+S[k][0]+'.jpg';}
+  function pad(n){return (n<10?'0':'')+n;}
+  document.getElementById('capOf').textContent=pad(S.length);
+  function show(k){
+    k=(k+S.length)%S.length; load(k); load((k+1)%S.length);
+    var go=function(){imgs[i].classList.remove('on');void imgs[k].offsetWidth;imgs[k].classList.add('on');i=k;
+      document.getElementById('capKick').textContent=S[k][1];document.getElementById('capText').textContent=S[k][2];document.getElementById('capNo').textContent=pad(k+1);
+      var bar=document.getElementById('heroProg');bar.style.animation='none';void bar.offsetWidth;bar.style.animation='';};
+    if(imgs[k].complete&&imgs[k].naturalWidth)go();else{imgs[k].onload=imgs[k].onerror=function(){imgs[k].onload=null;go();};}
   }
-  function start(){if(!timer)timer=setInterval(next,5000);}
+  function start(){stop();timer=setInterval(function(){show(i+1);},6000);}
   function stop(){clearInterval(timer);timer=null;}
+  document.getElementById('heroNext').onclick=function(){show(i+1);start();};
+  document.getElementById('heroPrev').onclick=function(){show(i-1);start();};
+  var tx=null;box.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;},{passive:true});
+  box.addEventListener('touchend',function(e){if(tx==null)return;var dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>40){show(i+(dx<0?1:-1));start();}tx=null;});
   document.addEventListener('visibilitychange',function(){document.hidden?stop():start();});
-  L[0].style.transformOrigin=O[0]; preload(1); start();
+  load(1); start();
 })();
 </script>
 <div class="joinpop" id="joinpop" hidden role="dialog" aria-modal="true" aria-labelledby="jpTitle">

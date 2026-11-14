@@ -96,6 +96,19 @@ var DESK_SCHEMA = {
   config: { sheet: 'Staff app settings', lazy: true, hidden: true, cols: [['key', 'Setting'], ['value', 'Value', 's']] }
 };
 
+/* Room price by the date of each night. Same table as /pricing.js (website) and backend/Code.gs: change all three together.
+   The bill's "usual" tariff is this price, so offer months never print the standard ₹5,000 / ₹4,500. */
+var DESK_RATE_PERIODS = [
+  { from: '2000-01-01', to: '2026-12-23', double: 3500, twin: 3000 },
+  { from: '2026-12-24', to: '2027-05-05', double: 5000, twin: 4500 },
+  { from: '2027-05-06', to: '9999-12-31', double: 3500, twin: 3000 }
+];
+function deskRateOn(type, ymd) {
+  var k = /large/i.test(String(type || '')) ? 'double' : /twin/i.test(String(type || '')) ? 'twin' : 'double';
+  for (var i = 0; i < DESK_RATE_PERIODS.length; i++) if (ymd >= DESK_RATE_PERIODS[i].from && ymd <= DESK_RATE_PERIODS[i].to) return DESK_RATE_PERIODS[i][k];
+  return DESK_RATE_PERIODS[DESK_RATE_PERIODS.length - 1][k];
+}
+
 var DESK_DEFAULTS = {
   rooms: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function (n) {
     var twin = n === 1 || n === 5, big = n === 10 || n === 11;
@@ -297,7 +310,7 @@ function deskCore(db, hooks) {
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
       if (s.status === 'Checked out') { var ub = undoBlock(s); v.undo = ub === 'undo_too_late' ? '' : ub || 'ok'; }
-      v.ids = db.all('guestids').filter(function (x) { return x.stay === s.id && !x.removed; }).length;
+      v.ids = idCount(db.all('guestids').filter(function (x) { return x.stay === s.id && !x.removed; }));
       var ar = find('archive', 'stay', s.id); if (canApprove(me) && ar && ar.folder) v.drive = 'https://drive.google.com/drive/folders/' + ar.folder;
       v.advancePays = s.booking ? bookingPays(s.booking).filter(function (p) { return Number(p.amount) > 0; }).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: 'Advance · booking ' + s.booking }; }) : [];
     } else {
@@ -328,7 +341,10 @@ function deskCore(db, hooks) {
   function prettyPhone(p) { p = String(p || ''); return p.length === 10 ? '+91 ' + p.slice(0, 5) + ' ' + p.slice(5) : p; }
   /* Everything printed on the bill, frozen at the time it is made. */
   function billData(s, me, old) {
-    var r = find('rooms', 'room', s.room) || {}, usual = Number(r.rate || 0), rate = Number(s.rate || 0), nights = Number(s.nights || 0);
+    var r = find('rooms', 'room', s.room) || {}, rate = Number(s.rate || 0), nights = Number(s.nights || 0);
+    /* usual price = the dated room price for the nights of this stay (offer price in offer months) */
+    var usual = Number(r.rate || 0);
+    if (r.type && isYmd(String(s.checkin || '')) && nights > 0) { var ut = 0; for (var ni = 0; ni < nights; ni++) ut += deskRateOn(r.type, addDays(String(s.checkin), ni)); usual = Math.round(ut / nights); }
     var tariff = usual > rate ? usual : rate, discounts = [];
     if (usual > rate) {
       var mem = memberOf(s.phone), pct = Math.round((usual - rate) / usual * 100), note = String(s.rateNote || '');
@@ -504,7 +520,7 @@ function deskCore(db, hooks) {
       row('Check-in', dd(s.checkin) + (s.inAt ? ' · arrived ' + tm(s.inAt) : '')) + row('Room given by', s.inBy) +
       row(s.status === 'Checked out' ? 'Check-out' : 'Check-out (planned)', dd(s.checkout) + (s.outAt ? ' · left ' + tm(s.outAt) : '')) + row('Checked out by', s.outBy) +
       row('Nights', s.nights) + row('Rate per night', rupees(s.rate) + (s.rateNote ? ' · ' + s.rateNote : '')) + row('From booking', s.booking) + row('Bill no.', b ? b.no : '') +
-      row('ID copies', ids.length ? ids.length + ' saved in this folder (' + ids.map(function (x) { return x.label; }).join(', ') + ')' : 'None saved') + row('Notes', s.notes) + '</table>' +
+      row('ID copies', ids.length ? idCount(ids) + (idCount(ids) === 1 ? ' ID' : ' IDs') + ' saved in this folder (' + ids.map(function (x) { return x.label; }).join(', ') + ')' : 'None saved') + row('Notes', s.notes) + '</table>' +
       '<h2>Items given</h2>' + (ch.length ? '<table class="l"><tr><th>When</th><th>Item</th><th>Qty</th><th>Amount</th><th>By</th></tr>' + ch.map(function (c) {
         return '<tr><td>' + hx(tm(c.at)) + '</td><td>' + hx(c.item) + (c.free === 'Yes' ? ' (free' + (c.note ? ', ' + hx(c.note) : '') + ')' : '') + '</td><td>' + hx(c.qty) + '</td><td>' + (c.free === 'Yes' ? '₹0' : hx(rupees(c.total))) + '</td><td>' + hx(c.by) + '</td></tr>';
       }).join('') + '</table>' : '<p>None</p>') +
@@ -657,7 +673,7 @@ function deskCore(db, hooks) {
       var o = { room: r.room, type: r.type, beds: r.beds, status: r.status, updated: r.updated, by: r.by };
       var ab = arriving[r.room];
       if (ab && !(r.stay && stays[r.stay])) o.arriving = { id: ab.id, guest: mgr ? ab.guest : String(ab.guest || '').split(/\s+/)[0], late: ab.checkin < t };
-      if (mgr) o.rate = r.rate;
+      if (mgr) o.rate = r.type ? deskRateOn(r.type, t) : r.rate;
       var s = r.stay && stays[r.stay];
       if (s) {
         o.stay = { id: s.id, guest: mgr ? s.guest : String(s.guest || '').split(/\s+/)[0], guests: s.guests, checkin: s.checkin, checkout: s.checkout,
@@ -1005,8 +1021,14 @@ function deskCore(db, hooks) {
   var ID_SLOTS = { id: ['Person 1 · front', 'Person 1 · back', 'Person 2 · front', 'Person 2 · back', 'Person 3 · front', 'Person 3 · back'],
     pp: ['Passport · front (photo page)', 'Passport · back (last page)', 'Visa'] };
   function idsOf(sid) { return db.all('guestids').filter(function (x) { return x.stay === sid && !x.removed; }); }
+  /* one person's ID = front + back (or passport + visa), so count IDs, not photos */
+  function idCount(rows) {
+    var seen = {};
+    rows.forEach(function (x) { seen[x.kind === 'pp' ? 'pp' : 'id' + Math.floor(Number(x.slot) / 2)] = 1; });
+    return Object.keys(seen).length;
+  }
   function idView(x) { return { id: x.id, kind: x.kind, slot: Number(x.slot), label: x.label, by: x.by, at: x.at }; }
-  function idStayView(s) { return { id: s.id, room: s.room, guest: s.guest, guests: s.guests, checkin: s.checkin, checkout: s.checkout, status: s.status, ids: idsOf(s.id).length }; }
+  function idStayView(s) { return { id: s.id, room: s.room, guest: s.guest, guests: s.guests, checkin: s.checkin, checkout: s.checkout, status: s.status, ids: idCount(idsOf(s.id)) }; }
   api.idStays = function (req) {
     var me = auth(req); needMgr(me);
     var since = addDays(today(), -45), q = String(req.q || '').toLowerCase().trim();
@@ -1366,7 +1388,7 @@ function deskCore(db, hooks) {
     if (!isYmd(p.checkin) || !isYmd(p.checkout) || dayNum(p.checkout) <= dayNum(p.checkin)) fail('bad_dates');
     if (dayNum(p.checkout) - dayNum(p.checkin) > 60) fail('bad_dates');
     var rate = req.rate != null && req.rate !== '' ? money(req.rate) : b ? Number(b.rate) : NaN;
-    if (isNaN(rate) || rate <= 0) rate = /twin/i.test(p.roomType) ? 4500 : 5000;
+    if (isNaN(rate) || rate <= 0) rate = deskRateOn(p.roomType, p.checkin);
     p.rate = rate;
     p.notes = text(req.notes != null ? req.notes : b && b.notes, 400);
     return p;
