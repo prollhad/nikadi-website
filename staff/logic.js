@@ -13,6 +13,9 @@ var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (take
 var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
 var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
 var DESK_BILL_PREFIX = 'NGH';
+/* WhatsApp (Meta WhatsApp Cloud API). Message wordings are approved by Meta as templates with these names. */
+var DESK_WA = { welcome: 'nikadi_welcome', membership: 'nikadi_membership', booking: 'nikadi_booking_confirmed', bill: 'nikadi_bill', lang: 'en' };
+var DESK_JOIN_URL = 'https://www.nikadiguesthouse.com/app/?join=1';
 /* Old GPS log-in/log-out attendance (replaced by Wi-Fi attendance on 14 Nov 2026; kept so old records still read). */
 var DESK_ATTEND_ROLES = [];
 /* Wi-Fi attendance: everyone except the Owner. The first and last time the app is opened on the guest house Wi-Fi each day = entry and exit. */
@@ -58,7 +61,8 @@ var DESK_SCHEMA = {
   items: { sheet: 'Items', cols: [['item', 'Item'], ['price', 'Price (₹)', 'n'], ['track', 'Track stock'], ['stock', 'In stock', 'n'], ['low', 'Warn below', 'n'], ['active', 'Active'], ['sell', 'Sold to rooms'], ['hsn', 'HSN / SAC code', 's'], ['gst', 'GST %', 'n'], ['daily', 'Free daily per room', 's']] },
   service: { sheet: 'Housekeeping log', lazy: true, cols: [['id', 'ID'], ['date', 'Date', 'd'], ['room', 'Room', 'n'], ['stay', 'Stay ID'], ['items', 'Given'], ['by', 'Done by'], ['at', 'Time', 't'], ['charges', 'Charge IDs (system)', 's'], ['undone', 'Undone']] },
   bills: { sheet: 'Bills', cols: [['id', 'Bill link ID', 's'], ['no', 'Invoice no.'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'],
-    ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's'], ['sendAt', 'Email at', 't'], ['status', 'Email status'], ['pdf', 'PDF saved'], ['edited', 'Last changed']] },
+    ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's'], ['sendAt', 'Email at', 't'], ['status', 'Email status'], ['pdf', 'PDF saved'], ['edited', 'Last changed'], ['wa', 'WhatsApp']] },
+  wa: { sheet: 'WhatsApp messages', lazy: true, cols: [['id', 'ID'], ['at', 'Made', 't'], ['sendAt', 'Send at', 't'], ['to', 'To', 's'], ['name', 'Guest'], ['kind', 'Message'], ['ref', 'Stay / booking'], ['status', 'Status'], ['info', 'Details']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
   staff: { sheet: 'Staff', cols: [['name', 'Name'], ['pin', 'PIN', 's'], ['role', 'Role'], ['active', 'Active']] },
@@ -352,7 +356,7 @@ function deskCore(db, hooks) {
     if (!row) {
       d.no = newBillNo(); d.id = newBillId();
       row = db.add('bills', { id: d.id, no: d.no, at: stamp(), stay: s.id, room: s.room, guest: s.guest, phone: s.phone, email: s.email || '', total: billTotal(d), by: me.name, sent: '', data: JSON.stringify(d),
-        sendAt: plusHours(s.outAt || stamp(), DESK_BILL_DELAY_HOURS), status: s.email ? 'Scheduled' : 'No email', pdf: '', edited: '' });
+        sendAt: plusHours(s.outAt || stamp(), DESK_BILL_DELAY_HOURS), status: s.email ? 'Scheduled' : 'No email', pdf: '', edited: '', wa: s.phone ? 'Waiting' : 'No phone' });
       db.set('stays', s, { bill: d.no });
     } else {
       var p = { guest: s.guest, email: s.email || '', total: billTotal(d), data: JSON.stringify(d) };
@@ -382,23 +386,77 @@ function deskCore(db, hooks) {
     if (pdf != null && !pdfOk(pdf)) fail('bad_pdf');
     hooks.sendBill(b.data, to, pdf || null);
     db.set('bills', b.row, { sent: stamp() + ' → ' + to, status: 'Sent' });
-    pdfClear(b.row.id);
   }
   /* Emails every bill whose time has come. Runs on its own (timer) and also when the app is used. */
+  /* ---- WhatsApp ---- */
+  function waReady() { try { return !!(hooks.waReady && hooks.waReady()); } catch (e) { return false; } }
+  function first(n) { return String(n || '').trim().split(/\s+/)[0] || 'Guest'; }
+  function dd(ymd) { var p = String(ymd || '').slice(0, 10).split('-'); return p.length < 3 ? '' : +p[2] + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+p[1] - 1] + ' ' + p[0]; }
+  function rupees(n) { return '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN'); }
+  function waQueue(kind, phone, name, ref, at) {
+    if (!phone || String(phone).length !== 10) return;
+    if (db.all('wa').some(function (m) { return m.kind === kind && m.ref === ref && m.status !== 'Failed'; })) return; // once per stay / booking
+    db.add('wa', { id: id('W'), at: stamp(), sendAt: at || stamp(), to: String(phone), name: name, kind: kind, ref: ref, status: 'Waiting', info: '' });
+  }
+  function welcomeMsgs(s) {
+    if (!waReady() || !s.phone) return;
+    waQueue('welcome', s.phone, s.guest, s.id);
+    if (firstVisit(s) && !memberOf(s.phone)) waQueue('membership', s.phone, s.guest, s.id, plusHours(stamp(), 0.05)); // first stay with us, not yet a member
+  }
+  function firstVisit(s) { return !db.all('stays').some(function (x) { return x.id !== s.id && x.phone === s.phone && x.checkin <= s.checkin; }); }
+  function waParams(m) {
+    if (m.kind === 'welcome' || m.kind === 'membership') {
+      var s = find('stays', 'id', m.ref); if (!s) throw new Error('stay_gone');
+      return m.kind === 'welcome' ? [first(s.guest), String(s.room), dd(s.checkin), dd(s.checkout)] : [first(s.guest), DESK_JOIN_URL];
+    }
+    if (m.kind === 'booking') {
+      var b = find('bookings', 'id', m.ref); if (!b) throw new Error('booking_gone');
+      var rooms = String(b.rooms || '').split(',').filter(function (x) { return x.trim(); }).length || Number(b.roomsNeeded || 1);
+      return [first(b.guest), b.id, String(rooms), dd(b.checkin), dd(b.checkout), rupees(Number(b.advancePaid || 0) - Number(b.refunded || 0))];
+    }
+    throw new Error('bad_kind');
+  }
+  function waSendOne(m) {
+    try {
+      var id1 = hooks.waSend(DESK_WA[m.kind], m.to, waParams(m), null, null);
+      db.set('wa', m, { status: 'Sent', info: stamp() + (id1 ? ' · ' + String(id1).slice(-12) : '') });
+    } catch (e) { db.set('wa', m, { status: 'Failed', info: String(e && e.message || e).slice(0, 120) }); }
+  }
+  function waBill(row) {
+    var d = JSON.parse(row.data), B = typeof NikadiBill !== 'undefined' ? NikadiBill : null, c = B ? B.compute(d) : null;
+    var total = c ? c.total : Number(row.total || 0), due = c ? c.due : 0;
+    var params = [B ? B.greetName(d.guest) : first(d.guest.name), d.no, rupees(total), Math.abs(due) < 0.5 ? 'paid in full' : due > 0 ? 'balance due ' + rupees(due) : 'refund due ' + rupees(-due)];
+    var mid = hooks.waSend(DESK_WA.bill, String(row.phone), params, pdfOf(row.id), 'Nikadi-Bill-' + String(d.no).replace(/[^A-Za-z0-9-]+/g, '-') + '.pdf', DESK_BILL_URL + row.id);
+    db.set('bills', row, { wa: 'Sent ' + stamp() });
+    return mid;
+  }
+  /* Sends everything that is due: bill emails + WhatsApp bills (12 h after check-out) and WhatsApp welcome / membership / booking messages. */
   function sendDue() {
-    var now = stamp(), out = [];
+    var now = stamp(), out = [], ready = waReady();
     db.all('bills').forEach(function (row) {
-      if (row.status !== 'Scheduled' || !row.sendAt || row.sendAt > now || !row.email) return;
-      var d = JSON.parse(row.data); d.url = DESK_BILL_URL + row.id;
-      try { sendBill({ row: row, data: d }, row.email, pdfOf(row.id)); out.push(row.no); }
-      catch (e) { db.set('bills', row, { status: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); }
+      if (!row.sendAt || row.sendAt > now) return;
+      if (row.status === 'Scheduled' && row.email) {
+        var d = JSON.parse(row.data); d.url = DESK_BILL_URL + row.id;
+        try { sendBill({ row: row, data: d }, row.email, pdfOf(row.id)); out.push(row.no); }
+        catch (e) { db.set('bills', row, { status: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); }
+      }
+      if (row.wa === 'Waiting' && !/^Stopped/.test(row.status || '')) {
+        if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
+        else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); } }
+      }
+      if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting') { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
+    });
+    db.all('wa').forEach(function (m) {
+      if (m.status !== 'Waiting' || m.sendAt > now) return;
+      if (!ready) { db.set('wa', m, { status: 'Not sent', info: 'WhatsApp not connected' }); return; }
+      waSendOne(m); out.push(m.kind + ' → ' + m.to);
     });
     return out;
   }
   function billInfo(s, b) {
     if (!b) return null;
     return { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', title: s.title || '',
-      address: s.address || '', name: s.guest, status: b.row.status || '', sendAt: b.row.sendAt || '', hasPdf: !!b.row.pdf, edited: b.row.edited || '', data: b.data };
+      address: s.address || '', name: s.guest, status: b.row.status || '', sendAt: b.row.sendAt || '', hasPdf: !!b.row.pdf, edited: b.row.edited || '', wa: b.row.wa || '', data: b.data };
   }
   function billFields(s, req) {
     var p = {};
@@ -577,6 +635,7 @@ function deskCore(db, hooks) {
     recompute(s);
     db.set('rooms', r, { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
     freeWater(r.room, me.name, s.id);
+    welcomeMsgs(s);
     return { stay: stayView(s, me) };
   };
 
@@ -773,6 +832,28 @@ function deskCore(db, hooks) {
     return api.housekeeping(req);
   };
 
+  /* Owner: WhatsApp connection. The access token is kept in the script's private settings and never sent back to the app. */
+  api.waStatus = function (req) {
+    var me = auth(req); needOwner(me);
+    var info = hooks.waInfo ? hooks.waInfo() : {};
+    return { connected: waReady(), phoneId: info.phoneId || '', hasToken: !!info.hasToken, templates: DESK_WA,
+      recent: db.all('wa').slice(-25).reverse().map(function (m) { return { at: m.at, to: m.to, name: m.name, kind: m.kind, status: m.status, info: m.info }; }),
+      bills: db.all('bills').slice(-10).reverse().map(function (b) { return { no: b.no, guest: b.guest, wa: b.wa || '' }; }) };
+  };
+  api.waSave = function (req) {
+    var me = auth(req); needOwner(me);
+    if (!hooks.waSave) fail('not_available');
+    hooks.waSave({ phoneId: text(req.phoneId, 40), token: req.waToken ? String(req.waToken).trim() : null, clear: !!req.clear });
+    return api.waStatus(req);
+  };
+  api.waTest = function (req) {
+    var me = auth(req); needOwner(me);
+    if (!waReady()) fail('wa_not_connected');
+    var to = phoneOk(req.phone); if (!to) fail('phone_required');
+    var mid = hooks.waSend('hello_world', to, [], null, null, null, 'en_US');
+    return { sent: true, id: mid };
+  };
+
   /* Owner only: entry and exit per person per day. */
   api.attendance = function (req) {
     var me = auth(req); needOwner(me);
@@ -866,8 +947,8 @@ function deskCore(db, hooks) {
   api.billSchedule = function (req) {
     var me = auth(req); needApprover(me);
     var s = checkedOut(req), b = saveBill(s, me, null), what = String(req.what || '');
-    if (what === 'stop') db.set('bills', b.row, { status: 'Stopped by ' + me.name });
-    else if (what === 'resume') { if (!s.email) fail('invalid_email'); db.set('bills', b.row, { status: 'Scheduled', sendAt: b.row.sendAt > stamp() ? b.row.sendAt : stamp() }); }
+    if (what === 'stop') db.set('bills', b.row, { status: 'Stopped by ' + me.name, wa: b.row.wa === 'Waiting' ? 'Stopped' : b.row.wa });
+    else if (what === 'resume') { if (!s.email && !s.phone) fail('invalid_email'); db.set('bills', b.row, { status: s.email ? 'Scheduled' : 'No email', wa: b.row.wa === 'Stopped' ? 'Waiting' : b.row.wa, sendAt: b.row.sendAt > stamp() ? b.row.sendAt : stamp() }); }
     else if (what === 'now') sendBill(b, String(s.email || ''), req.pdf || pdfOf(b.row.id));
     else fail('bad_request');
     return { bill: billInfo(s, b) };
@@ -1062,6 +1143,7 @@ function deskCore(db, hooks) {
     db.set('bookings', b, { rooms: rooms.join(', '), roomsNeeded: rooms.length, status: 'Confirmed', confirmedBy: me.name, confirmedAt: stamp() });
     db.add('payments', { id: id('P'), at: stamp(), stay: '', room: rooms.join(', '), amount: amt, method: req.method, note: 'Booking advance', by: me.name, booking: b.id, ref: ref });
     recomputeBooking(b);
+    if (waReady()) waQueue('booking', b.phone, b.guest, b.id);
     return { booking: bookingView(b, me) };
   };
 
@@ -1143,6 +1225,7 @@ function deskCore(db, hooks) {
       recompute(s);
       db.set('rooms', room(n), { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
       freeWater(n, me.name, s.id);
+      if (i === 0) welcomeMsgs(s);
       made.push(s.id);
     });
     db.set('bookings', b, { status: 'Checked in', closedBy: me.name, closedAt: stamp(), closeNote: 'Checked in to room ' + rooms.join(', ') });

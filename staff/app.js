@@ -8,6 +8,7 @@
   var app = document.getElementById('app');
 
   var ERR = {
+    wa_not_connected: 'WhatsApp is not connected yet (Settings → WhatsApp).', bad_phone_id: 'The phone number ID should be only digits.', bad_token: 'That access token looks too short. Copy the whole token.',
     bill_locked: 'This guest has checked out. Only a manager or the owner can change the bill now.', checkout_future: 'The check-out date can\'t be in the future for a guest who already left.',
     pdf_tools_failed: 'Could not make the PDF. Check the internet connection and try again.', bad_pdf: 'The PDF could not be sent. Please try again.', bad_title: 'Choose Mr., Ms., Mrs., Dr. or Name only.',
     invalid_gstin: 'That GSTIN does not look right (15 characters, like 19ABCDE1234F1Z5).', invalid_email: 'That email address does not look right.', not_checked_out: 'The guest has not checked out yet.',
@@ -818,10 +819,48 @@
   function viewSettings(v) {
     if (!owner()) { S.tab = 'rooms'; return render(); }
     v.innerHTML = '<div><p class="kicker">Owner only</p><h1>Settings</h1></div>' +
-      '<div class="btns"><button class="btn btn-line" type="button" id="team">Team & PINs</button><button class="btn btn-line" type="button" id="prices">Items & prices</button></div>' +
+      '<div class="btns"><button class="btn btn-line" type="button" id="team">Team & PINs</button><button class="btn btn-line" type="button" id="prices">Items & prices</button><button class="btn btn-line" type="button" id="wa">WhatsApp</button></div>' +
       '<div class="panel"><div class="sec-h"><h2>Cancellation policy</h2></div><div class="note">' + esc(S.st.policy.text) + '</div>' +
       '<p class="small">This text appears on the website booking form, in the house rules, in the WhatsApp confirmation and on every booking in this app.</p></div>';
-    $('#team', v).onclick = openTeam; $('#prices', v).onclick = openPrices;
+    $('#team', v).onclick = openTeam; $('#prices', v).onclick = openPrices; $('#wa', v).onclick = openWhatsApp;
+  }
+  /* Owner: connect the guest house WhatsApp number (Meta WhatsApp Cloud API) for automatic messages. */
+  function openWhatsApp() {
+    var body = openSheet('WhatsApp');
+    var KIND = { welcome: 'Welcome at check-in', membership: 'Membership invite (first stay)', booking: 'Booking confirmed', bill: 'Bill PDF' };
+    function draw(w, msg) {
+      body.innerHTML = '<div class="bstat k-' + (w.connected ? 'ok' : 'warn') + '">' + ICON.bills + '<span>' + (w.connected ? '<b>Connected.</b> Automatic WhatsApp messages are on (phone number ID ' + esc(w.phoneId) + ').' : '<b>Not connected yet.</b> Nothing is sent on WhatsApp automatically until this is set up.') + '</span></div>' +
+        (msg ? '<p class="ok-note">' + esc(msg) + '</p>' : '') +
+        '<div class="panel"><div class="sec-h"><h2>What is sent automatically</h2></div><ul class="plain">' +
+        '<li><b>Welcome</b> right after check-in: room, dates, how to find reception.</li>' +
+        '<li><b>Membership invite</b> a few minutes later, only on a guest\'s first stay (and if not a member yet): all levels and benefits + join link.</li>' +
+        '<li><b>Booking confirmed</b> when reception confirms a booking with the advance.</li>' +
+        '<li><b>Bill PDF</b> 12 hours after check-out, together with the email.</li></ul>' +
+        '<p class="small">Each uses a message template approved by Meta: ' + esc(Object.keys(w.templates).filter(function (k) { return k !== 'lang'; }).map(function (k) { return w.templates[k]; }).join(', ')) + ' (language: English).</p></div>' +
+        '<div class="panel"><div class="sec-h"><h2>Connection</h2></div>' +
+        field('Phone number ID (from Meta → WhatsApp → API setup)', '<input class="input" id="w-id" inputmode="numeric" value="' + esc(w.phoneId || '') + '">') +
+        field('Permanent access token' + (w.hasToken ? ' (saved; leave empty to keep it)' : ''), '<input class="input" id="w-tok" type="password" autocomplete="off" placeholder="' + (w.hasToken ? '••••••••••••' : 'Paste the token here') + '">') +
+        '<p class="err" id="w-err" role="alert"></p><div class="btn-row"><button class="btn btn-gold" type="button" id="w-save">Save connection</button>' + (w.phoneId || w.hasToken ? '<button class="btn btn-quiet sm danger" type="button" id="w-clear">Disconnect</button>' : '') + '</div>' +
+        '<p class="small">The token is stored privately in Google, not in the sheet, and is never shown again.</p></div>' +
+        (w.connected ? '<div class="panel"><div class="sec-h"><h2>Test</h2></div>' + field('Send Meta\'s “hello world” test to', '<input class="input" id="w-to" inputmode="tel" maxlength="10" placeholder="10-digit number">') +
+          '<p class="err" id="t-err" role="alert"></p><button class="btn btn-line" type="button" id="w-test">Send test message</button></div>' : '') +
+        '<div class="panel"><div class="sec-h"><h2>Recent messages</h2></div>' + (w.recent.length ? '<div class="list">' + w.recent.map(function (m) {
+          return '<div class="bl"><span class="t"><b>' + esc(KIND[m.kind] || m.kind) + ' · ' + esc(m.name || '') + '</b><small>' + esc(tShort(m.at)) + ' · ' + esc(m.to) + (m.info ? ' · ' + esc(m.info) : '') + '</small></span><span class="a"><span class="ptag k-' + (m.status === 'Sent' ? 'ok' : m.status === 'Waiting' ? 'wait' : 'bad') + '">' + esc(m.status) + '</span></span></div>';
+        }).join('') + '</div>' : '<p class="small">None yet.</p>') +
+        (w.bills.length ? '<div class="sec-h"><h3>Bills on WhatsApp</h3></div><div class="list">' + w.bills.map(function (b) { return '<div class="bl"><span class="t"><b>' + esc(b.no) + ' · ' + esc(b.guest) + '</b><small>' + esc(b.wa || '—') + '</small></span></div>'; }).join('') + '</div>' : '') + '</div>';
+      $('#w-save', body).onclick = function () {
+        var x = this; busy(x, true); $('#w-err', body).textContent = '';
+        api('deskWaSave', { phoneId: $('#w-id', body).value.trim(), waToken: $('#w-tok', body).value.trim() || null })
+          .then(function (r) { draw(r, r.connected ? 'Saved. WhatsApp is connected.' : 'Saved.'); }, function (e) { busy(x, false); $('#w-err', body).textContent = errText(e); });
+      };
+      var c = $('#w-clear', body); if (c) c.onclick = function () { var x = this; if (x.dataset.sure !== '1') { x.dataset.sure = '1'; x.textContent = 'Sure? Tap again'; return; } busy(x, true); api('deskWaSave', { clear: true }).then(function (r) { draw(r, 'Disconnected.'); }); };
+      var t = $('#w-test', body); if (t) t.onclick = function () {
+        var x = this; busy(x, true); $('#t-err', body).textContent = '';
+        api('deskWaTest', { phone: $('#w-to', body).value.trim() }).then(function () { busy(x, false); toast('Test sent'); }, function (e) { busy(x, false); $('#t-err', body).textContent = errText(e); });
+      };
+    }
+    body.innerHTML = '<div class="loading">Loading…</div>';
+    api('deskWaStatus').then(function (w) { draw(w); }, function (e) { body.innerHTML = '<p class="err">' + esc(errText(e)) + '</p>'; });
   }
 
   /* ---------- Calendar + bookings data (loaded on demand) ---------- */
@@ -1625,7 +1664,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 21</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 22</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

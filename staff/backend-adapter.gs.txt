@@ -78,6 +78,7 @@ function deskHandle_(req) {
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
+    waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     sendBill: deskSendBill_ });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
@@ -92,7 +93,47 @@ function deskHandle_(req) {
 function sendDueBills() {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return;
-  try { deskCore(deskDb_(), { sendBill: deskSendBill_ })._sendDue(); } finally { lock.releaseLock(); }
+  try {
+    deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_,
+      memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null })._sendDue();
+  } finally { lock.releaseLock(); }
+}
+
+/* ---------------- WhatsApp (Meta WhatsApp Cloud API) ----------------
+   The owner saves the Phone number ID and a permanent access token in the staff app (Settings → WhatsApp).
+   They are kept in this script's private Script Properties, not in the sheet. */
+var WA_API = 'https://graph.facebook.com/v21.0/';
+function deskWaProps_() { var p = PropertiesService.getScriptProperties(); return { phoneId: p.getProperty('WA_PHONE_ID') || '', token: p.getProperty('WA_TOKEN') || '' }; }
+function deskWaReady_() { var w = deskWaProps_(); return !!(w.phoneId && w.token); }
+function deskWaInfo_() { var w = deskWaProps_(); return { phoneId: w.phoneId, hasToken: !!w.token }; }
+function deskWaSave_(o) {
+  var p = PropertiesService.getScriptProperties();
+  if (o.clear) { p.deleteProperty('WA_PHONE_ID'); p.deleteProperty('WA_TOKEN'); return; }
+  if (o.phoneId) { if (!/^\d{6,30}$/.test(o.phoneId)) throw new Error('bad_phone_id'); p.setProperty('WA_PHONE_ID', o.phoneId); }
+  if (o.token) { if (o.token.length < 40) throw new Error('bad_token'); p.setProperty('WA_TOKEN', o.token); }
+}
+function deskWaCall_(path, opts) {
+  var w = deskWaProps_();
+  opts = opts || {}; opts.headers = { Authorization: 'Bearer ' + w.token }; opts.muteHttpExceptions = true;
+  var r = UrlFetchApp.fetch(WA_API + path, opts), j = {};
+  try { j = JSON.parse(r.getContentText()); } catch (e) {}
+  if (r.getResponseCode() >= 300 || j.error) throw new Error('WhatsApp: ' + (j.error ? (j.error.error_user_msg || j.error.message || '') + (j.error.code ? ' (' + j.error.code + ')' : '') : 'HTTP ' + r.getResponseCode()));
+  return j;
+}
+/** Sends an approved template. params fill {{1}}, {{2}}… in the body; pdf (base64) goes as the document header. */
+function deskWaSend_(template, to10, params, pdf, fileName, url, lang) {
+  var w = deskWaProps_(); if (!w.phoneId || !w.token) throw new Error('wa_not_connected');
+  var comps = [];
+  if (pdf) {
+    var blob = Utilities.newBlob(Utilities.base64Decode(pdf), 'application/pdf', fileName || 'bill.pdf');
+    var media = deskWaCall_(w.phoneId + '/media', { method: 'post', payload: { file: blob, type: 'application/pdf', messaging_product: 'whatsapp' } });
+    comps.push({ type: 'header', parameters: [{ type: 'document', document: { id: media.id, filename: fileName || 'bill.pdf' } }] });
+  } else if (template === 'nikadi_bill') throw new Error('no_pdf');
+  if (params && params.length) comps.push({ type: 'body', parameters: params.map(function (t) { return { type: 'text', text: String(t) }; }) });
+  var body = { messaging_product: 'whatsapp', to: '91' + String(to10).replace(/\D/g, '').slice(-10), type: 'template',
+    template: { name: template, language: { code: lang || 'en' }, components: comps } };
+  var j = deskWaCall_(w.phoneId + '/messages', { method: 'post', contentType: 'application/json', payload: JSON.stringify(body) });
+  return j.messages && j.messages[0] ? j.messages[0].id : '';
 }
 
 /** Emails a guest their bill: a warm message, with the PDF bill attached (made by the staff app). */
