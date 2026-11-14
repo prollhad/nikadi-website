@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /staff/
+Disallow: /bill/
+Disallow: /backend/
+
+Sitemap: https://www.nikadiguesthouse.com/sitemap.xml
