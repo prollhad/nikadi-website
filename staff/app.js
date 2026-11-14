@@ -489,7 +489,7 @@
       '<div class="bill" id="sum"></div>' +
       '<div class="field"><span>Greet the guest as</span>' + titleSeg('b-title', s.title || '') + '</div>' +
       '<details class="billx"' + (s.gstin || s.company ? ' open' : '') + '><summary>Bill details · email, company, GSTIN</summary>' +
-      field('Guest email (the bill is emailed at check-out)', '<input class="input" id="b-mail" type="email" inputmode="email" autocomplete="off" maxlength="80" value="' + esc(s.email || (s.member && s.member.email) || '') + '" placeholder="Optional">') +
+      field('Guest email (the PDF bill is emailed 12 hours after check-out)', '<input class="input" id="b-mail" type="email" inputmode="email" autocomplete="off" maxlength="80" value="' + esc(s.email || (s.member && s.member.email) || '') + '" placeholder="Optional">') +
       field('Company / billing name', '<input class="input" id="b-co" maxlength="80" value="' + esc(s.company || '') + '" placeholder="Only if the bill should be in a company name">') +
       field('Guest GSTIN', '<input class="input" id="b-gst" maxlength="15" autocomplete="off" style="text-transform:uppercase" value="' + esc(s.gstin || '') + '" placeholder="Only for business guests">') + '</details>' +
       '<p class="err" id="err" role="alert"></p><div id="conf"></div>' +
@@ -1184,43 +1184,63 @@
     var w = window.open('', '_blank'); if (!w) { toast('Allow pop-ups to see the bill'); return; }
     w.document.open(); w.document.write(NikadiBill.billHTML(d, { toolbar: true, logo: '../img/brand/logo.png' })); w.document.close();
   }
+  function whenText(st) {
+    var m = /^(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d)/.exec(String(st || '')); if (!m) return st || '';
+    var h = +m[4], mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1];
+    return +m[3] + ' ' + mon + ', ' + ((h % 12) || 12) + ':' + m[5] + (h < 12 ? ' AM' : ' PM');
+  }
+  function billStatus(b) {
+    var st = String(b.status || '');
+    if (st === 'Scheduled') return { k: 'wait', t: 'Will be emailed automatically to ' + b.email + ' on ' + whenText(b.sendAt) + (b.hasPdf ? ' (PDF ready)' : '') };
+    if (st === 'Sent') return { k: 'ok', t: 'Emailed: ' + String(b.sent || '').replace(' → ', ' to ') };
+    if (st === 'No email') return { k: 'warn', t: 'No email address, so nothing is sent automatically. Send it on WhatsApp' + (approver() ? ', or add an email below.' : ', or ask a manager to add an email.') };
+    if (/^Stopped/.test(st)) return { k: 'warn', t: 'Automatic email stopped (' + st.replace(/^Stopped by /, 'by ') + ').' };
+    if (/^Failed/.test(st)) return { k: 'bad', t: 'The automatic email did not go through. ' + (approver() ? 'Use “Email now”.' : 'Ask a manager to send it.') };
+    return { k: 'wait', t: st };
+  }
   function openBill(b, o) {
     o = o || {};
-    var body = openSheet('Bill ' + b.no), pdf = null, pdfJob = null, title = null;
-    function billData(b) { var d = JSON.parse(JSON.stringify(b.data)); d.url = b.url; if (title != null) d.guest.title = title; return d; }
+    var body = openSheet('Bill ' + b.no), pdf = null, pdfJob = null, A = approver();
+    function billData(b) { var d = JSON.parse(JSON.stringify(b.data)); d.url = b.url; return d; }
     function makePdf(b) {
       if (pdf) return Promise.resolve(pdf);
       if (!pdfJob) pdfJob = NikadiBillPdf.make(billData(b), { base: '' }).then(function (r) { pdf = r; pdfJob = null; return r; }, function (e) { pdfJob = null; throw e; });
       return pdfJob;
     }
+    function savePdf(b) { // keep the PDF on the server so the automatic email can attach it
+      return makePdf(b).then(function (r) { return api('deskBillPdf', { id: b.stay, pdf: r.base64() }); }).then(function (r) { return Object.assign(r.bill, { stay: b.stay }); });
+    }
     function draw(b, msg) {
-      if (title == null) title = b.title || (b.data.guest && b.data.guest.title) || '';
-      var d = billData(b), c = NikadiBill.compute(d), ph = String(b.phone || '').replace(/\D/g, '').slice(-10);
+      var d = billData(b), c = NikadiBill.compute(d), ph = String(b.phone || '').replace(/\D/g, '').slice(-10), st = billStatus(b);
       body.innerHTML = '<div class="note"><b>' + esc(d.guest.company || d.guest.name) + '</b>Room ' + esc(d.room.no) + ' · ' + esc(dShort(d.checkin)) + ' – ' + esc(dShort(d.checkout)) + ' · Tax invoice ' + esc(b.no) + '</div>' +
         '<div class="bill"><div class="bl"><span class="t">Total (incl. GST)</span><span class="a">' + inr(c.total) + '</span></div>' +
         '<div class="bl paid"><span class="t">Paid</span><span class="a">' + inr(c.paid - c.refunded) + '</span></div>' +
         '<div class="bl due"><span class="t">' + (Math.abs(c.due) < 0.5 ? 'Fully paid' : c.due > 0 ? 'Still due' : 'To refund') + '</span><span class="a">' + inr(Math.abs(c.due)) + '</span></div></div>' +
-        '<div class="field"><span>Greet the guest as</span>' + titleSeg('bt', title) + '<small class="small" id="greet">Message starts: “Dear ' + esc(NikadiBill.greetName(d.guest)) + ',”</small></div>' +
+        '<div class="bstat k-' + st.k + '">' + ICON.bills + '<span>' + esc(st.t) + '</span></div>' +
         '<p class="ok-note" id="bmsg"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</p>' +
+        '<p class="small">Message starts: “Dear ' + esc(NikadiBill.greetName(d.guest)) + ',”' + (b.edited ? ' · Last changed ' + esc(b.edited) : '') + '</p>' +
         '<div class="btn-col"><button class="btn btn-gold" type="button" id="bw">' + ICON_SHARE + ' Send PDF on WhatsApp</button>' +
         '<button class="btn btn-line" type="button" id="bd">' + ICON_DL + ' Download PDF</button>' +
         '<button class="btn btn-quiet" type="button" id="bv">View bill online</button></div>' +
-        '<div class="sec-h"><h2>Email the PDF bill</h2></div>' +
-        field('Email', '<input class="input" id="be" type="email" inputmode="email" maxlength="80" value="' + esc(b.email || d.guest.email || '') + '">') +
-        '<p class="err" id="berr" role="alert"></p><button class="btn btn-line" type="button" id="bs">' + (b.sent ? 'Send again' : 'Send email with PDF') + '</button>' +
-        (b.sent ? '<p class="small">Last emailed ' + esc(b.sent) + '</p>' : '') +
-        '<details class="billx"><summary>Change company name or GSTIN</summary>' +
-        field('Company / billing name', '<input class="input" id="bc" maxlength="80" value="' + esc(b.company || '') + '">') +
-        field('Guest GSTIN', '<input class="input" id="bg" maxlength="15" style="text-transform:uppercase" value="' + esc(b.gstin || '') + '">') +
-        '<p class="err" id="uerr" role="alert"></p><button class="btn btn-line" type="button" id="bu">Update bill</button><p class="small">The invoice number and the QR code stay the same.</p></details>' +
+        (A ? '<div class="sec-h"><h2>Email</h2></div><div class="btn-row">' +
+            (b.email ? '<button class="btn btn-line" type="button" id="bnow">Email now</button>' : '') +
+            (b.status === 'Scheduled' ? '<button class="btn btn-quiet" type="button" id="bstop">Don\'t send automatically</button>' : '') +
+            (/^Stopped|^Failed/.test(b.status || '') && b.email ? '<button class="btn btn-quiet" type="button" id="bres">Send automatically again</button>' : '') + '</div>' +
+            '<p class="err" id="serr" role="alert"></p>' +
+          '<details class="billx"' + (o.edit ? ' open' : '') + '><summary>Change the bill (manager / owner)</summary>' +
+            '<div class="field"><span>Greet the guest as</span>' + titleSeg('bt', b.title || '') + '</div>' +
+            field('Guest name', '<input class="input" id="bn" maxlength="80" value="' + esc(b.name || d.guest.name) + '">') +
+            field('Email', '<input class="input" id="be" type="email" inputmode="email" maxlength="80" value="' + esc(b.email || '') + '">') +
+            field('Address (optional)', '<input class="input" id="ba" maxlength="160" value="' + esc(b.address || '') + '">') +
+            field('Company / billing name', '<input class="input" id="bc" maxlength="80" value="' + esc(b.company || '') + '">') +
+            field('Guest GSTIN', '<input class="input" id="bg" maxlength="15" style="text-transform:uppercase" value="' + esc(b.gstin || '') + '">') +
+            '<p class="err" id="uerr" role="alert"></p><button class="btn btn-gold" type="button" id="bu">Save changes</button>' +
+            '<p class="small">The invoice number and QR code stay the same. ' + (b.status === 'Sent' ? 'The guest already has the earlier bill: use “Email now” to send the new one.' : 'The changed bill is the one that gets emailed.') + ' Amounts come from the room bill.</p></details>'
+          : '<p class="small">Only a manager or the owner can change this bill or its email.</p>') +
         '<p class="small">The QR code on the bill opens it on www.nikadiguesthouse.com. Anyone with the link can see this bill, so share it only with the guest.</p>';
       function note(t) { var n = $('#bmsg', body); n.textContent = t; n.hidden = !t; }
-      makePdf(b).catch(function () {}); // get the PDF ready so WhatsApp opens straight away
-      wireTitleSeg(body, function (t) {
-        title = t; pdf = null; pdfJob = null; makePdf(b).catch(function () {});
-        $('#greet', body).textContent = 'Message starts: “Dear ' + NikadiBill.greetName(billData(b).guest) + ',”';
-        api('deskBill', { id: b.stay, title: t }).then(function (r) { b = Object.assign(r.bill, { stay: b.stay }); }, function () {});
-      });
+      makePdf(b).catch(function () {}); // ready in the background, so WhatsApp opens straight away
+      if (A) wireTitleSeg(body);
       $('#bv', body).onclick = function () { showBill(b); };
       $('#bd', body).onclick = function () {
         var x = this; busy(x, true);
@@ -1229,7 +1249,7 @@
       $('#bw', body).onclick = function () {
         if (!ph) { toast('No phone number for this guest'); return; }
         var x = this, text = NikadiBill.billWhatsApp(billData(b));
-        if (!pdf) { // still making it: wait, then ask for one more tap (phones only share straight after a tap)
+        if (!pdf) {
           busy(x, true);
           makePdf(b).then(function () { busy(x, false); x.textContent = 'PDF ready · tap to send on WhatsApp'; x.classList.add('pulse'); }, function (e) { busy(x, false); toast(errText(e)); });
           return;
@@ -1244,25 +1264,24 @@
           }
         });
       };
-      function sendMail(em, x) {
-        $('#berr', body).textContent = '';
-        if (x) busy(x, true);
-        note('Making the PDF and emailing it…');
-        return makePdf(b).then(function (r) {
-          return api('deskBillSend', { id: b.stay, email: em, title: title, pdf: r.base64() });
-        }).then(function (r) { draw(Object.assign(r.bill, { stay: b.stay }), 'Bill emailed with the PDF to ' + r.emailed + (demo ? ' (demo: no real email is sent)' : '')); },
-          function (e) { if (x) busy(x, false); note(''); $('#berr', body).textContent = errText(e); });
+      function sched(what, x) {
+        busy(x, true); $('#serr', body).textContent = '';
+        var p = what === 'now' ? makePdf(b).then(function (r) { return api('deskBillSchedule', { id: b.stay, what: 'now', pdf: r.base64() }); }) : api('deskBillSchedule', { id: b.stay, what: what });
+        p.then(function (r) { draw(Object.assign(r.bill, { stay: b.stay }), what === 'now' ? 'Bill emailed with the PDF to ' + r.bill.email + (demo ? ' (demo: no real email is sent)' : '') : what === 'stop' ? 'The bill will not be emailed automatically.' : 'The bill will be emailed automatically.'); },
+          function (e) { busy(x, false); $('#serr', body).textContent = errText(e); });
       }
-      $('#bs', body).onclick = function () {
-        var em = $('#be', body).value.trim(); if (!em) { $('#berr', body).textContent = 'Enter the guest\'s email.'; return; }
-        sendMail(em, this);
+      var bn;
+      if ((bn = $('#bnow', body))) bn.onclick = function () { sched('now', this); };
+      if ((bn = $('#bstop', body))) bn.onclick = function () { sched('stop', this); };
+      if ((bn = $('#bres', body))) bn.onclick = function () { sched('resume', this); };
+      if ((bn = $('#bu', body))) bn.onclick = function () {
+        var x = this; busy(x, true); $('#uerr', body).textContent = '';
+        api('deskBill', { id: b.stay, title: titleVal(body, 'bt'), name: $('#bn', body).value.trim(), email: $('#be', body).value.trim(), address: $('#ba', body).value.trim(),
+          company: $('#bc', body).value.trim(), gstin: $('#bg', body).value.trim().toUpperCase() })
+          .then(function (r) { pdf = null; pdfJob = null; b = Object.assign(r.bill, { stay: b.stay }); return b.status === 'Sent' ? b : savePdf(b); })
+          .then(function (nb) { draw(nb, 'Saved. ' + (nb.status === 'Scheduled' ? 'The changed bill will be emailed on ' + whenText(nb.sendAt) + '.' : nb.status === 'Sent' ? 'Use “Email now” to send the new bill.' : '')); },
+            function (e) { busy(x, false); $('#uerr', body).textContent = errText(e); });
       };
-      $('#bu', body).onclick = function () {
-        var x = this; busy(x, true);
-        api('deskBill', { id: b.stay, company: $('#bc', body).value.trim(), gstin: $('#bg', body).value.trim().toUpperCase() })
-          .then(function (r) { pdf = null; draw(Object.assign(r.bill, { stay: b.stay }), 'Bill updated'); }, function (e) { busy(x, false); $('#uerr', body).textContent = errText(e); });
-      };
-      return { sendMail: sendMail };
     }
     if (!b.data) {
       body.innerHTML = '<div class="loading">Loading bill…</div>';
@@ -1270,9 +1289,9 @@
       return;
     }
     if (!b.stay) b.stay = b.data.stay;
-    if (o.emailed) { draw(b, 'Bill emailed to ' + o.emailed + (demo ? ' (demo: no real email is sent)' : '')); return; }
-    var h = draw(b, '');
-    if (o.auto && b.email) h.sendMail(b.email, null); // email the PDF straight after check-out
+    draw(b, o.auto ? 'Saving the PDF…' : '');
+    if (o.auto) savePdf(b).then(function (nb) { draw(nb, nb.status === 'Scheduled' ? 'Bill saved. It goes to the guest by email automatically, 12 hours after check-out.' : 'Bill saved.'); },
+      function (e) { draw(b, ''); toast(errText(e)); });
   }
   var BILLS = { list: null };
   function viewBills(v) {
@@ -1284,7 +1303,7 @@
     var L = BILLS.list;
     v.innerHTML = '<div class="hrow"><div><p class="kicker">Front desk · last ' + L.length + '</p><h1>Bills</h1></div><button class="btn btn-quiet" type="button" id="brf">Refresh</button></div>' +
       (L.length ? '<div class="list">' + L.map(function (b, i) {
-        return '<button type="button" class="bl bl-btn" data-i="' + i + '"><span class="t"><b>' + esc(b.guest) + '</b><small>' + esc(b.no) + ' · Room ' + esc(b.room) + ' · ' + esc(dShort(b.at)) + (b.sent ? ' · emailed' : '') + '</small></span><span class="a">' + inr(b.total) + '</span></button>';
+        return '<button type="button" class="bl bl-btn" data-i="' + i + '"><span class="t"><b>' + esc(b.guest) + '</b><small>' + esc(b.no) + ' · Room ' + esc(b.room) + ' · ' + esc(dShort(b.at)) + (b.status === 'Scheduled' ? ' · emails ' + whenText(b.sendAt) : b.status === 'Sent' ? ' · emailed' : b.status ? ' · ' + b.status.toLowerCase() : '') + '</small></span><span class="a">' + inr(b.total) + '</span></button>';
       }).join('') + '</div>' : '<p class="small">No bills yet. A bill is made automatically when a guest checks out.</p>');
     $('#brf', v).onclick = function () { BILLS.list = null; render(); };
     $$('[data-i]', v).forEach(function (x) { x.onclick = function () { openBill({ stay: L[+x.dataset.i].stay, no: L[+x.dataset.i].no }); }; });

@@ -122,7 +122,7 @@
       setTimeout(function () {
         try {
           var api = deskCore(memoryDb(world), { memberInfo: demoMember, sendBill: function () {} });
-          if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
+          if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
           var clean = JSON.parse(JSON.stringify(req || {}));
           Object.keys(clean).forEach(function (k) { if (k.charAt(0) === '_') delete clean[k]; });
           var out = api[name](clean);

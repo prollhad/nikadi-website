@@ -13,6 +13,7 @@
 var DESK_TZ_MIN = 330; // India Standard Time, UTC+5:30 (no daylight saving)
 var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
 var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
+var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
 var DESK_BILL_PREFIX = 'NGH'; // invoice numbers: NGH/26-27/0001 (restarts every financial year, 1 April)
 /* Government codes for things sold to rooms. Used when the Items sheet has no code of its own.
    [HSN/SAC, GST %, unit, name printed on the bill] */
@@ -38,7 +39,7 @@ var DESK_SCHEMA = {
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
     ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't'],
-    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)']] },
+    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)'], ['address', 'Guest address']] },
   bookings: { sheet: 'Bookings', cols: [['id', 'Booking ID'], ['status', 'Status'], ['source', 'Source'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['email', 'Email'],
     ['guests', 'Guests', 'n'], ['roomsNeeded', 'Rooms needed', 'n'], ['roomType', 'Room preference'], ['rooms', 'Room numbers', 's'], ['checkin', 'Check-in date', 'd'],
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
@@ -53,7 +54,8 @@ var DESK_SCHEMA = {
     ['reason', 'Reason'], ['status', 'Status'], ['decidedBy', 'Decided by'], ['decidedAt', 'Decided at', 't'], ['decisionNote', 'Decision note'], ['payload', 'Details (system)', 's']] },
   items: { sheet: 'Items', cols: [['item', 'Item'], ['price', 'Price (₹)', 'n'], ['track', 'Track stock'], ['stock', 'In stock', 'n'], ['low', 'Warn below', 'n'], ['active', 'Active'], ['sell', 'Sold to rooms'], ['hsn', 'HSN / SAC code', 's'], ['gst', 'GST %', 'n']] },
   bills: { sheet: 'Bills', cols: [['id', 'Bill link ID', 's'], ['no', 'Invoice no.'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'],
-    ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's']] },
+    ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's'], ['sendAt', 'Email at', 't'], ['status', 'Email status'], ['pdf', 'PDF saved'], ['edited', 'Last changed']] },
+  billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
   staff: { sheet: 'Staff', cols: [['name', 'Name'], ['pin', 'PIN', 's'], ['role', 'Role'], ['active', 'Active']] },
   sessions: { sheet: 'Staff sessions', hidden: true, cols: [['token', 'Token', 's'], ['name', 'Name'], ['role', 'Role'], ['expires', 'Expires', 't']] }
@@ -272,7 +274,7 @@ function deskCore(db, hooks) {
       payments.push({ date: p.at, label: p.note || 'Payment received', method: p.method, ref: p.ref, amount: amt });
     });
     return { no: old ? old.no : '', id: old ? old.id : '', date: old ? old.date : today(), booking: s.booking || '',
-      guest: { name: s.guest, title: s.title || '', phone: prettyPhone(s.phone), email: s.email || '', gstin: s.gstin || '', company: s.company || '' },
+      guest: { name: s.guest, title: s.title || '', address: s.address || '', phone: prettyPhone(s.phone), email: s.email || '', gstin: s.gstin || '', company: s.company || '' },
       room: { no: s.room, type: (r.type || '') + (r.beds ? ' (' + r.beds + ')' : '') }, checkin: s.checkin, checkout: s.checkout, inAt: s.inAt, outAt: s.outAt,
       nights: nights, guests: Number(s.guests || 1), tariff: tariff, discounts: discounts, items: items, payments: payments, refunds: refunds,
       member: old ? old.member : null, staff: s.outBy || (me && me.name) || '' };
@@ -283,34 +285,78 @@ function deskCore(db, hooks) {
     d.items.forEach(function (x) { t += x.qty * x.rate; });
     return t;
   }
-  function saveBill(s, me, member) {
+  function plusHours(st, h) { // 'yyyy-MM-dd HH:mm' + hours (plain clock arithmetic, India time)
+    var m = /^(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d)/.exec(String(st)); if (!m) return stamp();
+    var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) + h * 3600000);
+    return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes());
+  }
+  function saveBill(s, me, member, edited) {
     var row = billOfStay(s.id), old = row ? JSON.parse(row.data) : null;
     var d = billData(s, me, old);
     if (member) d.member = member;
     if (!row) {
       d.no = newBillNo(); d.id = newBillId();
-      row = db.add('bills', { id: d.id, no: d.no, at: stamp(), stay: s.id, room: s.room, guest: s.guest, phone: s.phone, email: s.email || '', total: billTotal(d), by: me.name, sent: '', data: JSON.stringify(d) });
+      row = db.add('bills', { id: d.id, no: d.no, at: stamp(), stay: s.id, room: s.room, guest: s.guest, phone: s.phone, email: s.email || '', total: billTotal(d), by: me.name, sent: '', data: JSON.stringify(d),
+        sendAt: plusHours(s.outAt || stamp(), DESK_BILL_DELAY_HOURS), status: s.email ? 'Scheduled' : 'No email', pdf: '', edited: '' });
       db.set('stays', s, { bill: d.no });
-    } else db.set('bills', row, { guest: s.guest, email: s.email || '', total: billTotal(d), data: JSON.stringify(d) });
+    } else {
+      var p = { guest: s.guest, email: s.email || '', total: billTotal(d), data: JSON.stringify(d) };
+      if (edited) p.edited = stamp() + ' · ' + me.name;
+      if (row.status === 'No email' && s.email) { p.status = 'Scheduled'; if (row.sendAt < stamp()) p.sendAt = stamp(); }
+      if (row.status === 'Scheduled' && !s.email) p.status = 'No email';
+      db.set('bills', row, p);
+    }
     d.url = DESK_BILL_URL + d.id;
     return { row: row, data: d };
+  }
+  /* The PDF is made by the staff app (it looks exactly like the bill) and kept here until it is emailed. */
+  var PDF_PART = 45000;
+  function pdfParts(id) { return db.all('billpdfs').filter(function (x) { return x.bill === id && x.data; }).sort(function (a, b) { return a.part - b.part; }); }
+  function pdfOf(id) { var p = pdfParts(id); return p.length ? p.map(function (x) { return x.data; }).join('') : null; }
+  function pdfClear(id) { pdfParts(id).forEach(function (x) { db.set('billpdfs', x, { data: '' }); }); }
+  function pdfOk(pdf) { return typeof pdf === 'string' && pdf.length > 100 && pdf.length < 9000000 && /^[A-Za-z0-9+\/=]+$/.test(pdf); }
+  function pdfStore(b, pdf) {
+    if (!pdfOk(pdf)) fail('bad_pdf');
+    pdfClear(b.row.id);
+    for (var i = 0, n = 0; i < pdf.length; i += PDF_PART, n++) db.add('billpdfs', { bill: b.row.id, part: n, data: pdf.slice(i, i + PDF_PART) });
+    db.set('bills', b.row, { pdf: stamp() });
   }
   function sendBill(b, to, pdf) {
     if (!hooks.sendBill) fail('email_unavailable');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) fail('invalid_email');
-    if (pdf != null && !(typeof pdf === 'string' && pdf.length < 9000000 && /^[A-Za-z0-9+\/=]+$/.test(pdf))) fail('bad_pdf');
+    if (pdf != null && !pdfOk(pdf)) fail('bad_pdf');
     hooks.sendBill(b.data, to, pdf || null);
-    db.set('bills', b.row, { sent: stamp() + ' → ' + to });
+    db.set('bills', b.row, { sent: stamp() + ' → ' + to, status: 'Sent' });
+    pdfClear(b.row.id);
   }
-  function billInfo(s, b) { return b ? { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', title: s.title || '', data: b.data } : null; }
+  /* Emails every bill whose time has come. Runs on its own (timer) and also when the app is used. */
+  function sendDue() {
+    var now = stamp(), out = [];
+    db.all('bills').forEach(function (row) {
+      if (row.status !== 'Scheduled' || !row.sendAt || row.sendAt > now || !row.email) return;
+      var d = JSON.parse(row.data); d.url = DESK_BILL_URL + row.id;
+      try { sendBill({ row: row, data: d }, row.email, pdfOf(row.id)); out.push(row.no); }
+      catch (e) { db.set('bills', row, { status: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); }
+    });
+    return out;
+  }
+  function billInfo(s, b) {
+    if (!b) return null;
+    return { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', title: s.title || '',
+      address: s.address || '', name: s.guest, status: b.row.status || '', sendAt: b.row.sendAt || '', hasPdf: !!b.row.pdf, edited: b.row.edited || '', data: b.data };
+  }
   function billFields(s, req) {
     var p = {};
     if (req.email != null) { p.email = text(req.email, 80); if (p.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p.email)) fail('invalid_email'); }
     if (req.gstin != null) { p.gstin = text(req.gstin, 15).toUpperCase(); if (p.gstin && !/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/.test(p.gstin)) fail('invalid_gstin'); }
     if (req.company != null) p.company = text(req.company, 80);
+    if (req.address != null) p.address = text(req.address, 160);
+    if (req.name != null) { p.guest = text(req.name, 80); if (!p.guest) fail('name_required'); }
     if (req.title != null) { p.title = String(req.title); if (['', 'Mr.', 'Ms.', 'Mrs.', 'Dr.'].indexOf(p.title) < 0) fail('bad_title'); }
     if (Object.keys(p).length) db.set('stays', s, p);
+    return Object.keys(p).length > 0;
   }
+  function checkedOut(req) { var s = stay(req.id); if (s.status !== 'Checked out') fail('not_checked_out'); return s; }
 
   var api = {};
 
@@ -570,33 +616,53 @@ function deskCore(db, hooks) {
     if (!s.email && memBefore && memBefore.email) db.set('stays', s, { email: memBefore.email });
     var bm = memBefore ? { level: memBefore.tier, earned: member ? member.points : null, balance: member ? member.balance : memBefore.points } : null;
     if (bm) { var r0 = find('rooms', 'room', s.room); if (r0 && Number(r0.rate) > Number(s.rate)) bm.saved = (Number(r0.rate) - Number(s.rate)) * nights; }
-    var b = saveBill(s, me, bm), sentTo = '';
-    if (s.email && req.sendEmail !== false && hooks.sendBill) { try { sendBill(b, s.email); sentTo = s.email; } catch (e) { sentTo = ''; } }
-    return { stay: stayView(s, me), member: member, bill: billInfo(s, b), emailed: sentTo };
+    var b = saveBill(s, me, bm); // emailed automatically DESK_BILL_DELAY_HOURS after check-out
+    return { stay: stayView(s, me), member: member, bill: billInfo(s, b), emailed: '' };
   };
 
-  /* Bill for a checked-out stay: view it, fix the guest's email / GSTIN / company name, and make it again. */
+  /* Bills. Front desk can see, download, WhatsApp and email them; only a Manager or the Owner can change them. */
   api.bill = function (req) {
     var me = auth(req); needMgr(me);
-    var s = stay(req.id);
-    if (s.status !== 'Checked out') fail('not_checked_out');
-    billFields(s, req);
-    var b = saveBill(s, me, null);
+    var s = checkedOut(req), keys = ['name', 'title', 'address', 'email', 'company', 'gstin'], change = {};
+    keys.forEach(function (k) { if (req[k] != null) change[k] = req[k]; });
+    if (Object.keys(change).length) needApprover(me);
+    var edited = billFields(s, change);
+    var b = saveBill(s, me, null, edited);
+    return { bill: billInfo(s, b) };
+  };
+  /* The staff app uploads the PDF once at check-out; after that only a Manager or the Owner can replace it (after a change). */
+  api.billPdf = function (req) {
+    var me = auth(req); needMgr(me);
+    var s = checkedOut(req), b = saveBill(s, me, null);
+    if (b.row.pdf && !canApprove(me)) fail('not_allowed');
+    if (b.row.status === 'Sent' && !canApprove(me)) fail('not_allowed');
+    pdfStore(b, req.pdf);
+    return { bill: billInfo(s, b) };
+  };
+  /* Manager / Owner: email now, stop the automatic email, or switch it back on. */
+  api.billSchedule = function (req) {
+    var me = auth(req); needApprover(me);
+    var s = checkedOut(req), b = saveBill(s, me, null), what = String(req.what || '');
+    if (what === 'stop') db.set('bills', b.row, { status: 'Stopped by ' + me.name });
+    else if (what === 'resume') { if (!s.email) fail('invalid_email'); db.set('bills', b.row, { status: 'Scheduled', sendAt: b.row.sendAt > stamp() ? b.row.sendAt : stamp() }); }
+    else if (what === 'now') sendBill(b, String(s.email || ''), req.pdf || pdfOf(b.row.id));
+    else fail('bad_request');
     return { bill: billInfo(s, b) };
   };
   api.billSend = function (req) {
     var me = auth(req); needMgr(me);
-    var s = stay(req.id);
-    if (s.status !== 'Checked out') fail('not_checked_out');
-    billFields(s, { email: req.email, title: req.title });
+    var s = checkedOut(req);
+    if (req.email != null && String(req.email).trim() !== String(s.email || '')) { needApprover(me); billFields(s, { email: req.email }); }
     var b = saveBill(s, me, null);
-    sendBill(b, String(s.email || ''), req.pdf);
+    sendBill(b, String(s.email || ''), req.pdf || pdfOf(b.row.id));
     return { bill: billInfo(s, b), emailed: s.email };
   };
+  /* Runs the automatic emails (called by a timer in Google, and when the app is used). */
+  api._sendDue = function () { return { sent: sendDue() }; };
   /* Recent bills for the front desk list. */
   api.bills = function (req) {
     var me = auth(req); needMgr(me);
-    return { bills: db.all('bills').slice(-60).reverse().map(function (b) { return { no: b.no, at: b.at, stay: b.stay, room: b.room, guest: b.guest, total: b.total, sent: b.sent, url: DESK_BILL_URL + b.id }; }) };
+    return { bills: db.all('bills').slice(-60).reverse().map(function (b) { return { no: b.no, at: b.at, stay: b.stay, room: b.room, guest: b.guest, total: b.total, sent: b.sent, status: b.status || '', sendAt: b.sendAt || '', url: DESK_BILL_URL + b.id }; }) };
   };
   /* Public: the QR code / link on a bill. Only the secret bill id opens it. */
   api.billView = function (req) {
@@ -995,7 +1061,8 @@ function deskCore(db, hooks) {
     phone: '+91 75011 01137',
     email: 'nikadiguesthouse@gmail.com',
     web: 'www.nikadiguesthouse.com',
-    logo: 'https://www.nikadiguesthouse.com/img/brand/logo.png'
+    logo: 'https://www.nikadiguesthouse.com/img/brand/logo.png',
+    sign: 'https://www.nikadiguesthouse.com/img/brand/signature.png'
   };
   /* Government codes. Rooms: SAC 996311 "Room or unit accommodation services" (5% GST up to ₹7,500 a night). */
   var ROOM_HSN = '996311', ROOM_GST = 5;
@@ -1161,7 +1228,7 @@ function deskCore(db, hooks) {
         'I agree that my liability for this bill is not waived and agree to be held personally liable if the indicated person, company or association fails to pay any part of it. ' +
         'Any query about this bill must be raised within five days of departure.</p></section>' +
 
-      '<section class="sign"><div><div class="for">&nbsp;</div><div class="line"></div>Guest signature</div><div class="r"><div class="for">For ' + HOTEL.company + '</div><div class="line"></div>Authorised signatory' +
+      '<section class="sign"><div class="gsig"><div class="line"></div>Guest signature<small>&nbsp;</small></div><div class="r"><img class="sig" src="' + esc(opt.sign || (opt.logo ? String(opt.logo).replace(/logo\.png$/, 'signature.png') : HOTEL.sign)) + '" alt="Signed for ' + HOTEL.company + ', Director"><div class="line"></div>Authorised signatory' +
         (d.staff ? '<small>Checked out by ' + esc(d.staff) + '</small>' : '') + '</div></section>' +
 
       '<footer class="foot"><div>' + HOTEL.company + ' · ' + HOTEL.name + ', ' + HOTEL.address.join(', ') + '</div>' +
@@ -1171,7 +1238,7 @@ function deskCore(db, hooks) {
       '</div></body></html>';
   }
 
-  var PRINT = ['body{background:#fff;font-size:9.5px;line-height:1.3}.incl{margin-top:3px}.parties .kv.sm{margin-top:3px}.small{margin-top:3px}.decl p{font-size:9px}.foot{font-size:9px;line-height:1.45}.foot .thanks{font-size:10.5px;margin-top:3px}.words{margin-top:5px}.stamp{margin-top:5px}.top{gap:14px;padding-bottom:10px}.logo{width:120px}.qr-svg{width:96px;height:96px}.doc h1{font-size:18px}.parties{padding:10px 0;gap:18px}.who{font-size:11.5px}.lines{margin-top:10px}.lines td{padding:5px 6px}.lines th{padding:6px}.split{margin-top:10px}.tax td,.tax th,.ptab td,.ptab th{padding:3px 5px}.pays,.member,.decl{margin-top:10px}.sign{margin-top:8px}.sign .line{margin-top:16px}.foot>div:first-child{display:none}.stamp{display:none}.srow.tot{margin:3px 0}.srow.bal{margin-top:3px;padding:4px 6px}.lines tfoot td{padding:5px 6px}.kv th,.kv td,.kv td.colon{padding-top:0;padding-bottom:0}.party{line-height:1.35}.tax td,.tax th{padding:2px 5px}.ptab td,.ptab th{padding:2px 5px}.srow{padding:1px 0}.lines td{padding:4px 6px}.qr span{font-size:8px}.decl p{line-height:1.35}.split{gap:14px}.foot{margin-top:12px;padding-top:8px}.member{padding:6px 10px}.totals{padding:6px 10px}.srow{padding:2px 0}.srow.tot{font-size:13px;padding:5px 0}section,.totals,.taxbox,table{break-inside:avoid}.toolbar{display:none}.sheet{box-shadow:none;margin:0;max-width:none;padding:0;border-top-width:4px}',
+  var PRINT = ['body{background:#fff;font-size:9.5px;line-height:1.3}.incl{margin-top:3px}.parties .kv.sm{margin-top:3px}.small{margin-top:3px}.decl p{font-size:9px}.foot{font-size:9px;line-height:1.45}.foot .thanks{font-size:10.5px;margin-top:3px}.words{margin-top:5px}.stamp{margin-top:5px}.top{gap:14px;padding-bottom:10px}.logo{width:120px}.qr-svg{width:96px;height:96px}.doc h1{font-size:18px}.parties{padding:10px 0;gap:18px}.who{font-size:11.5px}.lines{margin-top:10px}.lines td{padding:5px 6px}.lines th{padding:6px}.split{margin-top:10px}.tax td,.tax th,.ptab td,.ptab th{padding:3px 5px}.pays,.member,.decl{margin-top:10px}.sign{margin-top:8px}.sign .line{margin-top:2px}.sign .sig{width:185px}.foot>div:first-child{display:none}.stamp{display:none}.srow.tot{margin:3px 0}.srow.bal{margin-top:3px;padding:4px 6px}.lines tfoot td{padding:5px 6px}.kv th,.kv td,.kv td.colon{padding-top:0;padding-bottom:0}.party{line-height:1.35}.tax td,.tax th{padding:2px 5px}.ptab td,.ptab th{padding:2px 5px}.srow{padding:1px 0}.lines td{padding:4px 6px}.qr span{font-size:8px}.decl p{line-height:1.35}.split{gap:14px}.foot{margin-top:12px;padding-top:8px}.member{padding:6px 10px}.totals{padding:6px 10px}.srow{padding:2px 0}.srow.tot{font-size:13px;padding:5px 0}section,.totals,.taxbox,table{break-inside:avoid}.toolbar{display:none}.sheet{box-shadow:none;margin:0;max-width:none;padding:0;border-top-width:4px}',
     '.top{grid-template-columns:1fr auto 1.25fr}.parties{grid-template-columns:1fr 1fr}.split{grid-template-columns:1fr 250px}',
     '.lines th,.srow.bal,.lines tfoot td,.tax th,.ptab th,.member{-webkit-print-color-adjust:exact;print-color-adjust:exact}'].join('');
 
@@ -1214,7 +1281,7 @@ function deskCore(db, hooks) {
     '.member{margin-top:16px;display:flex;flex-wrap:wrap;gap:6px 22px;padding:9px 14px;border-left:3px solid #156b82;background:#f0f6f8;color:#3d474b}.member>b{color:#156b82}',
     '.decl{margin-top:16px}.decl p{margin:0;font-size:10.5px;color:#52606a;line-height:1.5}',
     '.sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:22px;font-size:11px;color:#3d474b}',
-    '.sign .line{border-top:1px solid #1d2326;margin:40px 0 5px;height:0}.sign .r{text-align:right}.sign .for{font-weight:700;min-height:1.4em}.sign small{display:block;color:#8a9499;margin-top:2px}',
+    '.sign{align-items:end}.sign .line{border-top:1px solid #1d2326;margin:4px 0 5px;height:0}.sign .r{text-align:right}.sign .sig{display:block;width:230px;max-width:100%;height:auto;margin:0 0 0 auto}.sign small{display:block;color:#8a9499;margin-top:2px}',
     '.foot{margin-top:24px;padding-top:12px;border-top:1px solid #cfd6d9;text-align:center;font-size:10.5px;color:#66737a;line-height:1.6}',
     '.foot .gen{color:#8a9499}.foot .thanks{margin-top:6px;font-size:12.5px;color:#156b82;font-weight:600}',
     '.toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px max(16px,env(safe-area-inset-left,0px));background:#1d2326;color:#fff;font-weight:600}',
@@ -1282,9 +1349,10 @@ function deskDb_() {
   function sh(t) {
     var def = DESK_SCHEMA[t], s = ss.getSheetByName(def.sheet);
     if (!s) {
-      if (t !== 'bills') throw new Error('not_setup');
+      if (t !== 'bills' && t !== 'billpdfs') throw new Error('not_setup');
       s = ss.insertSheet(def.sheet); s.appendRow(def.cols.map(function (c) { return c[1]; }));
       s.getRange(1, 1, 1, def.cols.length).setFontWeight('bold').setBackground('#1b1714').setFontColor('#e0be7a'); s.setFrozenRows(1);
+      if (def.hidden) s.hideSheet();
     }
     if (!checked[t]) { // add headings for columns added in newer versions
       checked[t] = true;
@@ -1350,8 +1418,20 @@ function deskHandle_(req) {
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     sendBill: deskSendBill_ });
-  if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
-  return api[name](clean);
+  if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
+  var out = api[name](clean);
+  try { // send bills that are due (at most every 10 minutes), so emails go out even without the timer
+    var c = CacheService.getScriptCache();
+    if (!c.get('desk_due_check')) { c.put('desk_due_check', '1', 600); api._sendDue(); }
+  } catch (e) {}
+  return out;
+}
+
+/** Timer: emails bills 12 hours after check-out. Set in Apps Script → Triggers → sendDueBills → Time-driven → every 15 minutes. */
+function sendDueBills() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return;
+  try { deskCore(deskDb_(), { sendBill: deskSendBill_ })._sendDue(); } finally { lock.releaseLock(); }
 }
 
 /** Emails a guest their bill: a warm message, with the PDF bill attached (made by the staff app). */

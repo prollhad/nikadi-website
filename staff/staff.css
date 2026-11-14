@@ -471,3 +471,10 @@ main.view{flex:1}
 #greet{display:block;margin-top:6px}
 .btn-col .btn svg{vertical-align:-3px;margin-right:6px}
 .btn.pulse{animation:nkpulse 1.2s ease-in-out infinite}@keyframes nkpulse{50%{box-shadow:0 0 0 6px rgba(224,190,122,.25)}}
+.bstat{display:flex;gap:10px;align-items:flex-start;border-radius:12px;padding:12px 14px;margin:12px 0;border:1px solid var(--line);font-size:.92rem;line-height:1.45}
+.bstat svg{width:18px;height:18px;flex:none;margin-top:1px}
+.bstat.k-ok{background:rgba(80,170,120,.12);border-color:rgba(80,170,120,.35);color:#9fdcb8}
+.bstat.k-wait{background:rgba(224,190,122,.10);border-color:rgba(224,190,122,.35);color:var(--gold-hi,#e0be7a)}
+.bstat.k-warn{background:rgba(230,150,80,.10);border-color:rgba(230,150,80,.35);color:#f0b98a}
+.bstat.k-bad{background:rgba(220,90,80,.12);border-color:rgba(220,90,80,.4);color:#f2a39b}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px}.btn-row .btn{flex:1 1 160px}

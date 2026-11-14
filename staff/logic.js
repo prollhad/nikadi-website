@@ -7,6 +7,7 @@
 var DESK_TZ_MIN = 330; // India Standard Time, UTC+5:30 (no daylight saving)
 var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
 var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
+var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
 var DESK_BILL_PREFIX = 'NGH'; // invoice numbers: NGH/26-27/0001 (restarts every financial year, 1 April)
 /* Government codes for things sold to rooms. Used when the Items sheet has no code of its own.
    [HSN/SAC, GST %, unit, name printed on the bill] */
@@ -32,7 +33,7 @@ var DESK_SCHEMA = {
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
     ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't'],
-    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)']] },
+    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)'], ['address', 'Guest address']] },
   bookings: { sheet: 'Bookings', cols: [['id', 'Booking ID'], ['status', 'Status'], ['source', 'Source'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['email', 'Email'],
     ['guests', 'Guests', 'n'], ['roomsNeeded', 'Rooms needed', 'n'], ['roomType', 'Room preference'], ['rooms', 'Room numbers', 's'], ['checkin', 'Check-in date', 'd'],
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
@@ -47,7 +48,8 @@ var DESK_SCHEMA = {
     ['reason', 'Reason'], ['status', 'Status'], ['decidedBy', 'Decided by'], ['decidedAt', 'Decided at', 't'], ['decisionNote', 'Decision note'], ['payload', 'Details (system)', 's']] },
   items: { sheet: 'Items', cols: [['item', 'Item'], ['price', 'Price (₹)', 'n'], ['track', 'Track stock'], ['stock', 'In stock', 'n'], ['low', 'Warn below', 'n'], ['active', 'Active'], ['sell', 'Sold to rooms'], ['hsn', 'HSN / SAC code', 's'], ['gst', 'GST %', 'n']] },
   bills: { sheet: 'Bills', cols: [['id', 'Bill link ID', 's'], ['no', 'Invoice no.'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'],
-    ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's']] },
+    ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's'], ['sendAt', 'Email at', 't'], ['status', 'Email status'], ['pdf', 'PDF saved'], ['edited', 'Last changed']] },
+  billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
   staff: { sheet: 'Staff', cols: [['name', 'Name'], ['pin', 'PIN', 's'], ['role', 'Role'], ['active', 'Active']] },
   sessions: { sheet: 'Staff sessions', hidden: true, cols: [['token', 'Token', 's'], ['name', 'Name'], ['role', 'Role'], ['expires', 'Expires', 't']] }
@@ -266,7 +268,7 @@ function deskCore(db, hooks) {
       payments.push({ date: p.at, label: p.note || 'Payment received', method: p.method, ref: p.ref, amount: amt });
     });
     return { no: old ? old.no : '', id: old ? old.id : '', date: old ? old.date : today(), booking: s.booking || '',
-      guest: { name: s.guest, title: s.title || '', phone: prettyPhone(s.phone), email: s.email || '', gstin: s.gstin || '', company: s.company || '' },
+      guest: { name: s.guest, title: s.title || '', address: s.address || '', phone: prettyPhone(s.phone), email: s.email || '', gstin: s.gstin || '', company: s.company || '' },
       room: { no: s.room, type: (r.type || '') + (r.beds ? ' (' + r.beds + ')' : '') }, checkin: s.checkin, checkout: s.checkout, inAt: s.inAt, outAt: s.outAt,
       nights: nights, guests: Number(s.guests || 1), tariff: tariff, discounts: discounts, items: items, payments: payments, refunds: refunds,
       member: old ? old.member : null, staff: s.outBy || (me && me.name) || '' };
@@ -277,34 +279,78 @@ function deskCore(db, hooks) {
     d.items.forEach(function (x) { t += x.qty * x.rate; });
     return t;
   }
-  function saveBill(s, me, member) {
+  function plusHours(st, h) { // 'yyyy-MM-dd HH:mm' + hours (plain clock arithmetic, India time)
+    var m = /^(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d)/.exec(String(st)); if (!m) return stamp();
+    var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) + h * 3600000);
+    return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes());
+  }
+  function saveBill(s, me, member, edited) {
     var row = billOfStay(s.id), old = row ? JSON.parse(row.data) : null;
     var d = billData(s, me, old);
     if (member) d.member = member;
     if (!row) {
       d.no = newBillNo(); d.id = newBillId();
-      row = db.add('bills', { id: d.id, no: d.no, at: stamp(), stay: s.id, room: s.room, guest: s.guest, phone: s.phone, email: s.email || '', total: billTotal(d), by: me.name, sent: '', data: JSON.stringify(d) });
+      row = db.add('bills', { id: d.id, no: d.no, at: stamp(), stay: s.id, room: s.room, guest: s.guest, phone: s.phone, email: s.email || '', total: billTotal(d), by: me.name, sent: '', data: JSON.stringify(d),
+        sendAt: plusHours(s.outAt || stamp(), DESK_BILL_DELAY_HOURS), status: s.email ? 'Scheduled' : 'No email', pdf: '', edited: '' });
       db.set('stays', s, { bill: d.no });
-    } else db.set('bills', row, { guest: s.guest, email: s.email || '', total: billTotal(d), data: JSON.stringify(d) });
+    } else {
+      var p = { guest: s.guest, email: s.email || '', total: billTotal(d), data: JSON.stringify(d) };
+      if (edited) p.edited = stamp() + ' · ' + me.name;
+      if (row.status === 'No email' && s.email) { p.status = 'Scheduled'; if (row.sendAt < stamp()) p.sendAt = stamp(); }
+      if (row.status === 'Scheduled' && !s.email) p.status = 'No email';
+      db.set('bills', row, p);
+    }
     d.url = DESK_BILL_URL + d.id;
     return { row: row, data: d };
+  }
+  /* The PDF is made by the staff app (it looks exactly like the bill) and kept here until it is emailed. */
+  var PDF_PART = 45000;
+  function pdfParts(id) { return db.all('billpdfs').filter(function (x) { return x.bill === id && x.data; }).sort(function (a, b) { return a.part - b.part; }); }
+  function pdfOf(id) { var p = pdfParts(id); return p.length ? p.map(function (x) { return x.data; }).join('') : null; }
+  function pdfClear(id) { pdfParts(id).forEach(function (x) { db.set('billpdfs', x, { data: '' }); }); }
+  function pdfOk(pdf) { return typeof pdf === 'string' && pdf.length > 100 && pdf.length < 9000000 && /^[A-Za-z0-9+\/=]+$/.test(pdf); }
+  function pdfStore(b, pdf) {
+    if (!pdfOk(pdf)) fail('bad_pdf');
+    pdfClear(b.row.id);
+    for (var i = 0, n = 0; i < pdf.length; i += PDF_PART, n++) db.add('billpdfs', { bill: b.row.id, part: n, data: pdf.slice(i, i + PDF_PART) });
+    db.set('bills', b.row, { pdf: stamp() });
   }
   function sendBill(b, to, pdf) {
     if (!hooks.sendBill) fail('email_unavailable');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) fail('invalid_email');
-    if (pdf != null && !(typeof pdf === 'string' && pdf.length < 9000000 && /^[A-Za-z0-9+\/=]+$/.test(pdf))) fail('bad_pdf');
+    if (pdf != null && !pdfOk(pdf)) fail('bad_pdf');
     hooks.sendBill(b.data, to, pdf || null);
-    db.set('bills', b.row, { sent: stamp() + ' → ' + to });
+    db.set('bills', b.row, { sent: stamp() + ' → ' + to, status: 'Sent' });
+    pdfClear(b.row.id);
   }
-  function billInfo(s, b) { return b ? { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', title: s.title || '', data: b.data } : null; }
+  /* Emails every bill whose time has come. Runs on its own (timer) and also when the app is used. */
+  function sendDue() {
+    var now = stamp(), out = [];
+    db.all('bills').forEach(function (row) {
+      if (row.status !== 'Scheduled' || !row.sendAt || row.sendAt > now || !row.email) return;
+      var d = JSON.parse(row.data); d.url = DESK_BILL_URL + row.id;
+      try { sendBill({ row: row, data: d }, row.email, pdfOf(row.id)); out.push(row.no); }
+      catch (e) { db.set('bills', row, { status: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); }
+    });
+    return out;
+  }
+  function billInfo(s, b) {
+    if (!b) return null;
+    return { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', title: s.title || '',
+      address: s.address || '', name: s.guest, status: b.row.status || '', sendAt: b.row.sendAt || '', hasPdf: !!b.row.pdf, edited: b.row.edited || '', data: b.data };
+  }
   function billFields(s, req) {
     var p = {};
     if (req.email != null) { p.email = text(req.email, 80); if (p.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p.email)) fail('invalid_email'); }
     if (req.gstin != null) { p.gstin = text(req.gstin, 15).toUpperCase(); if (p.gstin && !/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/.test(p.gstin)) fail('invalid_gstin'); }
     if (req.company != null) p.company = text(req.company, 80);
+    if (req.address != null) p.address = text(req.address, 160);
+    if (req.name != null) { p.guest = text(req.name, 80); if (!p.guest) fail('name_required'); }
     if (req.title != null) { p.title = String(req.title); if (['', 'Mr.', 'Ms.', 'Mrs.', 'Dr.'].indexOf(p.title) < 0) fail('bad_title'); }
     if (Object.keys(p).length) db.set('stays', s, p);
+    return Object.keys(p).length > 0;
   }
+  function checkedOut(req) { var s = stay(req.id); if (s.status !== 'Checked out') fail('not_checked_out'); return s; }
 
   var api = {};
 
@@ -564,33 +610,53 @@ function deskCore(db, hooks) {
     if (!s.email && memBefore && memBefore.email) db.set('stays', s, { email: memBefore.email });
     var bm = memBefore ? { level: memBefore.tier, earned: member ? member.points : null, balance: member ? member.balance : memBefore.points } : null;
     if (bm) { var r0 = find('rooms', 'room', s.room); if (r0 && Number(r0.rate) > Number(s.rate)) bm.saved = (Number(r0.rate) - Number(s.rate)) * nights; }
-    var b = saveBill(s, me, bm), sentTo = '';
-    if (s.email && req.sendEmail !== false && hooks.sendBill) { try { sendBill(b, s.email); sentTo = s.email; } catch (e) { sentTo = ''; } }
-    return { stay: stayView(s, me), member: member, bill: billInfo(s, b), emailed: sentTo };
+    var b = saveBill(s, me, bm); // emailed automatically DESK_BILL_DELAY_HOURS after check-out
+    return { stay: stayView(s, me), member: member, bill: billInfo(s, b), emailed: '' };
   };
 
-  /* Bill for a checked-out stay: view it, fix the guest's email / GSTIN / company name, and make it again. */
+  /* Bills. Front desk can see, download, WhatsApp and email them; only a Manager or the Owner can change them. */
   api.bill = function (req) {
     var me = auth(req); needMgr(me);
-    var s = stay(req.id);
-    if (s.status !== 'Checked out') fail('not_checked_out');
-    billFields(s, req);
-    var b = saveBill(s, me, null);
+    var s = checkedOut(req), keys = ['name', 'title', 'address', 'email', 'company', 'gstin'], change = {};
+    keys.forEach(function (k) { if (req[k] != null) change[k] = req[k]; });
+    if (Object.keys(change).length) needApprover(me);
+    var edited = billFields(s, change);
+    var b = saveBill(s, me, null, edited);
+    return { bill: billInfo(s, b) };
+  };
+  /* The staff app uploads the PDF once at check-out; after that only a Manager or the Owner can replace it (after a change). */
+  api.billPdf = function (req) {
+    var me = auth(req); needMgr(me);
+    var s = checkedOut(req), b = saveBill(s, me, null);
+    if (b.row.pdf && !canApprove(me)) fail('not_allowed');
+    if (b.row.status === 'Sent' && !canApprove(me)) fail('not_allowed');
+    pdfStore(b, req.pdf);
+    return { bill: billInfo(s, b) };
+  };
+  /* Manager / Owner: email now, stop the automatic email, or switch it back on. */
+  api.billSchedule = function (req) {
+    var me = auth(req); needApprover(me);
+    var s = checkedOut(req), b = saveBill(s, me, null), what = String(req.what || '');
+    if (what === 'stop') db.set('bills', b.row, { status: 'Stopped by ' + me.name });
+    else if (what === 'resume') { if (!s.email) fail('invalid_email'); db.set('bills', b.row, { status: 'Scheduled', sendAt: b.row.sendAt > stamp() ? b.row.sendAt : stamp() }); }
+    else if (what === 'now') sendBill(b, String(s.email || ''), req.pdf || pdfOf(b.row.id));
+    else fail('bad_request');
     return { bill: billInfo(s, b) };
   };
   api.billSend = function (req) {
     var me = auth(req); needMgr(me);
-    var s = stay(req.id);
-    if (s.status !== 'Checked out') fail('not_checked_out');
-    billFields(s, { email: req.email, title: req.title });
+    var s = checkedOut(req);
+    if (req.email != null && String(req.email).trim() !== String(s.email || '')) { needApprover(me); billFields(s, { email: req.email }); }
     var b = saveBill(s, me, null);
-    sendBill(b, String(s.email || ''), req.pdf);
+    sendBill(b, String(s.email || ''), req.pdf || pdfOf(b.row.id));
     return { bill: billInfo(s, b), emailed: s.email };
   };
+  /* Runs the automatic emails (called by a timer in Google, and when the app is used). */
+  api._sendDue = function () { return { sent: sendDue() }; };
   /* Recent bills for the front desk list. */
   api.bills = function (req) {
     var me = auth(req); needMgr(me);
-    return { bills: db.all('bills').slice(-60).reverse().map(function (b) { return { no: b.no, at: b.at, stay: b.stay, room: b.room, guest: b.guest, total: b.total, sent: b.sent, url: DESK_BILL_URL + b.id }; }) };
+    return { bills: db.all('bills').slice(-60).reverse().map(function (b) { return { no: b.no, at: b.at, stay: b.stay, room: b.room, guest: b.guest, total: b.total, sent: b.sent, status: b.status || '', sendAt: b.sendAt || '', url: DESK_BILL_URL + b.id }; }) };
   };
   /* Public: the QR code / link on a bill. Only the secret bill id opens it. */
   api.billView = function (req) {

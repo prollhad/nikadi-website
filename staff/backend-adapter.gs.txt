@@ -8,9 +8,10 @@ function deskDb_() {
   function sh(t) {
     var def = DESK_SCHEMA[t], s = ss.getSheetByName(def.sheet);
     if (!s) {
-      if (t !== 'bills') throw new Error('not_setup');
+      if (t !== 'bills' && t !== 'billpdfs') throw new Error('not_setup');
       s = ss.insertSheet(def.sheet); s.appendRow(def.cols.map(function (c) { return c[1]; }));
       s.getRange(1, 1, 1, def.cols.length).setFontWeight('bold').setBackground('#1b1714').setFontColor('#e0be7a'); s.setFrozenRows(1);
+      if (def.hidden) s.hideSheet();
     }
     if (!checked[t]) { // add headings for columns added in newer versions
       checked[t] = true;
@@ -76,8 +77,20 @@ function deskHandle_(req) {
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     sendBill: deskSendBill_ });
-  if (!api.hasOwnProperty(name)) throw new Error('unknown_action');
-  return api[name](clean);
+  if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
+  var out = api[name](clean);
+  try { // send bills that are due (at most every 10 minutes), so emails go out even without the timer
+    var c = CacheService.getScriptCache();
+    if (!c.get('desk_due_check')) { c.put('desk_due_check', '1', 600); api._sendDue(); }
+  } catch (e) {}
+  return out;
+}
+
+/** Timer: emails bills 12 hours after check-out. Set in Apps Script → Triggers → sendDueBills → Time-driven → every 15 minutes. */
+function sendDueBills() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return;
+  try { deskCore(deskDb_(), { sendBill: deskSendBill_ })._sendDue(); } finally { lock.releaseLock(); }
 }
 
 /** Emails a guest their bill: a warm message, with the PDF bill attached (made by the staff app). */
