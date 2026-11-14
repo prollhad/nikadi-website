@@ -34,6 +34,8 @@
     ask_manager_nights: 'Charging fewer nights than the guest stayed needs a manager. Ask the manager or owner to check this guest out.',
     too_early: 'This booking starts on a later date. If the guest came early, edit the booking dates first.', too_many_requests: 'Too many requests. Try again later.'
   };
+  if ('serviceWorker' in navigator) { var hadSw = !!navigator.serviceWorker.controller, swReloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadSw && !swReloaded) { swReloaded = true; location.reload(); } }); } // show a new version straight away
   function errText(c) { c = c && c.message || c; return ERR[c] || (/pdf|canvas|html2canvas/i.test(String(c)) ? ERR.pdf_tools_failed : ERR.server_error); }
 
   function api(action, data) {
@@ -1315,6 +1317,7 @@
         '<div class="bstat k-' + st.k + '">' + ICON.bills + '<span>' + esc(st.t) + '</span></div>' +
         '<p class="ok-note" id="bmsg"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</p>' +
         '<p class="small">Message starts: “Dear ' + esc(NikadiBill.greetName(d.guest)) + ',”' + (b.edited ? ' · Last changed ' + esc(b.edited) : '') + '</p>' +
+        (A ? '<button class="btn btn-line edit-cta" type="button" id="bedit">✎ Edit this bill: rate, nights, items, payments</button>' : '') +
         '<div class="btn-col"><button class="btn btn-gold" type="button" id="bw">' + ICON_SHARE + ' Send PDF on WhatsApp</button>' +
         '<button class="btn btn-line" type="button" id="bd">' + ICON_DL + ' Download PDF</button>' +
         '<button class="btn btn-quiet" type="button" id="bv">View bill online</button></div>' +
@@ -1341,6 +1344,7 @@
       function note(t) { var n = $('#bmsg', body); n.textContent = t; n.hidden = !t; }
       makePdf(b).catch(function () {}); // ready in the background, so WhatsApp opens straight away
       if (A) { wireTitleSeg(body); editors(b); }
+      var be = $('#bedit', body); if (be) be.onclick = function () { var dt = $('details[data-sec="room"]', body); dt.open = true; OPEN.room = true; dt.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
       $$('details[data-sec]', body).forEach(function (dt) { if (OPEN[dt.dataset.sec]) dt.open = true; dt.ontoggle = function () { OPEN[dt.dataset.sec] = dt.open; }; });
       $('#bv', body).onclick = function () { showBill(b); };
       $('#bd', body).onclick = function () {
@@ -1403,7 +1407,7 @@
     v.innerHTML = '<div class="hrow"><div><p class="kicker">Front desk · last ' + L.length + '</p><h1>Bills</h1></div><button class="btn btn-quiet" type="button" id="brf">Refresh</button></div>' +
       (L.length ? '<div class="list">' + L.map(function (b, i) {
         return '<button type="button" class="bl bl-btn" data-i="' + i + '"><span class="t"><b>' + esc(b.guest) + '</b><small>' + esc(b.no) + ' · Room ' + esc(b.room) + ' · ' + esc(dShort(b.at)) + (b.status === 'Scheduled' ? ' · emails ' + whenText(b.sendAt) : b.status === 'Sent' ? ' · emailed' : b.status ? ' · ' + b.status.toLowerCase() : '') + '</small></span><span class="a">' + inr(b.total) + '</span></button>';
-      }).join('') + '</div>' : '<p class="small">No bills yet. A bill is made automatically when a guest checks out.</p>');
+      }).join('') + '</div>' : '<p class="small">No bills yet. A bill is made automatically when a guest checks out (from 13 Nov 2026 onwards). Open it here to view, send or edit it.</p>');
     $('#brf', v).onclick = function () { BILLS.list = null; render(); };
     $$('[data-i]', v).forEach(function (x) { x.onclick = function () { openBill({ stay: L[+x.dataset.i].stay, no: L[+x.dataset.i].no }); }; });
   }
