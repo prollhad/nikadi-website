@@ -2,6 +2,7 @@
    Runs the real staff logic (logic.js) on sample data kept only on this phone.
    Demo PINs: 1111 Owner · 2222 Reception (Manager) · 3333 Housekeeping (Staff) */
 (function (root) {
+  var DEMO_PHOTOS = {}; // demo: bill photos only kept until the page reloads
   var KEY = 'nikadi-staff-demo-v8';
 
   function memoryDb(data) {
@@ -122,7 +123,9 @@
     return new Promise(function (resolve, reject) {
       setTimeout(function () {
         try {
-          var api = deskCore(memoryDb(world), { memberInfo: demoMember, sendBill: function () {} });
+          var api = deskCore(memoryDb(world), { memberInfo: demoMember, sendBill: function () {},
+            savePhoto: function (b64) { var k = 'ph' + Date.now() + Math.random().toString(36).slice(2, 6); DEMO_PHOTOS[k] = 'data:image/jpeg;base64,' + b64; return k; },
+            getPhoto: function (k) { return DEMO_PHOTOS[k] || ''; } });
           if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
           var clean = JSON.parse(JSON.stringify(req || {}));
           Object.keys(clean).forEach(function (k) { if (k.charAt(0) === '_') delete clean[k]; });

@@ -522,3 +522,11 @@ main.view{flex:1}
 .hk-tag{font-size:.66rem;border-radius:999px;padding:2px 7px;border:1px solid rgba(230,150,80,.5);color:#f0b98a;white-space:nowrap}
 .hk-tag.done{border-color:rgba(80,170,120,.5);color:#9fdcb8}
 ul.plain{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--ink-2,#d8ccb9)}
+/* expenses / commission */
+.mbar{display:flex;align-items:center;gap:12px;margin:6px 0 4px}.mbar b{min-width:150px;text-align:center;font-size:1.05rem}
+.kpi-btn{cursor:pointer;text-align:left;font:inherit;color:inherit}.kpi-btn.on{outline:2px solid var(--gold-hi,#e0be7a)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.two>*{min-width:0}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.ph-grid{display:flex;flex-wrap:wrap;gap:10px}.ph{position:relative;width:96px;height:96px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#000}
+.ph img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}.ph button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.7);color:#fff;cursor:pointer}
+.ph-add{display:inline-flex;align-items:center;gap:6px;width:max-content;margin-top:6px;cursor:pointer}

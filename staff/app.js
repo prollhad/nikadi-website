@@ -8,6 +8,7 @@
   var app = document.getElementById('app');
 
   var ERR = {
+    category_required: 'Choose what kind of expense it is.', date_future: 'The date can\'t be in the future.', bad_photo: 'That photo could not be uploaded. Try another photo.', photos_unavailable: 'Photo upload is not set up yet. Save without the photo for now.', not_found: 'That entry was not found. Refresh and try again.',
     wa_not_connected: 'WhatsApp is not connected yet (Settings → WhatsApp).', bad_phone_id: 'The phone number ID should be only digits.', bad_token: 'That access token looks too short. Copy the whole token.',
     bill_locked: 'This guest has checked out. Only a manager or the owner can change the bill now.', checkout_future: 'The check-out date can\'t be in the future for a guest who already left.',
     pdf_tools_failed: 'Could not make the PDF. Check the internet connection and try again.', bad_pdf: 'The PDF could not be sent. Please try again.', bad_title: 'Choose Mr., Ms., Mrs., Dr. or Name only.',
@@ -196,6 +197,8 @@
 
   /* ---------- shell: side menu on computers, tabs at the bottom on phones ---------- */
   var ICON = {
+    expenses: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/><path d="M7 6V4h10v2"/></svg>',
+    commission: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M17 7v6M14.5 9.5h3.2a1.3 1.3 0 0 1 0 2.6H16"/></svg>',
     housekeeping: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 3h6v4H9z"/><path d="M7 7h10l-1 14H8z"/><path d="M10 11h4M10 15h4"/></svg>',
     attendance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     bills: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2.5h12v19l-3-2-3 2-3-2-3 2z"/><path d="M9 7.5h6M9 11h6M9 14.5h4"/></svg>',
@@ -210,10 +213,10 @@
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping' };
+  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission' };
   function navFor(desk) {
     if (!mgr()) return ['rooms', 'housekeeping', 'add', 'stock', 'calendar'];
-    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'bills', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'attendance', 'settings'] : []);
+    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'bills', 'expenses', 'commission', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'attendance', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
@@ -231,7 +234,7 @@
   }
   function go(tab) {
     closeAllSheetsQuiet();
-    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; nav(); render(); window.scrollTo(0, 0);
+    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; if (tab === 'expenses') EXP.data = null; if (tab === 'commission') COM.data = null; nav(); render(); window.scrollTo(0, 0);
     if (tab === 'calendar' || tab === 'bookings') loadExtra();
   }
 
@@ -251,7 +254,7 @@
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -266,7 +269,7 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping }[S.tab] || viewRooms)(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission }[S.tab] || viewRooms)(v);
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -462,6 +465,185 @@
     $('#hrf', v).onclick = function () { HK.data = null; render(); };
     $$('[data-done]', v).forEach(function (b) { b.onclick = function () { busy(b, true); api('deskServiceDone', { room: Number(b.dataset.done) }).then(function (r) { vibrate(); toast('Room ' + b.dataset.done + ' done'); HK.data = r; render(); refresh(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
     $$('[data-undo]', v).forEach(function (b) { b.onclick = function () { busy(b, true); api('deskServiceUndo', { room: Number(b.dataset.undo) }).then(function (r) { toast('Undone'); HK.data = r; render(); refresh(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
+  }
+
+  /* ---------- Expenses (front desk) ---------- */
+  function monthShift(m, n) { var y = +m.slice(0, 4), mo = +m.slice(5, 7) - 1 + n; y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12; return y + '-' + String(mo + 1).padStart(2, '0'); }
+  function monthName(m) { return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+m.slice(5, 7) - 1] + ' ' + m.slice(0, 4); }
+  function monthBar(m, idp) {
+    var cur = (S.st ? S.st.today : '').slice(0, 7);
+    return '<div class="mbar"><button class="btn btn-quiet sm" type="button" id="' + idp + 'prev">‹</button><b>' + esc(monthName(m)) + '</b><button class="btn btn-quiet sm" type="button" id="' + idp + 'next"' + (m >= cur ? ' disabled' : '') + '>›</button></div>';
+  }
+  /* photos: shrink on the phone before upload (max 1600 px, JPEG) */
+  function shrinkPhoto(file) {
+    return new Promise(function (ok, bad) {
+      var fr = new FileReader();
+      fr.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+          var k = Math.min(1, 1600 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+          c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+          var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+          var url = c.toDataURL('image/jpeg', 0.72); ok({ url: url, data: url.split(',')[1] });
+        };
+        im.onerror = function () { bad(new Error('bad_photo')); };
+        im.src = fr.result;
+      };
+      fr.onerror = function () { bad(new Error('bad_photo')); };
+      fr.readAsDataURL(file);
+    });
+  }
+  var EXP = { data: null, month: null, cat: '' };
+  function viewExpenses(v) {
+    if (!EXP.month) EXP.month = S.st.today.slice(0, 7);
+    if (!EXP.data) {
+      v.innerHTML = '<div><p class="kicker">Front desk</p><h1>Expenses</h1></div><div class="loading">Loading…</div>';
+      api('deskExpenses', { month: EXP.month }).then(function (r) { EXP.data = r; if (S.tab === 'expenses') render(); }, function (e) { toast(errText(e)); });
+      return;
+    }
+    var d = EXP.data, list = d.list.filter(function (e) { return !EXP.cat || e.group === EXP.cat; });
+    var total = d.list.reduce(function (a, e) { return a + e.amount; }, 0), byG = {};
+    d.list.forEach(function (e) { byG[e.group] = (byG[e.group] || 0) + e.amount; });
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Front desk · money spent for the guest house</p><h1>Expenses</h1></div><button class="btn btn-gold" type="button" id="xadd">+ Add expense</button></div>' +
+      monthBar(d.month, 'x') +
+      '<div class="kpis"><div class="kpi"><span>Total this month</span><b>' + inr(total) + '</b><small>' + d.list.length + ' entr' + (d.list.length === 1 ? 'y' : 'ies') + '</small></div>' +
+      Object.keys(byG).sort(function (a, b) { return byG[b] - byG[a]; }).map(function (g) { return '<button type="button" class="kpi kpi-btn' + (EXP.cat === g ? ' on' : '') + '" data-g="' + esc(g) + '"><span>' + esc(g) + '</span><b>' + inr(byG[g]) + '</b><small>' + (EXP.cat === g ? 'tap to show all' : 'tap to filter') + '</small></button>'; }).join('') + '</div>' +
+      (list.length ? '<div class="list">' + list.map(function (e, i) {
+        return '<button type="button" class="bl bl-btn" data-x="' + i + '"><span class="t"><b>' + esc(e.category) + (e.item && e.item !== e.category ? ' · ' + esc(e.item) : '') + '</b><small>' + esc(dShort(e.date)) + (e.shop ? ' · ' + esc(e.shop) : '') + ' · ' + esc(e.method) + (e.photos ? ' · 📎 ' + e.photos : ' · no bill photo') + (e.stockQty ? ' · +' + e.stockQty + ' to stock' : '') + '</small></span><span class="a">' + inr(e.amount) + '</span></button>';
+      }).join('') + '</div>' : '<p class="small">No expenses ' + (EXP.cat ? 'in ' + esc(EXP.cat) + ' ' : '') + 'for ' + esc(monthName(d.month)) + ' yet.</p>');
+    $('#xadd', v).onclick = function () { openExpense(null); };
+    $('#xprev', v).onclick = function () { EXP.month = monthShift(EXP.month, -1); EXP.data = null; render(); };
+    $('#xnext', v).onclick = function () { EXP.month = monthShift(EXP.month, 1); EXP.data = null; render(); };
+    $$('[data-g]', v).forEach(function (b) { b.onclick = function () { EXP.cat = EXP.cat === b.dataset.g ? '' : b.dataset.g; render(); }; });
+    $$('[data-x]', v).forEach(function (b) { b.onclick = function () { openExpense(list[+b.dataset.x]); }; });
+  }
+  function openExpense(e) {
+    var d = EXP.data, body = openSheet(e ? 'Expense' : 'Add expense'), photos = [], keep = [];
+    var fixable = !e || d.canApprove || (e.by === d.me && String(e.at).slice(0, 10) === S.st.today);
+    var opts = d.cats.map(function (g) { return '<optgroup label="' + esc(g[0]) + '">' + g[1].map(function (c) { return '<option' + (e && e.category === c[0] ? ' selected' : '') + ' data-shop="' + esc((c[1] && c[1].shop) || '') + '" data-stock="' + esc((c[1] && c[1].stock) || '') + '">' + esc(c[0]) + '</option>'; }).join('') + '</optgroup>'; }).join('');
+    body.innerHTML = (e && !fixable ? '<div class="note"><b>Read only</b>Only a manager or the owner can change this entry (or the person who entered it, the same day).</div>' : '') +
+      field('Date', '<input class="input" id="x-date" type="date" max="' + esc(S.st.today) + '" value="' + esc(e ? e.date : S.st.today) + '">', true) +
+      field('What kind of expense', '<select class="input" id="x-cat">' + (e ? '' : '<option value="" disabled selected>Choose…</option>') + opts + '</select>', true) +
+      field('Details (what exactly)', '<input class="input" id="x-item" maxlength="120" placeholder="e.g. 2 bottles Lizol 1 L, November electricity" value="' + esc(e && e.item !== e.category ? e.item : '') + '">') +
+      '<div class="two">' + field('Quantity', '<input class="input" id="x-qty" inputmode="numeric" value="' + esc(e && e.qty ? e.qty : '') + '" placeholder="optional">') +
+      field('Amount paid (₹)', '<input class="input" id="x-amt" inputmode="numeric" value="' + esc(e ? e.amount : '') + '">', true) + '</div>' +
+      field('Shop / paid to', '<input class="input" id="x-shop" list="x-shops" maxlength="120" value="' + esc(e ? e.shop : '') + '" placeholder="Shop name and place"><datalist id="x-shops">' + d.shops.map(function (s1) { return '<option value="' + esc(s1) + '">'; }).join('') + '</datalist>') +
+      '<div class="field"><span>Paid by <i>*</i></span>' + seg('x-m', d.methods, e ? e.method : 'Cash') + '</div>' +
+      field('Bill / transaction no.', '<input class="input" id="x-ref" maxlength="40" value="' + esc(e ? e.ref : '') + '" placeholder="optional">') +
+      (e ? '' : '<div class="field" id="x-stockf" hidden><span>Add to stock?</span><div class="two"><select class="input" id="x-sitem"><option value="">No</option>' + d.stockItems.map(function (i) { return '<option>' + esc(i) + '</option>'; }).join('') + '</select><input class="input" id="x-sqty" inputmode="numeric" placeholder="How many"></div><small class="small">The stock count goes up by this many.</small></div>') +
+      (e && e.stockQty ? '<p class="small">Added ' + e.stockQty + ' × ' + esc(e.stockItem) + ' to stock when this was saved.</p>' : '') +
+      '<div class="field"><span>Bill photos</span><div class="ph-grid" id="x-ph"></div>' + (fixable ? '<label class="btn btn-line ph-add">📷 Add bill photo<input type="file" accept="image/*" multiple id="x-file" hidden></label><small class="small">Take a photo of the bill or choose from the gallery (up to 4).</small>' : '') + '</div>' +
+      field('Note', '<input class="input" id="x-note" maxlength="300" value="' + esc(e ? e.note : '') + '">') +
+      (e ? '<p class="small">Entered by ' + esc(e.by) + ' · ' + esc(tShort(e.at)) + (e.edited ? ' · changed ' + esc(e.edited) : '') + '</p>' : '') +
+      '<p class="err" id="x-err" role="alert"></p>' +
+      (fixable ? '<button class="btn btn-gold big-cta" type="button" id="x-save">' + (e ? 'Save changes' : 'Save expense') + '</button>' + (e ? '<button class="btn btn-quiet sm danger" type="button" id="x-del">Remove this expense</button>' : '') : '');
+    if (!fixable) $$('input,select', body).forEach(function (x) { x.disabled = true; });
+    wireSegs(body);
+    var cat = $('#x-cat', body);
+    function catChanged() {
+      var o = cat.selectedOptions[0]; if (!o) return;
+      if (o.dataset.shop && !$('#x-shop', body).value) $('#x-shop', body).value = o.dataset.shop;
+      var sf = $('#x-stockf', body); if (!sf) return;
+      if (o.dataset.stock && d.stockItems.indexOf(o.dataset.stock) >= 0) { sf.hidden = false; $('#x-sitem', body).value = o.dataset.stock; }
+      else { sf.hidden = !d.stockItems.length; }
+    }
+    cat.onchange = catChanged;
+    function drawPhotos() {
+      var g = $('#x-ph', body);
+      g.innerHTML = keep.map(function (k, i) { return '<div class="ph"><img src="' + k.url + '" alt="Bill photo"><button type="button" data-rk="' + i + '" aria-label="Remove photo"' + (fixable ? '' : ' hidden') + '>✕</button></div>'; }).join('') +
+        photos.map(function (p1, i) { return '<div class="ph"><img src="' + p1.url + '" alt="New bill photo"><button type="button" data-rp="' + i + '" aria-label="Remove photo">✕</button></div>'; }).join('');
+      $$('[data-rk]', g).forEach(function (b) { b.onclick = function () { keep.splice(+b.dataset.rk, 1); drawPhotos(); }; });
+      $$('[data-rp]', g).forEach(function (b) { b.onclick = function () { photos.splice(+b.dataset.rp, 1); drawPhotos(); }; });
+      $$('img', g).forEach(function (im) { im.onclick = function () { var w = window.open('', '_blank'); if (w) { w.document.write('<title>Bill photo</title><body style="margin:0;background:#111"><img src="' + im.src + '" style="max-width:100%;display:block;margin:auto">'); w.document.close(); } }; });
+    }
+    var fi = $('#x-file', body);
+    if (fi) fi.onchange = function () {
+      var files = Array.prototype.slice.call(fi.files || []).slice(0, Math.max(0, 4 - photos.length - keep.length));
+      Promise.all(files.map(shrinkPhoto)).then(function (arr) { photos = photos.concat(arr); drawPhotos(); body.closest('.sheet').dataset.dirty = '1'; }, function () { toast('That photo could not be read'); });
+      fi.value = '';
+    };
+    if (e && e.photos) {
+      $('#x-ph', body).innerHTML = '<span class="small">Loading photos…</span>';
+      api('deskExpensePhoto', { id: e.id }).then(function (r) { keep = r.photos.map(function (p1) { return { id: p1.id, url: p1.data }; }); drawPhotos(); }, function () { $('#x-ph', body).innerHTML = '<span class="small">Could not load the photos.</span>'; });
+    }
+    var sv = $('#x-save', body);
+    if (sv) sv.onclick = function () {
+      var x = this, err = $('#x-err', body); err.textContent = '';
+      if (!cat.value) { err.textContent = 'Choose what kind of expense it is.'; return; }
+      var data = { id: e ? e.id : '', date: $('#x-date', body).value, category: cat.value, item: $('#x-item', body).value.trim(), qty: $('#x-qty', body).value.replace(/\D/g, ''),
+        amount: $('#x-amt', body).value.replace(/\D/g, ''), shop: $('#x-shop', body).value.trim(), method: segVal(body, 'x-m'), ref: $('#x-ref', body).value.trim(), note: $('#x-note', body).value.trim(),
+        photos: photos.map(function (p1) { return { data: p1.data }; }), keepPhotos: keep.map(function (k) { return k.id; }) };
+      if (!e && $('#x-sitem', body) && $('#x-sitem', body).value) { data.stockItem = $('#x-sitem', body).value; data.stockQty = $('#x-sqty', body).value.replace(/\D/g, ''); }
+      if (photos.length) x.textContent = 'Uploading photos…';
+      submit(x, err, 'deskExpenseSave', data, function () { toast(e ? 'Expense updated' : 'Expense saved'); EXP.data = null; closeSheet(); render(); if (data.stockItem) refresh(); });
+    };
+    var del = $('#x-del', body);
+    if (del) del.onclick = function () {
+      var x = this; if (x.dataset.sure !== '1') { x.dataset.sure = '1'; x.textContent = 'Sure? Tap again to remove'; return; }
+      submit(x, $('#x-err', body), 'deskExpenseRemove', { id: e.id }, function () { toast('Expense removed'); EXP.data = null; closeSheet(); render(); });
+    };
+    if (!e) catChanged();
+  }
+
+  /* ---------- Commission (front desk) ---------- */
+  var COM = { data: null, month: null };
+  function viewCommission(v) {
+    if (!COM.month) COM.month = S.st.today.slice(0, 7);
+    if (!COM.data) {
+      v.innerHTML = '<div><p class="kicker">Front desk</p><h1>Commission</h1></div><div class="loading">Loading…</div>';
+      api('deskCommissions', { month: COM.month }).then(function (r) { COM.data = r; if (S.tab === 'commission') render(); }, function (e) { toast(errText(e)); });
+      return;
+    }
+    var d = COM.data, total = d.list.reduce(function (a, c) { return a + c.amount; }, 0), byP = {};
+    d.list.forEach(function (c) { var k = c.name + ' · ' + c.type; byP[k] = (byP[k] || 0) + c.amount; });
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Front desk · drivers, brokers and agents</p><h1>Commission</h1></div><button class="btn btn-gold" type="button" id="kadd">+ Add commission</button></div>' +
+      monthBar(d.month, 'k') +
+      '<div class="kpis"><div class="kpi"><span>Paid this month</span><b>' + inr(total) + '</b><small>' + d.list.length + ' payment' + (d.list.length === 1 ? '' : 's') + '</small></div>' +
+      Object.keys(byP).sort(function (a, b) { return byP[b] - byP[a]; }).slice(0, 5).map(function (k) { return '<div class="kpi"><span>' + esc(k) + '</span><b>' + inr(byP[k]) + '</b></div>'; }).join('') + '</div>' +
+      (d.list.length ? '<div class="list">' + d.list.map(function (c, i) {
+        return '<button type="button" class="bl bl-btn" data-k="' + i + '"><span class="t"><b>' + esc(c.name) + ' · ' + esc(c.type) + '</b><small>' + esc(dShort(c.date)) + ' · ' + esc(c.phone) + (c.vehicle ? ' · ' + esc(c.vehicle) : '') + (c.guest || c.room ? ' · for ' + esc([c.guest, c.room].filter(Boolean).join(', ')) : '') + ' · ' + esc(c.method) + '</small></span><span class="a">' + inr(c.amount) + '</span></button>';
+      }).join('') + '</div>' : '<p class="small">No commission paid in ' + esc(monthName(d.month)) + ' yet.</p>') +
+      (d.people.length ? '<div class="panel"><div class="sec-h"><h2>Drivers and brokers</h2><span class="small">all time</span></div><div class="list">' + d.people.map(function (p1) {
+        return '<div class="bl"><span class="t"><b>' + esc(p1.name) + ' · ' + esc(p1.type) + '</b><small><a href="tel:+91' + esc(p1.phone) + '">' + esc(p1.phone) + '</a>' + (p1.vehicle ? ' · ' + esc(p1.vehicle) : '') + ' · ' + p1.times + ' time' + (p1.times > 1 ? 's' : '') + ' · last ' + esc(dShort(p1.last)) + '</small></span><span class="a">' + inr(p1.total) + '</span></div>';
+      }).join('') + '</div></div>' : '');
+    $('#kadd', v).onclick = function () { openCommission(null); };
+    $('#kprev', v).onclick = function () { COM.month = monthShift(COM.month, -1); COM.data = null; render(); };
+    $('#knext', v).onclick = function () { COM.month = monthShift(COM.month, 1); COM.data = null; render(); };
+    $$('[data-k]', v).forEach(function (b) { b.onclick = function () { openCommission(d.list[+b.dataset.k]); }; });
+  }
+  function openCommission(c) {
+    var d = COM.data, body = openSheet(c ? 'Commission' : 'Add commission');
+    var fixable = !c || d.canApprove || (c.by === d.me && String(c.at).slice(0, 10) === S.st.today);
+    body.innerHTML = (c && !fixable ? '<div class="note"><b>Read only</b>Only a manager or the owner can change this entry (or the person who entered it, the same day).</div>' : '') +
+      field('Name', '<input class="input" id="k-name" maxlength="80" list="k-people" value="' + esc(c ? c.name : '') + '" placeholder="Driver / broker name"><datalist id="k-people">' + d.people.map(function (p1) { return '<option value="' + esc(p1.name) + '">' + esc(p1.type + ' · ' + p1.phone) + '</option>'; }).join('') + '</datalist>', true) +
+      '<div class="field"><span>Who is it?</span>' + seg('k-t', d.types, c ? c.type : 'Driver') + '</div>' +
+      '<div class="two">' + field('Phone', '<input class="input" id="k-phone" inputmode="tel" maxlength="10" value="' + esc(c ? c.phone : '') + '">', true) + field('Vehicle no. (drivers)', '<input class="input" id="k-veh" maxlength="20" style="text-transform:uppercase" value="' + esc(c ? c.vehicle : '') + '" placeholder="optional">') + '</div>' +
+      '<div class="two">' + field('For which guest', '<input class="input" id="k-guest" maxlength="80" value="' + esc(c ? c.guest : '') + '" placeholder="optional">') + field('Room / booking', '<input class="input" id="k-room" maxlength="40" value="' + esc(c ? c.room : '') + '" placeholder="optional">') + '</div>' +
+      '<div class="two">' + field('Date', '<input class="input" id="k-date" type="date" max="' + esc(S.st.today) + '" value="' + esc(c ? c.date : S.st.today) + '">') + field('Amount (₹)', '<input class="input" id="k-amt" inputmode="numeric" value="' + esc(c ? c.amount : '') + '">', true) + '</div>' +
+      '<div class="field"><span>Paid by <i>*</i></span>' + seg('k-m', d.methods, c ? c.method : 'Cash') + '</div>' +
+      field('Transaction no.', '<input class="input" id="k-ref" maxlength="40" value="' + esc(c ? c.ref : '') + '" placeholder="for UPI / bank">') +
+      field('Note', '<input class="input" id="k-note" maxlength="300" value="' + esc(c ? c.note : '') + '">') +
+      (c ? '<p class="small">Entered by ' + esc(c.by) + ' · ' + esc(tShort(c.at)) + (c.edited ? ' · changed ' + esc(c.edited) : '') + '</p>' : '') +
+      '<p class="err" id="k-err" role="alert"></p>' +
+      (fixable ? '<button class="btn btn-gold big-cta" type="button" id="k-save">' + (c ? 'Save changes' : 'Save commission') + '</button>' + (c ? '<button class="btn btn-quiet sm danger" type="button" id="k-del">Remove this entry</button>' : '') : '');
+    if (!fixable) $$('input,select', body).forEach(function (x) { x.disabled = true; });
+    wireSegs(body);
+    $('#k-name', body).onchange = function () { // known person: fill phone, type, vehicle
+      var p1 = d.people.filter(function (x) { return x.name.toLowerCase() === this.value.trim().toLowerCase(); }, this)[0];
+      if (p1) { if (!$('#k-phone', body).value) $('#k-phone', body).value = p1.phone; if (!$('#k-veh', body).value) $('#k-veh', body).value = p1.vehicle || ''; $$('[data-seg="k-t"] button', body).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === p1.type)); }); }
+    };
+    var sv = $('#k-save', body);
+    if (sv) sv.onclick = function () {
+      submit(this, $('#k-err', body), 'deskCommissionSave', { id: c ? c.id : '', name: $('#k-name', body).value.trim(), type: segVal(body, 'k-t'), phone: $('#k-phone', body).value.trim(),
+        vehicle: $('#k-veh', body).value.trim(), guest: $('#k-guest', body).value.trim(), room: $('#k-room', body).value.trim(), date: $('#k-date', body).value,
+        amount: $('#k-amt', body).value.replace(/\D/g, ''), method: segVal(body, 'k-m'), ref: $('#k-ref', body).value.trim(), note: $('#k-note', body).value.trim() },
+        function () { toast(c ? 'Updated' : 'Commission saved'); COM.data = null; closeSheet(); render(); });
+    };
+    var del = $('#k-del', body);
+    if (del) del.onclick = function () {
+      var x = this; if (x.dataset.sure !== '1') { x.dataset.sure = '1'; x.textContent = 'Sure? Tap again to remove'; return; }
+      submit(x, $('#k-err', body), 'deskCommissionRemove', { id: c.id }, function () { toast('Removed'); COM.data = null; closeSheet(); render(); });
+    };
   }
 
   /* ---------- Nikadi members ---------- */
@@ -1660,11 +1842,11 @@
 
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
-    var list = [['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
+    var list = [['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 22</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 23</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

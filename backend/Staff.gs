@@ -21,6 +21,16 @@ var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long a
 var DESK_BILL_PREFIX = 'NGH';
 /* WhatsApp (Meta WhatsApp Cloud API). Message wordings are approved by Meta as templates with these names. */
 var DESK_WA = { welcome: 'nikadi_welcome', membership: 'nikadi_membership', booking: 'nikadi_booking_confirmed', bill: 'nikadi_bill', lang: 'en' };
+/* Expenses: categories in groups. 'shop' fills the shop / payee automatically. 'stock' links the purchase to a stock item. */
+var DESK_EXPENSE_CATS = [
+  ['Utilities', [['Electricity bill', { shop: 'WBSEDCL (West Bengal State Electricity Distribution Co. Ltd., Govt. of West Bengal)' }], ['Drinking water purchase (jars)'], ['Water bill'], ['Gas cylinder (LPG)'], ['Internet / Wi-Fi'], ['Mobile recharge'], ['Generator / inverter fuel']]],
+  ['Guest supplies', [['Water bottles', { stock: 'Water bottle' }], ['Dental kits', { stock: 'Dental kit' }], ['Soap'], ['Shampoo sachets'], ['Toilet tissue paper', { stock: 'Toilet roll' }], ['Mosquito repellent'], ['Towels'], ['Bedsheets / pillow covers'], ['Slippers'], ['Morning kit', { stock: 'Morning kit' }]]],
+  ['Cleaning', [['Floor cleaning liquid'], ['Toilet cleaner'], ['Phenyl'], ['Broom'], ['Mop'], ['Bucket / mug'], ['Garbage bags'], ['Air freshener'], ['Detergent / washing powder'], ['Glass cleaner']]],
+  ['Room items & repairs', [['Kettle'], ['Bulbs / electrical items'], ['Fan / AC repair'], ['Plumbing repair'], ['Furniture'], ['Mattress'], ['Painting / maintenance'], ['TV / remote / batteries']]],
+  ['Staff', [['Staff salary'], ['Staff advance'], ['Staff food / tea']]],
+  ['Other', [['Laundry service'], ['Stationery / printing'], ['Transport / fuel'], ['Pooja items / flowers'], ['Taxes / licence fees'], ['Bank charges'], ['Other']]]
+];
+var DESK_COMMISSION_TYPES = ['Driver', 'Broker', 'Agent', 'Other'];
 var DESK_JOIN_URL = 'https://www.nikadiguesthouse.com/app/?join=1';
 /* Old GPS log-in/log-out attendance (replaced by Wi-Fi attendance on 14 Nov 2026; kept so old records still read). */
 var DESK_ATTEND_ROLES = [];
@@ -68,6 +78,12 @@ var DESK_SCHEMA = {
   service: { sheet: 'Housekeeping log', lazy: true, cols: [['id', 'ID'], ['date', 'Date', 'd'], ['room', 'Room', 'n'], ['stay', 'Stay ID'], ['items', 'Given'], ['by', 'Done by'], ['at', 'Time', 't'], ['charges', 'Charge IDs (system)', 's'], ['undone', 'Undone']] },
   bills: { sheet: 'Bills', cols: [['id', 'Bill link ID', 's'], ['no', 'Invoice no.'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'],
     ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's'], ['sendAt', 'Email at', 't'], ['status', 'Email status'], ['pdf', 'PDF saved'], ['edited', 'Last changed'], ['wa', 'WhatsApp']] },
+  expenses: { sheet: 'Expenses', lazy: true, cols: [['id', 'ID'], ['date', 'Date', 'd'], ['group', 'Group'], ['category', 'Category'], ['item', 'What was bought / paid for'], ['qty', 'Qty', 'n'],
+    ['amount', 'Amount (₹)', 'n'], ['method', 'Paid by'], ['ref', 'Transaction / bill no.', 's'], ['shop', 'Shop / payee'], ['note', 'Note'], ['photos', 'Bill photos (Drive file IDs)', 's'],
+    ['stockItem', 'Added to stock: item'], ['stockQty', 'Added to stock: qty', 'n'], ['by', 'Entered by'], ['at', 'Entered at', 't'], ['edited', 'Last changed'], ['removed', 'Removed']] },
+  commissions: { sheet: 'Commission', lazy: true, cols: [['id', 'ID'], ['date', 'Date', 'd'], ['name', 'Name'], ['type', 'Driver / broker'], ['phone', 'Phone', 's'], ['vehicle', 'Vehicle no.'],
+    ['guest', 'For guest'], ['room', 'Room / booking', 's'], ['amount', 'Amount (₹)', 'n'], ['method', 'Paid by'], ['ref', 'Transaction no.', 's'], ['note', 'Note'],
+    ['by', 'Entered by'], ['at', 'Entered at', 't'], ['edited', 'Last changed'], ['removed', 'Removed']] },
   wa: { sheet: 'WhatsApp messages', lazy: true, cols: [['id', 'ID'], ['at', 'Made', 't'], ['sendAt', 'Send at', 't'], ['to', 'To', 's'], ['name', 'Guest'], ['kind', 'Message'], ['ref', 'Stay / booking'], ['status', 'Status'], ['info', 'Details']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
@@ -836,6 +852,104 @@ function deskCore(db, hooks) {
     db.set('service', x, { undone: stamp() + ' · ' + me.name });
     recompute(s);
     return api.housekeeping(req);
+  };
+
+  /* ================= Expenses and commission (front desk: Owner, Manager, Receptionist) =================
+     Reception can add entries and fix their own entries the same day; a Manager or the Owner can change or remove any entry. */
+  function catInfo(name) {
+    for (var g = 0; g < DESK_EXPENSE_CATS.length; g++) for (var i = 0; i < DESK_EXPENSE_CATS[g][1].length; i++) {
+      var c = DESK_EXPENSE_CATS[g][1][i]; if (c[0] === name) return { group: DESK_EXPENSE_CATS[g][0], opts: c[1] || {} };
+    }
+    return null;
+  }
+  function monthRange(req) { var m = /^\d{4}-\d\d$/.test(String(req.month || '')) ? req.month : today().slice(0, 7); return { month: m, from: m + '-01', to: m + '-31' }; }
+  function canFix(me, row) { return canApprove(me) || (row.by === me.name && String(row.at).slice(0, 10) === today()); }
+  function expView(e) {
+    return { id: e.id, date: e.date, group: e.group, category: e.category, item: e.item, qty: Number(e.qty || 0), amount: Number(e.amount || 0), method: e.method, ref: e.ref, shop: e.shop, note: e.note,
+      photos: String(e.photos || '').split(',').filter(Boolean).length, stockItem: e.stockItem, stockQty: Number(e.stockQty || 0), by: e.by, at: e.at, edited: e.edited };
+  }
+  api.expenses = function (req) {
+    var me = auth(req); needMgr(me);
+    var r = monthRange(req), list = db.all('expenses').filter(function (e) { return !e.removed && e.date >= r.from && e.date <= r.to; })
+      .sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : (a.at < b.at ? 1 : -1); });
+    var shops = {}; db.all('expenses').forEach(function (e) { if (e.shop) shops[e.shop] = 1; });
+    return { month: r.month, list: list.map(expView), cats: DESK_EXPENSE_CATS, methods: METHODS, shops: Object.keys(shops).slice(0, 80),
+      stockItems: db.all('items').filter(function (i) { return yes(i.active) && yes(i.track); }).map(function (i) { return i.item; }), canApprove: canApprove(me), me: me.name };
+  };
+  api.expenseSave = function (req) {
+    var me = auth(req); needMgr(me);
+    var old = req.id ? find('expenses', 'id', req.id) || fail('not_found') : null;
+    if (old && (old.removed || !canFix(me, old))) fail('not_allowed');
+    var date = isYmd(req.date) ? req.date : today(); if (date > today()) fail('date_future');
+    var info = catInfo(String(req.category || '')) || fail('category_required');
+    var amt = money(req.amount); if (!(amt > 0)) fail('invalid_amount');
+    if (METHODS.indexOf(req.method) < 0) fail('method_required');
+    var p = { date: date, group: info.group, category: req.category, item: text(req.item, 120) || req.category, qty: Math.max(0, Math.round(Number(req.qty) || 0)), amount: amt,
+      method: req.method, ref: text(req.ref, 40), shop: text(req.shop, 120) || info.opts.shop || '', note: text(req.note, 300) };
+    /* bill photos: keep the ones still listed, add new uploads (max 4) */
+    var keep = old ? String(old.photos || '').split(',').filter(Boolean).filter(function (fid) { return (req.keepPhotos || []).indexOf(fid) >= 0; }) : [];
+    (req.photos || []).slice(0, 4).forEach(function (ph, i) {
+      if (!hooks.savePhoto) fail('photos_unavailable');
+      if (!/^[A-Za-z0-9+\/=]+$/.test(String(ph.data || '')) || String(ph.data).length > 4000000) fail('bad_photo');
+      keep.push(hooks.savePhoto(ph.data, date + ' ' + p.category + ' ' + (i + 1) + '.jpg', date.slice(0, 7)));
+    });
+    p.photos = keep.slice(0, 6).join(',');
+    /* add to stock (only when the entry is first saved, so stock is not counted twice) */
+    if (!old && req.stockItem) {
+      var it = find('items', 'item', req.stockItem) || fail('no_item'), q = Math.round(Number(req.stockQty) || 0);
+      if (q > 0) { moveStock(it, q, 'Bought (expense ' + p.category + ')', '', me.name); p.stockItem = it.item; p.stockQty = q; }
+    }
+    if (old) { p.edited = stamp() + ' · ' + me.name; db.set('expenses', old, p); return { expense: expView(old) }; }
+    p.id = id('E'); p.by = me.name; p.at = stamp(); p.removed = ''; if (!p.stockItem) { p.stockItem = ''; p.stockQty = 0; } p.edited = '';
+    return { expense: expView(db.add('expenses', p)) };
+  };
+  api.expenseRemove = function (req) {
+    var me = auth(req); needMgr(me);
+    var e = find('expenses', 'id', req.id) || fail('not_found');
+    if (e.removed || !canFix(me, e)) fail('not_allowed');
+    if (e.stockItem && Number(e.stockQty) > 0) { var it = find('items', 'item', e.stockItem); if (it) moveStock(it, -Number(e.stockQty), 'Expense removed', '', me.name); }
+    db.set('expenses', e, { removed: stamp() + ' · ' + me.name });
+    return {};
+  };
+  api.expensePhoto = function (req) {
+    var me = auth(req); needMgr(me);
+    var e = find('expenses', 'id', req.id) || fail('not_found');
+    var ids = String(e.photos || '').split(',').filter(Boolean);
+    if (!hooks.getPhoto) fail('photos_unavailable');
+    return { photos: ids.map(function (fid) { return { id: fid, data: hooks.getPhoto(fid) }; }) };
+  };
+  function comView(c) {
+    return { id: c.id, date: c.date, name: c.name, type: c.type, phone: c.phone, vehicle: c.vehicle, guest: c.guest, room: c.room, amount: Number(c.amount || 0), method: c.method, ref: c.ref, note: c.note, by: c.by, at: c.at, edited: c.edited };
+  }
+  api.commissions = function (req) {
+    var me = auth(req); needMgr(me);
+    var r = monthRange(req), all = db.all('commissions').filter(function (c) { return !c.removed; });
+    var list = all.filter(function (c) { return c.date >= r.from && c.date <= r.to; }).sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : (a.at < b.at ? 1 : -1); });
+    var people = {}; all.forEach(function (c) { var k = c.phone || c.name; var p = people[k] || (people[k] = { name: c.name, type: c.type, phone: c.phone, vehicle: c.vehicle, total: 0, times: 0, last: '' }); p.total += Number(c.amount || 0); p.times++; if (c.date > p.last) { p.last = c.date; p.name = c.name; p.type = c.type; p.vehicle = c.vehicle || p.vehicle; } });
+    return { month: r.month, list: list.map(comView), people: Object.keys(people).map(function (k) { return people[k]; }).sort(function (a, b) { return b.last < a.last ? -1 : 1; }),
+      types: DESK_COMMISSION_TYPES, methods: METHODS, canApprove: canApprove(me), me: me.name };
+  };
+  api.commissionSave = function (req) {
+    var me = auth(req); needMgr(me);
+    var old = req.id ? find('commissions', 'id', req.id) || fail('not_found') : null;
+    if (old && (old.removed || !canFix(me, old))) fail('not_allowed');
+    var name = text(req.name, 80); if (!name) fail('name_required');
+    var phone = phoneOk(req.phone); if (!phone) fail('phone_required');
+    var amt = money(req.amount); if (!(amt > 0)) fail('invalid_amount');
+    if (METHODS.indexOf(req.method) < 0) fail('method_required');
+    var date = isYmd(req.date) ? req.date : today(); if (date > today()) fail('date_future');
+    var p = { date: date, name: name, type: DESK_COMMISSION_TYPES.indexOf(req.type) >= 0 ? req.type : 'Other', phone: phone, vehicle: text(req.vehicle, 20).toUpperCase(),
+      guest: text(req.guest, 80), room: text(req.room, 40), amount: amt, method: req.method, ref: text(req.ref, 40), note: text(req.note, 300) };
+    if (old) { p.edited = stamp() + ' · ' + me.name; db.set('commissions', old, p); return { commission: comView(old) }; }
+    p.id = id('K'); p.by = me.name; p.at = stamp(); p.edited = ''; p.removed = '';
+    return { commission: comView(db.add('commissions', p)) };
+  };
+  api.commissionRemove = function (req) {
+    var me = auth(req); needMgr(me);
+    var c = find('commissions', 'id', req.id) || fail('not_found');
+    if (c.removed || !canFix(me, c)) fail('not_allowed');
+    db.set('commissions', c, { removed: stamp() + ' · ' + me.name });
+    return {};
   };
 
   /* Owner: WhatsApp connection. The access token is kept in the script's private settings and never sent back to the app. */
@@ -1734,6 +1848,7 @@ function deskHandle_(req) {
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
+    savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_,
     sendBill: deskSendBill_ });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
@@ -1790,6 +1905,24 @@ function deskWaSend_(template, to10, params, pdf, fileName, url, lang) {
   var j = deskWaCall_(w.phoneId + '/messages', { method: 'post', contentType: 'application/json', payload: JSON.stringify(body) });
   return j.messages && j.messages[0] ? j.messages[0].id : '';
 }
+
+/* ---------------- Expense bill photos: kept in Google Drive, folder "Nikadi Expense Bills" / month ---------------- */
+function deskPhotoFolder_(month) {
+  var root, it = DriveApp.getFoldersByName('Nikadi Expense Bills');
+  root = it.hasNext() ? it.next() : DriveApp.createFolder('Nikadi Expense Bills');
+  var m = root.getFoldersByName(month);
+  return m.hasNext() ? m.next() : root.createFolder(month);
+}
+function deskSavePhoto_(b64, name, month) {
+  var blob = Utilities.newBlob(Utilities.base64Decode(b64), 'image/jpeg', name);
+  return deskPhotoFolder_(month).createFile(blob).getId();
+}
+function deskGetPhoto_(fileId) {
+  var f = DriveApp.getFileById(fileId);
+  return 'data:' + (f.getMimeType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(f.getBlob().getBytes());
+}
+/** Run once from the editor so Google asks for Drive permission (for expense bill photos). */
+function authorizeDrive() { var it = DriveApp.getFoldersByName('Nikadi Expense Bills'); return it.hasNext() ? it.next().getName() : DriveApp.createFolder('Nikadi Expense Bills').getName(); }
 
 /** Emails a guest their bill: a warm message, with the PDF bill attached (made by the staff app). */
 function deskSendBill_(d, to, pdf) {
