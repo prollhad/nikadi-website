@@ -575,3 +575,9 @@ ul.plain{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--ink-2,#d8cc
 .idc-pages button{background:#fff;border:2px solid transparent;border-radius:6px;padding:4px;cursor:pointer;display:grid;gap:4px}
 .idc-pages button:hover,.idc-pages button:focus{border-color:#e0be7a}
 .idc-pages img{width:100%;display:block}.idc-pages span{font-size:.75rem;color:#333}
+/* No zooming or sliding: fast taps (PIN pad) must not double-tap-zoom, the page must not pinch-zoom or drift sideways */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:hidden}
+body{overscroll-behavior:none;overflow-x:hidden;max-width:100vw}
+button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+/* iPhone zooms into any text box smaller than 16px when tapped */
+@media (pointer:coarse){input,select,textarea,.input{font-size:16px!important}}

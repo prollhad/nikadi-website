@@ -1,6 +1,9 @@
 /* Nikadi Staff — phone app for reception and staff.
    Rooms board · check-in · items to rooms · bills and payments · check-out · cleaning · stock · team. */
 (function () {
+  /* No zooming: iPhone Safari ignores user-scalable=no, so block pinch here (fast taps are handled by touch-action in staff.css) */
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', function (e) { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
   var demo = NIKADI.demo;
   var TK = demo ? 'nk-staff-demo-token' : 'nk-staff-token', MK = demo ? 'nk-staff-demo-me' : 'nk-staff-me';
   var S = { token: nkStore(TK), me: null, st: null, tab: 'rooms', addRoom: null, addItem: null, loading: false };
@@ -1898,7 +1901,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 26</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 27</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
