@@ -507,3 +507,17 @@ main.view{flex:1}
 .sheet-ask span{flex:1 1 220px}
 .sheet.nudge{animation:nknudge .35s ease}
 @keyframes nknudge{20%{transform:translateX(-8px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+/* housekeeping */
+.hk-box{border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:8px}
+.hk-box.due{background:rgba(230,150,80,.08);border-color:rgba(230,150,80,.4)}
+.hk-box.done{background:rgba(80,170,120,.08);border-color:rgba(80,170,120,.4)}
+.hk-box p{margin:0;color:var(--ink-2,#d8ccb9)}.hk-h{display:flex;align-items:center;gap:8px}.hk-h svg{width:18px;height:18px}
+.hk-box .btn{justify-self:start}
+.hk-list{display:grid;gap:10px}
+.hk-row{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid rgba(230,150,80,.4);background:rgba(230,150,80,.06);border-radius:14px}
+.hk-row.done{border-color:rgba(80,170,120,.35);background:rgba(80,170,120,.06)}
+.hk-room b{display:block;font-size:1.6rem;line-height:1}.hk-room small{color:var(--muted);font-size:.7rem}
+.hk-what{min-width:0;display:grid;gap:3px}.hk-what span{color:var(--muted);font-size:.86rem}
+.hk-row.done .hk-what span{color:#9fdcb8}
+.hk-tag{font-size:.66rem;border-radius:999px;padding:2px 7px;border:1px solid rgba(230,150,80,.5);color:#f0b98a;white-space:nowrap}
+.hk-tag.done{border-color:rgba(80,170,120,.5);color:#9fdcb8}

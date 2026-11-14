@@ -5,6 +5,10 @@
    It never touches a sheet or the browser directly: it only uses the small `db` object it is given. */
 
 var DESK_TZ_MIN = 330; // India Standard Time, UTC+5:30 (no daylight saving)
+var DESK_MAX_GUESTS = 20; // people allowed in one room (rooms normally sleep 3; extra mattresses let more stay)
+/* Free things housekeeping gives every staying room each day from the 2nd day (water etc.). The Items sheet column
+   "Free daily per room" overrides this when filled in. */
+var DESK_DAILY_FREE = { 'Water bottle': 2 };
 var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
 var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
 var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
@@ -51,7 +55,8 @@ var DESK_SCHEMA = {
     ['method', 'Method'], ['note', 'Note'], ['by', 'Taken by'], ['booking', 'Booking ID'], ['ref', 'Reference no.', 's'], ['voided', 'Voided']] },
   requests: { sheet: 'Approval requests', cols: [['id', 'Request ID'], ['at', 'Date', 't'], ['by', 'Requested by'], ['type', 'Type'], ['summary', 'What'],
     ['reason', 'Reason'], ['status', 'Status'], ['decidedBy', 'Decided by'], ['decidedAt', 'Decided at', 't'], ['decisionNote', 'Decision note'], ['payload', 'Details (system)', 's']] },
-  items: { sheet: 'Items', cols: [['item', 'Item'], ['price', 'Price (₹)', 'n'], ['track', 'Track stock'], ['stock', 'In stock', 'n'], ['low', 'Warn below', 'n'], ['active', 'Active'], ['sell', 'Sold to rooms'], ['hsn', 'HSN / SAC code', 's'], ['gst', 'GST %', 'n']] },
+  items: { sheet: 'Items', cols: [['item', 'Item'], ['price', 'Price (₹)', 'n'], ['track', 'Track stock'], ['stock', 'In stock', 'n'], ['low', 'Warn below', 'n'], ['active', 'Active'], ['sell', 'Sold to rooms'], ['hsn', 'HSN / SAC code', 's'], ['gst', 'GST %', 'n'], ['daily', 'Free daily per room', 's']] },
+  service: { sheet: 'Housekeeping log', lazy: true, cols: [['id', 'ID'], ['date', 'Date', 'd'], ['room', 'Room', 'n'], ['stay', 'Stay ID'], ['items', 'Given'], ['by', 'Done by'], ['at', 'Time', 't'], ['charges', 'Charge IDs (system)', 's'], ['undone', 'Undone']] },
   bills: { sheet: 'Bills', cols: [['id', 'Bill link ID', 's'], ['no', 'Invoice no.'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'],
     ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's'], ['sendAt', 'Email at', 't'], ['status', 'Email status'], ['pdf', 'PDF saved'], ['edited', 'Last changed']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
@@ -194,9 +199,30 @@ function deskCore(db, hooks) {
   }
 
   /* every room gets free water at check-in: take it out of stock (no charge) */
-  function freeWater(roomNo, by) {
+  /* Free water at check-in: shown on the room's item list as free (not on the guest's bill) and taken from stock. */
+  function freeWater(roomNo, by, sid) {
+    if (!(DESK_FREE_WATER > 0)) return;
     var it = find('items', 'item', 'Water bottle');
-    if (it && yes(it.track) && DESK_FREE_WATER > 0) moveStock(it, -DESK_FREE_WATER, 'Free at check-in (' + DESK_FREE_WATER + ' per room)', roomNo, by);
+    if (sid) db.add('charges', { id: id('C'), at: stamp(), stay: sid, room: roomNo, item: 'Water bottle', qty: DESK_FREE_WATER, price: 0, total: 0, free: 'Yes', note: 'Check-in', by: by, removed: '' });
+    if (it && yes(it.track)) moveStock(it, -DESK_FREE_WATER, 'Free at check-in (' + DESK_FREE_WATER + ' per room)', roomNo, by);
+  }
+  /* ---- daily housekeeping checklist ---- */
+  function dailyFree() {
+    var out = [];
+    db.all('items').forEach(function (it) {
+      if (!yes(it.active)) return;
+      var raw = String(it.daily == null ? '' : it.daily).trim();
+      var q = raw !== '' && !isNaN(Number(raw)) ? Number(raw) : DESK_DAILY_FREE[it.item] || 0;
+      if (q > 0) out.push({ item: it.item, qty: q });
+    });
+    return out;
+  }
+  function serviceDue(s) { return s && s.status === 'In house' && s.checkin < today() && s.checkout > today(); }
+  function serviceOf(sid, d) { return db.all('service').filter(function (x) { return x.stay === sid && x.date === (d || today()) && !x.undone; })[0] || null; }
+  function serviceView(s) {
+    if (!serviceDue(s)) return null;
+    var x = serviceOf(s.id), day = nightsBetween(s.checkin, today()) + 1;
+    return { due: true, day: day, of: Number(s.nights), items: dailyFree(), done: x ? { by: x.by, at: x.at, items: x.items } : null };
   }
 
   /* ---- bills ---- */
@@ -237,6 +263,7 @@ function deskCore(db, hooks) {
       if (mgr) { o.price = c.price; o.total = c.total; }
       return o;
     }).reverse();
+    v.service = serviceView(s);
     var mem = s.status === 'In house' ? memberOf(s.phone) : null;
     if (mem) v.member = { name: mem.name, tier: mem.tier, tierKey: mem.tierKey, discount: mem.discount, onsite: mem.onsite, email: mgr ? mem.email || '' : '' };
     if (mgr) {
@@ -475,11 +502,14 @@ function deskCore(db, hooks) {
         o.stay = { id: s.id, guest: mgr ? s.guest : String(s.guest || '').split(/\s+/)[0], guests: s.guests, checkin: s.checkin, checkout: s.checkout,
           leavesToday: s.checkout <= t };
         if (mgr) o.stay.balance = s.balance;
+        var sv = serviceView(s); if (sv) o.service = { day: sv.day, of: sv.of, done: sv.done ? { by: sv.done.by, at: sv.done.at } : null };
       }
       return o;
     }).sort(function (a, b) { return a.room - b.room; });
     var items = db.all('items').filter(function (i) { return yes(i.active); }).map(function (i) {
+      var df = dailyFree().filter(function (d) { return d.item === i.item; })[0];
       var o = { item: i.item, track: yes(i.track), stock: i.stock, low: i.low, sell: sellable(i) };
+      o.daily = df ? df.qty : 0;
       if (mgr) o.price = i.price;
       return o;
     });
@@ -530,7 +560,7 @@ function deskCore(db, hooks) {
     var r = room(req.room);
     if (r.status !== 'Ready') fail(r.status === 'Occupied' ? 'room_occupied' : 'room_not_clean');
     var guest = text(req.guest, 80); if (!guest) fail('name_required');
-    var guests = Math.round(Number(req.guests)); if (!(guests >= 1 && guests <= 3)) fail('max_guests');
+    var guests = Math.round(Number(req.guests)); if (!(guests >= 1 && guests <= DESK_MAX_GUESTS)) fail('max_guests');
     var cin = String(req.checkin || today()), cout = String(req.checkout || '');
     if (!isYmd(cin) || !isYmd(cout)) fail('bad_dates');
     if (dayNum(cout) <= dayNum(cin)) fail('bad_dates');
@@ -546,7 +576,7 @@ function deskCore(db, hooks) {
     }
     recompute(s);
     db.set('rooms', r, { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
-    freeWater(r.room, me.name);
+    freeWater(r.room, me.name, s.id);
     return { stay: stayView(s, me) };
   };
 
@@ -557,7 +587,7 @@ function deskCore(db, hooks) {
     var p = {};
     if (req.guest != null) { p.guest = text(req.guest, 80); if (!p.guest) fail('name_required'); }
     if (req.phone != null) p.phone = phoneOk(req.phone);
-    if (req.guests != null) { p.guests = Math.round(Number(req.guests)); if (!(p.guests >= 1 && p.guests <= 3)) fail('max_guests'); }
+    if (req.guests != null) { p.guests = Math.round(Number(req.guests)); if (!(p.guests >= 1 && p.guests <= DESK_MAX_GUESTS)) fail('max_guests'); }
     if (req.rate != null) { p.rate = money(req.rate); if (!(p.rate > 0)) fail('rate_required'); }
     if (req.rateNote != null) p.rateNote = text(req.rateNote, 160);
     if (req.notes != null) p.notes = text(req.notes, 300);
@@ -696,6 +726,53 @@ function deskCore(db, hooks) {
     else db.set('wifi', row, { last: stamp(), opens: Number(row.opens || 0) + 1, lastDevice: dev });
     return { counted: true, atHouse: true };
   };
+  /* Housekeeping checklist: rooms with guests staying (2nd day onwards) and the free things to give today. Everyone can see it. */
+  api.housekeeping = function (req) {
+    var me = auth(req), list = [];
+    db.all('rooms').forEach(function (r) {
+      if (r.status !== 'Occupied' || !r.stay) return;
+      var s = find('stays', 'id', r.stay); if (!s) return;
+      var sv = serviceView(s);
+      list.push({ room: r.room, type: r.type, guest: String(s.guest || '').split(/\s+/)[0], guests: Number(s.guests), checkin: s.checkin, checkout: s.checkout,
+        due: !!sv, day: sv ? sv.day : 1, of: Number(s.nights), items: sv ? sv.items : [], done: sv && sv.done ? sv.done : null, firstDay: s.checkin >= today(), leaves: s.checkout <= today() });
+    });
+    list.sort(function (a, b) { return a.room - b.room; });
+    return { date: today(), rooms: list, daily: dailyFree() };
+  };
+  /* Housekeeping done for a room today: gives the free items (they show on the room as free, stock goes down). */
+  api.serviceDone = function (req) {
+    var me = auth(req), r = room(req.room);
+    if (r.status !== 'Occupied' || !r.stay) fail('room_not_occupied');
+    var s = stay(r.stay);
+    if (!serviceDue(s)) fail('no_service_today');
+    if (serviceOf(s.id)) fail('already_done');
+    var day = nightsBetween(s.checkin, today()) + 1, ids = [], given = [];
+    dailyFree().forEach(function (d) {
+      var it = find('items', 'item', d.item), cid = id('C');
+      db.add('charges', { id: cid, at: stamp(), stay: s.id, room: r.room, item: d.item, qty: d.qty, price: 0, total: 0, free: 'Yes', note: 'Daily housekeeping (day ' + day + ')', by: me.name, removed: '' });
+      if (it && yes(it.track)) moveStock(it, -d.qty, 'Free daily housekeeping', r.room, me.name);
+      ids.push(cid); given.push(d.qty + ' × ' + d.item);
+    });
+    db.add('service', { id: id('H'), date: today(), room: r.room, stay: s.id, items: given.join(', ') || 'Room serviced', by: me.name, at: stamp(), charges: ids.join(','), undone: '' });
+    recompute(s);
+    return api.housekeeping(req);
+  };
+  /* Undo a mistaken "done" (the same person the same day, or a manager / owner). Puts the items back in stock. */
+  api.serviceUndo = function (req) {
+    var me = auth(req), r = room(req.room);
+    var s = r.stay ? stay(r.stay) : fail('room_not_occupied'), x = serviceOf(s.id) || fail('not_done');
+    if (x.by !== me.name && !isMgr(me)) fail('not_allowed');
+    String(x.charges || '').split(',').filter(Boolean).forEach(function (cid) {
+      var c = find('charges', 'id', cid); if (!c || c.removed) return;
+      var it = find('items', 'item', c.item);
+      db.set('charges', c, { removed: 'Undone by ' + me.name + ' · ' + stamp() });
+      if (it && yes(it.track)) moveStock(it, Number(c.qty), 'Housekeeping undone', r.room, me.name);
+    });
+    db.set('service', x, { undone: stamp() + ' · ' + me.name });
+    recompute(s);
+    return api.housekeeping(req);
+  };
+
   /* Owner only: entry and exit per person per day. */
   api.attendance = function (req) {
     var me = auth(req); needOwner(me);
@@ -878,6 +955,7 @@ function deskCore(db, hooks) {
     var old = req.original ? find('items', 'item', req.original) : null;
     if (!old && find('items', 'item', name)) fail('name_taken');
     var p = { item: name, price: price, track: req.track ? 'Yes' : 'No', low: low, active: req.active === false ? 'No' : 'Yes', sell: req.sell === false ? 'No' : 'Yes' };
+    if (req.daily != null && req.daily !== '') p.daily = String(Math.max(0, Math.min(20, Math.round(Number(req.daily) || 0))));
     if (old) db.set('items', old, p); else { p.stock = 0; db.add('items', p); }
     return {};
   };
@@ -888,9 +966,9 @@ function deskCore(db, hooks) {
     var guest = text(req.guest != null ? req.guest : b && b.guest, 80); if (!guest) fail('name_required'); p.guest = guest;
     p.phone = phoneOk(req.phone != null ? req.phone : b && b.phone); if (!p.phone) fail('phone_required');
     p.email = text(req.email != null ? req.email : b && b.email, 80);
-    p.guests = Math.round(Number(req.guests != null ? req.guests : b && b.guests)); if (!(p.guests >= 1 && p.guests <= 33)) fail('bad_guests');
-    var minRooms = Math.ceil(p.guests / 3);
-    p.roomsNeeded = Math.round(Number(req.roomsNeeded != null ? req.roomsNeeded : b ? b.roomsNeeded : minRooms)) || minRooms;
+    p.guests = Math.round(Number(req.guests != null ? req.guests : b && b.guests)); if (!(p.guests >= 1 && p.guests <= DESK_MAX_GUESTS * 11)) fail('bad_guests');
+    var minRooms = Math.ceil(p.guests / DESK_MAX_GUESTS), normal = Math.ceil(p.guests / 3); // suggest 3 per room, but more can share a room
+    p.roomsNeeded = Math.round(Number(req.roomsNeeded != null ? req.roomsNeeded : b ? b.roomsNeeded : normal)) || normal;
     if (p.roomsNeeded < minRooms) p.roomsNeeded = minRooms;
     if (p.roomsNeeded > 11) fail('max_guests');
     p.roomType = text(req.roomType != null ? req.roomType : b && b.roomType, 40) || 'Any';
@@ -960,7 +1038,7 @@ function deskCore(db, hooks) {
       if (!rooms.length) fail('pick_rooms');
       rooms.forEach(function (n) { room(n); var c = roomClash(n, p.checkin, p.checkout, { booking: b.id }); if (c) clashFail(n, c); });
       p.rooms = rooms.join(', '); p.roomsNeeded = rooms.length;
-      if (rooms.length * 3 < p.guests) fail('max_guests');
+      if (rooms.length * DESK_MAX_GUESTS < p.guests) fail('max_guests');
     }
     db.set('bookings', b, p);
     recomputeBooking(b);
@@ -974,7 +1052,7 @@ function deskCore(db, hooks) {
     if (b.status !== 'Pending') fail('booking_closed');
     var rooms = (req.rooms || []).map(Number).filter(function (n, i, a) { return n && a.indexOf(n) === i; });
     if (!rooms.length) fail('pick_rooms');
-    if (rooms.length * 3 < Number(b.guests)) fail('max_guests');
+    if (rooms.length * DESK_MAX_GUESTS < Number(b.guests)) fail('max_guests');
     if (req.rate != null && req.rate !== '') { var rt = money(req.rate); if (!(rt > 0)) fail('rate_required'); db.set('bookings', b, { rate: rt }); }
     rooms.forEach(function (n) { room(n); var c = roomClash(n, b.checkin, b.checkout, { booking: b.id }); if (c) clashFail(n, c); });
     var amt = money(req.amount); if (!(amt > 0)) fail('advance_required');
@@ -1056,7 +1134,7 @@ function deskCore(db, hooks) {
     var left = Number(b.advancePaid || 0) - Number(b.refunded || 0), each = Math.floor(left / rooms.length), guestsLeft = Number(b.guests);
     var made = [];
     rooms.forEach(function (n, i) {
-      var g = Math.min(3, Math.max(1, Math.ceil(guestsLeft / (rooms.length - i)))); guestsLeft -= g;
+      var g = Math.min(DESK_MAX_GUESTS, Math.max(1, Math.ceil(guestsLeft / (rooms.length - i)))); guestsLeft -= g;
       var s = db.add('stays', { id: id('S'), room: n, guest: b.guest, phone: b.phone, guests: g, checkin: cin, checkout: b.checkout, nights: nightsBetween(cin, b.checkout),
         rate: b.rate, rateNote: 'Booking ' + b.id + (rooms.length > 1 ? ' · ' + rooms.length + ' rooms' : ''), status: 'In house', roomTotal: 0, extras: 0, paid: 0, balance: 0,
         notes: b.notes, inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: b.id });
@@ -1064,7 +1142,7 @@ function deskCore(db, hooks) {
       if (share > 0) db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: n, amount: share, method: FROM_ADV, note: 'Advance from booking ' + b.id, by: me.name, booking: b.id, ref: '' });
       recompute(s);
       db.set('rooms', room(n), { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
-      freeWater(n, me.name);
+      freeWater(n, me.name, s.id);
       made.push(s.id);
     });
     db.set('bookings', b, { status: 'Checked in', closedBy: me.name, closedAt: stamp(), closeNote: 'Checked in to room ' + rooms.join(', ') });
