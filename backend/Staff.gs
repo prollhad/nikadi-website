@@ -201,6 +201,24 @@ function deskCore(db, hooks) {
     db.set('stays', s, { roomTotal: roomTotal, extras: extras, paid: paid, balance: roomTotal + extras - paid });
   }
 
+  /* After a checked-out stay is corrected (rate, nights, items, payments): only a Manager or the Owner may do it,
+     and the change flows into member points and the bill (which is re-made; the staff app saves a fresh PDF). */
+  function lockedOut(me, s) { if (s.status === 'Checked out' && !canApprove(me)) fail('bill_locked'); }
+  function afterChange(s, me, rt0) {
+    if (s.status !== 'Checked out') return;
+    var delta = null;
+    if (hooks.onStayChange && Number(rt0) !== Number(s.roomTotal)) {
+      try { delta = hooks.onStayChange({ id: s.id, phone: s.phone, room: s.room, nights: Number(s.nights), checkin: s.checkin, checkout: s.checkout, roomTotal: Number(s.roomTotal), before: Number(rt0) }); } catch (e) { delta = null; }
+    }
+    var row = billOfStay(s.id);
+    if (!row) return;
+    var old = JSON.parse(row.data), mem = old.member;
+    if (mem && delta && delta.points) { mem.earned = Number(mem.earned || 0) + delta.points; if (delta.balance != null) mem.balance = delta.balance; }
+    if (mem) { var r0 = find('rooms', 'room', s.room); mem.saved = r0 && Number(r0.rate) > Number(s.rate) ? (Number(r0.rate) - Number(s.rate)) * Number(s.nights) : 0; }
+    saveBill(s, me, mem, true);
+    pdfClear(row.id); db.set('bills', row, { pdf: '' }); // the old PDF is out of date
+  }
+
   function memberOf(phone) { if (!hooks.memberInfo || !phone) return null; try { return hooks.memberInfo(String(phone)); } catch (e) { return null; } }
   function stayView(s, me) {
     var mgr = isMgr(me);
@@ -250,7 +268,8 @@ function deskCore(db, hooks) {
     var tariff = usual > rate ? usual : rate, discounts = [];
     if (usual > rate) {
       var mem = memberOf(s.phone), pct = Math.round((usual - rate) / usual * 100), note = String(s.rateNote || '');
-      var label = mem ? mem.tier + ' member discount (' + pct + '%)' : note && !/^Booking /.test(note) ? note : 'Discount (' + pct + '%)';
+      var custom = note && !/^Booking /.test(note) && !/member rate$/i.test(note);
+      var label = mem && Number(mem.discount) === pct && !custom ? mem.tier + ' member discount (' + pct + '%)' : custom ? note + ' (' + pct + '%)' : 'Discount (' + pct + '%)';
       discounts.push({ label: label, note: 'On room tariff of ₹' + (usual * nights).toLocaleString('en-IN'), amount: (usual - rate) * nights });
     }
     var items = [], byKey = {};
@@ -475,7 +494,8 @@ function deskCore(db, hooks) {
 
   api.updateStay = function (req) {
     var me = auth(req); needMgr(me);
-    var s = stay(req.id);
+    var s = stay(req.id), rt0 = s.roomTotal;
+    lockedOut(me, s);
     var p = {};
     if (req.guest != null) { p.guest = text(req.guest, 80); if (!p.guest) fail('name_required'); }
     if (req.phone != null) p.phone = phoneOk(req.phone);
@@ -491,7 +511,8 @@ function deskCore(db, hooks) {
       if (g0) return g0;
     }
     var targetRoom = req.room != null ? Number(req.room) : Number(s.room);
-    if (s.status === 'In house') { var cl = roomClash(targetRoom, cin, cout, { stay: s.id, booking: s.booking }); if (cl) clashFail(targetRoom, cl); }
+    if (s.status === 'Checked out' && cout !== s.checkout && dayNum(cout) > dayNum(today())) fail('checkout_future');
+    if (s.status === 'In house' || (s.status === 'Checked out' && (cin !== s.checkin || cout !== s.checkout))) { var cl = roomClash(targetRoom, cin, cout, { stay: s.id, booking: s.booking }); if (cl) clashFail(targetRoom, cl); }
     if (req.room != null && Number(req.room) !== Number(s.room)) {
       if (s.status !== 'In house') fail('not_in_house');
       var to = room(req.room); if (to.status !== 'Ready') fail(to.status === 'Occupied' ? 'room_occupied' : 'room_not_clean');
@@ -503,14 +524,20 @@ function deskCore(db, hooks) {
     }
     db.set('stays', s, p);
     recompute(s);
+    afterChange(s, me, rt0);
     return { stay: stayView(s, me) };
   };
 
   api.charge = function (req) {
-    var me = auth(req), mgr = isMgr(me);
-    var r = room(req.room);
-    if (r.status !== 'Occupied' || !r.stay) fail('room_not_occupied');
-    var s = stay(r.stay), it = item(req.item);
+    var me = auth(req), mgr = isMgr(me), r, s;
+    if (req.id) { // add to a guest who already checked out (bill correction)
+      s = stay(req.id); if (s.status !== 'Checked out') fail('room_not_occupied'); needApprover(me); r = { room: s.room };
+    } else {
+      r = room(req.room);
+      if (r.status !== 'Occupied' || !r.stay) fail('room_not_occupied');
+      s = stay(r.stay);
+    }
+    var it = item(req.item);
     if (!sellable(it)) fail('no_item');
     var qty = Math.round(Number(req.qty || 1)); if (!(qty >= 1 && qty <= 50)) fail('bad_qty');
     var free = !!req.free;
@@ -520,9 +547,10 @@ function deskCore(db, hooks) {
     if (mgr && price !== Number(it.price) && !free) note = text((note ? note + ' · ' : '') + 'Price changed from ₹' + it.price, 160);
     var c = db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: r.room, item: it.item, qty: qty, price: free ? 0 : price,
       total: free ? 0 : price * qty, free: free ? 'Yes' : 'No', note: note, by: me.name, removed: '' });
-    moveStock(it, -qty, free ? 'Free to room' : 'Charged to room', r.room, me.name);
+    moveStock(it, -qty, free ? 'Free to room' : (req.id ? 'Added to bill after check-out' : 'Charged to room'), r.room, me.name);
     recompute(s);
-    return { added: { item: it.item, qty: qty, room: r.room, free: free, total: mgr ? c.total : undefined }, stock: yes(it.track) ? it.stock : null };
+    afterChange(s, me, s.roomTotal);
+    return { stay: req.id ? stayView(s, me) : undefined, added: { item: it.item, qty: qty, room: r.room, free: free, total: mgr ? c.total : undefined }, stock: yes(it.track) ? it.stock : null };
   };
 
   api.editCharge = function (req) {
@@ -530,6 +558,7 @@ function deskCore(db, hooks) {
     var c = find('charges', 'id', req.id) || fail('no_charge');
     if (c.removed) fail('no_charge');
     var s = stay(c.stay), it = find('items', 'item', c.item);
+    lockedOut(me, s);
     var back = req.remove && req.refundAmount ? money(req.refundAmount) : 0;
     if (isNaN(back)) fail('invalid_amount');
     if (back > 0) {
@@ -554,16 +583,19 @@ function deskCore(db, hooks) {
         note: text((c.note ? c.note + ' · ' : '') + 'Edited by ' + who(me, req) + (req.reason ? ': ' + text(req.reason, 80) : ''), 200) });
     }
     recompute(s);
+    afterChange(s, me, s.roomTotal);
     return { stay: stayView(s, me) };
   };
 
   api.pay = function (req) {
     var me = auth(req); needMgr(me);
     var s = stay(req.id);
+    lockedOut(me, s);
     var amt = money(req.amount); if (!(amt > 0)) fail('invalid_amount');
     if (METHODS.indexOf(req.method) < 0) fail('method_required');
-    db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: s.room, amount: amt, method: req.method, note: text(req.note, 120), by: me.name, booking: s.booking || '', ref: text(req.ref, 40) });
+    db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: s.room, amount: amt, method: req.method, note: text(req.note, 120) || (s.status === 'Checked out' ? 'Paid after check-out' : ''), by: me.name, booking: s.booking || '', ref: text(req.ref, 40) });
     recompute(s);
+    afterChange(s, me, s.roomTotal);
     return { stay: stayView(s, me) };
   };
 
@@ -571,6 +603,7 @@ function deskCore(db, hooks) {
   api.refund = function (req) {
     var me = auth(req); needMgr(me);
     var s = stay(req.id);
+    lockedOut(me, s);
     var amt = money(req.amount); if (!(amt > 0)) fail('invalid_amount');
     if (amt > Number(s.paid || 0)) fail('refund_too_much');
     if (METHODS.indexOf(req.method) < 0) fail('method_required');
@@ -581,6 +614,7 @@ function deskCore(db, hooks) {
     if (g) return g;
     db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: s.room, amount: -amt, method: req.method, note: 'Refund: ' + text(req.reason, 120), by: who(me, req), booking: s.booking || '', ref: ref, voided: '' });
     recompute(s);
+    afterChange(s, me, s.roomTotal);
     return { stay: stayView(s, me) };
   };
 
@@ -590,10 +624,11 @@ function deskCore(db, hooks) {
     var p = find('payments', 'id', req.id) || fail('no_payment');
     if (p.voided || p.method === FROM_ADV) fail('no_payment');
     if (!text(req.reason, 200)) fail('reason_required');
+    if (p.stay) lockedOut(me, stay(p.stay));
     var g = gate(me, 'voidPayment', req, (p.stay ? 'Room ' + p.room : 'Booking ' + p.booking) + ': cancel ' + (Number(p.amount) < 0 ? 'refund' : 'payment') + ' of ₹' + Math.abs(p.amount) + ' (' + p.method + (p.ref ? ' ' + p.ref : '') + ', ' + p.at + ', by ' + p.by + ')');
     if (g) return g;
     db.set('payments', p, { voided: 'Voided by ' + who(me, req) + ' ' + stamp() + ': ' + text(req.reason, 120) });
-    if (p.stay) { var s = stay(p.stay); recompute(s); return { stay: stayView(s, me) }; }
+    if (p.stay) { var s = stay(p.stay); recompute(s); afterChange(s, me, s.roomTotal); return { stay: stayView(s, me) }; }
     var b = find('bookings', 'id', p.booking); if (b) { recomputeBooking(b); return { booking: bookingView(b, me) }; }
     return {};
   };
@@ -1416,6 +1451,7 @@ function deskHandle_(req) {
   Object.keys(req).forEach(function (k) { if (k.charAt(0) !== '_') clean[k] = req[k]; }); // private flags only from inside the script
   var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
+    onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     sendBill: deskSendBill_ });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');

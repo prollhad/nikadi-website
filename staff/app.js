@@ -8,6 +8,7 @@
   var app = document.getElementById('app');
 
   var ERR = {
+    bill_locked: 'This guest has checked out. Only a manager or the owner can change the bill now.', checkout_future: 'The check-out date can\'t be in the future for a guest who already left.',
     pdf_tools_failed: 'Could not make the PDF. Check the internet connection and try again.', bad_pdf: 'The PDF could not be sent. Please try again.', bad_title: 'Choose Mr., Ms., Mrs., Dr. or Name only.',
     invalid_gstin: 'That GSTIN does not look right (15 characters, like 19ABCDE1234F1Z5).', invalid_email: 'That email address does not look right.', not_checked_out: 'The guest has not checked out yet.',
     no_bill: 'Bill not found.', email_unavailable: 'Email is not set up yet.',
@@ -1210,6 +1211,101 @@
     function savePdf(b) { // keep the PDF on the server so the automatic email can attach it
       return makePdf(b).then(function (r) { return api('deskBillPdf', { id: b.stay, pdf: r.base64() }); }).then(function (r) { return Object.assign(r.bill, { stay: b.stay }); });
     }
+    var OPEN = {};
+    /* After any change: fetch the re-made bill, save a fresh PDF for the automatic email, redraw. */
+    function refresh(b, msg) {
+      pdf = null; pdfJob = null;
+      return api('deskBill', { id: b.stay }).then(function (r) { var nb = Object.assign(r.bill, { stay: b.stay }); return nb.status === 'Sent' ? nb : savePdf(nb); })
+        .then(function (nb) { draw(nb, msg); }, function (e) { toast(errText(e)); });
+    }
+    function editors(b) {
+      api('deskStay', { id: b.stay }).then(function (r) {
+        var st = r.stay, er = $('#ed-room', body), ei = $('#ed-items', body), ep = $('#ed-pays', body);
+        if (!er) return;
+        /* room */
+        er.className = '';
+        er.innerHTML = field('Rate per night (₹, incl. GST)', '<input class="input" id="e-rate" inputmode="numeric" value="' + esc(st.rate) + '">') +
+          field('Discount name on the bill (optional)', '<input class="input" id="e-note" maxlength="60" value="' + esc(/^Booking /.test(st.rateNote || '') ? '' : st.rateNote || '') + '" placeholder="e.g. Festival offer, Repeat guest">') +
+          '<div class="field"><span>Check-in</span><div class="input ro">' + esc(dShort(st.checkin)) + '</div></div>' +
+          field('Check-out date', '<input class="input" id="e-out" type="date" value="' + esc(st.checkout) + '" min="' + esc(st.checkin) + '">') +
+          '<div class="field"><span>Guests</span>' + seg('eg', ['1', '2', '3'], String(st.guests)) + '</div>' +
+          '<p class="small">Now: ' + st.nights + ' night' + (st.nights > 1 ? 's' : '') + ' × ' + inr(st.rate) + ' = ' + inr(st.roomTotal) + '. The usual price stays on the bill and the difference shows as a discount.</p>' +
+          '<p class="err" id="e-rerr" role="alert"></p><button class="btn btn-gold" type="button" id="e-rsave">Save room changes</button>';
+        wireSegs(er);
+        $('#e-rsave', er).onclick = function () {
+          var x = this; busy(x, true); $('#e-rerr', er).textContent = '';
+          api('deskUpdateStay', { id: st.id, rate: $('#e-rate', er).value.replace(/\D/g, ''), rateNote: $('#e-note', er).value.trim(), checkout: $('#e-out', er).value, guests: Number(segVal(er, 'eg')) })
+            .then(function () { return refresh(b, 'Room changes saved. Bill, sales and member points are updated.'); }, function (e) { busy(x, false); $('#e-rerr', er).textContent = errText(e); });
+        };
+        /* items */
+        ei.className = '';
+        var sell = S.st.items.filter(function (i) { return i.sell; });
+        ei.innerHTML = (st.charges.length ? '<div class="list">' + st.charges.map(function (ch, k) {
+            return '<div class="bl ed-row" data-c="' + k + '"><span class="t"><b>' + esc(ch.item) + '</b><small>' + esc(dShort(ch.at)) + (ch.free ? ' · free' : '') + '</small></span>' +
+              '<span class="ed-ctl"><input class="input sm" data-q inputmode="numeric" value="' + esc(ch.qty) + '" aria-label="Quantity"><span class="x">×</span><input class="input sm" data-p inputmode="numeric" value="' + esc(ch.price) + '" aria-label="Price"' + (ch.free ? ' disabled' : '') + '>' +
+              '<button class="btn btn-quiet sm" type="button" data-save>Save</button><button class="btn btn-quiet sm danger" type="button" data-del>Remove</button></span></div>';
+          }).join('') + '</div>' : '<p class="small">No items on this bill.</p>') +
+          '<div class="sec-h"><h3>Add an item</h3></div>' +
+          '<div class="ed-add"><select class="input" id="e-it">' + sell.map(function (i) { return '<option value="' + esc(i.item) + '" data-price="' + esc(i.price) + '">' + esc(i.item) + ' · ' + inr(i.price) + '</option>'; }).join('') + '</select>' +
+          '<input class="input sm" id="e-iq" inputmode="numeric" value="1" aria-label="Quantity"><input class="input sm" id="e-ip" inputmode="numeric" placeholder="Price" aria-label="Price (blank = usual)">' +
+          '<button class="btn btn-gold sm" type="button" id="e-iadd">Add</button></div>' +
+          '<p class="err" id="e-ierr" role="alert"></p><p class="small">Adding, changing or removing items also corrects the stock.</p>';
+        function ierr(e) { $('#e-ierr', ei).textContent = errText(e); }
+        $$('[data-c]', ei).forEach(function (row) {
+          var ch = st.charges[+row.dataset.c];
+          $('[data-save]', row).onclick = function () {
+            var x = this; busy(x, true);
+            api('deskEditCharge', { id: ch.id, qty: Number($('[data-q]', row).value), price: ch.free ? 0 : $('[data-p]', row).value.replace(/\D/g, '') || '0', free: ch.free, reason: 'Bill corrected after check-out' })
+              .then(function () { return refresh(b, ch.item + ' changed. Stock and bill updated.'); }, function (e) { busy(x, false); ierr(e); });
+          };
+          $('[data-del]', row).onclick = function () {
+            var x = this;
+            if (x.dataset.sure !== '1') { x.dataset.sure = '1'; x.textContent = 'Sure?'; return; }
+            busy(x, true);
+            api('deskEditCharge', { id: ch.id, remove: true, reason: 'Removed from bill after check-out' })
+              .then(function () { return refresh(b, ch.item + ' removed. Stock and bill updated.'); }, function (e) { busy(x, false); ierr(e); });
+          };
+        });
+        $('#e-iadd', ei).onclick = function () {
+          var x = this, pr = $('#e-ip', ei).value.replace(/\D/g, ''); busy(x, true);
+          api('deskCharge', { id: st.id, item: $('#e-it', ei).value, qty: Number($('#e-iq', ei).value), price: pr === '' ? undefined : pr })
+            .then(function () { return refresh(b, 'Item added. Stock and bill updated.'); }, function (e) { busy(x, false); ierr(e); });
+        };
+        /* payments */
+        ep.className = '';
+        ep.innerHTML = (st.payments.length ? '<div class="list">' + st.payments.map(function (pm, k) {
+            return '<div class="bl ed-row" data-p="' + k + '"><span class="t"><b>' + inr(pm.amount) + ' · ' + esc(pm.method) + '</b><small>' + esc(dShort(pm.at)) + (pm.ref ? ' · ' + esc(pm.ref) : '') + (pm.note ? ' · ' + esc(pm.note) : '') + '</small></span>' +
+              (pm.method === 'From advance' ? '' : '<span class="ed-ctl"><input class="input" data-why placeholder="Why cancel?" maxlength="120"><button class="btn btn-quiet sm danger" type="button" data-void>Cancel entry</button></span>') + '</div>';
+          }).join('') + '</div>' : '<p class="small">No payments recorded.</p>') +
+          '<div class="sec-h"><h3>Add a payment</h3></div>' +
+          field('Amount (₹)', '<input class="input" id="e-pamt" inputmode="numeric">') + '<div class="field"><span>Paid by</span>' + seg('epm', S.st.methods, 'UPI') + '</div>' + refField('e-pref') +
+          '<button class="btn btn-gold" type="button" id="e-padd">Add payment</button>' +
+          '<div class="sec-h"><h3>Give money back</h3></div>' +
+          field('Amount (₹)', '<input class="input" id="e-ramt" inputmode="numeric">') + '<div class="field"><span>Paid back by</span>' + seg('erm', S.st.methods, 'UPI') + '</div>' + refField('e-rref') +
+          field('Reason', '<input class="input" id="e-rwhy" maxlength="120">') +
+          '<button class="btn btn-line" type="button" id="e-radd">Record refund</button><p class="err" id="e-perr" role="alert"></p>';
+        wireSegs(ep);
+        function perr(e) { $('#e-perr', ep).textContent = errText(e); }
+        $$('[data-p]', ep).forEach(function (row) {
+          var pm = st.payments[+row.dataset.p], v = $('[data-void]', row); if (!v) return;
+          v.onclick = function () {
+            var x = this; busy(x, true);
+            api('deskVoidPayment', { id: pm.id, reason: $('[data-why]', row).value.trim() })
+              .then(function () { return refresh(b, 'Payment entry cancelled. Bill and sales updated.'); }, function (e) { busy(x, false); perr(e); });
+          };
+        });
+        $('#e-padd', ep).onclick = function () {
+          var x = this; busy(x, true);
+          api('deskPay', { id: st.id, amount: $('#e-pamt', ep).value.replace(/\D/g, ''), method: segVal(ep, 'epm'), ref: $('#e-pref', ep).value.trim() })
+            .then(function () { return refresh(b, 'Payment added. Bill and sales updated.'); }, function (e) { busy(x, false); perr(e); });
+        };
+        $('#e-radd', ep).onclick = function () {
+          var x = this; busy(x, true);
+          api('deskRefund', { id: st.id, amount: $('#e-ramt', ep).value.replace(/\D/g, ''), method: segVal(ep, 'erm'), ref: $('#e-rref', ep).value.trim(), reason: $('#e-rwhy', ep).value.trim() })
+            .then(function () { return refresh(b, 'Refund recorded. Bill and sales updated.'); }, function (e) { busy(x, false); perr(e); });
+        };
+      }, function (e) { var er = $('#ed-room', body); if (er) er.textContent = errText(e); });
+    }
     function draw(b, msg) {
       var d = billData(b), c = NikadiBill.compute(d), ph = String(b.phone || '').replace(/\D/g, '').slice(-10), st = billStatus(b);
       body.innerHTML = '<div class="note"><b>' + esc(d.guest.company || d.guest.name) + '</b>Room ' + esc(d.room.no) + ' · ' + esc(dShort(d.checkin)) + ' – ' + esc(dShort(d.checkout)) + ' · Tax invoice ' + esc(b.no) + '</div>' +
@@ -1227,7 +1323,11 @@
             (b.status === 'Scheduled' ? '<button class="btn btn-quiet" type="button" id="bstop">Don\'t send automatically</button>' : '') +
             (/^Stopped|^Failed/.test(b.status || '') && b.email ? '<button class="btn btn-quiet" type="button" id="bres">Send automatically again</button>' : '') + '</div>' +
             '<p class="err" id="serr" role="alert"></p>' +
-          '<details class="billx"' + (o.edit ? ' open' : '') + '><summary>Change the bill (manager / owner)</summary>' +
+          '<div class="sec-h"><h2>Change the bill</h2><span class="small">manager / owner</span></div>' +
+          '<details class="billx" data-sec="room"><summary>Room rate, nights and guests</summary><div id="ed-room" class="loading">Loading…</div></details>' +
+          '<details class="billx" data-sec="items"><summary>Items (water, dental kit, mattress…)</summary><div id="ed-items" class="loading">Loading…</div></details>' +
+          '<details class="billx" data-sec="pays"><summary>Payments and refunds</summary><div id="ed-pays" class="loading">Loading…</div></details>' +
+          '<details class="billx" data-sec="guest"><summary>Guest name, email, company, GSTIN</summary>' +
             '<div class="field"><span>Greet the guest as</span>' + titleSeg('bt', b.title || '') + '</div>' +
             field('Guest name', '<input class="input" id="bn" maxlength="80" value="' + esc(b.name || d.guest.name) + '">') +
             field('Email', '<input class="input" id="be" type="email" inputmode="email" maxlength="80" value="' + esc(b.email || '') + '">') +
@@ -1235,12 +1335,13 @@
             field('Company / billing name', '<input class="input" id="bc" maxlength="80" value="' + esc(b.company || '') + '">') +
             field('Guest GSTIN', '<input class="input" id="bg" maxlength="15" style="text-transform:uppercase" value="' + esc(b.gstin || '') + '">') +
             '<p class="err" id="uerr" role="alert"></p><button class="btn btn-gold" type="button" id="bu">Save changes</button>' +
-            '<p class="small">The invoice number and QR code stay the same. ' + (b.status === 'Sent' ? 'The guest already has the earlier bill: use “Email now” to send the new one.' : 'The changed bill is the one that gets emailed.') + ' Amounts come from the room bill.</p></details>'
+            '<p class="small">The invoice number and QR code stay the same. ' + (b.status === 'Sent' ? 'The guest already has the earlier bill: use “Email now” to send the new one.' : 'The changed bill is the one that gets emailed.') + ' Room, items and payment changes also update stock, sales, member points and the guest\'s stay history.</p></details>'
           : '<p class="small">Only a manager or the owner can change this bill or its email.</p>') +
         '<p class="small">The QR code on the bill opens it on www.nikadiguesthouse.com. Anyone with the link can see this bill, so share it only with the guest.</p>';
       function note(t) { var n = $('#bmsg', body); n.textContent = t; n.hidden = !t; }
       makePdf(b).catch(function () {}); // ready in the background, so WhatsApp opens straight away
-      if (A) wireTitleSeg(body);
+      if (A) { wireTitleSeg(body); editors(b); }
+      $$('details[data-sec]', body).forEach(function (dt) { if (OPEN[dt.dataset.sec]) dt.open = true; dt.ontoggle = function () { OPEN[dt.dataset.sec] = dt.open; }; });
       $('#bv', body).onclick = function () { showBill(b); };
       $('#bd', body).onclick = function () {
         var x = this; busy(x, true);
@@ -1278,9 +1379,7 @@
         var x = this; busy(x, true); $('#uerr', body).textContent = '';
         api('deskBill', { id: b.stay, title: titleVal(body, 'bt'), name: $('#bn', body).value.trim(), email: $('#be', body).value.trim(), address: $('#ba', body).value.trim(),
           company: $('#bc', body).value.trim(), gstin: $('#bg', body).value.trim().toUpperCase() })
-          .then(function (r) { pdf = null; pdfJob = null; b = Object.assign(r.bill, { stay: b.stay }); return b.status === 'Sent' ? b : savePdf(b); })
-          .then(function (nb) { draw(nb, 'Saved. ' + (nb.status === 'Scheduled' ? 'The changed bill will be emailed on ' + whenText(nb.sendAt) + '.' : nb.status === 'Sent' ? 'Use “Email now” to send the new bill.' : '')); },
-            function (e) { busy(x, false); $('#uerr', body).textContent = errText(e); });
+          .then(function () { return refresh(b, 'Guest details saved.'); }, function (e) { busy(x, false); $('#uerr', body).textContent = errText(e); });
       };
     }
     if (!b.data) {

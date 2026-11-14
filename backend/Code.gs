@@ -296,6 +296,19 @@ function memberStayPoints_(st) {
   return { name: m.name, points: pts, balance: m.points, tier: after.tier.name };
 }
 
+/** A manager corrected the room charges of a stay after check-out: add or take back the difference in points. */
+function memberStayAdjust_(st) {
+  var phone; try { phone = normPhone_(st.phone); } catch (e) { return null; }
+  var m = findMember_(phone);
+  if (!m || m.status === 'Blocked') return null;
+  var t = tierOf_(m, st.id), per = num_(settings_().POINTS_PER_100, 1) * t.tier.earn;
+  var pts = Math.floor(Math.max(0, st.roomTotal) / 100 * per) - Math.floor(Math.max(0, st.before) / 100 * per);
+  if (!pts) return { points: 0, balance: m.points };
+  if (m.points + pts < 0) pts = -m.points; // never below zero
+  addTx_(m, 'Stay correction', st.roomTotal - st.before, pts, 'Room ' + st.room + ' · bill corrected to ' + st.nights + (st.nights > 1 ? ' nights' : ' night') + ', room ₹' + st.roomTotal + ' (was ₹' + st.before + ')', 'Staff app');
+  return { points: pts, balance: m.points };
+}
+
 /** Birthday bonus: once a year, in the member's birthday month, the next time they use the app or check out. */
 function birthdayBonus_(m) {
   try {

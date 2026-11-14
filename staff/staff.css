@@ -478,3 +478,13 @@ main.view{flex:1}
 .bstat.k-warn{background:rgba(230,150,80,.10);border-color:rgba(230,150,80,.35);color:#f0b98a}
 .bstat.k-bad{background:rgba(220,90,80,.12);border-color:rgba(220,90,80,.4);color:#f2a39b}
 .btn-row{display:flex;flex-wrap:wrap;gap:10px}.btn-row .btn{flex:1 1 160px}
+.ed-row{grid-template-columns:1fr;gap:8px}
+.ed-ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ed-ctl .input{flex:1 1 120px}
+.input.sm{width:72px;flex:0 0 72px;padding:8px 10px;min-height:0}
+.btn.sm{padding:8px 12px;font-size:.8rem;min-height:0}
+.btn.danger{color:#f2a39b;border-color:rgba(220,90,80,.45)}
+.ed-ctl .x{color:var(--muted)}
+.ed-add{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ed-add select{flex:1 1 180px}
+.input.ro{opacity:.75}
+.billx h3{font-size:.95rem;margin:14px 0 6px}

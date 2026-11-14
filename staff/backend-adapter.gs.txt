@@ -75,6 +75,7 @@ function deskHandle_(req) {
   Object.keys(req).forEach(function (k) { if (k.charAt(0) !== '_') clean[k] = req[k]; }); // private flags only from inside the script
   var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
+    onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     sendBill: deskSendBill_ });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
