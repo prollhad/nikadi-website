@@ -84,6 +84,8 @@ var DESK_SCHEMA = {
   commissions: { sheet: 'Commission', lazy: true, cols: [['id', 'ID'], ['date', 'Date', 'd'], ['name', 'Name'], ['type', 'Driver / broker'], ['phone', 'Phone', 's'], ['vehicle', 'Vehicle no.'],
     ['guest', 'For guest'], ['room', 'Room / booking', 's'], ['amount', 'Amount (₹)', 'n'], ['method', 'Paid by'], ['ref', 'Transaction no.', 's'], ['note', 'Note'],
     ['by', 'Entered by'], ['at', 'Entered at', 't'], ['edited', 'Last changed'], ['removed', 'Removed']] },
+  guestids: { sheet: 'Guest ID copies', lazy: true, cols: [['id', 'ID'], ['at', 'Saved at', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'], ['kind', 'Page'], ['slot', 'Box', 'n'],
+    ['label', 'What'], ['file', 'Photo (Drive file ID)', 's'], ['by', 'Saved by'], ['removed', 'Removed']] },
   wa: { sheet: 'WhatsApp messages', lazy: true, cols: [['id', 'ID'], ['at', 'Made', 't'], ['sendAt', 'Send at', 't'], ['to', 'To', 's'], ['name', 'Guest'], ['kind', 'Message'], ['ref', 'Stay / booking'], ['status', 'Status'], ['info', 'Details']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
@@ -297,6 +299,7 @@ function deskCore(db, hooks) {
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
+      v.ids = db.all('guestids').filter(function (x) { return x.stay === s.id && !x.removed; }).length;
       v.advancePays = s.booking ? bookingPays(s.booking).filter(function (p) { return Number(p.amount) > 0; }).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: 'Advance · booking ' + s.booking }; }) : [];
     } else {
       v.guest = String(s.guest || '').split(/\s+/)[0];
@@ -917,6 +920,54 @@ function deskCore(db, hooks) {
     var ids = String(e.photos || '').split(',').filter(Boolean);
     if (!hooks.getPhoto) fail('photos_unavailable');
     return { photos: ids.map(function (fid) { return { id: fid, data: hooks.getPhoto(fid) }; }) };
+  };
+  /* ================= Guest ID copies (front desk) =================
+     The cropped, straightened ID photos for each stay are kept in Google Drive ("Nikadi Guest IDs" / month), listed in the 'Guest ID copies' sheet.
+     Page 'id': 3 people × front/back (Aadhaar / driving licence size). Page 'pp': passport front, passport back, visa. */
+  var ID_SLOTS = { id: ['Person 1 · front', 'Person 1 · back', 'Person 2 · front', 'Person 2 · back', 'Person 3 · front', 'Person 3 · back'],
+    pp: ['Passport · front (photo page)', 'Passport · back (last page)', 'Visa'] };
+  function idsOf(sid) { return db.all('guestids').filter(function (x) { return x.stay === sid && !x.removed; }); }
+  function idView(x) { return { id: x.id, kind: x.kind, slot: Number(x.slot), label: x.label, by: x.by, at: x.at }; }
+  function idStayView(s) { return { id: s.id, room: s.room, guest: s.guest, guests: s.guests, checkin: s.checkin, checkout: s.checkout, status: s.status, ids: idsOf(s.id).length }; }
+  api.idStays = function (req) {
+    var me = auth(req); needMgr(me);
+    var since = addDays(today(), -45), q = String(req.q || '').toLowerCase().trim();
+    var list = db.all('stays').filter(function (s) {
+      if (q) return (String(s.guest).toLowerCase().indexOf(q) >= 0 || String(s.phone).indexOf(q) >= 0 || String(s.room) === q);
+      return s.status === 'In house' || (s.checkout >= since);
+    }).sort(function (a, b) { return (a.status === 'In house') !== (b.status === 'In house') ? (a.status === 'In house' ? -1 : 1) : a.status === 'In house' ? Number(a.room) - Number(b.room) : (a.checkout < b.checkout ? 1 : -1); });
+    return { list: list.slice(0, 80).map(idStayView), slots: ID_SLOTS };
+  };
+  api.idList = function (req) {
+    var me = auth(req); needMgr(me);
+    var s = stay(req.stay);
+    return { stay: idStayView(s), list: idsOf(s.id).map(idView), slots: ID_SLOTS };
+  };
+  api.idGet = function (req) {
+    var me = auth(req); needMgr(me);
+    var x = find('guestids', 'id', req.id) || fail('not_found');
+    if (x.removed) fail('not_found');
+    if (!hooks.getPhoto) fail('photos_unavailable');
+    return { id: x.id, data: hooks.getPhoto(x.file) };
+  };
+  api.idSave = function (req) {
+    var me = auth(req); needMgr(me);
+    var s = stay(req.stay), kind = ID_SLOTS[req.kind] ? req.kind : fail('bad_kind'), slot = Math.round(Number(req.slot));
+    if (!(slot >= 0 && slot < ID_SLOTS[kind].length)) fail('bad_slot');
+    if (!hooks.savePhoto) fail('photos_unavailable');
+    var data = String(req.data || '').replace(/^data:image\/\w+;base64,/, '');
+    if (!/^[A-Za-z0-9+\/=]+$/.test(data) || data.length > 4000000) fail('bad_photo');
+    var day = today(), label = ID_SLOTS[kind][slot];
+    var file = hooks.savePhoto(data, 'Room ' + s.room + ' ' + String(s.guest).replace(/[^\w .-]+/g, '') + ' ' + label.replace(/[^\w ]+/g, '') + ' ' + day + '.jpg', day.slice(0, 7), 'Nikadi Guest IDs');
+    idsOf(s.id).forEach(function (x) { if (x.kind === kind && Number(x.slot) === slot) db.set('guestids', x, { removed: 'Replaced ' + stamp() + ' · ' + me.name }); });
+    var row = db.add('guestids', { id: id('G'), at: stamp(), stay: s.id, room: s.room, guest: s.guest, kind: kind, slot: slot, label: label, file: file, by: me.name, removed: '' });
+    return { saved: idView(row), list: idsOf(s.id).map(idView) };
+  };
+  api.idRemove = function (req) {
+    var me = auth(req); needMgr(me);
+    var x = find('guestids', 'id', req.id) || fail('not_found');
+    if (!x.removed) db.set('guestids', x, { removed: stamp() + ' · ' + me.name });
+    return { list: idsOf(x.stay).map(idView) };
   };
   function comView(c) {
     return { id: c.id, date: c.date, name: c.name, type: c.type, phone: c.phone, vehicle: c.vehicle, guest: c.guest, room: c.room, amount: Number(c.amount || 0), method: c.method, ref: c.ref, note: c.note, by: c.by, at: c.at, edited: c.edited };
@@ -1907,15 +1958,16 @@ function deskWaSend_(template, to10, params, pdf, fileName, url, lang) {
 }
 
 /* ---------------- Expense bill photos: kept in Google Drive, folder "Nikadi Expense Bills" / month ---------------- */
-function deskPhotoFolder_(month) {
-  var root, it = DriveApp.getFoldersByName('Nikadi Expense Bills');
-  root = it.hasNext() ? it.next() : DriveApp.createFolder('Nikadi Expense Bills');
+function deskPhotoFolder_(month, rootName) {
+  rootName = rootName || 'Nikadi Expense Bills';
+  var root, it = DriveApp.getFoldersByName(rootName);
+  root = it.hasNext() ? it.next() : DriveApp.createFolder(rootName);
   var m = root.getFoldersByName(month);
   return m.hasNext() ? m.next() : root.createFolder(month);
 }
-function deskSavePhoto_(b64, name, month) {
+function deskSavePhoto_(b64, name, month, rootName) {
   var blob = Utilities.newBlob(Utilities.base64Decode(b64), 'image/jpeg', name);
-  return deskPhotoFolder_(month).createFile(blob).getId();
+  return deskPhotoFolder_(month, rootName).createFile(blob).getId(); // files stay private to the owner's Drive
 }
 function deskGetPhoto_(fileId) {
   var f = DriveApp.getFileById(fileId);

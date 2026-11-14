@@ -197,6 +197,7 @@
 
   /* ---------- shell: side menu on computers, tabs at the bottom on phones ---------- */
   var ICON = {
+    idcopy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="5" width="19" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M5 16.5c.6-1.6 2-2.4 3.5-2.4s2.9.8 3.5 2.4M14.5 10h4.5M14.5 13.5h3.5"/></svg>',
     expenses: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/><path d="M7 6V4h10v2"/></svg>',
     commission: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M17 7v6M14.5 9.5h3.2a1.3 1.3 0 0 1 0 2.6H16"/></svg>',
     housekeeping: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 3h6v4H9z"/><path d="M7 7h10l-1 14H8z"/><path d="M10 11h4M10 15h4"/></svg>',
@@ -213,10 +214,10 @@
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission' };
+  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies' };
   function navFor(desk) {
     if (!mgr()) return ['rooms', 'housekeeping', 'add', 'stock', 'calendar'];
-    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'bills', 'expenses', 'commission', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'attendance', 'settings'] : []);
+    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'attendance', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
@@ -234,7 +235,7 @@
   }
   function go(tab) {
     closeAllSheetsQuiet();
-    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; if (tab === 'expenses') EXP.data = null; if (tab === 'commission') COM.data = null; nav(); render(); window.scrollTo(0, 0);
+    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; if (tab === 'expenses') EXP.data = null; if (tab === 'commission') COM.data = null; if (tab === 'idcopy') { IDC.stay = null; IDC.list = null; } nav(); render(); window.scrollTo(0, 0);
     if (tab === 'calendar' || tab === 'bookings') loadExtra();
   }
 
@@ -254,7 +255,7 @@
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission', 'idcopy'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -269,7 +270,7 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission }[S.tab] || viewRooms)(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy }[S.tab] || viewRooms)(v);
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -280,7 +281,7 @@
   function busyTyping() {
     var a = document.activeElement;
     return !!document.querySelector('.sheet') || (a && a.closest && a.closest('#view') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) ||
-      Date.now() - viewTouched < 180000 || ['add', 'settings'].indexOf(S.tab) >= 0 && Date.now() - viewTouched < 600000;
+      Date.now() - viewTouched < 180000 || (S.tab === 'idcopy' && IDC.stay) || ['add', 'settings'].indexOf(S.tab) >= 0 && Date.now() - viewTouched < 600000;
   }
   setInterval(function () {
     if (S.token && !document.hidden && !busyTyping()) { refresh(); if (S.tab === 'calendar' || S.tab === 'bookings') loadExtra(); }
@@ -396,6 +397,7 @@
     if (s.service) h += serviceBox(s.service);
     if (m && s.notes) h += '<div class="note"><b>Notes</b>' + esc(s.notes) + '</div>';
     if (m && s.booking) h += '<button class="linkbtn" type="button" id="b-bk">From booking ' + esc(s.booking) + ' →</button>';
+    if (m) h += '<button class="idc-room ' + (s.ids ? 'has' : 'none') + '" type="button" id="b-ids">' + ICON.idcopy + '<span><b>ID copies' + (s.ids ? ' · ' + s.ids + ' saved' : '') + '</b><small>' + (s.ids ? 'Open, add more or print on A4' : 'No ID saved yet for this stay · add Aadhaar, licence or passport') + '</small></span><i aria-hidden="true">›</i></button>';
     if (m) {
       h += '<div class="bill"><h3>Bill</h3>' +
         '<div class="bl sum"><span class="t">Room · ' + s.nights + (s.nights > 1 ? ' nights' : ' night') + ' × ' + inr(s.rate) + '</span><span class="d">' + esc(s.rateNote || 'Agreed rate per night') + '</span><span class="a">' + inr(s.roomTotal) + '</span></div>' +
@@ -425,6 +427,7 @@
     if ((b = $('#hk-undo', body))) b.onclick = function () { var x = this; busy(x, true); api('deskServiceUndo', { room: s.room }).then(function () { toast('Undone'); loadStay(body, s.id); refresh(); }, function (e) { busy(x, false); toast(errText(e)); }); };
     if ((b = $('#b-add', body))) b.onclick = function () { openAdd(s.room); };
     if ((b = $('#b-bk', body))) b.onclick = function () { openBooking(s.booking); };
+    if ((b = $('#b-ids', body))) b.onclick = function () { openIds(s); };
     if ((b = $('#b-pay', body))) b.onclick = function () { openPay(s, body); };
     if ((b = $('#b-edit', body))) b.onclick = function () { openEdit(s, body); };
     if ((b = $('#b-ref', body))) b.onclick = function () { openRefund('stay', s, body); };
@@ -465,6 +468,54 @@
     $('#hrf', v).onclick = function () { HK.data = null; render(); };
     $$('[data-done]', v).forEach(function (b) { b.onclick = function () { busy(b, true); api('deskServiceDone', { room: Number(b.dataset.done) }).then(function (r) { vibrate(); toast('Room ' + b.dataset.done + ' done'); HK.data = r; render(); refresh(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
     $$('[data-undo]', v).forEach(function (b) { b.onclick = function () { busy(b, true); api('deskServiceUndo', { room: Number(b.dataset.undo) }).then(function (r) { toast('Undone'); HK.data = r; render(); refresh(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
+  }
+
+  /* ---------- Guest ID copies (front desk) ---------- */
+  var IDC = { stay: null, list: null, q: '' };
+  function openIds(s) {
+    go('idcopy');
+    IDC.stay = { id: s.id, room: s.room, guest: s.guest, checkin: s.checkin, checkout: s.checkout, status: s.status };
+    render();
+  }
+  function viewIdCopy(v) {
+    if (IDC.stay) {
+      if (v._idcFor === IDC.stay.id && v.querySelector('.idc-top')) return; // keep the page as it is (nothing is lost on refresh)
+      var st = IDC.stay;
+      v.innerHTML = '<div class="hrow"><div><p class="kicker">' + (st.id === 'free' ? 'Quick copy · not saved' : 'ID copies · ' + esc(st.status === 'In house' ? 'staying now' : 'checked out')) + '</p><h1>' + (st.id === 'free' ? 'ID copies' : 'Room ' + esc(st.room)) + '</h1></div>' +
+        '<button class="btn btn-quiet" type="button" id="idb">‹ All guests</button></div><div id="idc"></div>';
+      v._idcFor = st.id;
+      $('#idb', v).onclick = function () { IDC.stay = null; IDC.list = null; v._idcFor = null; render(); };
+      var free = st.id === 'free';
+      NikadiID.mount($('#idc', v), free ? { today: S.st.today, toast: toast, base: '' } : {
+        today: S.st.today, toast: toast, base: '', kind: IDC.kind,
+        stay: st, stayLine: dShort(st.checkin) + ' → ' + dShort(st.checkout),
+        load: function () { return api('deskIdList', { stay: st.id }).then(function (r) { return r.list; }); },
+        fetch: function (id) { return api('deskIdGet', { id: id }).then(function (r) { return r.data; }); },
+        save: function (kind, slot, data) { return api('deskIdSave', { stay: st.id, kind: kind, slot: slot, data: data }).then(function (r) { return r.saved; }); },
+        remove: function (id) { return api('deskIdRemove', { id: id }); }
+      });
+      return;
+    }
+    v._idcFor = null;
+    if (!IDC.list) {
+      v.innerHTML = '<div><p class="kicker">Front desk</p><h1>ID copies</h1></div><div class="loading">Loading…</div>';
+      api('deskIdStays', { q: IDC.q }).then(function (r) { IDC.list = r.list; if (S.tab === 'idcopy' && !IDC.stay) render(); }, function (e) { toast(errText(e)); });
+      return;
+    }
+    var L = IDC.list, now = L.filter(function (x) { return x.status === 'In house'; }), past = L.filter(function (x) { return x.status !== 'In house'; });
+    function row(x) {
+      return '<button type="button" class="bl bl-btn" data-sid="' + esc(x.id) + '"><span class="t"><b>Room ' + esc(x.room) + ' · ' + esc(x.guest) + '</b><small>' + esc(dShort(x.checkin)) + ' → ' + esc(dShort(x.checkout)) + ' · ' + x.guests + (x.guests > 1 ? ' guests' : ' guest') + '</small></span>' +
+        '<span class="a"><span class="ptag ' + (x.ids ? 'k-ok' : 'k-warn') + '">' + (x.ids ? x.ids + ' saved' : 'No ID yet') + '</span></span></button>';
+    }
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Front desk · Aadhaar, driving licence, passport and visa</p><h1>ID copies</h1></div><button class="btn btn-quiet" type="button" id="idfree">Quick copy (not saved)</button></div>' +
+      '<p class="small">Pick the guest. Photos of their ID are cropped, straightened and saved to the stay, and print 3 people (front and back) on one A4 page, or passport, back page and visa on another.</p>' +
+      '<form class="idc-find" id="idq"><input class="input" type="search" placeholder="Find a guest: name, phone or room" value="' + esc(IDC.q) + '"><button class="btn btn-line" type="submit">Find</button></form>' +
+      (IDC.q ? '<div class="list">' + (L.length ? L.map(row).join('') : '<p class="small">No stays found.</p>') + '</div>' :
+        '<h3 class="idc-h">Staying now</h3>' + (now.length ? '<div class="list">' + now.map(row).join('') + '</div>' : '<p class="small">Nobody is checked in right now.</p>') +
+        (past.length ? '<h3 class="idc-h">Checked out · last 45 days</h3><div class="list">' + past.map(row).join('') + '</div>' : ''));
+    $('#idq', v).onsubmit = function (e) { e.preventDefault(); IDC.q = this.querySelector('input').value.trim(); IDC.list = null; render(); };
+    $('#idfree', v).onclick = function () { IDC.stay = { id: 'free' }; render(); };
+    $$('[data-sid]', v).forEach(function (b) { b.onclick = function () { var x = L.filter(function (y) { return y.id === b.dataset.sid; })[0]; IDC.stay = x; render(); }; });
   }
 
   /* ---------- Expenses (front desk) ---------- */
@@ -1842,11 +1893,11 @@
 
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
-    var list = [['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
+    var list = [['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['idcopy', 'ID copies', 'Guest ID / passport copies for each room, print on A4'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 23</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 24</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

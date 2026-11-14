@@ -138,15 +138,16 @@ function deskWaSend_(template, to10, params, pdf, fileName, url, lang) {
 }
 
 /* ---------------- Expense bill photos: kept in Google Drive, folder "Nikadi Expense Bills" / month ---------------- */
-function deskPhotoFolder_(month) {
-  var root, it = DriveApp.getFoldersByName('Nikadi Expense Bills');
-  root = it.hasNext() ? it.next() : DriveApp.createFolder('Nikadi Expense Bills');
+function deskPhotoFolder_(month, rootName) {
+  rootName = rootName || 'Nikadi Expense Bills';
+  var root, it = DriveApp.getFoldersByName(rootName);
+  root = it.hasNext() ? it.next() : DriveApp.createFolder(rootName);
   var m = root.getFoldersByName(month);
   return m.hasNext() ? m.next() : root.createFolder(month);
 }
-function deskSavePhoto_(b64, name, month) {
+function deskSavePhoto_(b64, name, month, rootName) {
   var blob = Utilities.newBlob(Utilities.base64Decode(b64), 'image/jpeg', name);
-  return deskPhotoFolder_(month).createFile(blob).getId();
+  return deskPhotoFolder_(month, rootName).createFile(blob).getId(); // files stay private to the owner's Drive
 }
 function deskGetPhoto_(fileId) {
   var f = DriveApp.getFileById(fileId);
