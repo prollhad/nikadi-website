@@ -567,3 +567,11 @@ ul.plain{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--ink-2,#d8cc
 .idc-h{font-family:inherit}
 .idc-sheet{max-width:210mm}
 .idc-adj-btns .btn{width:auto}
+/* ID copies: PDF page picker and password */
+.idc-pdf{background:#1b1714;border:1px solid #3a322a;border-radius:10px;padding:18px;max-width:min(560px,100%);width:100%;justify-items:stretch;text-align:center}
+.idc-pdf .input{width:100%;font-size:1.05rem;letter-spacing:.06em;text-align:center}
+.idc-pdf-help{font-size:.85rem;color:#bdb3a6!important}.idc-pdf-bad{color:#f0a08a!important}
+.idc-pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;max-height:60vh;overflow:auto}
+.idc-pages button{background:#fff;border:2px solid transparent;border-radius:6px;padding:4px;cursor:pointer;display:grid;gap:4px}
+.idc-pages button:hover,.idc-pages button:focus{border-color:#e0be7a}
+.idc-pages img{width:100%;display:block}.idc-pages span{font-size:.75rem;color:#333}

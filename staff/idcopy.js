@@ -70,6 +70,45 @@
     if (polyArea(quad) < blob.area * 0.8 || polyArea(quad) > blob.area * 1.35) return null;
     return order(quad.map(function (q) { return { x: q.x / k, y: q.y / k }; }));
   }
+  /* ---------------- find ID cards on a PDF page ----------------
+     PDF pages are white paper with the card(s) printed on them (e-Aadhaar has front and back side by side, plus letter text).
+     Mark everything that is not paper-white, join nearby marks a little, then keep every blob whose outline is a filled
+     rectangle with an ID-card or passport shape. Returns a list of 4-corner quads, top-to-bottom then left-to-right. */
+  function findCards(src) {
+    var k = Math.min(1, 900 / Math.max(src.width, src.height)), W = Math.max(2, Math.round(src.width * k)), H = Math.max(2, Math.round(src.height * k));
+    var c = canvasOf(W, H), x = c.getContext('2d'); x.drawImage(src, 0, 0, W, H);
+    var d = x.getImageData(0, 0, W, H).data, n = W * H, m = new Uint8Array(n);
+    for (var p = 0; p < n; p++) { var r = d[p * 4], g = d[p * 4 + 1], b = d[p * 4 + 2]; m[p] = (Math.min(r, g, b) < 225 || Math.max(r, g, b) - Math.min(r, g, b) > 25) ? 1 : 0; }
+    m = closeMask(m, W, H, Math.max(2, Math.round(Math.min(W, H) / 160)));
+    var lab = new Int32Array(n), stack = new Int32Array(n), cur = 0, out = [];
+    for (var s0 = 0; s0 < n; s0++) {
+      if (!m[s0] || lab[s0]) continue;
+      cur++; var sp = 0, area = 0, edge = []; stack[sp++] = s0; lab[s0] = cur;
+      while (sp) {
+        var q0 = stack[--sp], qx = q0 % W, qy = (q0 / W) | 0, isEdge = false; area++;
+        for (var j = 0; j < 4; j++) {
+          var nx = qx + (j === 0 ? 1 : j === 1 ? -1 : 0), ny = qy + (j === 2 ? 1 : j === 3 ? -1 : 0);
+          if (nx < 0 || ny < 0 || nx >= W || ny >= H) { isEdge = true; continue; }
+          var q1 = ny * W + nx; if (!m[q1]) { isEdge = true; continue; }
+          if (!lab[q1]) { lab[q1] = cur; stack[sp++] = q1; }
+        }
+        if (isEdge) edge.push({ x: qx, y: qy });
+      }
+      if (edge.length < 8) continue;
+      var hull = convexHull(edge), ha = polyArea(hull);
+      if (ha < n * 0.025 || ha > n * 0.97) continue;
+      var quad = toQuad(hull); if (!quad) continue;
+      var qa = polyArea(quad); if (qa < ha * 0.9) continue;
+      var o = order(quad), w1 = Math.hypot(o[1].x - o[0].x, o[1].y - o[0].y), h1 = Math.hypot(o[3].x - o[0].x, o[3].y - o[0].y);
+      var ar = Math.max(w1, h1) / Math.max(1, Math.min(w1, h1));
+      if (ar < 1.25 || ar > 1.95) continue;
+      /* a card is mostly ink-coloured edges + content; plain text paragraphs fill far less of their box */
+      if (area < qa * 0.18) continue;
+      out.push({ q: o.map(function (pt) { return { x: pt.x / k, y: pt.y / k }; }), cy: (o[0].y + o[2].y) / 2, cx: (o[0].x + o[2].x) / 2, h: Math.min(w1, h1) });
+    }
+    out.sort(function (a, b) { return Math.abs(a.cy - b.cy) > a.h * 0.5 ? a.cy - b.cy : a.cx - b.cx; });
+    return out.map(function (o) { return o.q; });
+  }
   function otsu(hist, total) {
     var sum = 0, i; for (i = 0; i < 256; i++) sum += i * hist[i];
     var sumB = 0, wB = 0, best = 0, t = 30;
@@ -258,7 +297,7 @@
         (st ? '<div class="idc-stay"><b>Room ' + esc(st.room) + ' · ' + esc(st.guest) + '</b><span>' + esc(opt.stayLine || '') + '</span></div>' :
         '<div class="idc-info"><input class="input" id="idc-g" placeholder="Guest name (printed on top, optional)" maxlength="60" value="' + esc(state.info.guest) + '"><input class="input" id="idc-r" placeholder="Room" maxlength="10" value="' + esc(state.info.room) + '"></div>') +
         '<div class="idc-actions"><button class="btn btn-gold" type="button" id="idc-print">🖨 Print A4</button><button class="btn btn-line" type="button" id="idc-pdf">Download PDF</button><button class="btn btn-quiet" type="button" id="idc-clear">Clear page</button></div></div>' +
-        '<p class="small">Drag a photo of the ID onto a box, or tap a box to take / choose a photo. The ID is found, cut out from the background, straightened and sharpened automatically. Tap <b>Adjust</b> if the corners need fixing. ' +
+        '<p class="small">Drag a photo or PDF of the ID onto a box, or tap a box to take / choose a photo or PDF. The ID is found, cut out from the background, straightened and sharpened automatically. Tap <b>Adjust</b> if the corners need fixing. ' +
         (st ? 'Each copy is <b>saved to this stay</b> in Google Drive (Nikadi Guest House Records › year › month › check-in day), so you can open and print it again later.' : 'Photos stay on this device only and are not saved anywhere.') + '</p>' +
         '<div class="idc-sheet idc-' + state.kind + '"><div class="idc-page">' +
         '<div class="idc-head"><b>Nikadi Guest House</b><span>' + esc([state.info.guest, state.info.room ? 'Room ' + state.info.room : '', state.info.date].filter(Boolean).join(' · ')) + '</span></div>' +
@@ -270,7 +309,7 @@
             '<span class="idc-tag">' + esc(name) + '</span>' +
             (st && s ? '<span class="idc-st ' + (s.saving ? 'ing' : s.saved ? 'ok' : 'bad') + '">' + (s.saving ? 'Saving…' : s.saved ? 'Saved ✓' : '<button type="button" data-retry="' + i + '">Not saved · retry</button>') + '</span>' : '') +
             (s && s.out ? '<span class="idc-tools"><button type="button" data-adj="' + i + '">Adjust</button><button type="button" data-rot="' + i + '">↻</button><button type="button" data-del="' + i + '">✕</button></span>' : '') + '</div>';
-        }).join('') + '</div></div></div><input type="file" accept="image/*" id="idc-file" hidden>';
+        }).join('') + '</div></div></div><input type="file" accept="image/*,application/pdf,.pdf" id="idc-file" hidden>';
       fit();
       var file = el.querySelector('#idc-file'), target = -1;
       el.querySelectorAll('[data-kind]').forEach(function (b) { b.onclick = function () { state.kind = b.dataset.kind; draw(); }; });
@@ -309,7 +348,7 @@
     /* paste a photo: goes into the first empty box */
     document.addEventListener('paste', function (e) {
       if (!alive() || document.querySelector('.idc-adj')) return;
-      var f = Array.prototype.slice.call((e.clipboardData && e.clipboardData.files) || []).filter(function (x) { return /^image\//.test(x.type); })[0];
+      var f = Array.prototype.slice.call((e.clipboardData && e.clipboardData.files) || []).filter(function (x) { return /^image\//.test(x.type) || isPdf(x); })[0];
       if (!f) return;
       var S = state.slots[state.kind], L = LAYOUTS[state.kind], i = 0; while (i < L.slots.length && S[i]) i++;
       if (i < L.slots.length) take(i, f);
@@ -329,20 +368,100 @@
       }, function () { if (s.ver !== n) return; s.saving = false; s.saved = false; if (state.slots[kind][i] === s) draw(); if (opt.toast) opt.toast('Could not save the ID copy. Tap retry.'); });
     }
     function busy(i, on) { var sl = el.querySelector('.idc-slot[data-i="' + i + '"]'); if (sl) sl.classList.toggle('busy', on); }
+    /* ---------- PDF IDs (e-Aadhaar, scanned copies): open the PDF, pick the page, then crop like a photo ---------- */
+    function isPdf(f) { return !!f && (f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '')); }
+    var pdfjsP = null, lastPdf = null;
+    function pdfjs() {
+      if (!pdfjsP) {
+        var b = new URL((opt.base || '') + 'vendor/', location.href).href;
+        pdfjsP = (new Function('u', 'return import(u)'))(b + 'pdf.min.mjs').then(function (m) { m.GlobalWorkerOptions.workerSrc = b + 'pdf.worker.min.mjs'; return m; });
+        pdfjsP.catch(function () { pdfjsP = null; });
+      }
+      return pdfjsP;
+    }
+    function overlay(html) { var ov = document.createElement('div'); ov.className = 'idc-adj'; ov.innerHTML = '<div class="idc-adj-in idc-pdf">' + html + '</div>'; document.body.appendChild(ov); return ov; }
+    function askPassword(wrong) {
+      return new Promise(function (ok) {
+        var ov = overlay('<p><b>This PDF is locked with a password.</b></p>' + (wrong ? '<p class="idc-pdf-bad">That password did not work. Please try again.</p>' : '') +
+          '<p class="idc-pdf-help">e-Aadhaar: the first 4 letters of the name in CAPITALS + year of birth, for example <b>RADH1990</b>. Ask the guest if unsure.</p>' +
+          '<input class="input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PDF password">' +
+          '<div class="idc-adj-btns"><button class="btn btn-quiet" type="button" data-a="no">Cancel</button><button class="btn btn-gold" type="button" data-a="ok">Open PDF</button></div>');
+        var inp = ov.querySelector('input'); setTimeout(function () { inp.focus(); }, 30);
+        function done(v) { ov.remove(); ok(v); }
+        ov.querySelector('[data-a="ok"]').onclick = function () { done(inp.value); };
+        ov.querySelector('[data-a="no"]').onclick = function () { done(null); };
+        inp.onkeydown = function (e) { if (e.key === 'Enter') done(inp.value); if (e.key === 'Escape') done(null); };
+      });
+    }
+    function openPdf(f) {
+      var key = [f.name, f.size, f.lastModified].join('|');
+      if (lastPdf && lastPdf.key === key) return Promise.resolve(lastPdf.doc);
+      return Promise.all([pdfjs(), f.arrayBuffer()]).then(function (r) {
+        var task = r[0].getDocument({ data: new Uint8Array(r[1]) });
+        task.onPassword = function (update, reason) {
+          askPassword(reason === 2).then(function (pw) { if (pw == null) { task.destroy(); } else update(pw); });
+        };
+        return task.promise.then(function (doc) { if (lastPdf && lastPdf.doc !== doc) { try { var od = lastPdf.doc; (od.loadingTask || od).destroy(); } catch (x) {} } lastPdf = { key: key, doc: doc }; return doc; },
+          function (e) { if (task.destroyed || /destroy/i.test(String(e && (e.name + e.message)))) throw { cancel: true }; throw e; });
+      });
+    }
+    function pageCanvas(doc, n, longSide) {
+      return doc.getPage(n).then(function (pg) {
+        var v1 = pg.getViewport({ scale: 1 }), k = Math.min(5, longSide / Math.max(v1.width, v1.height)), vp = pg.getViewport({ scale: k });
+        var c = canvasOf(Math.round(vp.width), Math.round(vp.height)), cx = c.getContext('2d');
+        cx.fillStyle = '#fff'; cx.fillRect(0, 0, c.width, c.height);
+        return pg.render({ canvasContext: cx, viewport: vp }).promise.then(function () { return c; });
+      });
+    }
+    function pickPage(doc) {
+      var n = Math.min(doc.numPages, 12);
+      if (n === 1) return Promise.resolve(1);
+      var nums = []; for (var j = 1; j <= n; j++) nums.push(j);
+      return Promise.all(nums.map(function (j) { return pageCanvas(doc, j, 260); })).then(function (thumbs) {
+        return new Promise(function (ok) {
+          var ov = overlay('<p><b>Which page has the ID?</b></p><div class="idc-pages">' + thumbs.map(function (c, j) { return '<button type="button" data-p="' + (j + 1) + '"><img alt="Page ' + (j + 1) + '" src="' + c.toDataURL('image/jpeg', 0.7) + '"><span>Page ' + (j + 1) + '</span></button>'; }).join('') + '</div>' +
+            (doc.numPages > n ? '<p class="idc-pdf-help">Showing the first ' + n + ' of ' + doc.numPages + ' pages.</p>' : '') +
+            '<div class="idc-adj-btns"><button class="btn btn-quiet" type="button" data-a="no">Cancel</button></div>');
+          ov.querySelectorAll('[data-p]').forEach(function (b) { b.onclick = function () { ov.remove(); ok(+b.dataset.p); }; });
+          ov.querySelector('[data-a="no"]').onclick = function () { ov.remove(); ok(null); };
+        });
+      });
+    }
+    function pdfToCanvas(f) {
+      return openPdf(f).then(function (doc) {
+        return pickPage(doc).then(function (n) { if (!n) throw { cancel: true }; return pageCanvas(doc, n, 2600); });
+      });
+    }
     function take(i, f) {
-      var kind = state.kind;
+      var kind = state.kind, pdf = isPdf(f);
       busy(i, true);
-      fileToImage(f).then(function (im) {
+      (pdf ? pdfToCanvas(f) : fileToImage(f).then(baseCanvas)).then(function (src) {
         setTimeout(function () {
-          var src = baseCanvas(im), quad = null;
-          try { quad = detect(src); } catch (e) { quad = null; }
-          var s = { src: src, quad: quad, rot: 0, auto: !!quad };
-          s.out = render(src, quad, LAYOUTS[kind], 0).toDataURL('image/jpeg', 0.9);
-          var old = state.slots[kind][i]; if (old && old.fid) s.fid = old.fid;
-          state.slots[kind][i] = s; draw(); store(kind, i, s);
-          if (!quad && opt.toast) opt.toast('Could not find the ID edges. Tap Adjust to set the corners.');
+          var L = LAYOUTS[kind], quad = null, cards = [];
+          if (pdf) { try { cards = findCards(src); } catch (e) { cards = []; } }
+          if (cards.length) quad = cards[0];
+          else { try { quad = detect(src); } catch (e) { quad = null; } }
+          function put(at, q) {
+            var s = { src: src, quad: q, rot: 0, auto: !!q, pdf: pdf };
+            s.out = render(src, q, L, 0).toDataURL('image/jpeg', 0.9);
+            var old = state.slots[kind][at]; if (old && old.fid) s.fid = old.fid;
+            state.slots[kind][at] = s; return s;
+          }
+          var s1 = put(i, quad), both = false;
+          /* e-Aadhaar: front and back on one page. Dropped on a "front" box with the "back" box free → fill both. */
+          if (pdf && kind === 'id' && cards.length >= 2 && i % 2 === 0 && !state.slots[kind][i + 1]) { put(i + 1, cards[1]); both = true; }
+          draw(); store(kind, i, s1); if (both) store(kind, i + 1, state.slots[kind][i + 1]);
+          if (pdf && !cards.length && state.kind === kind) adjust(i); /* nothing card-shaped found: let staff set the corners */
+          else if (both && opt.toast) opt.toast('Front and back taken from the PDF. Tap Adjust if a corner is off.');
+          else if (pdf && opt.toast) opt.toast('ID taken from the PDF. Tap Adjust if a corner is off.');
+          else if (!quad && opt.toast) opt.toast('Could not find the ID edges. Tap Adjust to set the corners.');
         }, 30);
-      }, function () { busy(i, false); if (opt.toast) opt.toast('That photo could not be opened'); });
+      }, function (e) {
+        busy(i, false);
+        if (e && e.cancel) return;
+        if (root.console) console.warn('ID copy: could not open file', e);
+        if (opt.toast) opt.toast(pdf ? 'That PDF could not be opened' : 'That photo could not be opened');
+      });
     }
     /* manual corners */
     function adjust(i) {
@@ -354,7 +473,7 @@
       var maxW = Math.min(window.innerWidth - 32, 900), maxH = window.innerHeight - 170, k = Math.min(maxW / s.src.width, maxH / s.src.height);
       var W = Math.round(s.src.width * k), H = Math.round(s.src.height * k);
       var q = (s.quad || [{ x: s.src.width * 0.1, y: s.src.height * 0.1 }, { x: s.src.width * 0.9, y: s.src.height * 0.1 }, { x: s.src.width * 0.9, y: s.src.height * 0.9 }, { x: s.src.width * 0.1, y: s.src.height * 0.9 }]).map(function (p) { return { x: p.x * k, y: p.y * k }; });
-      ov.innerHTML = '<div class="idc-adj-in"><p>Drag the 4 dots onto the corners of the ID.</p><div class="idc-adj-pic" style="width:' + W + 'px;height:' + H + 'px"><canvas width="' + W + '" height="' + H + '"></canvas>' +
+      ov.innerHTML = '<div class="idc-adj-in"><p>' + (s.pdf ? 'Page from the PDF: drag the 4 dots onto the corners of this side of the ID, then tap Done. For the other side, add the same PDF to the next box.' : 'Drag the 4 dots onto the corners of the ID.') + '</p><div class="idc-adj-pic" style="width:' + W + 'px;height:' + H + 'px"><canvas width="' + W + '" height="' + H + '"></canvas>' +
         [0, 1, 2, 3].map(function (n) { return '<span class="dot" data-n="' + n + '"></span>'; }).join('') + '</div>' +
         '<div class="idc-adj-btns"><button class="btn btn-quiet" type="button" data-a="auto">Find automatically</button><button class="btn btn-quiet" type="button" data-a="full">Use whole photo</button><button class="btn btn-quiet" type="button" data-a="cancel">Cancel</button><button class="btn btn-gold" type="button" data-a="ok">Done</button></div></div>';
       document.body.appendChild(ov);
@@ -432,7 +551,7 @@
       document.head.appendChild(sc);
     }
     draw();
-    return { state: state, detect: detect, layouts: LAYOUTS };
+    return { state: state, detect: detect, findCards: findCards, layouts: LAYOUTS };
   }
   root.NikadiID = { mount: mount, detect: detect, render: render, baseCanvas: baseCanvas, LAYOUTS: LAYOUTS };
 })(window);
