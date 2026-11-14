@@ -32,7 +32,7 @@ var DESK_SCHEMA = {
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
     ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't'],
-    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.']] },
+    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)']] },
   bookings: { sheet: 'Bookings', cols: [['id', 'Booking ID'], ['status', 'Status'], ['source', 'Source'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['email', 'Email'],
     ['guests', 'Guests', 'n'], ['roomsNeeded', 'Rooms needed', 'n'], ['roomType', 'Room preference'], ['rooms', 'Room numbers', 's'], ['checkin', 'Check-in date', 'd'],
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
@@ -206,7 +206,7 @@ function deskCore(db, hooks) {
     var mem = s.status === 'In house' ? memberOf(s.phone) : null;
     if (mem) v.member = { name: mem.name, tier: mem.tier, tierKey: mem.tierKey, discount: mem.discount, onsite: mem.onsite, email: mgr ? mem.email || '' : '' };
     if (mgr) {
-      v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes; v.email = s.email || ''; v.gstin = s.gstin || ''; v.company = s.company || ''; v.bill = s.bill || '';
+      v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes; v.email = s.email || ''; v.gstin = s.gstin || ''; v.company = s.company || ''; v.bill = s.bill || ''; v.title = s.title || '';
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
@@ -266,7 +266,7 @@ function deskCore(db, hooks) {
       payments.push({ date: p.at, label: p.note || 'Payment received', method: p.method, ref: p.ref, amount: amt });
     });
     return { no: old ? old.no : '', id: old ? old.id : '', date: old ? old.date : today(), booking: s.booking || '',
-      guest: { name: s.guest, phone: prettyPhone(s.phone), email: s.email || '', gstin: s.gstin || '', company: s.company || '' },
+      guest: { name: s.guest, title: s.title || '', phone: prettyPhone(s.phone), email: s.email || '', gstin: s.gstin || '', company: s.company || '' },
       room: { no: s.room, type: (r.type || '') + (r.beds ? ' (' + r.beds + ')' : '') }, checkin: s.checkin, checkout: s.checkout, inAt: s.inAt, outAt: s.outAt,
       nights: nights, guests: Number(s.guests || 1), tariff: tariff, discounts: discounts, items: items, payments: payments, refunds: refunds,
       member: old ? old.member : null, staff: s.outBy || (me && me.name) || '' };
@@ -289,18 +289,20 @@ function deskCore(db, hooks) {
     d.url = DESK_BILL_URL + d.id;
     return { row: row, data: d };
   }
-  function sendBill(b, to) {
+  function sendBill(b, to, pdf) {
     if (!hooks.sendBill) fail('email_unavailable');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) fail('invalid_email');
-    hooks.sendBill(b.data, to);
+    if (pdf != null && !(typeof pdf === 'string' && pdf.length < 9000000 && /^[A-Za-z0-9+\/=]+$/.test(pdf))) fail('bad_pdf');
+    hooks.sendBill(b.data, to, pdf || null);
     db.set('bills', b.row, { sent: stamp() + ' → ' + to });
   }
-  function billInfo(s, b) { return b ? { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', data: b.data } : null; }
+  function billInfo(s, b) { return b ? { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', title: s.title || '', data: b.data } : null; }
   function billFields(s, req) {
     var p = {};
     if (req.email != null) { p.email = text(req.email, 80); if (p.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p.email)) fail('invalid_email'); }
     if (req.gstin != null) { p.gstin = text(req.gstin, 15).toUpperCase(); if (p.gstin && !/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/.test(p.gstin)) fail('invalid_gstin'); }
     if (req.company != null) p.company = text(req.company, 80);
+    if (req.title != null) { p.title = String(req.title); if (['', 'Mr.', 'Ms.', 'Mrs.', 'Dr.'].indexOf(p.title) < 0) fail('bad_title'); }
     if (Object.keys(p).length) db.set('stays', s, p);
   }
 
@@ -580,9 +582,9 @@ function deskCore(db, hooks) {
     var me = auth(req); needMgr(me);
     var s = stay(req.id);
     if (s.status !== 'Checked out') fail('not_checked_out');
-    if (req.email != null) billFields(s, { email: req.email });
+    billFields(s, { email: req.email, title: req.title });
     var b = saveBill(s, me, null);
-    sendBill(b, String(s.email || ''));
+    sendBill(b, String(s.email || ''), req.pdf);
     return { bill: billInfo(s, b), emailed: s.email };
   };
   /* Recent bills for the front desk list. */

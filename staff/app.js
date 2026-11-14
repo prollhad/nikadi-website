@@ -8,6 +8,9 @@
   var app = document.getElementById('app');
 
   var ERR = {
+    pdf_tools_failed: 'Could not make the PDF. Check the internet connection and try again.', bad_pdf: 'The PDF could not be sent. Please try again.', bad_title: 'Choose Mr., Ms., Mrs., Dr. or Name only.',
+    invalid_gstin: 'That GSTIN does not look right (15 characters, like 19ABCDE1234F1Z5).', invalid_email: 'That email address does not look right.', not_checked_out: 'The guest has not checked out yet.',
+    no_bill: 'Bill not found.', email_unavailable: 'Email is not set up yet.',
     wrong_pin: 'Wrong PIN. Please try again.', too_many_attempts: 'Too many wrong PINs. Wait 15 minutes and try again.',
     not_logged_in: 'Please log in again.', session_expired: 'Please log in again.', not_allowed: 'Only reception or the owner can do this.',
     room_occupied: 'This room already has a guest.', room_not_clean: 'This room has not been cleaned yet. Mark it as cleaned first.',
@@ -30,7 +33,7 @@
     ask_manager_nights: 'Charging fewer nights than the guest stayed needs a manager. Ask the manager or owner to check this guest out.',
     too_early: 'This booking starts on a later date. If the guest came early, edit the booking dates first.', too_many_requests: 'Too many requests. Try again later.'
   };
-  function errText(c) { return ERR[c] || ERR.server_error; }
+  function errText(c) { c = c && c.message || c; return ERR[c] || (/pdf|canvas|html2canvas/i.test(String(c)) ? ERR.pdf_tools_failed : ERR.server_error); }
 
   function api(action, data) {
     var body = Object.assign({ action: action, token: S.token }, data || {});
@@ -484,6 +487,7 @@
     body.innerHTML = '<div class="note"><b>' + esc(s.guest) + '</b>In since ' + esc(dShort(s.checkin)) + ' · planned check-out ' + esc(dShort(s.checkout)) + '</div>' +
       '<div class="field"><span>Nights to charge</span>' + stepper('f-n', n, 1, 365) + '</div>' +
       '<div class="bill" id="sum"></div>' +
+      '<div class="field"><span>Greet the guest as</span>' + titleSeg('b-title', s.title || '') + '</div>' +
       '<details class="billx"' + (s.gstin || s.company ? ' open' : '') + '><summary>Bill details · email, company, GSTIN</summary>' +
       field('Guest email (the bill is emailed at check-out)', '<input class="input" id="b-mail" type="email" inputmode="email" autocomplete="off" maxlength="80" value="' + esc(s.email || (s.member && s.member.email) || '') + '" placeholder="Optional">') +
       field('Company / billing name', '<input class="input" id="b-co" maxlength="80" value="' + esc(s.company || '') + '" placeholder="Only if the bill should be in a company name">') +
@@ -500,8 +504,9 @@
       $('#conf', body).innerHTML = ''; var g = $('#go', body); if (g) g.hidden = false;
     }
     wireSteppers(body, sum); sum();
-    function billArgs() { return { email: $('#b-mail', body).value.trim(), company: $('#b-co', body).value.trim(), gstin: $('#b-gst', body).value.trim().toUpperCase() }; }
-    function outDone(res) { vibrate(); toast('Checked out. Room ' + s.room + ' needs cleaning.'); after(2); if (res && res.bill) setTimeout(function () { openBill(res.bill, res.emailed); }, 350); }
+    wireTitleSeg(body);
+    function billArgs() { return { sendEmail: false, title: titleVal(body, 'b-title'), email: $('#b-mail', body).value.trim(), company: $('#b-co', body).value.trim(), gstin: $('#b-gst', body).value.trim().toUpperCase() }; }
+    function outDone(res) { vibrate(); toast('Checked out. Room ' + s.room + ' needs cleaning.'); after(2); if (res && res.bill) setTimeout(function () { openBill(res.bill, { emailed: res.emailed, auto: true }); }, 350); }
     function doOut(btn) {
       submit(btn, $('#err', body), 'deskCheckOut', Object.assign({ id: s.id, nights: Number($('#f-n', body).textContent) }, billArgs()), outDone);
     }
@@ -524,7 +529,7 @@
           var x = this; busy(x, true);
           api('deskPay', { id: s.id, amount: $('#p-amt', pb).value.replace(/\D/g, ''), method: segVal(pb, 'method'), ref: $('#p-ref', pb).value, note: 'At check-out' })
             .then(function () { return api('deskCheckOut', Object.assign({ id: s.id, nights: nn }, billArgs())); })
-            .then(function (res) { vibrate(); toast('Paid and checked out. Room ' + s.room + ' needs cleaning.'); after(3); if (res && res.bill) setTimeout(function () { openBill(res.bill, res.emailed); }, 350); }, function (e) { busy(x, false); $('#perr', pb).textContent = errText(e); });
+            .then(function (res) { vibrate(); toast('Paid and checked out. Room ' + s.room + ' needs cleaning.'); after(3); if (res && res.bill) setTimeout(function () { openBill(res.bill, { emailed: res.emailed, auto: true }); }, 350); }, function (e) { busy(x, false); $('#perr', pb).textContent = errText(e); });
         };
       };
       $('#cgo', body).onclick = function () { doOut(this); };
@@ -1162,50 +1167,112 @@
   }
 
   /* ---------- Bills (GST tax invoices) ---------- */
+  function titleSeg(id, val) {
+    return '<div class="seg title-seg" id="' + id + '">' + [['Mr.', 'Mr.'], ['Ms.', 'Ms.'], ['Mrs.', 'Mrs.'], ['Dr.', 'Dr.'], ['', 'Name only']].map(function (o) {
+      return '<button type="button" data-t="' + o[0] + '" aria-pressed="' + (o[0] === val) + '">' + o[1] + '</button>';
+    }).join('') + '</div>';
+  }
+  function wireTitleSeg(root, onChange) {
+    $$('.title-seg', root).forEach(function (g) {
+      $$('button', g).forEach(function (b) { b.onclick = function () { $$('button', g).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); if (onChange) onChange(b.dataset.t); }; });
+    });
+  }
+  function titleVal(root, id) { var b = $('#' + id + ' [aria-pressed="true"]', root); return b ? b.dataset.t : ''; }
   function showBill(b) {
     var d = Object.assign({}, b.data, { url: b.url });
     if (!demo) { window.open(b.url, '_blank', 'noopener'); return; }
     var w = window.open('', '_blank'); if (!w) { toast('Allow pop-ups to see the bill'); return; }
     w.document.open(); w.document.write(NikadiBill.billHTML(d, { toolbar: true, logo: '../img/brand/logo.png' })); w.document.close();
   }
-  function openBill(b, emailed) {
-    var body = openSheet('Bill ' + b.no);
+  function openBill(b, o) {
+    o = o || {};
+    var body = openSheet('Bill ' + b.no), pdf = null, pdfJob = null, title = null;
+    function billData(b) { var d = JSON.parse(JSON.stringify(b.data)); d.url = b.url; if (title != null) d.guest.title = title; return d; }
+    function makePdf(b) {
+      if (pdf) return Promise.resolve(pdf);
+      if (!pdfJob) pdfJob = NikadiBillPdf.make(billData(b), { base: '' }).then(function (r) { pdf = r; pdfJob = null; return r; }, function (e) { pdfJob = null; throw e; });
+      return pdfJob;
+    }
     function draw(b, msg) {
-      var d = Object.assign({}, b.data, { url: b.url }), c = NikadiBill.compute(d), ph = String(b.phone || '').replace(/\D/g, '').slice(-10);
+      if (title == null) title = b.title || (b.data.guest && b.data.guest.title) || '';
+      var d = billData(b), c = NikadiBill.compute(d), ph = String(b.phone || '').replace(/\D/g, '').slice(-10);
       body.innerHTML = '<div class="note"><b>' + esc(d.guest.company || d.guest.name) + '</b>Room ' + esc(d.room.no) + ' · ' + esc(dShort(d.checkin)) + ' – ' + esc(dShort(d.checkout)) + ' · Tax invoice ' + esc(b.no) + '</div>' +
         '<div class="bill"><div class="bl"><span class="t">Total (incl. GST)</span><span class="a">' + inr(c.total) + '</span></div>' +
-        '<div class="bl"><span class="t">GST included</span><span class="a">₹' + c.gstTotal.toFixed(2) + '</span></div>' +
         '<div class="bl paid"><span class="t">Paid</span><span class="a">' + inr(c.paid - c.refunded) + '</span></div>' +
         '<div class="bl due"><span class="t">' + (Math.abs(c.due) < 0.5 ? 'Fully paid' : c.due > 0 ? 'Still due' : 'To refund') + '</span><span class="a">' + inr(Math.abs(c.due)) + '</span></div></div>' +
-        (msg ? '<p class="ok-note">' + esc(msg) + '</p>' : '') +
-        '<div class="btn-col"><button class="btn btn-gold" type="button" id="bv">View / print bill</button>' +
-        '<a class="btn btn-line" id="bw" target="_blank" rel="noopener" href="' + (ph ? 'https://wa.me/91' + ph + '?text=' + encodeURIComponent(NikadiBill.billWhatsApp(d)) : '#') + '">Send on WhatsApp</a></div>' +
-        '<div class="sec-h"><h2>Email the bill</h2></div>' +
+        '<div class="field"><span>Greet the guest as</span>' + titleSeg('bt', title) + '<small class="small" id="greet">Message starts: “Dear ' + esc(NikadiBill.greetName(d.guest)) + ',”</small></div>' +
+        '<p class="ok-note" id="bmsg"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</p>' +
+        '<div class="btn-col"><button class="btn btn-gold" type="button" id="bw">' + ICON_SHARE + ' Send PDF on WhatsApp</button>' +
+        '<button class="btn btn-line" type="button" id="bd">' + ICON_DL + ' Download PDF</button>' +
+        '<button class="btn btn-quiet" type="button" id="bv">View bill online</button></div>' +
+        '<div class="sec-h"><h2>Email the PDF bill</h2></div>' +
         field('Email', '<input class="input" id="be" type="email" inputmode="email" maxlength="80" value="' + esc(b.email || d.guest.email || '') + '">') +
-        '<p class="err" id="berr" role="alert"></p><button class="btn btn-line" type="button" id="bs">' + (b.sent ? 'Send again' : 'Send email') + '</button>' +
+        '<p class="err" id="berr" role="alert"></p><button class="btn btn-line" type="button" id="bs">' + (b.sent ? 'Send again' : 'Send email with PDF') + '</button>' +
         (b.sent ? '<p class="small">Last emailed ' + esc(b.sent) + '</p>' : '') +
         '<details class="billx"><summary>Change company name or GSTIN</summary>' +
         field('Company / billing name', '<input class="input" id="bc" maxlength="80" value="' + esc(b.company || '') + '">') +
         field('Guest GSTIN', '<input class="input" id="bg" maxlength="15" style="text-transform:uppercase" value="' + esc(b.gstin || '') + '">') +
         '<p class="err" id="uerr" role="alert"></p><button class="btn btn-line" type="button" id="bu">Update bill</button><p class="small">The invoice number and the QR code stay the same.</p></details>' +
         '<p class="small">The QR code on the bill opens it on www.nikadiguesthouse.com. Anyone with the link can see this bill, so share it only with the guest.</p>';
-      if (!ph) { var a = $('#bw', body); a.classList.add('off'); a.onclick = function (e) { e.preventDefault(); toast('No phone number for this guest'); }; }
+      function note(t) { var n = $('#bmsg', body); n.textContent = t; n.hidden = !t; }
+      makePdf(b).catch(function () {}); // get the PDF ready so WhatsApp opens straight away
+      wireTitleSeg(body, function (t) {
+        title = t; pdf = null; pdfJob = null; makePdf(b).catch(function () {});
+        $('#greet', body).textContent = 'Message starts: “Dear ' + NikadiBill.greetName(billData(b).guest) + ',”';
+        api('deskBill', { id: b.stay, title: t }).then(function (r) { b = Object.assign(r.bill, { stay: b.stay }); }, function () {});
+      });
       $('#bv', body).onclick = function () { showBill(b); };
+      $('#bd', body).onclick = function () {
+        var x = this; busy(x, true);
+        makePdf(b).then(function (r) { busy(x, false); NikadiBillPdf.download(r); }, function (e) { busy(x, false); toast(errText(e)); });
+      };
+      $('#bw', body).onclick = function () {
+        if (!ph) { toast('No phone number for this guest'); return; }
+        var x = this, text = NikadiBill.billWhatsApp(billData(b));
+        if (!pdf) { // still making it: wait, then ask for one more tap (phones only share straight after a tap)
+          busy(x, true);
+          makePdf(b).then(function () { busy(x, false); x.textContent = 'PDF ready · tap to send on WhatsApp'; x.classList.add('pulse'); }, function (e) { busy(x, false); toast(errText(e)); });
+          return;
+        }
+        try { if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {}); } catch (e) {}
+        NikadiBillPdf.share(pdf, text).then(function (ok) {
+          if (ok === true) note('Shared. If WhatsApp did not add the message, paste it: it is copied.');
+          else if (ok === false) {
+            NikadiBillPdf.download(pdf);
+            window.open('https://wa.me/91' + ph + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+            note('The PDF is downloaded and WhatsApp is open with the message. Attach the PDF (📎) in the chat and send.');
+          }
+        });
+      };
+      function sendMail(em, x) {
+        $('#berr', body).textContent = '';
+        if (x) busy(x, true);
+        note('Making the PDF and emailing it…');
+        return makePdf(b).then(function (r) {
+          return api('deskBillSend', { id: b.stay, email: em, title: title, pdf: r.base64() });
+        }).then(function (r) { draw(Object.assign(r.bill, { stay: b.stay }), 'Bill emailed with the PDF to ' + r.emailed + (demo ? ' (demo: no real email is sent)' : '')); },
+          function (e) { if (x) busy(x, false); note(''); $('#berr', body).textContent = errText(e); });
+      }
       $('#bs', body).onclick = function () {
-        var x = this, em = $('#be', body).value.trim(); if (!em) { $('#berr', body).textContent = 'Enter the guest\'s email.'; return; }
-        busy(x, true); $('#berr', body).textContent = '';
-        api('deskBillSend', { id: d.stay || b.stay, email: em }).then(function (r) { draw(r.bill, 'Bill emailed to ' + r.emailed + (demo ? ' (demo: no real email is sent)' : '')); }, function (e) { busy(x, false); $('#berr', body).textContent = errText(e); });
+        var em = $('#be', body).value.trim(); if (!em) { $('#berr', body).textContent = 'Enter the guest\'s email.'; return; }
+        sendMail(em, this);
       };
       $('#bu', body).onclick = function () {
         var x = this; busy(x, true);
-        api('deskBill', { id: d.stay || b.stay, company: $('#bc', body).value.trim(), gstin: $('#bg', body).value.trim().toUpperCase() })
-          .then(function (r) { draw(r.bill, 'Bill updated'); }, function (e) { busy(x, false); $('#uerr', body).textContent = errText(e); });
+        api('deskBill', { id: b.stay, company: $('#bc', body).value.trim(), gstin: $('#bg', body).value.trim().toUpperCase() })
+          .then(function (r) { pdf = null; draw(Object.assign(r.bill, { stay: b.stay }), 'Bill updated'); }, function (e) { busy(x, false); $('#uerr', body).textContent = errText(e); });
       };
+      return { sendMail: sendMail };
     }
     if (!b.data) {
       body.innerHTML = '<div class="loading">Loading bill…</div>';
       api('deskBill', { id: b.stay }).then(function (r) { r.bill.stay = b.stay; draw(r.bill); }, function (e) { body.innerHTML = '<p class="err">' + esc(errText(e)) + '</p>'; });
-    } else draw(b, emailed ? 'Bill emailed to ' + emailed + (demo ? ' (demo: no real email is sent)' : '') : '');
+      return;
+    }
+    if (!b.stay) b.stay = b.data.stay;
+    if (o.emailed) { draw(b, 'Bill emailed to ' + o.emailed + (demo ? ' (demo: no real email is sent)' : '')); return; }
+    var h = draw(b, '');
+    if (o.auto && b.email) h.sendMail(b.email, null); // email the PDF straight after check-out
   }
   var BILLS = { list: null };
   function viewBills(v) {

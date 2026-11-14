@@ -467,3 +467,7 @@ main.view{flex:1}
 .ok-note{background:rgba(80,170,120,.12);border:1px solid rgba(80,170,120,.35);color:#9fdcb8;border-radius:10px;padding:10px 12px;margin:12px 0}
 .bl-btn{width:100%;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .bl-btn .t small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+.title-seg{display:flex;flex-wrap:wrap}.title-seg button{flex:1 1 auto;min-width:56px}
+#greet{display:block;margin-top:6px}
+.btn-col .btn svg{vertical-align:-3px;margin-right:6px}
+.btn.pulse{animation:nkpulse 1.2s ease-in-out infinite}@keyframes nkpulse{50%{box-shadow:0 0 0 6px rgba(224,190,122,.25)}}

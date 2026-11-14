@@ -80,12 +80,14 @@ function deskHandle_(req) {
   return api[name](clean);
 }
 
-/** Emails a guest their bill (HTML email with a link to the full bill and its QR code). */
-function deskSendBill_(d, to) {
-  MailApp.sendEmail({ to: to, name: 'Nikadi Guest House', replyTo: 'nikadiguesthouse@gmail.com',
-    subject: 'Your tax invoice ' + d.no + ' · Nikadi Guest House',
+/** Emails a guest their bill: a warm message, with the PDF bill attached (made by the staff app). */
+function deskSendBill_(d, to, pdf) {
+  var msg = { to: to, name: 'Nikadi Guest House', replyTo: 'nikadiguesthouse@gmail.com',
+    subject: NikadiBill.billEmailSubject(d),
     htmlBody: NikadiBill.billEmail(d),
-    body: NikadiBill.billWhatsApp(d).replace(/\*/g, '') });
+    body: NikadiBill.billWhatsApp(d, { link: !pdf }).replace(/\*/g, '') };
+  if (pdf) msg.attachments = [Utilities.newBlob(Utilities.base64Decode(pdf), 'application/pdf', 'Nikadi-Bill-' + String(d.no).replace(/[^A-Za-z0-9-]+/g, '-') + '.pdf')];
+  MailApp.sendEmail(msg);
 }
 
 /** Creates the staff app tabs. Called from setup() in Code.gs; safe to run again. */

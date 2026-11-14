@@ -38,7 +38,7 @@ var DESK_SCHEMA = {
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
     ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't'],
-    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.']] },
+    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)']] },
   bookings: { sheet: 'Bookings', cols: [['id', 'Booking ID'], ['status', 'Status'], ['source', 'Source'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['email', 'Email'],
     ['guests', 'Guests', 'n'], ['roomsNeeded', 'Rooms needed', 'n'], ['roomType', 'Room preference'], ['rooms', 'Room numbers', 's'], ['checkin', 'Check-in date', 'd'],
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
@@ -212,7 +212,7 @@ function deskCore(db, hooks) {
     var mem = s.status === 'In house' ? memberOf(s.phone) : null;
     if (mem) v.member = { name: mem.name, tier: mem.tier, tierKey: mem.tierKey, discount: mem.discount, onsite: mem.onsite, email: mgr ? mem.email || '' : '' };
     if (mgr) {
-      v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes; v.email = s.email || ''; v.gstin = s.gstin || ''; v.company = s.company || ''; v.bill = s.bill || '';
+      v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes; v.email = s.email || ''; v.gstin = s.gstin || ''; v.company = s.company || ''; v.bill = s.bill || ''; v.title = s.title || '';
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
@@ -272,7 +272,7 @@ function deskCore(db, hooks) {
       payments.push({ date: p.at, label: p.note || 'Payment received', method: p.method, ref: p.ref, amount: amt });
     });
     return { no: old ? old.no : '', id: old ? old.id : '', date: old ? old.date : today(), booking: s.booking || '',
-      guest: { name: s.guest, phone: prettyPhone(s.phone), email: s.email || '', gstin: s.gstin || '', company: s.company || '' },
+      guest: { name: s.guest, title: s.title || '', phone: prettyPhone(s.phone), email: s.email || '', gstin: s.gstin || '', company: s.company || '' },
       room: { no: s.room, type: (r.type || '') + (r.beds ? ' (' + r.beds + ')' : '') }, checkin: s.checkin, checkout: s.checkout, inAt: s.inAt, outAt: s.outAt,
       nights: nights, guests: Number(s.guests || 1), tariff: tariff, discounts: discounts, items: items, payments: payments, refunds: refunds,
       member: old ? old.member : null, staff: s.outBy || (me && me.name) || '' };
@@ -295,18 +295,20 @@ function deskCore(db, hooks) {
     d.url = DESK_BILL_URL + d.id;
     return { row: row, data: d };
   }
-  function sendBill(b, to) {
+  function sendBill(b, to, pdf) {
     if (!hooks.sendBill) fail('email_unavailable');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) fail('invalid_email');
-    hooks.sendBill(b.data, to);
+    if (pdf != null && !(typeof pdf === 'string' && pdf.length < 9000000 && /^[A-Za-z0-9+\/=]+$/.test(pdf))) fail('bad_pdf');
+    hooks.sendBill(b.data, to, pdf || null);
     db.set('bills', b.row, { sent: stamp() + ' → ' + to });
   }
-  function billInfo(s, b) { return b ? { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', data: b.data } : null; }
+  function billInfo(s, b) { return b ? { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', title: s.title || '', data: b.data } : null; }
   function billFields(s, req) {
     var p = {};
     if (req.email != null) { p.email = text(req.email, 80); if (p.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p.email)) fail('invalid_email'); }
     if (req.gstin != null) { p.gstin = text(req.gstin, 15).toUpperCase(); if (p.gstin && !/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/.test(p.gstin)) fail('invalid_gstin'); }
     if (req.company != null) p.company = text(req.company, 80);
+    if (req.title != null) { p.title = String(req.title); if (['', 'Mr.', 'Ms.', 'Mrs.', 'Dr.'].indexOf(p.title) < 0) fail('bad_title'); }
     if (Object.keys(p).length) db.set('stays', s, p);
   }
 
@@ -586,9 +588,9 @@ function deskCore(db, hooks) {
     var me = auth(req); needMgr(me);
     var s = stay(req.id);
     if (s.status !== 'Checked out') fail('not_checked_out');
-    if (req.email != null) billFields(s, { email: req.email });
+    billFields(s, { email: req.email, title: req.title });
     var b = saveBill(s, me, null);
-    sendBill(b, String(s.email || ''));
+    sendBill(b, String(s.email || ''), req.pdf);
     return { bill: billInfo(s, b), emailed: s.email };
   };
   /* Recent bills for the front desk list. */
@@ -1026,6 +1028,16 @@ function deskCore(db, hooks) {
     return out.join(' ');
   }
 
+  var TITLES = ['Mr.', 'Ms.', 'Mrs.', 'Dr.'];
+  function cap(w) { w = String(w || ''); return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); }
+  function fullName(g) { return (g.title && TITLES.indexOf(g.title) >= 0 ? g.title + ' ' : '') + String(g.name || '').trim(); }
+  /* "Mrs. Paul" when we know the title, otherwise the guest's full name. */
+  function greetName(g) {
+    var parts = String(g.name || '').trim().split(/\s+/), last = parts[parts.length - 1] || '';
+    if (g.title && TITLES.indexOf(g.title) >= 0 && last && parts.length > 1) return g.title + ' ' + (last === last.toUpperCase() || last === last.toLowerCase() ? cap(last) : last);
+    return parts.map(function (w) { return w === w.toLowerCase() ? cap(w) : w; }).join(' ') || 'Guest';
+  }
+
   /* d = { no, date, id, url,
        guest:{name, phone, email, address, gstin, company},
        room:{no, type}, checkin, checkout, inAt, outAt, nights, guests, booking,
@@ -1088,12 +1100,12 @@ function deskCore(db, hooks) {
     }).join('');
 
     var bar = opt.toolbar ? '<div class="toolbar"><span>Bill ' + esc(d.no) + '</span><span class="tb-btns">' +
-      '<button type="button" onclick="window.print()">Download PDF</button>' +
+      '<button type="button" onclick="if(window.nikadiPdf){window.nikadiPdf(this)}else{window.print()}">Download PDF</button>' +
       '<button type="button" class="tb-share" onclick="if(navigator.share){navigator.share({title:document.title,url:location.href}).catch(function(){})}else{navigator.clipboard&&navigator.clipboard.writeText(location.href);this.textContent=\'Link copied\'}">Share</button></span></div>' : '';
 
     return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
       '<meta name="robots" content="noindex,nofollow"><title>Tax Invoice ' + esc(d.no) + ' · ' + HOTEL.name + '</title>' +
-      '<style>' + CSS + '</style></head><body>' + bar + '<div class="sheet">' +
+      '<style>' + CSS + (opt.pdf ? PRINT : '') + '</style></head><body' + (opt.pdf ? ' class="pdf"' : '') + '>' + bar + '<div class="sheet">' +
 
       '<header class="top">' +
         '<div class="brand"><img class="logo" src="' + esc(opt.logo || HOTEL.logo) + '" alt="' + HOTEL.name + '" width="150"></div>' +
@@ -1106,8 +1118,8 @@ function deskCore(db, hooks) {
       '</header>' +
 
       '<section class="parties">' +
-        '<div class="party"><div class="lbl">Billed to</div><div class="who">' + esc(g.company || g.name) + '</div>' +
-          (g.company ? '<div>Guest: ' + esc(g.name) + '</div>' : '') + (g.address ? '<div>' + esc(g.address) + '</div>' : '') +
+        '<div class="party"><div class="lbl">Billed to</div><div class="who">' + esc(g.company || fullName(g)) + '</div>' +
+          (g.company ? '<div>Guest: ' + esc(fullName(g)) + '</div>' : '') + (g.address ? '<div>' + esc(g.address) + '</div>' : '') +
           (g.phone ? '<div>Mobile: ' + esc(g.phone) + '</div>' : '') + (g.email ? '<div>Email: ' + esc(g.email) + '</div>' : '') +
           '<table class="kv sm">' + kv('Customer GSTIN', g.gstin ? '<span class="mono">' + esc(g.gstin) + '</span>' : 'Unregistered') +
           kv('Place of Supply', HOTEL.stateCode + ' (' + HOTEL.state + ')') + '</table></div>' +
@@ -1159,6 +1171,10 @@ function deskCore(db, hooks) {
       '</div></body></html>';
   }
 
+  var PRINT = ['body{background:#fff;font-size:9.5px;line-height:1.3}.incl{margin-top:3px}.parties .kv.sm{margin-top:3px}.small{margin-top:3px}.decl p{font-size:9px}.foot{font-size:9px;line-height:1.45}.foot .thanks{font-size:10.5px;margin-top:3px}.words{margin-top:5px}.stamp{margin-top:5px}.top{gap:14px;padding-bottom:10px}.logo{width:120px}.qr-svg{width:96px;height:96px}.doc h1{font-size:18px}.parties{padding:10px 0;gap:18px}.who{font-size:11.5px}.lines{margin-top:10px}.lines td{padding:5px 6px}.lines th{padding:6px}.split{margin-top:10px}.tax td,.tax th,.ptab td,.ptab th{padding:3px 5px}.pays,.member,.decl{margin-top:10px}.sign{margin-top:8px}.sign .line{margin-top:16px}.foot>div:first-child{display:none}.stamp{display:none}.srow.tot{margin:3px 0}.srow.bal{margin-top:3px;padding:4px 6px}.lines tfoot td{padding:5px 6px}.kv th,.kv td,.kv td.colon{padding-top:0;padding-bottom:0}.party{line-height:1.35}.tax td,.tax th{padding:2px 5px}.ptab td,.ptab th{padding:2px 5px}.srow{padding:1px 0}.lines td{padding:4px 6px}.qr span{font-size:8px}.decl p{line-height:1.35}.split{gap:14px}.foot{margin-top:12px;padding-top:8px}.member{padding:6px 10px}.totals{padding:6px 10px}.srow{padding:2px 0}.srow.tot{font-size:13px;padding:5px 0}section,.totals,.taxbox,table{break-inside:avoid}.toolbar{display:none}.sheet{box-shadow:none;margin:0;max-width:none;padding:0;border-top-width:4px}',
+    '.top{grid-template-columns:1fr auto 1.25fr}.parties{grid-template-columns:1fr 1fr}.split{grid-template-columns:1fr 250px}',
+    '.lines th,.srow.bal,.lines tfoot td,.tax th,.ptab th,.member{-webkit-print-color-adjust:exact;print-color-adjust:exact}'].join('');
+
   var CSS = [
     '*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}',
     'body{margin:0;background:#e9ecee;color:#1d2326;font:12.5px/1.45 "Helvetica Neue",Helvetica,Arial,sans-serif}',
@@ -1205,44 +1221,54 @@ function deskCore(db, hooks) {
     '.toolbar button{font:inherit;font-size:13px;border:0;border-radius:6px;padding:8px 14px;background:#156b82;color:#fff;cursor:pointer;margin-left:6px}.toolbar .tb-share{background:#3d474b}',
     '@media (max-width:700px){.sheet{margin:0;padding:20px 16px;box-shadow:none}.top{grid-template-columns:1fr auto}.doc{grid-column:1/-1}.parties,.split{grid-template-columns:1fr}',
     '.qr-svg{width:96px;height:96px}.lines{font-size:11.5px}.lines th:nth-child(1),.lines td:nth-child(1),.lines th:nth-child(6),.lines td:nth-child(6){display:none}.sign{gap:18px}}',
-    '@media print{body{background:#fff;font-size:9.5px;line-height:1.3}.incl{margin-top:3px}.parties .kv.sm{margin-top:3px}.small{margin-top:3px}.decl p{font-size:9px}.foot{font-size:9px;line-height:1.45}.foot .thanks{font-size:10.5px;margin-top:3px}.words{margin-top:5px}.stamp{margin-top:5px}.top{gap:14px;padding-bottom:10px}.logo{width:120px}.qr-svg{width:96px;height:96px}.doc h1{font-size:18px}.parties{padding:10px 0;gap:18px}.who{font-size:11.5px}.lines{margin-top:10px}.lines td{padding:5px 6px}.lines th{padding:6px}.split{margin-top:10px}.tax td,.tax th,.ptab td,.ptab th{padding:3px 5px}.pays,.member,.decl{margin-top:10px}.sign{margin-top:8px}.sign .line{margin-top:16px}.foot>div:first-child{display:none}.stamp{display:none}.srow.tot{margin:3px 0}.srow.bal{margin-top:3px;padding:4px 6px}.lines tfoot td{padding:5px 6px}.kv th,.kv td,.kv td.colon{padding-top:0;padding-bottom:0}.party{line-height:1.35}.tax td,.tax th{padding:2px 5px}.ptab td,.ptab th{padding:2px 5px}.srow{padding:1px 0}.lines td{padding:4px 6px}.qr span{font-size:8px}.decl p{line-height:1.35}.split{gap:14px}.foot{margin-top:12px;padding-top:8px}.member{padding:6px 10px}.totals{padding:6px 10px}.srow{padding:2px 0}.srow.tot{font-size:13px;padding:5px 0}section,.totals,.taxbox,table{break-inside:avoid}.toolbar{display:none}.sheet{box-shadow:none;margin:0;max-width:none;padding:0;border-top-width:4px}',
-    '.top{grid-template-columns:1fr auto 1.25fr}.parties{grid-template-columns:1fr 1fr}.split{grid-template-columns:1fr 250px}',
-    '.lines th,.srow.bal,.lines tfoot td,.tax th,.ptab th,.member{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:9mm 10mm}}'
+    '@media print{' + PRINT + '@page{size:A4;margin:9mm 10mm}}'
   ].join('');
 
-  /* Email body: plain tables + inline styles so it looks right in Gmail and Outlook. */
+  /* Email body: plain tables + inline styles so it looks right in Gmail and Outlook. The PDF bill is attached. */
   function billEmail(d) {
-    var c = compute(d), g = d.guest || {}, first = String(g.name || '').split(' ')[0];
-    function row(a, b, strong) { return '<tr><td style="padding:6px 0;color:#3d474b;font-size:14px' + (strong ? ';font-weight:700;color:#1d2326' : '') + '">' + a + '</td><td align="right" style="padding:6px 0;font-size:14px;color:#1d2326' + (strong ? ';font-weight:700' : '') + '">' + b + '</td></tr>'; }
-    return '<div style="background:#e9ecee;padding:24px 12px;font-family:Helvetica,Arial,sans-serif">' +
+    var c = compute(d), g = d.guest || {}, m = d.member, paid = Math.abs(c.due) < .5;
+    function p(t, st) { return '<tr><td style="padding:0 30px 14px;font-size:15px;color:#263034;line-height:1.65' + (st || '') + '">' + t + '</td></tr>'; }
+    function row(a, b, strong) { return '<tr><td style="padding:7px 0;color:#4a5458;font-size:14px' + (strong ? ';font-weight:700;color:#1d2326' : '') + '">' + a + '</td><td align="right" style="padding:7px 0;font-size:14px;color:#1d2326' + (strong ? ';font-weight:700' : '') + '">' + b + '</td></tr>'; }
+    return '<div style="background:#eef1f2;padding:28px 12px;font-family:Helvetica,Arial,sans-serif">' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-top:4px solid #156b82">' +
-      '<tr><td style="padding:26px 28px 8px"><img src="' + HOTEL.logo + '" width="130" alt="' + HOTEL.name + '" style="display:block;border:0"></td></tr>' +
-      '<tr><td style="padding:8px 28px 0;font-size:15px;color:#1d2326;line-height:1.55">Hare Krishna ' + esc(first) + ',<br><br>Thank you for staying with us at Nikadi Guest House. Your tax invoice is ready.</td></tr>' +
-      '<tr><td style="padding:18px 28px 4px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #cfd6d9;border-bottom:1px solid #cfd6d9">' +
-        row('Invoice No.', '<span style="font-family:Menlo,Consolas,monospace">' + esc(d.no) + '</span>') + row('Room', esc(d.room.no) + ' · ' + esc(d.room.type)) +
-        row('Stay', day(d.checkin) + ' – ' + day(d.checkout) + ' (' + d.nights + (d.nights > 1 ? ' nights' : ' night') + ')') +
-        (c.disc ? row('Discount', '−' + inr(c.disc)) : '') + row('Total (incl. GST)', inr(c.total), true) + row('Paid', inr(c.paid)) +
-        row(Math.abs(c.due) < .5 ? 'Balance' : c.due > 0 ? 'Balance payable' : 'Refundable', Math.abs(c.due) < .5 ? '₹0 · Paid in full' : inr(Math.abs(c.due)), true) +
-        (d.member && d.member.earned ? row('Membership points earned', '+' + d.member.earned) : '') +
+      '<tr><td style="padding:28px 30px 18px"><img src="' + HOTEL.logo + '" width="130" alt="' + HOTEL.name + '" style="display:block;border:0"></td></tr>' +
+      p('Dear ' + esc(greetName(g)) + ',') +
+      p('Hare Krishna! 🙏') +
+      p('Thank you so much for choosing Nikadi Guest House for your stay in Sri Dham Mayapur. It was a real pleasure to have you with us, and we hope your days in the Dham were peaceful and full of blessings.') +
+      p('Your bill is attached to this email as a PDF.') +
+      '<tr><td style="padding:4px 30px 18px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #dfe6e8;border-bottom:1px solid #dfe6e8">' +
+        row('Tax invoice', '<span style="font-family:Menlo,Consolas,monospace">' + esc(d.no) + '</span>') +
+        row('Stay', 'Room ' + esc(d.room.no) + ' · ' + day(d.checkin) + ' – ' + day(d.checkout)) +
+        (c.disc ? row('You saved', inr(c.disc)) : '') +
+        row('Total (incl. GST)', inr(c.total), true) +
+        row(paid ? 'Payment' : c.due > 0 ? 'Balance due' : 'To be refunded to you', paid ? 'Paid in full ✓' : inr(Math.abs(c.due)), true) +
       '</table></td></tr>' +
-      (d.url ? '<tr><td align="center" style="padding:22px 28px"><a href="' + esc(d.url) + '" style="display:inline-block;background:#156b82;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:6px">View and download your bill</a></td></tr>' : '') +
-      '<tr><td style="padding:0 28px 24px;font-size:12px;color:#66737a;line-height:1.6">' + HOTEL.company + ' · GSTIN ' + HOTEL.gstin + '<br>' + HOTEL.address.join(', ') + '<br>' + HOTEL.phone + ' · ' + HOTEL.web + '</td></tr>' +
+      (m && m.earned ? p('As our ' + esc(m.level) + ' member, you earned <b>' + m.earned + ' points</b> on this stay' + (m.balance != null ? ' and now have <b>' + grp(String(m.balance)) + ' points</b>' : '') + '. Thank you for being part of the Nikadi family.') : '') +
+      p('Whenever the Dham calls you back, we will be happy to welcome you again.') +
+      p('With warm regards,<br><b>Team Nikadi Guest House</b><br>' + HOTEL.phone, ';padding-bottom:22px') +
+      (d.url ? '<tr><td style="padding:0 30px 24px;font-size:13px;color:#66737a">You can also <a href="' + esc(d.url) + '" style="color:#156b82">view your bill online</a>.</td></tr>' : '') +
+      '<tr><td style="padding:16px 30px 24px;border-top:1px solid #eef1f2;font-size:11.5px;color:#7d8a8e;line-height:1.6">' + HOTEL.company + ' · GSTIN ' + HOTEL.gstin + '<br>' + HOTEL.address.join(', ') + '<br>' + HOTEL.web + '</td></tr>' +
       '</table></div>';
   }
+  function billEmailSubject(d) { return 'Thank you for staying with us · Your bill ' + d.no + ' · Nikadi Guest House'; }
 
-  /* Short WhatsApp message that goes with the bill link. */
-  function billWhatsApp(d) {
-    var c = compute(d), g = d.guest || {}, m = d.member, first = String(g.name || '').split(' ')[0];
-    return 'Hare Krishna ' + first + ' 🙏\n\nThank you for staying at *Nikadi Guest House*.\n\n' +
-      '*Tax Invoice ' + d.no + '*\nRoom ' + d.room.no + ' · ' + d.nights + (d.nights > 1 ? ' nights' : ' night') + ' (' + day(d.checkin) + ' – ' + day(d.checkout) + ')\n' +
-      'Total: *' + inr(c.total) + '* (incl. GST)\n' +
-      'Paid: ' + inr(c.paid) + (Math.abs(c.due) < .5 ? ' ✅ Paid in full' : '\nBalance: ' + inr(c.due)) + '\n' +
-      (m && m.earned ? '\n⭐ ' + m.level + ' member: +' + m.earned + ' points' + (m.balance != null ? ' (balance ' + m.balance + ')' : '') + '\n' : '') +
-      (d.url ? '\nView or download your bill:\n' + d.url + '\n' : '') +
-      '\nWe hope to welcome you back to Sri Dham Mayapur soon.\n— Nikadi Guest House · ' + HOTEL.phone;
+  /* WhatsApp message sent together with the PDF bill. opt.link adds the online link (when the PDF can't be attached). */
+  function billWhatsApp(d, opt) {
+    opt = opt || {};
+    var c = compute(d), g = d.guest || {}, m = d.member, paid = Math.abs(c.due) < .5;
+    return 'Dear ' + greetName(g) + ',\n\n' +
+      'Hare Krishna! 🙏\n\n' +
+      'Thank you so much for staying with us at *Nikadi Guest House*. It was a real pleasure to have you, and we hope your time in Sri Dham Mayapur was peaceful and full of blessings.\n\n' +
+      (opt.link ? 'Here is your bill:\n' : 'Your bill is attached as a PDF:\n') +
+      '*Tax Invoice ' + d.no + '*\n' +
+      'Total ' + inr(c.total) + ' (incl. GST) · ' + (paid ? 'Paid in full ✅' : c.due > 0 ? 'Balance due ' + inr(c.due) : 'To be refunded ' + inr(-c.due)) + '\n' +
+      (opt.link && d.url ? d.url + '\n' : '') +
+      (m && m.earned ? '\n⭐ As our ' + m.level + ' member, you earned ' + m.earned + ' points on this stay' + (m.balance != null ? '. Your balance is now ' + grp(String(m.balance)) + ' points' : '') + '.\n' : '') +
+      '\nWhenever the Dham calls you back, we will be happy to welcome you again.\n\n' +
+      'With warm regards,\nTeam Nikadi Guest House\n' + HOTEL.phone;
   }
 
-  root.NikadiBill = { billHTML: billHTML, billEmail: billEmail, billWhatsApp: billWhatsApp, compute: compute, words: words, inr: inr, HOTEL: HOTEL, ROOM_HSN: ROOM_HSN, ROOM_GST: ROOM_GST };
+  root.NikadiBill = { billHTML: billHTML, billEmail: billEmail, billEmailSubject: billEmailSubject, greetName: greetName, TITLES: TITLES, billWhatsApp: billWhatsApp, compute: compute, words: words, inr: inr, HOTEL: HOTEL, ROOM_HSN: ROOM_HSN, ROOM_GST: ROOM_GST };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.NikadiBill;
 })(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);
 
@@ -1328,12 +1354,14 @@ function deskHandle_(req) {
   return api[name](clean);
 }
 
-/** Emails a guest their bill (HTML email with a link to the full bill and its QR code). */
-function deskSendBill_(d, to) {
-  MailApp.sendEmail({ to: to, name: 'Nikadi Guest House', replyTo: 'nikadiguesthouse@gmail.com',
-    subject: 'Your tax invoice ' + d.no + ' · Nikadi Guest House',
+/** Emails a guest their bill: a warm message, with the PDF bill attached (made by the staff app). */
+function deskSendBill_(d, to, pdf) {
+  var msg = { to: to, name: 'Nikadi Guest House', replyTo: 'nikadiguesthouse@gmail.com',
+    subject: NikadiBill.billEmailSubject(d),
     htmlBody: NikadiBill.billEmail(d),
-    body: NikadiBill.billWhatsApp(d).replace(/\*/g, '') });
+    body: NikadiBill.billWhatsApp(d, { link: !pdf }).replace(/\*/g, '') };
+  if (pdf) msg.attachments = [Utilities.newBlob(Utilities.base64Decode(pdf), 'application/pdf', 'Nikadi-Bill-' + String(d.no).replace(/[^A-Za-z0-9-]+/g, '-') + '.pdf')];
+  MailApp.sendEmail(msg);
 }
 
 /** Creates the staff app tabs. Called from setup() in Code.gs; safe to run again. */
