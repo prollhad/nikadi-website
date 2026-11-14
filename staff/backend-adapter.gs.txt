@@ -79,7 +79,7 @@ function deskHandle_(req) {
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
-    savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_,
+    savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
     sendBill: deskSendBill_ });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
@@ -95,9 +95,14 @@ function sendDueBills() {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return;
   try {
-    deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_,
-      memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null })._sendDue();
+    deskTimerCore_()._sendDue({ archive: true, limit: 8 });
   } finally { lock.releaseLock(); }
+}
+
+function deskTimerCore_() {
+  return deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_,
+    memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
+    archive: deskArchive_, stayFolder: deskStayFolder_, trashFile: deskTrash_ });
 }
 
 /* ---------------- WhatsApp (Meta WhatsApp Cloud API) ----------------
@@ -145,14 +150,93 @@ function deskPhotoFolder_(month, rootName) {
   var m = root.getFoldersByName(month);
   return m.hasNext() ? m.next() : root.createFolder(month);
 }
-function deskSavePhoto_(b64, name, month, rootName) {
+function deskSavePhoto_(b64, name, month, rootName, folderId) {
   var blob = Utilities.newBlob(Utilities.base64Decode(b64), 'image/jpeg', name);
-  return deskPhotoFolder_(month, rootName).createFile(blob).getId(); // files stay private to the owner's Drive
+  var folder = folderId ? DriveApp.getFolderById(folderId) : deskPhotoFolder_(month, rootName);
+  return folder.createFile(blob).getId(); // files stay private to the owner's Drive
 }
 function deskGetPhoto_(fileId) {
   var f = DriveApp.getFileById(fileId);
   return 'data:' + (f.getMimeType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(f.getBlob().getBytes());
 }
+/* ---------------- Permanent stay records in Google Drive ----------------
+   Nikadi Guest House Records / 2026 / 11 November / 17 Nov 2026 / Room 3 · Guest · 5 nights
+     Stay details – Room 3.pdf · Bill NGH-26-27-0001.pdf · ID · Person 1 front · Guest.jpg …
+   18, 19, 20, 21 Nov get a shortcut: "Room 3 · Guest · night 2 of 5 → … saved in 17 Nov 2026".
+   Every day of a month gets its folder when the month is first used. */
+var DESK_ARCHIVE_ROOT = 'Nikadi Guest House Records';
+var DESK_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function deskLive_(id) { try { var f = DriveApp.getFolderById(id); return f.isTrashed() ? null : f; } catch (e) { return null; } }
+function deskChild_(parent, name) { var it = parent.getFoldersByName(name); return it.hasNext() ? it.next() : parent.createFolder(name); }
+function deskCachedFolder_(key, make) {
+  var p = PropertiesService.getScriptProperties(), id = p.getProperty(key), f = id ? deskLive_(id) : null;
+  if (!f) { f = make(); p.setProperty(key, f.getId()); }
+  return f;
+}
+function deskArchiveRoot_() {
+  return deskCachedFolder_('ARCH_ROOT', function () { var it = DriveApp.getFoldersByName(DESK_ARCHIVE_ROOT); return it.hasNext() ? it.next() : DriveApp.createFolder(DESK_ARCHIVE_ROOT); });
+}
+function deskDayFolder_(ymd) {
+  var y = ymd.slice(0, 4), m = +ymd.slice(5, 7), d = +ymd.slice(8, 10);
+  var month = deskCachedFolder_('ARCH_M_' + ymd.slice(0, 7), function () {
+    var mf = deskChild_(deskCachedFolder_('ARCH_Y_' + y, function () { return deskChild_(deskArchiveRoot_(), y); }), (m < 10 ? '0' : '') + m + ' ' + DESK_MONTHS[m - 1]);
+    var days = new Date(+y, m, 0).getDate(), have = {}, it = mf.getFolders();
+    while (it.hasNext()) have[it.next().getName()] = 1;
+    for (var i = 1; i <= days; i++) { var n = deskDayName_(y, m, i); if (!have[n]) mf.createFolder(n); } // 01 Nov 2026 … 30 Nov 2026
+    return mf;
+  });
+  return deskCachedFolder_('ARCH_D_' + ymd, function () { return deskChild_(month, deskDayName_(y, m, d)); });
+}
+function deskDayName_(y, m, d) { return (d < 10 ? '0' : '') + d + ' ' + DESK_MONTHS[m - 1].slice(0, 3) + ' ' + y; }
+function deskTrash_(id) { if (id) try { DriveApp.getFileById(id).setTrashed(true); } catch (e) {} }
+/** The stay's own folder, filed under its check-in day (moved if the check-in date changed, renamed if the name changed). */
+function deskStayFolder_(rec, oldId) {
+  var day = deskDayFolder_(rec.checkin), f = oldId ? deskLive_(oldId) : null;
+  if (!f) return day.createFolder(rec.folderName).getId();
+  var parents = f.getParents(), inDay = false;
+  while (parents.hasNext()) if (parents.next().getId() === day.getId()) inDay = true;
+  if (!inDay) f.moveTo(day);
+  if (f.getName() !== rec.folderName) f.setName(rec.folderName);
+  return f.getId();
+}
+/** Saves / refreshes one stay in Drive. Returns the file ids so the next run only changes what changed. */
+function deskArchive_(rec, was) {
+  var folderId = deskStayFolder_(rec, was.folder), folder = DriveApp.getFolderById(folderId), out = { folder: folderId, details: was.details, bill: was.bill, notes: {} };
+  if (!was.details || was.key !== rec.key || folderId !== was.folder) { // stay details as a PDF
+    var pdf = Utilities.newBlob(rec.html, 'text/html', 'details.html').getAs('application/pdf').setName('Stay details – Room ' + rec.room + '.pdf');
+    deskTrash_(was.details);
+    out.details = folder.createFile(pdf).getId();
+  }
+  if (rec.billPdf) {
+    deskTrash_(was.bill);
+    out.bill = folder.createFile(Utilities.newBlob(Utilities.base64Decode(rec.billPdf), 'application/pdf', rec.billName)).getId();
+  }
+  (rec.ids || []).forEach(function (x) { if (x.folder !== folderId) try { DriveApp.getFileById(x.file).moveTo(folder); } catch (e) {} });
+  /* the other nights: one short link per day, back to the check-in day's folder */
+  var want = {}; rec.notes.forEach(function (n) { want[n.date] = n.name; });
+  Object.keys(was.notes || {}).forEach(function (date) {
+    var o = was.notes[date];
+    if (want[date] === o.name && o.target === folderId) { try { if (!DriveApp.getFileById(o.id).isTrashed()) { out.notes[date] = o; return; } } catch (e) {} }
+    deskTrash_(o.id);
+  });
+  rec.notes.forEach(function (n) {
+    if (out.notes[n.date]) return;
+    var day = deskDayFolder_(n.date), fid;
+    try { var sc = day.createShortcut(folderId); sc.setName(n.name); fid = sc.getId(); }
+    catch (e) { fid = day.createFile(n.name + '.txt', n.name + '\nFolder: https://drive.google.com/drive/folders/' + folderId + '\n', MimeType.PLAIN_TEXT).getId(); }
+    out.notes[n.date] = { id: fid, name: n.name, target: folderId };
+  });
+  return out;
+}
+/** Run once from the editor to file every stay now (otherwise the 15-minute timer does 8 stays at a time). */
+function archiveAllStays() {
+  var lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+  var core = deskTimerCore_();
+  for (var i = 0; i < 20; i++) { var r = core._sendDue({ archive: true, limit: 10 }); if (!r.archived.length) break; }
+  } finally { lock.releaseLock(); }
+}
+
 /** Run once from the editor so Google asks for Drive permission (for expense bill photos). */
 function authorizeDrive() { var it = DriveApp.getFoldersByName('Nikadi Expense Bills'); return it.hasNext() ? it.next().getName() : DriveApp.createFolder('Nikadi Expense Bills').getName(); }
 

@@ -79,7 +79,9 @@ var DESK_SCHEMA = {
     ['guest', 'For guest'], ['room', 'Room / booking', 's'], ['amount', 'Amount (₹)', 'n'], ['method', 'Paid by'], ['ref', 'Transaction no.', 's'], ['note', 'Note'],
     ['by', 'Entered by'], ['at', 'Entered at', 't'], ['edited', 'Last changed'], ['removed', 'Removed']] },
   guestids: { sheet: 'Guest ID copies', lazy: true, cols: [['id', 'ID'], ['at', 'Saved at', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'], ['kind', 'Page'], ['slot', 'Box', 'n'],
-    ['label', 'What'], ['file', 'Photo (Drive file ID)', 's'], ['by', 'Saved by'], ['removed', 'Removed']] },
+    ['label', 'What'], ['file', 'Photo (Drive file ID)', 's'], ['by', 'Saved by'], ['removed', 'Removed'], ['folder', 'In stay folder (system)', 's']] },
+  archive: { sheet: 'Drive records (system)', lazy: true, hidden: true, cols: [['stay', 'Stay ID'], ['cin', 'Check-in (filed under)', 's'], ['folder', 'Stay folder (Drive ID)', 's'], ['details', 'Stay details file', 's'],
+    ['key', 'Details version (system)', 's'], ['bill', 'Bill file', 's'], ['billAt', 'Bill PDF saved', 's'], ['notes', 'Night notes (system)', 's'], ['dirty', 'To update', 's'], ['at', 'Last saved', 't'], ['error', 'Last error']] },
   wa: { sheet: 'WhatsApp messages', lazy: true, cols: [['id', 'ID'], ['at', 'Made', 't'], ['sendAt', 'Send at', 't'], ['to', 'To', 's'], ['name', 'Guest'], ['kind', 'Message'], ['ref', 'Stay / booking'], ['status', 'Status'], ['info', 'Details']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
@@ -255,6 +257,7 @@ function deskCore(db, hooks) {
     var paid = paymentsOf(s.id).reduce(function (a, p) { return a + Number(p.amount || 0); }, 0);
     var roomTotal = Number(s.nights || 0) * Number(s.rate || 0);
     db.set('stays', s, { roomTotal: roomTotal, extras: extras, paid: paid, balance: roomTotal + extras - paid });
+    archiveMark(s.id);
   }
 
   /* After a checked-out stay is corrected (rate, nights, items, payments): only a Manager or the Owner may do it,
@@ -294,6 +297,7 @@ function deskCore(db, hooks) {
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
       v.ids = db.all('guestids').filter(function (x) { return x.stay === s.id && !x.removed; }).length;
+      var ar = find('archive', 'stay', s.id); if (canApprove(me) && ar && ar.folder) v.drive = 'https://drive.google.com/drive/folders/' + ar.folder;
       v.advancePays = s.booking ? bookingPays(s.booking).filter(function (p) { return Number(p.amount) > 0; }).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: 'Advance · booking ' + s.booking }; }) : [];
     } else {
       v.guest = String(s.guest || '').split(/\s+/)[0];
@@ -385,6 +389,7 @@ function deskCore(db, hooks) {
       db.set('bills', row, p);
     }
     d.url = DESK_BILL_URL + d.id;
+    archiveMark(s.id);
     return { row: row, data: d };
   }
   /* The PDF is made by the staff app (it looks exactly like the bill) and kept here until it is emailed. */
@@ -398,6 +403,7 @@ function deskCore(db, hooks) {
     pdfClear(b.row.id);
     for (var i = 0, n = 0; i < pdf.length; i += PDF_PART, n++) db.add('billpdfs', { bill: b.row.id, part: n, data: pdf.slice(i, i + PDF_PART) });
     db.set('bills', b.row, { pdf: stamp() });
+    archiveMark(b.row.stay);
   }
   function sendBill(b, to, pdf) {
     if (!hooks.sendBill) fail('email_unavailable');
@@ -463,7 +469,7 @@ function deskCore(db, hooks) {
         if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
         else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); } }
       }
-      if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting') { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
+      if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting' && (billArchived(row) || plusHours(row.pdf, 72) < now)) { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
     });
     db.all('wa').forEach(function (m) {
       if (m.status !== 'Waiting' || m.sendAt > now) return;
@@ -472,6 +478,83 @@ function deskCore(db, hooks) {
     });
     return out;
   }
+  /* ================= Google Drive records =================
+     Every stay is filed for good in Drive: Nikadi Guest House Records / 2026 / 11 November / 17 Nov 2026 / Room 3 · Guest · 5 nights
+     with "Stay details" (PDF: dates, room, who gave the room, items, payments), the bill PDF and the ID copies.
+     The other nights of the stay (18, 19, 20, 21 Nov) only get a short link back to the check-in day folder.
+     Changes are marked here and saved to Drive by the 15-minute timer (hooks.archive). */
+  function archiveMark(sid) {
+    if (!sid) return;
+    var a = find('archive', 'stay', sid);
+    if (!a) db.add('archive', { stay: sid, cin: '', folder: '', details: '', key: '', bill: '', billAt: '', notes: '', dirty: stamp(), at: '', error: '' });
+    else if (!a.dirty) db.set('archive', a, { dirty: stamp() });
+  }
+  function billArchived(row) { var a = find('archive', 'stay', row.stay); return !!(a && a.billAt && a.billAt === String(row.pdf)); }
+  function hx(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function tm(t) { t = String(t || ''); return t ? dd(t) + (t.length > 10 ? ', ' + t.slice(11, 16) : '') : ''; }
+  function stayRecord(s) {
+    var r0 = find('rooms', 'room', s.room) || {}, b = billOfStay(s.id), ch = chargesOf(s.id), pays = paymentsOf(s.id).slice();
+    if (s.booking) bookingPays(s.booking).forEach(function (p) { if (Number(p.amount) > 0) pays.unshift({ at: p.at, amount: p.amount, method: p.method, ref: p.ref, by: p.by, note: 'Advance · booking ' + s.booking }); });
+    var ids = db.all('guestids').filter(function (x) { return x.stay === s.id && !x.removed; });
+    var row = function (k, v) { return v === '' || v == null ? '' : '<tr><th>' + hx(k) + '</th><td>' + hx(v) + '</td></tr>'; };
+    var body = '<h1>Nikadi Guest House · Stay record</h1><p class="s">Room ' + hx(s.room) + ' · ' + hx(s.guest) + ' · ' + hx(s.status) + '</p>' +
+      '<table>' + row('Room', s.room + (r0.type ? ' · ' + r0.type : '')) + row('Guest', [s.title, s.guest].filter(Boolean).join(' ')) + row('Phone', s.phone) + row('Email', s.email) + row('Address', s.address) +
+      row('Company / GSTIN', [s.company, s.gstin].filter(Boolean).join(' · ')) + row('Guests in room', s.guests) +
+      row('Check-in', dd(s.checkin) + (s.inAt ? ' · arrived ' + tm(s.inAt) : '')) + row('Room given by', s.inBy) +
+      row(s.status === 'Checked out' ? 'Check-out' : 'Check-out (planned)', dd(s.checkout) + (s.outAt ? ' · left ' + tm(s.outAt) : '')) + row('Checked out by', s.outBy) +
+      row('Nights', s.nights) + row('Rate per night', rupees(s.rate) + (s.rateNote ? ' · ' + s.rateNote : '')) + row('From booking', s.booking) + row('Bill no.', b ? b.no : '') +
+      row('ID copies', ids.length ? ids.length + ' saved in this folder (' + ids.map(function (x) { return x.label; }).join(', ') + ')' : 'None saved') + row('Notes', s.notes) + '</table>' +
+      '<h2>Items given</h2>' + (ch.length ? '<table class="l"><tr><th>When</th><th>Item</th><th>Qty</th><th>Amount</th><th>By</th></tr>' + ch.map(function (c) {
+        return '<tr><td>' + hx(tm(c.at)) + '</td><td>' + hx(c.item) + (c.free === 'Yes' ? ' (free' + (c.note ? ', ' + hx(c.note) : '') + ')' : '') + '</td><td>' + hx(c.qty) + '</td><td>' + (c.free === 'Yes' ? '₹0' : hx(rupees(c.total))) + '</td><td>' + hx(c.by) + '</td></tr>';
+      }).join('') + '</table>' : '<p>None</p>') +
+      '<h2>Payments</h2>' + (pays.length ? '<table class="l"><tr><th>When</th><th>Amount</th><th>Method</th><th>Ref. no.</th><th>Taken by</th></tr>' + pays.map(function (p) {
+        return '<tr><td>' + hx(tm(p.at)) + '</td><td>' + (Number(p.amount) < 0 ? 'Refund ' + hx(rupees(-p.amount)) : hx(rupees(p.amount))) + '</td><td>' + hx(p.method) + (p.note ? ' · ' + hx(p.note) : '') + '</td><td>' + hx(p.ref) + '</td><td>' + hx(p.by) + '</td></tr>';
+      }).join('') + '</table>' : '<p>None</p>') +
+      '<table class="t">' + row('Room total', rupees(s.roomTotal)) + row('Extras', rupees(s.extras)) + row('Paid', rupees(s.paid)) + row(Number(s.balance) < 0 ? 'Refund due' : 'Balance due', rupees(Math.abs(Number(s.balance) || 0))) + '</table>';
+    var html = '<html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;font-size:10.5pt;color:#222;margin:28px}h1{font-size:16pt;margin:0}h2{font-size:12pt;margin:18px 0 6px}.s{color:#666;margin:4px 0 14px}' +
+      'table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:4px 6px;border-bottom:1px solid #ddd;vertical-align:top}th{width:32%;color:#555;font-weight:normal}.l th{width:auto;background:#f3f1ec}.t{margin-top:14px;width:50%}</style></head><body>' +
+      body + '<p class="s" style="margin-top:20px">Saved by the Nikadi Staff app on ' + hx(tm(stamp())) + '.</p></body></html>';
+    var nights = [], n = Number(s.nights) || nightsBetween(s.checkin, s.checkout);
+    for (var i = 1; i < n; i++) nights.push({ date: addDays(s.checkin, i), name: 'Room ' + s.room + ' · ' + s.guest + ' · night ' + (i + 1) + ' of ' + n + ' → bill, IDs and details saved in ' + dd(s.checkin) });
+    return { id: s.id, room: s.room, guest: s.guest, checkin: s.checkin, checkout: s.checkout, nights: n, status: s.status,
+      folderName: 'Room ' + s.room + ' · ' + s.guest + ' · ' + n + (n > 1 ? ' nights' : ' night') + (s.status === 'Checked out' ? '' : ' (staying)'),
+      html: html, key: body.length + ':' + hash(body), notes: nights };
+  }
+  function hash(str) { var h = 0; for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return String(h); }
+  /* the stay's Drive folder (made now if it does not exist yet), for the ID copies */
+  function stayFolder(s) {
+    if (!hooks.stayFolder) return '';
+    archiveMark(s.id);
+    var a = find('archive', 'stay', s.id);
+    if (a.folder && a.cin === s.checkin) return a.folder;
+    var f = hooks.stayFolder(stayRecord(s), a.folder || '');
+    db.set('archive', a, { folder: f, cin: s.checkin });
+    return f;
+  }
+  function archiveRun(limit) {
+    if (!hooks.archive) return [];
+    var list = db.all('archive');
+    if (!list.length) db.all('stays').forEach(function (s) { archiveMark(s.id); }); // first run: file every stay we already have
+    var done = [];
+    db.all('archive').filter(function (a) { return a.dirty; }).sort(function (x, y) { return x.dirty < y.dirty ? -1 : 1; }).slice(0, limit || 8).forEach(function (a) {
+      var mark = a.dirty, s = find('stays', 'id', a.stay);
+      if (!s) { db.set('archive', a, { dirty: '' }); return; }
+      try {
+        var rec = stayRecord(s), b = billOfStay(s.id);
+        rec.billPdf = b && b.pdf && String(b.pdf) !== String(a.billAt) ? pdfOf(b.id) : null;
+        rec.billName = b ? 'Bill ' + String(b.no).replace(/\//g, '-') + '.pdf' : '';
+        rec.ids = db.all('guestids').filter(function (x) { return x.stay === s.id && !x.removed && x.file; });
+        var out = hooks.archive(rec, { folder: a.folder, cin: a.cin, details: a.details, key: a.key, bill: a.bill, notes: a.notes ? JSON.parse(a.notes) : {} });
+        rec.ids.forEach(function (x) { if (x.folder !== out.folder) db.set('guestids', x, { folder: out.folder }); });
+        var p = { folder: out.folder, cin: s.checkin, details: out.details, key: rec.key, bill: out.bill || a.bill, notes: JSON.stringify(out.notes || {}), at: stamp(), error: '' };
+        if (rec.billPdf) p.billAt = String(b.pdf);
+        var now = find('archive', 'stay', s.id); if (now && now.dirty === mark) p.dirty = '';
+        db.set('archive', a, p); done.push(s.id);
+      } catch (e) { db.set('archive', a, { error: stamp() + ' ' + String(e && e.message || e).slice(0, 120) }); }
+    });
+    return done;
+  }
+
   function billInfo(s, b) {
     if (!b) return null;
     return { stay: s.id, no: b.data.no, id: b.data.id, url: b.data.url, sent: b.row.sent, email: s.email || '', phone: s.phone, gstin: s.gstin || '', company: s.company || '', title: s.title || '',
@@ -952,15 +1035,18 @@ function deskCore(db, hooks) {
     var data = String(req.data || '').replace(/^data:image\/\w+;base64,/, '');
     if (!/^[A-Za-z0-9+\/=]+$/.test(data) || data.length > 4000000) fail('bad_photo');
     var day = today(), label = ID_SLOTS[kind][slot];
-    var file = hooks.savePhoto(data, 'Room ' + s.room + ' ' + String(s.guest).replace(/[^\w .-]+/g, '') + ' ' + label.replace(/[^\w ]+/g, '') + ' ' + day + '.jpg', day.slice(0, 7), 'Nikadi Guest IDs');
-    idsOf(s.id).forEach(function (x) { if (x.kind === kind && Number(x.slot) === slot) db.set('guestids', x, { removed: 'Replaced ' + stamp() + ' · ' + me.name }); });
-    var row = db.add('guestids', { id: id('G'), at: stamp(), stay: s.id, room: s.room, guest: s.guest, kind: kind, slot: slot, label: label, file: file, by: me.name, removed: '' });
+    var folder = '';
+    try { folder = stayFolder(s); } catch (e) { folder = ''; }
+    var file = hooks.savePhoto(data, 'ID · ' + label.replace(/[^\w ()]+/g, ' ').replace(/\s+/g, ' ') + ' · ' + String(s.guest).replace(/[^\w .-]+/g, '') + '.jpg', day.slice(0, 7), 'Nikadi Guest IDs', folder);
+    idsOf(s.id).forEach(function (x) { if (x.kind === kind && Number(x.slot) === slot) { db.set('guestids', x, { removed: 'Replaced ' + stamp() + ' · ' + me.name }); if (hooks.trashFile) try { hooks.trashFile(x.file); } catch (e) {} } });
+    var row = db.add('guestids', { id: id('G'), at: stamp(), stay: s.id, room: s.room, guest: s.guest, kind: kind, slot: slot, label: label, file: file, by: me.name, removed: '', folder: folder });
+    archiveMark(s.id);
     return { saved: idView(row), list: idsOf(s.id).map(idView) };
   };
   api.idRemove = function (req) {
     var me = auth(req); needMgr(me);
     var x = find('guestids', 'id', req.id) || fail('not_found');
-    if (!x.removed) db.set('guestids', x, { removed: stamp() + ' · ' + me.name });
+    if (!x.removed) { db.set('guestids', x, { removed: stamp() + ' · ' + me.name }); if (hooks.trashFile) try { hooks.trashFile(x.file); } catch (e) {} archiveMark(x.stay); }
     return { list: idsOf(x.stay).map(idView) };
   };
   function comView(c) {
@@ -1127,7 +1213,12 @@ function deskCore(db, hooks) {
     return { bill: billInfo(s, b), emailed: s.email };
   };
   /* Runs the automatic emails (called by a timer in Google, and when the app is used). */
-  api._sendDue = function () { return { sent: sendDue() }; };
+  api.driveInfo = function (req) {
+    var me = auth(req); needMgr(me);
+    var a = find('archive', 'stay', req.stay);
+    return { folder: a && a.folder ? a.folder : '', at: a ? a.at : '', waiting: !!(a && a.dirty) };
+  };
+  api._sendDue = function (opt) { var arch = opt && opt.archive ? archiveRun(opt.limit || 8) : []; return { sent: sendDue(), archived: arch }; };
   /* Recent bills for the front desk list. */
   api.bills = function (req) {
     var me = auth(req); needMgr(me);

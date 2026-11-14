@@ -259,7 +259,7 @@
         '<div class="idc-info"><input class="input" id="idc-g" placeholder="Guest name (printed on top, optional)" maxlength="60" value="' + esc(state.info.guest) + '"><input class="input" id="idc-r" placeholder="Room" maxlength="10" value="' + esc(state.info.room) + '"></div>') +
         '<div class="idc-actions"><button class="btn btn-gold" type="button" id="idc-print">🖨 Print A4</button><button class="btn btn-line" type="button" id="idc-pdf">Download PDF</button><button class="btn btn-quiet" type="button" id="idc-clear">Clear page</button></div></div>' +
         '<p class="small">Drag a photo of the ID onto a box, or tap a box to take / choose a photo. The ID is found, cut out from the background, straightened and sharpened automatically. Tap <b>Adjust</b> if the corners need fixing. ' +
-        (st ? 'Each copy is <b>saved to this stay</b> (private Google Drive folder “Nikadi Guest IDs”), so you can open and print it again later.' : 'Photos stay on this device only and are not saved anywhere.') + '</p>' +
+        (st ? 'Each copy is <b>saved to this stay</b> in Google Drive (Nikadi Guest House Records › year › month › check-in day), so you can open and print it again later.' : 'Photos stay on this device only and are not saved anywhere.') + '</p>' +
         '<div class="idc-sheet idc-' + state.kind + '"><div class="idc-page">' +
         '<div class="idc-head"><b>Nikadi Guest House</b><span>' + esc([state.info.guest, state.info.room ? 'Room ' + state.info.room : '', state.info.date].filter(Boolean).join(' · ')) + '</span></div>' +
         '<div class="idc-grid" style="grid-template-columns:repeat(' + L.cols + ',' + L.w + 'mm);column-gap:' + L.gapX + 'mm;row-gap:' + L.gapY + 'mm">' +

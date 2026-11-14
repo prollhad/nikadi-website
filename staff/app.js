@@ -398,6 +398,7 @@
     if (m && s.notes) h += '<div class="note"><b>Notes</b>' + esc(s.notes) + '</div>';
     if (m && s.booking) h += '<button class="linkbtn" type="button" id="b-bk">From booking ' + esc(s.booking) + ' →</button>';
     if (m) h += '<button class="idc-room ' + (s.ids ? 'has' : 'none') + '" type="button" id="b-ids">' + ICON.idcopy + '<span><b>ID copies' + (s.ids ? ' · ' + s.ids + ' saved' : '') + '</b><small>' + (s.ids ? 'Open, add more or print on A4' : 'No ID saved yet for this stay · add Aadhaar, licence or passport') + '</small></span><i aria-hidden="true">›</i></button>';
+    if (s.drive) h += '<a class="linkbtn" href="' + esc(s.drive) + '" target="_blank" rel="noopener">Open this stay in Google Drive (details, bill, IDs) →</a>';
     if (m) {
       h += '<div class="bill"><h3>Bill</h3>' +
         '<div class="bl sum"><span class="t">Room · ' + s.nights + (s.nights > 1 ? ' nights' : ' night') + ' × ' + inr(s.rate) + '</span><span class="d">' + esc(s.rateNote || 'Agreed rate per night') + '</span><span class="a">' + inr(s.roomTotal) + '</span></div>' +
@@ -1897,7 +1898,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 24</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 25</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
