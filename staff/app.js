@@ -109,6 +109,24 @@
   var ICON_SHARE = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg>';
 
   /* ---------- login ---------- */
+  /* Location + device, sent with log-in and log-out (attendance for reception and managers). */
+  function deviceName() {
+    var u = navigator.userAgent || '', os = /Windows/.test(u) ? 'Windows PC' : /Mac OS X/.test(u) && !/Mobile|iPhone|iPad/.test(u) ? 'Mac' : /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) ? 'iPad' : /Android/.test(u) ? (/Mobile/.test(u) ? 'Android phone' : 'Android tablet') : /Linux/.test(u) ? 'Linux PC' : 'Device';
+    var br = /Edg\//.test(u) ? 'Edge' : /OPR\//.test(u) ? 'Opera' : /SamsungBrowser/.test(u) ? 'Samsung Internet' : /Firefox\//.test(u) ? 'Firefox' : /CriOS|Chrome\//.test(u) ? 'Chrome' : /Safari\//.test(u) ? 'Safari' : 'browser';
+    var app = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches ? ' (installed app)' : '';
+    return os + ' · ' + br + app;
+  }
+  function getLoc(ms) {
+    return new Promise(function (ok) {
+      if (!navigator.geolocation) return ok({ locErr: 'unavailable' });
+      var done = false, t = setTimeout(function () { if (!done) { done = true; ok({ locErr: 'timeout' }); } }, ms || 10000);
+      navigator.geolocation.getCurrentPosition(function (p) {
+        if (done) return; done = true; clearTimeout(t);
+        ok({ loc: { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy } });
+      }, function (e) { if (done) return; done = true; clearTimeout(t); ok({ locErr: e && e.code === 1 ? 'denied' : e && e.code === 3 ? 'timeout' : 'unavailable' }); },
+      { enableHighAccuracy: true, timeout: (ms || 10000) - 500, maximumAge: 0 });
+    });
+  }
   function renderLogin(msg) {
     closeAllSheets();
     var pin = '';
@@ -122,12 +140,17 @@
       (demo ? '<p class="small"><a href="./">Leave demo</a> · <button type="button" class="refresh" id="reset">Reset demo data</button></p>' : '') + '</div>';
     function dots() { $('#dots').innerHTML = pin.split('').map(function () { return '<i class="on"></i>'; }).join('') + (pin.length < 4 ? new Array(5 - pin.length).join('<i></i>') : ''); }
     dots();
+    var going = false;
     function go() {
-      if (pin.length < 4) return;
-      $('#lp').textContent = 'Checking…';
-      api('deskLogin', { pin: pin }).then(function (r) {
+      if (pin.length < 4 || going) return;
+      going = true;
+      $('#lp').textContent = 'Checking… (allow location if asked)';
+      getLoc(10000).then(function (L) {
+        return api('deskLogin', Object.assign({ pin: pin, device: deviceName() }, L));
+      }).then(function (r) {
         S.token = r.token; S.me = r.me; nkStore(TK, r.token); nkStore(MK, JSON.stringify(r.me)); S.tab = 'rooms'; start();
-      }, function (e) { pin = ''; dots(); $('#lp').textContent = errText(e); var d = $('#dots'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); vibrate(); });
+        if (r.attendance) setTimeout(function () { toast('Log-in recorded · ' + r.attendance); }, 600);
+      }, function (e) { going = false; pin = ''; dots(); $('#lp').textContent = errText(e); var d = $('#dots'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); vibrate(); });
     }
     $('#pad').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
@@ -146,13 +169,20 @@
   }
 
   function logout(expired) {
-    if (!expired && S.token) api('deskLogout').catch(function () {});
+    if (!expired && S.token) {
+      var tok = S.token, rec = S.me && (S.me.role === 'Receptionist' || S.me.role === 'Manager');
+      if (rec) {
+        toast('Logging out… (recording your location)');
+        getLoc(8000).then(function (L) { return api('deskLogout', Object.assign({ token: tok, device: deviceName() }, L)); }).then(function () { toast('Log-out recorded'); }, function () {});
+      } else api('deskLogout').catch(function () {});
+    }
     S.token = null; S.me = null; S.st = null; nkStore(TK, null); nkStore(MK, null);
     renderLogin(expired ? 'Please log in again' : 'Logged out');
   }
 
   /* ---------- shell: side menu on computers, tabs at the bottom on phones ---------- */
   var ICON = {
+    attendance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     bills: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2.5h12v19l-3-2-3 2-3-2-3 2z"/><path d="M9 7.5h6M9 11h6M9 14.5h4"/></svg>',
     today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
     rooms: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>',
@@ -165,10 +195,10 @@
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills' };
+  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance' };
   function navFor(desk) {
     if (!mgr()) return ['rooms', 'calendar', 'add', 'stock'];
-    if (desk) return ['today', 'rooms', 'calendar', 'bookings', 'bills', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'settings'] : []);
+    if (desk) return ['today', 'rooms', 'calendar', 'bookings', 'bills', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'attendance', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
@@ -186,7 +216,7 @@
   }
   function go(tab) {
     closeAllSheetsQuiet();
-    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; nav(); render(); window.scrollTo(0, 0);
+    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; nav(); render(); window.scrollTo(0, 0);
     if (tab === 'calendar' || tab === 'bookings') loadExtra();
   }
 
@@ -205,7 +235,7 @@
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -220,7 +250,7 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills }[S.tab] || viewRooms)(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance }[S.tab] || viewRooms)(v);
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -1435,13 +1465,78 @@
     $$('[data-i]', v).forEach(function (x) { x.onclick = function () { openBill({ stay: L[+x.dataset.i].stay, no: L[+x.dataset.i].no }); }; });
   }
 
+  /* ---------- Attendance (owner only) ---------- */
+  var ATT = { data: null, range: 'week', name: '' };
+  function attRange(k) {
+    var t = S.st ? S.st.today : new Date().toISOString().slice(0, 10), y = +t.slice(0, 4), m = +t.slice(5, 7);
+    function add(d, n) { var x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
+    if (k === 'today') return [t, t];
+    if (k === 'week') return [add(t, -6), t];
+    if (k === 'month') return [t.slice(0, 8) + '01', t];
+    var pm = m === 1 ? 12 : m - 1, py = m === 1 ? y - 1 : y, last = new Date(Date.UTC(py, pm, 0)).getUTCDate();
+    return [py + '-' + String(pm).padStart(2, '0') + '-01', py + '-' + String(pm).padStart(2, '0') + '-' + last];
+  }
+  function hm(a, b) { // minutes between two 'yyyy-MM-dd HH:mm'
+    function t(x) { var m = /^(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d)/.exec(String(x || '')); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 : null; }
+    var x = t(a), y = t(b); return x != null && y != null && y >= x ? y - x : null;
+  }
+  function dur(min) { if (min == null) return '—'; var h = Math.floor(min / 60), m = min % 60; return h + 'h ' + String(m).padStart(2, '0') + 'm'; }
+  function placeTag(place, lat, lng, acc) {
+    var k = /^At the guest house/.test(place || '') ? 'ok' : /away$/.test(place || '') ? 'bad' : /^Location saved/.test(place || '') ? 'wait' : 'warn';
+    var link = lat !== '' && lat != null && lng !== '' && lng != null ? 'https://www.google.com/maps?q=' + lat + ',' + lng : '';
+    return '<span class="ptag k-' + k + '">' + esc(place || '—') + '</span>' + (link ? ' <a class="maplink" href="' + link + '" target="_blank" rel="noopener">map' + (acc ? ' ±' + (acc >= 1000 ? (acc / 1000).toFixed(1) + ' km' : acc + ' m') : '') + '</a>' : '');
+  }
+  function viewAttendance(v) {
+    if (!owner()) { v.innerHTML = '<p class="small">Only the owner can see this.</p>'; return; }
+    if (!ATT.data) {
+      v.innerHTML = '<div><p class="kicker">Owner only</p><h1>Attendance</h1></div><div class="loading">Loading…</div>';
+      var r0 = attRange(ATT.range);
+      api('deskAttendance', { from: r0[0], to: r0[1], name: ATT.name }).then(function (r) { ATT.data = r; if (S.tab === 'attendance') render(); }, function (e) { toast(errText(e)); });
+      return;
+    }
+    var d = ATT.data, rows = d.rows, now = rows.filter(function (r) { return r.now; });
+    var tot = {}; rows.forEach(function (r) { var m = hm(r.inAt, r.outAt || (r.now ? null : r.lastSeen)); var t = tot[r.name] || (tot[r.name] = { days: {}, min: 0, away: 0 }); t.days[String(r.inAt).slice(0, 10)] = 1; if (m) t.min += m; if (!/^At the guest house/.test(r.inPlace || '')) t.away++; });
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Owner only · reception and managers</p><h1>Attendance</h1></div><button class="btn btn-quiet" type="button" id="arf">Refresh</button></div>' +
+      '<div class="panel"><div class="sec-h"><h2>Logged in now</h2></div>' + (now.length ? '<div class="list">' + now.map(function (r) {
+        return '<div class="bl"><span class="t"><b>' + esc(r.name) + '</b><small>' + esc(r.role) + ' · since ' + esc(tShort(r.inAt)) + ' · ' + esc(r.inDevice || '') + '</small></span><span class="a">' + placeTag(r.inPlace, r.inLat, r.inLng, r.inAcc) + '</span></div>';
+      }).join('') + '</div>' : '<p class="small">Nobody from reception or management is logged in right now.</p>') + '</div>' +
+      '<div class="att-filters">' + seg('arange', ['Today', 'Last 7 days', 'This month', 'Last month'], { today: 'Today', week: 'Last 7 days', month: 'This month', last: 'Last month' }[ATT.range]) +
+      '<select class="input" id="aname"><option value="">Everyone</option>' + d.people.map(function (p) { return '<option' + (p.name === ATT.name ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
+      (Object.keys(tot).length ? '<div class="kpis">' + Object.keys(tot).map(function (n) { var t = tot[n]; return '<div class="kpi"><span>' + esc(n) + '</span><b>' + dur(t.min) + '</b><small>' + Object.keys(t.days).length + ' day' + (Object.keys(t.days).length > 1 ? 's' : '') + (t.away ? ' · ' + t.away + ' log-in' + (t.away > 1 ? 's' : '') + ' not at the guest house' : '') + '</small></div>'; }).join('') + '</div>' : '') +
+      '<div class="panel"><div class="sec-h"><h2>Log-ins and log-outs</h2><span class="small">' + esc(dShort(d.from)) + ' – ' + esc(dShort(d.to)) + '</span></div>' +
+      (rows.length ? '<div class="tbl-wrap"><table class="tbl att"><thead><tr><th>Person</th><th>Logged in</th><th>Logged out</th><th class="r">Time</th></tr></thead><tbody>' + rows.map(function (r) {
+        var m = hm(r.inAt, r.outAt);
+        return '<tr><td><b>' + esc(r.name) + '</b><small>' + esc(r.role) + '</small></td>' +
+          '<td>' + esc(tShort(r.inAt)) + '<small>' + placeTag(r.inPlace, r.inLat, r.inLng, r.inAcc) + '</small><small class="dev">' + esc(r.inDevice || '') + '</small></td>' +
+          '<td>' + (r.now ? '<span class="ptag k-ok">Still logged in</span>' : esc(tShort(r.outAt)) + '<small>' + (r.outHow === 'Logged out' ? placeTag(r.outPlace, r.outLat, r.outLng, r.outAcc) : '<span class="ptag k-warn">' + esc(r.outHow) + (r.outAt ? ' · last active' : '') + '</span>') + '</small>' + (r.outDevice && r.outDevice !== r.inDevice ? '<small class="dev">' + esc(r.outDevice) + '</small>' : '')) + '</td>' +
+          '<td class="r">' + (r.now ? 'now' : dur(m)) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="small">No log-ins in this period.</p>') + '</div>' +
+      '<div class="panel"><div class="sec-h"><h2>Guest house location</h2></div>' +
+      (d.home ? '<p class="small">Set at ' + d.home.lat.toFixed(5) + ', ' + d.home.lng.toFixed(5) + ' · counts as “at the guest house” within ' + d.home.radius + ' m. <a class="maplink" href="https://www.google.com/maps?q=' + d.home.lat + ',' + d.home.lng + '" target="_blank" rel="noopener">map</a></p>'
+        : '<p class="small">Not set yet. Open this page once on the reception PC at the guest house and tap the button, so every log-in shows “At the guest house” or how far away it was.</p>') +
+      '<button class="btn btn-line" type="button" id="ahome">Use this device\'s location as the guest house</button><p class="err" id="aerr" role="alert"></p>' +
+      '<p class="small">Reception and managers are asked for their location when they log in and out, and their log-in lasts until 4 AM, so each working day starts with a fresh log-in. If someone blocks location, it shows here.</p></div>';
+    wireSegs(v, function () {
+      ATT.range = { 'Today': 'today', 'Last 7 days': 'week', 'This month': 'month', 'Last month': 'last' }[segVal(v, 'arange')] || 'week'; ATT.data = null; render();
+    });
+    $('#aname', v).onchange = function () { ATT.name = this.value; ATT.data = null; render(); };
+    $('#arf', v).onclick = function () { ATT.data = null; render(); };
+    $('#ahome', v).onclick = function () {
+      var x = this; busy(x, true); $('#aerr', v).textContent = '';
+      getLoc(15000).then(function (L) {
+        if (!L.loc) { busy(x, false); $('#aerr', v).textContent = L.locErr === 'denied' ? 'Location is blocked for this site. Allow it in the browser settings and try again.' : 'Could not get the location. Try again.'; return; }
+        return api('deskAttendancePlace', { loc: L.loc }).then(function () { toast('Guest house location saved'); ATT.data = null; render(); }, function (e) { busy(x, false); $('#aerr', v).textContent = errText(e); });
+      });
+    };
+  }
+
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
     var list = [['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
-      ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
+      ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff log-in / log-out with place (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 15</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 17</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

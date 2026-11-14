@@ -2,7 +2,7 @@
    Runs the real staff logic (logic.js) on sample data kept only on this phone.
    Demo PINs: 1111 Owner · 2222 Reception (Manager) · 3333 Housekeeping (Staff) */
 (function (root) {
-  var KEY = 'nikadi-staff-demo-v6';
+  var KEY = 'nikadi-staff-demo-v7';
 
   function memoryDb(data) {
     return {
@@ -94,6 +94,7 @@
       }
     })();
     data.tables.sessions = [];
+    data.tables.attendance = []; // seeding logs in as reception; don't show that as attendance
     return data;
   }
 

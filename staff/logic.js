@@ -8,7 +8,10 @@ var DESK_TZ_MIN = 330; // India Standard Time, UTC+5:30 (no daylight saving)
 var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
 var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
 var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
-var DESK_BILL_PREFIX = 'NGH'; // invoice numbers: NGH/26-27/0001 (restarts every financial year, 1 April)
+var DESK_BILL_PREFIX = 'NGH';
+/* Staff attendance: these roles get a log-in / log-out record with location, and their log-in lasts one working day. */
+var DESK_ATTEND_ROLES = ['Receptionist', 'Manager'];
+var DESK_ATTEND_RADIUS = 200; // metres from the guest house that count as "At the guest house" (plus the reading's own accuracy) // invoice numbers: NGH/26-27/0001 (restarts every financial year, 1 April)
 /* Government codes for things sold to rooms. Used when the Items sheet has no code of its own.
    [HSN/SAC, GST %, unit, name printed on the bill] */
 var DESK_HSN = {
@@ -52,7 +55,12 @@ var DESK_SCHEMA = {
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
   staff: { sheet: 'Staff', cols: [['name', 'Name'], ['pin', 'PIN', 's'], ['role', 'Role'], ['active', 'Active']] },
-  sessions: { sheet: 'Staff sessions', hidden: true, cols: [['token', 'Token', 's'], ['name', 'Name'], ['role', 'Role'], ['expires', 'Expires', 't']] }
+  sessions: { sheet: 'Staff sessions', hidden: true, cols: [['token', 'Token', 's'], ['name', 'Name'], ['role', 'Role'], ['expires', 'Expires', 't']] },
+  attendance: { sheet: 'Staff attendance', lazy: true, cols: [['id', 'ID'], ['name', 'Name'], ['role', 'Role'], ['inAt', 'Logged in', 't'], ['inPlace', 'Log-in place'],
+    ['inLat', 'Log-in latitude', 'n'], ['inLng', 'Log-in longitude', 'n'], ['inAcc', 'Log-in accuracy (m)', 'n'], ['inDevice', 'Log-in device'],
+    ['outAt', 'Logged out', 't'], ['outPlace', 'Log-out place'], ['outLat', 'Log-out latitude', 'n'], ['outLng', 'Log-out longitude', 'n'], ['outAcc', 'Log-out accuracy (m)', 'n'],
+    ['outDevice', 'Log-out device'], ['outHow', 'How it ended'], ['lastSeen', 'Last active', 't'], ['session', 'Session (system)', 's']] },
+  config: { sheet: 'Staff app settings', lazy: true, hidden: true, cols: [['key', 'Setting'], ['value', 'Value', 's']] }
 };
 
 var DESK_DEFAULTS = {
@@ -168,7 +176,9 @@ function deskCore(db, hooks) {
     if (s.expires < stamp()) fail('session_expired');
     var person = find('staff', 'name', s.name);
     if (!person || !yes(person.active) || person.role !== s.role) fail('not_logged_in');
-    return { name: s.name, role: s.role };
+    var me = { name: s.name, role: s.role };
+    if (!req._noSeen) seen(me, t);
+    return me;
   }
 
   /* ---- stock ---- */
@@ -372,6 +382,43 @@ function deskCore(db, hooks) {
   }
   function checkedOut(req) { var s = stay(req.id); if (s.status !== 'Checked out') fail('not_checked_out'); return s; }
 
+  /* ---- staff attendance (log-in / log-out with location) ---- */
+  function cfgGet(k) { var r = find('config', 'key', k); return r ? r.value : ''; }
+  function cfgSet(k, v) { var r = find('config', 'key', k); if (r) db.set('config', r, { value: String(v) }); else db.add('config', { key: k, value: String(v) }); }
+  function home() { var v = String(cfgGet('home') || '').split(','); return v.length >= 2 && !isNaN(+v[0]) && !isNaN(+v[1]) && v[0] !== '' ? { lat: +v[0], lng: +v[1], radius: +(v[2] || DESK_ATTEND_RADIUS) } : null; }
+  function metres(a, b) {
+    var R = 6371000, r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+    var x = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return Math.round(2 * R * Math.asin(Math.sqrt(x)));
+  }
+  function readLoc(req) {
+    var l = req.loc || {}, lat = Number(l.lat), lng = Number(l.lng), acc = Math.round(Number(l.acc) || 0);
+    var dev = text(req.device, 80);
+    if (!(lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) || (lat === 0 && lng === 0)) {
+      var why = { denied: 'Location blocked', unavailable: 'Location not available', timeout: 'Location timed out' }[String(req.locErr || '')] || 'No location';
+      return { place: why, lat: '', lng: '', acc: '', device: dev };
+    }
+    var h = home(), place;
+    if (!h) place = 'Location saved (guest house spot not set)';
+    else { var m = metres(h, { lat: lat, lng: lng }); place = m <= h.radius + Math.min(acc, 1500) ? 'At the guest house' : (m >= 1000 ? (m / 1000).toFixed(1) + ' km' : m + ' m') + ' away'; }
+    return { place: place, lat: lat, lng: lng, acc: acc, device: dev };
+  }
+  function tokenKey(t) { return String(t || '').slice(-14); }
+  function openEntries(name) { return db.all('attendance').filter(function (a) { return a.name === name && !a.outAt; }); }
+  function closeEntry(a, how, at, loc) {
+    var p = { outAt: at || a.lastSeen || a.inAt, outHow: how };
+    if (loc) { p.outPlace = loc.place; p.outLat = loc.lat; p.outLng = loc.lng; p.outAcc = loc.acc; p.outDevice = loc.device; }
+    db.set('attendance', a, p);
+  }
+  function workdayEnd() { var d = ist(Date.now() + (ist().getUTCHours() < 4 ? 0 : 864e5)); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + ' 04:00'; }
+  function seen(me, token) { // keeps "last active" so a forgotten log-out still shows when they stopped
+    if (DESK_ATTEND_ROLES.indexOf(me.role) < 0) return;
+    try {
+      var k = tokenKey(token), a = db.all('attendance').filter(function (x) { return x.session === k && !x.outAt; })[0];
+      if (a && (!a.lastSeen || plusHours(a.lastSeen, 0.17) < stamp())) db.set('attendance', a, { lastSeen: stamp() });
+    } catch (e) {}
+  }
+
   var api = {};
 
   api.login = function (req) {
@@ -382,14 +429,26 @@ function deskCore(db, hooks) {
     if (!person) { db.kvSet('pin_fails', String(fails + 1), 900); fail('wrong_pin'); }
     if (ROLES.indexOf(person.role) < 0) fail('bad_role');
     var token = id('T') + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-    var d = ist(Date.now() + 30 * 864e5);
+    var d = ist(Date.now() + 30 * 864e5), attend = DESK_ATTEND_ROLES.indexOf(person.role) >= 0;
     db.add('sessions', { token: token, name: person.name, role: person.role,
-      expires: d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + ' 00:00' });
-    return { token: token, me: { name: person.name, role: person.role } };
+      expires: attend ? workdayEnd() : d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + ' 00:00' });
+    var where = null;
+    if (attend) {
+      openEntries(person.name).forEach(function (a) { closeEntry(a, 'No log-out (closed at next log-in)'); });
+      var L = readLoc(req);
+      db.add('attendance', { id: id('A'), name: person.name, role: person.role, inAt: stamp(), inPlace: L.place, inLat: L.lat, inLng: L.lng, inAcc: L.acc, inDevice: L.device,
+        outAt: '', outPlace: '', outLat: '', outLng: '', outAcc: '', outDevice: '', outHow: '', lastSeen: stamp(), session: tokenKey(token) });
+      where = L.place;
+    }
+    return { token: token, me: { name: person.name, role: person.role }, attendance: where };
   };
 
   api.logout = function (req) {
     var s = find('sessions', 'token', req.token);
+    if (s && DESK_ATTEND_ROLES.indexOf(s.role) >= 0) {
+      var k = tokenKey(req.token), L = readLoc(req);
+      db.all('attendance').filter(function (a) { return a.session === k && !a.outAt; }).forEach(function (a) { closeEntry(a, 'Logged out', stamp(), L); });
+    }
     if (s) db.set('sessions', s, { expires: '2000-01-01 00:00' });
     return {};
   };
@@ -611,6 +670,32 @@ function deskCore(db, hooks) {
     recompute(s);
     afterChange(s, me, s.roomTotal);
     return { stay: stayView(s, me) };
+  };
+
+  /* Owner only: who logged in and out, when and where. */
+  api.attendance = function (req) {
+    var me = auth(req); needOwner(me);
+    var from = isYmd(req.from) ? req.from : addDays(today(), -6), to = isYmd(req.to) ? req.to : today();
+    var live = {};
+    db.all('sessions').forEach(function (x) { if (x.expires > stamp()) live[tokenKey(x.token)] = true; });
+    var rows = db.all('attendance').filter(function (a) { var d = String(a.inAt).slice(0, 10); return d >= from && d <= to && (!req.name || a.name === req.name); })
+      .map(function (a) {
+        var open = !a.outAt, on = open && live[a.session];
+        return { id: a.id, name: a.name, role: a.role, inAt: a.inAt, inPlace: a.inPlace, inLat: a.inLat, inLng: a.inLng, inAcc: a.inAcc, inDevice: a.inDevice,
+          outAt: a.outAt || (on ? '' : a.lastSeen), outPlace: a.outPlace, outLat: a.outLat, outLng: a.outLng, outAcc: a.outAcc, outDevice: a.outDevice,
+          outHow: a.outHow || (on ? 'Still logged in' : 'No log-out'), lastSeen: a.lastSeen, now: !!on };
+      }).reverse();
+    var people = db.all('staff').filter(function (p) { return DESK_ATTEND_ROLES.indexOf(p.role) >= 0; }).map(function (p) { return { name: p.name, role: p.role, active: yes(p.active) }; });
+    return { from: from, to: to, rows: rows, people: people, home: home(), roles: DESK_ATTEND_ROLES };
+  };
+  /* Owner: "this device is at the guest house" (or type the spot), used to say "At the guest house" or how far away. */
+  api.attendancePlace = function (req) {
+    var me = auth(req); needOwner(me);
+    var l = req.loc || {}, lat = Number(l.lat), lng = Number(l.lng), r = Math.round(Number(req.radius) || DESK_ATTEND_RADIUS);
+    if (!(lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) || (lat === 0 && lng === 0)) fail('bad_location');
+    if (!(r >= 30 && r <= 2000)) fail('bad_radius');
+    cfgSet('home', lat.toFixed(6) + ',' + lng.toFixed(6) + ',' + r);
+    return { home: home() };
   };
 
   /* Add or correct the transaction / reference number of a payment (no money changes). After check-out: Manager / Owner only. */

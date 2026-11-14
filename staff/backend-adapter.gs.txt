@@ -8,7 +8,7 @@ function deskDb_() {
   function sh(t) {
     var def = DESK_SCHEMA[t], s = ss.getSheetByName(def.sheet);
     if (!s) {
-      if (t !== 'bills' && t !== 'billpdfs') throw new Error('not_setup');
+      if (t !== 'bills' && t !== 'billpdfs' && !def.lazy) throw new Error('not_setup');
       s = ss.insertSheet(def.sheet); s.appendRow(def.cols.map(function (c) { return c[1]; }));
       s.getRange(1, 1, 1, def.cols.length).setFontWeight('bold').setBackground('#1b1714').setFontColor('#e0be7a'); s.setFrozenRows(1);
       if (def.hidden) s.hideSheet();

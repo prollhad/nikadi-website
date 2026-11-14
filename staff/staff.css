@@ -489,3 +489,12 @@ main.view{flex:1}
 .input.ro{opacity:.75}
 .billx h3{font-size:.95rem;margin:14px 0 6px}
 .edit-cta{width:100%;margin:4px 0 2px}
+/* attendance */
+.ptag{display:inline-block;border-radius:999px;padding:2px 9px;font-size:.75rem;line-height:1.5;border:1px solid var(--line)}
+.ptag.k-ok{background:rgba(80,170,120,.14);border-color:rgba(80,170,120,.4);color:#9fdcb8}
+.ptag.k-bad{background:rgba(220,90,80,.14);border-color:rgba(220,90,80,.45);color:#f2a39b}
+.ptag.k-warn{background:rgba(230,150,80,.12);border-color:rgba(230,150,80,.4);color:#f0b98a}
+.ptag.k-wait{background:rgba(224,190,122,.10);border-color:rgba(224,190,122,.35);color:var(--gold-hi,#e0be7a)}
+.maplink{font-size:.75rem;color:var(--muted);margin-left:4px}
+.att-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}.att-filters .seg{flex:1 1 320px}.att-filters select{flex:0 1 200px}
+.tbl.att td small{display:block;margin-top:4px}.tbl.att td small.dev{color:var(--muted);font-size:.72rem}
