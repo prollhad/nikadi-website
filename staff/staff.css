@@ -581,3 +581,6 @@ body{overscroll-behavior:none;overflow-x:hidden;max-width:100vw}
 button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-select:none;user-select:none}
 /* iPhone zooms into any text box smaller than 16px when tapped */
 @media (pointer:coarse){input,select,textarea,.input{font-size:16px!important}}
+/* Reverse a mistaken check-out */
+.undo-box{margin-top:14px;border:1px dashed var(--line);border-radius:var(--r-sm);padding:14px;display:grid;gap:6px;background:var(--band)}
+.undo-box span{color:var(--muted);font-size:.9rem}.undo-box .btn{justify-self:start;width:auto}

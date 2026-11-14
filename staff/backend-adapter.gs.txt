@@ -77,6 +77,7 @@ function deskHandle_(req) {
   var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
+    onCheckoutUndo: typeof memberCheckoutUndo_ === 'function' ? memberCheckoutUndo_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,

@@ -302,6 +302,7 @@ function deskCore(db, hooks) {
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
+      if (s.status === 'Checked out') { var ub = undoBlock(s); v.undo = ub === 'undo_too_late' ? '' : ub || 'ok'; }
       v.ids = db.all('guestids').filter(function (x) { return x.stay === s.id && !x.removed; }).length;
       var ar = find('archive', 'stay', s.id); if (canApprove(me) && ar && ar.folder) v.drive = 'https://drive.google.com/drive/folders/' + ar.folder;
       v.advancePays = s.booking ? bookingPays(s.booking).filter(function (p) { return Number(p.amount) > 0; }).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: 'Advance · booking ' + s.booking }; }) : [];
@@ -1178,7 +1179,59 @@ function deskCore(db, hooks) {
     var bm = memBefore ? { level: memBefore.tier, earned: member ? member.points : null, balance: member ? member.balance : memBefore.points } : null;
     if (bm) { var r0 = find('rooms', 'room', s.room); if (r0 && Number(r0.rate) > Number(s.rate)) bm.saved = (Number(r0.rate) - Number(s.rate)) * nights; }
     var b = saveBill(s, me, bm); // emailed automatically DESK_BILL_DELAY_HOURS after check-out
+    /* the check-out was reversed earlier: same invoice number, dated today, sending switched back on */
+    if (/^On hold/.test(String(b.row.status || ''))) {
+      pdfClear(b.row.id);
+      db.set('bills', b.row, { at: stamp(), status: s.email ? 'Scheduled' : 'No email', sendAt: plusHours(stamp(), DESK_BILL_DELAY_HOURS), wa: s.phone ? 'Waiting' : 'No phone', pdf: '' });
+    }
     return { stay: stayView(s, me), member: member, bill: billInfo(s, b), emailed: '' };
+  };
+
+  /* A guest was checked out by mistake and is still staying. Manager / Owner reverse it at once; a receptionist's
+     reverse goes to them as a request. The stay is In house again, the room Occupied, the bill is put on hold
+     (nothing is emailed or sent; the same invoice number is used at the real check-out) and the member points
+     given for the stay are taken back until then. Possible within DESK_UNDO_DAYS of the check-out. */
+  var DESK_UNDO_DAYS = 7;
+  function undoBlock(s) {
+    if (s.status !== 'Checked out') return 'not_checked_out';
+    if (s.outAt && plusHours(s.outAt, DESK_UNDO_DAYS * 24) < stamp()) return 'undo_too_late';
+    var r = find('rooms', 'room', s.room);
+    if (!r) return 'no_room';
+    if (r.stay && r.stay !== s.id) return 'room_taken';
+    if (db.all('stays').some(function (x) { return x.id !== s.id && Number(x.room) === Number(s.room) && x.status === 'In house'; })) return 'room_taken';
+    return '';
+  }
+  api.undoCheckout = function (req) {
+    var me = auth(req); needMgr(me);
+    var s = stay(req.id), why = undoBlock(s);
+    if (why) fail(why);
+    var until = isYmd(req.checkout) ? req.checkout : (s.checkout > today() ? s.checkout : addDays(today(), 1));
+    if (until < today()) fail('bad_checkout_date');
+    var nights = Math.round(dayNum(until) - dayNum(s.checkin));
+    if (!(nights >= 1 && nights <= 365)) fail('bad_nights');
+    var clash = db.all('bookings').filter(function (b) { return b.status === 'Confirmed' && roomList(b.rooms).indexOf(Number(s.room)) >= 0 && overlaps(b.checkin, b.checkout, today(), until); })[0];
+    if (clash) fail('room_booked');
+    var reason = text(req.reason, 200); if (!reason) fail('reason_required');
+    var g = gate(me, 'undoCheckout', req, 'Room ' + s.room + ' · ' + s.guest + ': reverse the check-out (guest is still staying, now leaving ' + until + ')');
+    if (g) return g;
+    var rt0 = Number(s.roomTotal || 0);
+    var note = 'Check-out by ' + (s.outBy || '?') + ' at ' + (s.outAt || '?') + ' reversed by ' + who(me, req) + ' ' + stamp() + ': ' + reason;
+    db.set('stays', s, { status: 'In house', nights: nights, checkout: until, outBy: '', outAt: '', notes: text((s.notes ? s.notes + ' · ' : '') + note, 1000) });
+    recompute(s);
+    db.set('rooms', find('rooms', 'room', s.room), { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
+    if (s.phone && rt0 > 0) {
+      try {
+        if (hooks.onCheckoutUndo) hooks.onCheckoutUndo({ id: s.id, phone: s.phone, room: s.room, roomTotal: rt0, checkin: s.checkin });
+        else if (hooks.onStayChange) hooks.onStayChange({ id: s.id, phone: s.phone, room: s.room, nights: 0, checkin: s.checkin, checkout: s.checkin, roomTotal: 0, before: rt0 });
+      } catch (e) {}
+    }
+    var row = billOfStay(s.id);
+    if (row) {
+      pdfClear(row.id);
+      db.set('bills', row, { status: 'On hold · check-out reversed', wa: row.wa === 'Waiting' ? 'On hold' : row.wa, pdf: '', edited: stamp() + ' · ' + me.name + ' · check-out reversed' });
+    }
+    archiveMark(s.id);
+    return { stay: stayView(s, me) };
   };
 
   /* Bills. Front desk can see, download, WhatsApp and email them; only a Manager or the Owner can change them. */
@@ -1564,7 +1617,7 @@ function deskCore(db, hooks) {
   };
 
   /* ================= Approvals ================= */
-  var APPROVABLE = ['editCharge', 'refund', 'voidPayment', 'updateStay', 'bookingUpdate', 'bookingCancel', 'bookingRefund'];
+  var APPROVABLE = ['editCharge', 'refund', 'voidPayment', 'updateStay', 'bookingUpdate', 'bookingCancel', 'bookingRefund', 'undoCheckout'];
   function reqView(r) { return { id: r.id, at: r.at, by: r.by, type: r.type, summary: r.summary, reason: r.reason, status: r.status, decidedBy: r.decidedBy, decidedAt: r.decidedAt, decisionNote: r.decisionNote }; }
   api.requests = function (req) {
     var me = auth(req); needMgr(me);
@@ -1988,6 +2041,7 @@ function deskHandle_(req) {
   var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
+    onCheckoutUndo: typeof memberCheckoutUndo_ === 'function' ? memberCheckoutUndo_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,

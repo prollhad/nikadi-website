@@ -296,6 +296,20 @@ function memberStayPoints_(st) {
   return { name: m.name, points: pts, balance: m.points, tier: after.tier.name };
 }
 
+/** A check-out was reversed (the guest is still staying): take back the points given for that stay.
+    They are given again at the real check-out. Called from Staff.gs. */
+function memberCheckoutUndo_(st) {
+  var phone; try { phone = normPhone_(st.phone); } catch (e) { return null; }
+  var m = findMember_(phone);
+  if (!m || m.status === 'Blocked' || !(st.roomTotal > 0)) return null;
+  var t = tierOf_(m, st.id);
+  var pts = Math.floor(st.roomTotal / 100 * num_(settings_().POINTS_PER_100, 1) * t.tier.earn);
+  if (pts > m.points) pts = m.points; // never below zero
+  if (!pts) return { points: 0, balance: m.points };
+  addTx_(m, 'Stay correction', -st.roomTotal, -pts, 'Room ' + st.room + ' · check-out reversed (guest still staying) · points come back at check-out', 'Staff app');
+  return { points: -pts, balance: m.points };
+}
+
 /** A manager corrected the room charges of a stay after check-out: add or take back the difference in points. */
 function memberStayAdjust_(st) {
   var phone; try { phone = normPhone_(st.phone); } catch (e) { return null; }

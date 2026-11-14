@@ -36,6 +36,8 @@
     reason_required: 'Please write the reason. The manager sees it.', refund_too_much: 'That is more than the guest has paid.',
     no_payment: 'This payment cannot be changed.', no_request: 'Request not found.', request_done: 'Someone already decided this request.',
     refund_from_room: 'The guest has checked in: refund from their room bill instead.',
+    not_checked_out: 'This guest is not checked out.', undo_too_late: 'It is more than 7 days since the check-out.', room_taken: 'Another guest is already in this room. Move one of them to another room first.',
+    room_booked: 'This room is booked for another guest in those dates. Choose an earlier leaving date or move the booking first.', bad_checkout_date: 'The leaving date cannot be in the past.', no_room: 'This room no longer exists.',
     ask_manager_nights: 'Charging fewer nights than the guest stayed needs a manager. Ask the manager or owner to check this guest out.',
     too_early: 'This booking starts on a later date. If the guest came early, edit the booking dates first.', too_many_requests: 'Too many requests. Try again later.'
   };
@@ -419,6 +421,9 @@
         '<button class="btn btn-line" id="b-pay" type="button">Take payment</button>' +
         (s.paid > 0 ? '<button class="btn btn-quiet" id="b-ref" type="button">' + (s.balance < 0 ? 'Refund ' + inr(-s.balance) : 'Refund money') + '</button>' : '') +
         (inHouse ? '<button class="btn btn-quiet" id="b-edit" type="button">Edit / extend</button><button class="btn btn-quiet" id="b-out" type="button">Check out</button>' : '') + '</div>';
+      if (!inHouse && s.undo) h += s.undo === 'ok'
+        ? '<div class="undo-box"><b>Checked out by mistake?</b><span>If the guest is still staying, bring the room back.</span><button class="btn btn-line" id="b-undo" type="button">' + (rcp() ? 'Ask manager to reverse check-out' : 'Reverse check-out') + '</button></div>'
+        : '<p class="small">Check-out can\'t be reversed now: ' + esc(errText(s.undo)) + '</p>';
     } else {
       h += '<div class="bill"><h3>Items given</h3>' + (s.charges.length ? s.charges.map(function (c) {
         return '<div class="bl"><span class="t">' + esc(c.qty + ' × ' + c.item) + (c.free ? '<span class="free">Free' + (c.note ? ' (' + esc(freeWhy(c.note)) + ')' : '') + '</span>' : '') + '</span><span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + '</span></div>';
@@ -437,10 +442,31 @@
     if ((b = $('#b-ref', body))) b.onclick = function () { openRefund('stay', s, body); };
     if (m) $$('[data-pay].tap', body).forEach(function (row) { row.onclick = function () { var p = s.payments.filter(function (x) { return x.id === row.dataset.pay; })[0]; if (p) openVoid(p, 'stay', body); }; });
     if ((b = $('#b-out', body))) b.onclick = function () { openCheckOut(s, body); };
+    if ((b = $('#b-undo', body))) b.onclick = function () { openUndoCheckout(s, body); };
     if (m) $$('[data-charge]', body).forEach(function (row) {
       row.onclick = function () { var c = s.charges.filter(function (x) { return x.id === row.dataset.charge; })[0]; if (c) openEditCharge(c, s, body); };
     });
   }
+
+  /* Checked out by mistake: Manager / Owner reverse it at once, a receptionist sends it for approval */
+  function openUndoCheckout(s, parentBody) {
+    var t = S.st.today, tmr = addDaysYmd(t, 1), def = s.checkout > t ? s.checkout : tmr;
+    var body = openSheet('Reverse check-out · Room ' + s.room);
+    body.innerHTML = '<p class="small"><b>' + esc(s.guest) + '</b> was checked out by ' + esc(s.outBy || '—') + (s.outAt ? ' at ' + esc(tShort(s.outAt)) : '') + '.</p>' +
+      '<div class="note"><b>What happens</b>The guest is shown as staying again and Room ' + esc(s.room) + ' is occupied. The bill is put on hold (nothing is emailed or sent on WhatsApp) and keeps the same invoice number for the real check-out. Member points for this stay come back at the real check-out.</div>' +
+      (rcp() ? '<div class="note gold"><b>Needs approval</b>This is sent to the manager. The room comes back once they approve it.</div>' : '') +
+      field('Guest now leaving on', '<input class="input" id="u-out" type="date" min="' + esc(t) + '" value="' + esc(def) + '">', true) +
+      reasonField('u-why', 'e.g. Wrong room checked out, guest is still staying') +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">' + goLabel('Reverse check-out') + '</button>';
+    $('#go', body).onclick = function () {
+      var x = this;
+      if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = 'Tap again to confirm'; return; }
+      submit(x, $('#err', body), 'deskUndoCheckout', { id: s.id, checkout: $('#u-out', body).value, reason: $('#u-why', body).value }, function (r) {
+        vibrate(); toast('Check-out reversed · Room ' + s.room + ' is occupied again'); closeSheet(); if (r.stay) drawStay(parentBody, r.stay); refresh();
+      });
+    };
+  }
+  function addDaysYmd(ymd, n) { var p = String(ymd).split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)); return d.toISOString().slice(0, 10); }
 
   function freeWhy(note) { note = String(note || ''); return /^Check-in/.test(note) ? 'check-in' : /^Daily housekeeping/.test(note) ? note.replace(/^Daily housekeeping \(day (\d+)\).*/, 'daily · day $1') : note; }
   function serviceBox(sv) {
@@ -1486,7 +1512,7 @@
   }
 
   /* ---------- Approvals (managers) / My requests (reception) ---------- */
-  var TYPE_LABEL = { editCharge: 'Bill item', refund: 'Refund', voidPayment: 'Payment correction', updateStay: 'Rate change', bookingUpdate: 'Rate change', bookingCancel: 'Cancellation', bookingRefund: 'Refund' };
+  var TYPE_LABEL = { editCharge: 'Bill item', refund: 'Refund', voidPayment: 'Payment correction', updateStay: 'Rate change', bookingUpdate: 'Rate change', bookingCancel: 'Cancellation', bookingRefund: 'Refund', undoCheckout: 'Reverse check-out' };
   var REQ = null;
   function viewApprovals(v) {
     var title = approver() ? 'Approvals' : 'My requests';
@@ -1500,7 +1526,7 @@
         '</article>';
     }
     v.innerHTML = '<div class="hrow"><div><p class="kicker">Money changes</p><h1>' + title + '</h1></div><button class="refresh" id="rf" type="button">Refresh</button></div>' +
-      (approver() ? '<p class="sub">Receptionists cannot change money that is already recorded. Their requests wait here. When you approve, the change is made at once and saved with both names.</p>'
+      (approver() ? '<p class="sub">Receptionists cannot change money that is already recorded or reverse a check-out. Their requests wait here. When you approve, the change is made at once and saved with both names.</p>'
         : '<p class="sub">Changes to recorded money (refunds, removing paid items, rate changes, corrections) are sent to the manager. You see their decision here.</p>') +
       '<div class="sec-h"><h2>Waiting</h2><span class="small">' + REQ.pending.length + '</span></div>' +
       (REQ.pending.length ? '<div class="reqs">' + REQ.pending.map(function (r) { return card(r, approver()); }).join('') + '</div>' : '<div class="note ok"><b>All clear</b>Nothing is waiting for approval.</div>') +
@@ -1901,7 +1927,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 27</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 28</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
