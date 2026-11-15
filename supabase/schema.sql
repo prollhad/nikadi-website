@@ -35,3 +35,77 @@ revoke all on public.records, public.table_versions, public.kv, public.change_lo
 
 -- private file storage (ID copies, payment screenshots, bill PDFs, expense photos)
 insert into storage.buckets (id, name, public) values ('files', 'files', false) on conflict (id) do nothing;
+
+create table if not exists public.records_archive (rid bigint primary key, tbl text not null, data jsonb not null, moved_at timestamptz not null default now());
+create index if not exists records_archive_tbl on public.records_archive (tbl);
+alter table public.records_archive enable row level security;
+revoke all on public.records_archive from anon, authenticated;
+
+
+-- ===== server functions (called with the service key only) =====
+-- nk_load: rows of the given tabs (all tabs when null) + the current version of every tab
+create or replace function public.nk_load(tbls text[] default null)
+returns jsonb language sql stable security definer set search_path = public as $$
+  select jsonb_build_object(
+    'versions', coalesce((select jsonb_object_agg(tbl, ver) from table_versions), '{}'::jsonb),
+    'rows', coalesce((select jsonb_object_agg(tbl, rs) from (
+        select tbl, jsonb_agg(jsonb_build_array(rid, data) order by rid) rs from records
+        where tbls is null or tbl = any(tbls) group by tbl) x), '{}'::jsonb)
+  );
+$$;
+
+-- nk_commit: applies a list of changes in one transaction.
+--  expect: {tbl: version} the caller read; if any changed meanwhile nothing is written and {conflict:[tbls]} comes back (caller retries).
+--  ops: [{op:'add',t,data} | {op:'set',t,rid,patch} | {op:'put',t,rid,data} | {op:'del',t,rid} | {op:'arch',t,rid} | {op:'kv',k,v,sec}]
+create or replace function public.nk_commit(ops jsonb, expect jsonb default '{}'::jsonb, who text default null, act text default null)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare o jsonb; bad text[]; new_ids bigint[] := '{}'; r bigint; touched text[] := '{}'; t text; old jsonb;
+begin
+  perform pg_advisory_xact_lock(4242);
+  select array_agg(e.key) into bad from jsonb_each_text(expect) e
+    left join table_versions v on v.tbl = e.key
+    where coalesce(v.ver, 0) <> e.value::bigint;
+  if bad is not null then return jsonb_build_object('conflict', to_jsonb(bad)); end if;
+  for o in select * from jsonb_array_elements(coalesce(ops, '[]'::jsonb)) loop
+    t := o->>'t';
+    if o->>'op' = 'add' then
+      insert into records (tbl, data) values (t, o->'data') returning rid into r;
+      new_ids := new_ids || r;
+      if t <> 'sheet:Sessions' and t <> 'sessions' then insert into change_log (who, action, tbl, rid, after) values (who, act, t, r, o->'data'); end if;
+    elsif o->>'op' = 'set' then
+      update records set data = data || (o->'patch'), updated_at = now() where rid = (o->>'rid')::bigint returning data into old;
+      if t not in ('sessions', 'wifi', 'wachats', 'attendance') then insert into change_log (who, action, tbl, rid, after) values (who, act, t, (o->>'rid')::bigint, o->'patch'); end if;
+    elsif o->>'op' = 'put' then
+      update records set data = o->'data', updated_at = now() where rid = (o->>'rid')::bigint;
+    elsif o->>'op' = 'del' then
+      delete from records where rid = (o->>'rid')::bigint returning data into old;
+      if t not in ('sheet:Otps', 'sheet:Sessions', 'sessions') then insert into change_log (who, action, tbl, rid, before) values (who, coalesce(act, 'delete'), t, (o->>'rid')::bigint, old); end if;
+    elsif o->>'op' = 'arch' then
+      insert into records_archive (rid, tbl, data) select rid, tbl, data from records where rid = (o->>'rid')::bigint;
+      delete from records where rid = (o->>'rid')::bigint;
+    elsif o->>'op' = 'kv' then
+      insert into kv (k, v, until) values (o->>'k', o->>'v', case when o ? 'sec' then now() + make_interval(secs => (o->>'sec')::int) else null end)
+        on conflict (k) do update set v = excluded.v, until = excluded.until;
+    end if;
+    if t is not null and o->>'op' <> 'kv' and not (t = any(touched)) then touched := touched || t; end if;
+  end loop;
+  foreach t in array touched loop
+    insert into table_versions (tbl, ver) values (t, 1) on conflict (tbl) do update set ver = table_versions.ver + 1;
+  end loop;
+  return jsonb_build_object('ids', to_jsonb(new_ids), 'versions', coalesce((select jsonb_object_agg(tbl, ver) from table_versions where tbl = any(touched)), '{}'::jsonb));
+end $$;
+
+-- kv read (unexpired)
+create or replace function public.nk_kv(keys text[] default null)
+returns jsonb language sql stable security definer set search_path = public as $$
+  select coalesce(jsonb_object_agg(k, v), '{}'::jsonb) from kv where (keys is null or k = any(keys)) and (until is null or until > now());
+$$;
+
+-- one archived row by a field (old bills opened from their QR code)
+create or replace function public.nk_find_old(t text, field text, val text)
+returns jsonb language sql stable security definer set search_path = public as $$
+  select jsonb_build_array(rid, data) from records_archive where tbl = t and data->>field = val order by rid desc limit 1;
+$$;
+
+revoke all on function public.nk_load, public.nk_commit, public.nk_kv, public.nk_find_old from anon, authenticated, public;
+grant execute on function public.nk_load, public.nk_commit, public.nk_kv, public.nk_find_old to service_role;
