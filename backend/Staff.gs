@@ -522,9 +522,9 @@ function deskCore(db, hooks) {
     return mid;
   }
   /* Sends everything that is due: bill emails + WhatsApp bills (12 h after check-out) and WhatsApp welcome / membership / booking messages. */
-  function sendDue() {
+  function sendDue(waOnly) {
     var now = stamp(), out = [], ready = waReady();
-    db.all('bills').forEach(function (row) {
+    if (!waOnly) db.all('bills').forEach(function (row) {
       if (!row.sendAt || row.sendAt > now) return;
       if (row.status === 'Scheduled' && row.email) {
         var d = JSON.parse(row.data); d.url = DESK_BILL_URL + row.id;
@@ -1389,7 +1389,7 @@ function deskCore(db, hooks) {
     var a = find('archive', 'stay', req.stay);
     return { folder: a && a.folder ? a.folder : '', at: a ? a.at : '', waiting: !!(a && a.dirty) };
   };
-  api._sendDue = function (opt) { var arch = opt && opt.archive ? archiveRun(opt.limit || 8) : []; return { sent: sendDue(), archived: arch }; };
+  api._sendDue = function (opt) { var arch = opt && opt.archive ? archiveRun(opt.limit || 8) : []; return { sent: sendDue(opt && opt.waOnly), archived: arch }; };
   /* Recent bills for the front desk list. */
   api.bills = function (req) {
     var me = auth(req); needMgr(me);
@@ -2371,7 +2371,7 @@ function deskHandle_(req) {
   if (typeof DESK_NO_LOCK_ !== 'undefined' && DESK_NO_LOCK_) return out; // read-only call without the lock: leave the bill timer to locked calls
   try { // send bills that are due (at most every 10 minutes), so emails go out even without the timer
     var c = CacheService.getScriptCache();
-    if (!c.get('desk_due_check')) { c.put('desk_due_check', '1', 600); api._sendDue(); }
+    if (!c.get('desk_due_check')) { c.put('desk_due_check', '1', 120); api._sendDue({ waOnly: true }); } // only quick WhatsApp messages here; bills go by the 15-minute timer
   } catch (e) {}
   return out;
 }

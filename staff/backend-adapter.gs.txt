@@ -141,7 +141,7 @@ function deskHandle_(req) {
   if (typeof DESK_NO_LOCK_ !== 'undefined' && DESK_NO_LOCK_) return out; // read-only call without the lock: leave the bill timer to locked calls
   try { // send bills that are due (at most every 10 minutes), so emails go out even without the timer
     var c = CacheService.getScriptCache();
-    if (!c.get('desk_due_check')) { c.put('desk_due_check', '1', 600); api._sendDue(); }
+    if (!c.get('desk_due_check')) { c.put('desk_due_check', '1', 120); api._sendDue({ waOnly: true }); } // only quick WhatsApp messages here; bills go by the 15-minute timer
   } catch (e) {}
   return out;
 }
