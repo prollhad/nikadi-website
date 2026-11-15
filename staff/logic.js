@@ -248,6 +248,21 @@ function deskCore(db, hooks) {
     if (sid) db.add('charges', { id: id('C'), at: stamp(), stay: sid, room: roomNo, item: 'Water bottle', qty: DESK_FREE_WATER, price: 0, total: 0, free: 'Yes', note: 'Check-in', by: by, removed: '' });
     if (it && yes(it.track)) moveStock(it, -DESK_FREE_WATER, 'Free at check-in (' + DESK_FREE_WATER + ' per room)', roomNo, by);
   }
+  /* Free welcome kit: staff choose Morning kit or Dental kit (or none) at check-in or later. One free line on the room, taken from stock. */
+  var KITS = { 'Morning kit': ['Morning kit (free)', 'Morning kit'], 'Dental kit': ['Dental kit'] };
+  function kitCharges(sid) { return chargesOf(sid).filter(function (c) { return c.note === 'Welcome kit'; }); }
+  function giveKit(s, kind, qty, by) {
+    if (kind && !KITS[kind]) fail('no_item');
+    qty = Math.round(Number(qty) || Number(s.guests) || 1); if (!(qty >= 1 && qty <= 20)) fail('bad_qty');
+    kitCharges(s.id).forEach(function (c) {
+      db.set('charges', c, { removed: 'Kit changed by ' + by + ' ' + stamp() });
+      var it0 = find('items', 'item', c.item); if (it0) moveStock(it0, Number(c.qty), 'Kit changed', s.room, by);
+    });
+    if (!kind) return;
+    var it = null; KITS[kind].some(function (n) { it = find('items', 'item', n); return it; });
+    db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: s.room, item: it ? it.item : kind, qty: qty, price: 0, total: 0, free: 'Yes', note: 'Welcome kit', by: by, removed: '' });
+    if (it) moveStock(it, -qty, 'Free welcome kit', s.room, by);
+  }
   /* ---- daily housekeeping checklist ---- */
   function dailyFree() {
     var out = [];
@@ -312,6 +327,7 @@ function deskCore(db, hooks) {
       if (mgr) { o.price = c.price; o.total = c.total; }
       return o;
     }).reverse();
+    var kc = kitCharges(s.id)[0]; v.kit = kc ? { kind: /dental/i.test(kc.item) ? 'Dental kit' : 'Morning kit', qty: Number(kc.qty), by: kc.by } : null;
     v.service = serviceView(s);
     var mem = s.status === 'In house' ? memberOf(s.phone) : null;
     if (mem) v.member = { name: mem.name, tier: mem.tier, tierKey: mem.tierKey, discount: mem.discount, onsite: mem.onsite, email: mgr ? mem.email || '' : '' };
@@ -767,6 +783,7 @@ function deskCore(db, hooks) {
     recompute(s);
     db.set('rooms', r, { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
     freeWater(r.room, me.name, s.id);
+    if (req.kit && KITS[req.kit]) giveKit(s, req.kit, req.kitQty || guests, me.name);
     welcomeMsgs(s);
     return { stay: stayView(s, me) };
   };
@@ -805,6 +822,14 @@ function deskCore(db, hooks) {
     db.set('stays', s, p);
     recompute(s);
     afterChange(s, me, rt0);
+    return { stay: stayView(s, me) };
+  };
+
+  api.kit = function (req) {
+    var me = auth(req), s = stay(req.id);
+    if (s.status !== 'In house') fail('not_in_house');
+    giveKit(s, req.kit || '', req.qty, me.name);
+    recompute(s);
     return { stay: stayView(s, me) };
   };
 

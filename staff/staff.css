@@ -646,3 +646,6 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .wa-send{height:44px;width:52px;padding:0;font-size:1.2rem;border-radius:12px}
 .wa-ph{display:flex;gap:8px;align-items:center}.wa-ph img{height:64px;border-radius:8px;border:1px solid var(--line)}.wa-ph .btn{width:auto}
 .wa-closed{border-color:rgba(230,150,80,.45)!important}
+.kit-room{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:14px;padding:12px 14px;margin:4px 0}
+.kit-room span{display:grid;gap:2px;flex:1;min-width:0}.kit-room small{color:var(--muted)}.kit-room i{font-style:normal;font-size:1.4rem;color:var(--muted)}
+.kit-room.none{border-color:rgba(230,150,80,.45);background:rgba(230,150,80,.07)}.kit-room.has b::before{content:"✓ ";color:var(--ok,#4caf7a)}

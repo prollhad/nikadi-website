@@ -402,6 +402,7 @@
     if (m && s.companions && s.companions.length) h += '<div class="note"><b>Other guests in the room</b>' + s.companions.map(esc).join(' · ') + '</div>';
     if (s.member) h += memberBox(s.member, false);
     if (s.service) h += serviceBox(s.service);
+    if (inHouse) h += kitBox(s);
     if (m && s.notes) h += '<div class="note"><b>Notes</b>' + esc(s.notes) + '</div>';
     if (m && s.booking) h += '<button class="linkbtn" type="button" id="b-bk">From booking ' + esc(s.booking) + ' →</button>';
     if (m) h += '<button class="idc-room ' + (s.ids ? 'has' : 'none') + '" type="button" id="b-ids">' + ICON.idcopy + '<span><b>ID copies' + (s.ids ? ' · ' + s.ids + (s.ids === 1 ? ' ID' : ' IDs') + ' taken' : '') + '</b><small>' + (s.ids ? 'Open, add more or print on A4' : 'No ID saved yet for this stay · add Aadhaar, licence or passport') + '</small></span><i aria-hidden="true">›</i></button>';
@@ -439,6 +440,7 @@
     if ((b = $('#b-add', body))) b.onclick = function () { openAdd(s.room); };
     if ((b = $('#b-bk', body))) b.onclick = function () { openBooking(s.booking); };
     if ((b = $('#b-ids', body))) b.onclick = function () { openIds(s); };
+    if ((b = $('#b-kit', body))) b.onclick = function () { openKit(s, body); };
     if ((b = $('#b-pay', body))) b.onclick = function () { openPay(s, body); };
     if ((b = $('#b-edit', body))) b.onclick = function () { openEdit(s, body); };
     if ((b = $('#b-ref', body))) b.onclick = function () { openRefund('stay', s, body); };
@@ -470,7 +472,7 @@
   }
   function addDaysYmd(ymd, n) { var p = String(ymd).split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)); return d.toISOString().slice(0, 10); }
 
-  function freeWhy(note) { note = String(note || ''); return /^Check-in/.test(note) ? 'check-in' : /^Daily housekeeping/.test(note) ? note.replace(/^Daily housekeeping \(day (\d+)\).*/, 'daily · day $1') : note; }
+  function freeWhy(note) { note = String(note || ''); return /^Check-in/.test(note) ? 'check-in' : note === 'Welcome kit' ? 'welcome kit' : /^Daily housekeeping/.test(note) ? note.replace(/^Daily housekeeping \(day (\d+)\).*/, 'daily · day $1') : note; }
   function serviceBox(sv) {
     var list = (sv.items || []).map(function (i) { return i.qty + ' × ' + i.item; }).join(', ') || 'Room service';
     return '<div class="hk-box ' + (sv.done ? 'done' : 'due') + '"><div class="hk-h">' + ICON.housekeeping + '<b>Housekeeping today · day ' + sv.day + ' of ' + sv.of + '</b></div>' +
@@ -881,6 +883,31 @@
     }, function (e) { busy(btn, false); errEl.textContent = errText(e); vibrate(); });
   }
 
+  /* free welcome kit: Morning kit (full kit) or Dental kit (for guests on a lower rate) */
+  var KIT_OPTS = ['Morning kit', 'Dental kit', 'Choose later'];
+  function kitField(cur) {
+    return '<div class="field"><span>Free kit for this room</span>' + seg('kit', cur ? ['Morning kit', 'Dental kit', 'No kit'] : KIT_OPTS, cur || 'Choose later') +
+      '<small class="small">Morning kit for regular guests · Dental kit only for guests paying a lower rate. One per guest, taken from stock.</small></div>';
+  }
+  function kitVal(root) { var v = segVal(root, 'kit'); return v === 'Morning kit' || v === 'Dental kit' ? v : ''; }
+  function kitBox(s) {
+    return '<button class="kit-room ' + (s.kit ? 'has' : 'none') + '" type="button" id="b-kit"><span><b>' + (s.kit ? esc(s.kit.kind) + ' × ' + s.kit.qty + ' given' : 'Free kit not chosen yet') + '</b><small>' +
+      (s.kit ? 'By ' + esc(s.kit.by) + ' · tap to change' : 'Tap to choose Morning kit or Dental kit') + '</small></span><i aria-hidden="true">›</i></button>';
+  }
+  function openKit(s, parentBody) {
+    var body = openSheet('Free kit · Room ' + s.room);
+    body.innerHTML = kitField(s.kit ? s.kit.kind : 'Morning kit') +
+      '<div class="field"><span>How many</span>' + stepper('k-qty', s.kit ? s.kit.qty : s.guests, 1, 20) + '</div>' +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">Save</button>';
+    wireSegs(body); wireSteppers(body);
+    $('#go', body).onclick = function () {
+      var k = kitVal(body);
+      submit(this, $('#err', body), 'deskKit', { id: s.id, kit: k, qty: Number($('#k-qty', body).textContent) }, function (res) {
+        vibrate(); toast(k ? k + ' saved · Room ' + s.room : 'Kit removed'); closeSheet(); drawStay(parentBody, res.stay);
+      });
+    };
+  }
+
   function openCheckIn(r) {
     var t = S.st.today, body = openSheet('Check in · Room ' + r.room, 'ready');
     body.innerHTML = '<p class="small">' + esc(r.type + ' · ' + r.beds) + '</p>' +
@@ -895,6 +922,7 @@
       '<div class="calc" id="calc"></div>' +
       field('Paid now (₹)', '<input class="input" id="f-adv" inputmode="numeric" placeholder="0">') +
       '<div class="field"><span>Paid by</span>' + seg('method', S.st.methods, 'Cash') + '</div>' + refField('f-ref') +
+      kitField() +
       field('Notes', '<textarea class="input" id="f-notes" rows="2" maxlength="300" placeholder="Special requests…"></textarea>') +
       '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">Check in</button>';
     function calc() {
@@ -924,7 +952,8 @@
       submit(this, $('#err', body), 'deskCheckIn', {
         room: r.room, guest: $('#f-guest', body).value, phone: $('#f-phone', body).value, guests: Number($('#f-guests', body).textContent), companions: compVal(body),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''),
-        rateNote: $('#f-rnote', body).value, advance: $('#f-adv', body).value.replace(/[^\d]/g, ''), method: segVal(body, 'method'), ref: $('#f-ref', body).value, notes: $('#f-notes', body).value
+        rateNote: $('#f-rnote', body).value, advance: $('#f-adv', body).value.replace(/[^\d]/g, ''), method: segVal(body, 'method'), ref: $('#f-ref', body).value, notes: $('#f-notes', body).value,
+        kit: kitVal(body), kitQty: Number($('#f-guests', body).textContent)
       }, function (res) { vibrate(); toast(res.stay.guest + ' checked in to room ' + r.room); after(2); });
     };
     setTimeout(function () { $('#f-guest', body).focus(); }, 50);
@@ -2076,7 +2105,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 36</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 37</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
