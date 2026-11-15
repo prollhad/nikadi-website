@@ -455,7 +455,7 @@ function deskCore(db, hooks) {
   function waParams(m) {
     if (m.kind === 'welcome' || m.kind === 'membership') {
       var s = find('stays', 'id', m.ref); if (!s) throw new Error('stay_gone');
-      return m.kind === 'welcome' ? [first(s.guest), String(s.room), dd(s.checkin), dd(s.checkout)] : [first(s.guest), DESK_JOIN_URL];
+      return m.kind === 'welcome' ? [first(s.guest), String(s.room), dd(s.checkin), dd(s.checkout)] : [first(s.guest)]; // join link is the template's button
     }
     if (m.kind === 'booking') {
       var b = find('bookings', 'id', m.ref); if (!b) throw new Error('booking_gone');

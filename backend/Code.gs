@@ -980,7 +980,8 @@ function waMenu_(to, st, hello) {
   var head = hello
     ? 'Hare Krishna' + (st.name ? ' ' + st.name : '') + ' 🙏 Welcome to *Nikadi Guest House*, steps away from the Mayapur ISKCON Temple.' +
       (mem ? '\nYou are a *' + mem.tier + ' member*, so you get ' + mem.pct + '% off every night.' : '') +
-      '\n\nI am the automatic assistant. I can show free rooms and prices and book your stay right here, any time.'
+      '\n\nI am the automatic assistant. I can show free rooms and prices and book your stay right here, any time.' +
+      (mem ? '' : '\n⭐ Free membership, join in one tap: ' + NK_SITE + '/app/?join=1') + '\n🌐 ' + NK_SITE
     : 'How else can I help?';
   waList_(to, head + '\n\nPlease choose 👇', 'Menu', WA_MENU_ROWS, 'Reply "menu" any time · "call" to talk to us');
   st.step = 'menu';
@@ -1185,9 +1186,15 @@ function waNotify_(subject, phone, body) {
    Otherwise the approved template is used. */
 var WA_TEXTS = {
   nikadi_welcome: 'Hare Krishna {1} 🙏 Welcome to Nikadi Guest House!\nYour room is {2}, from {3} to {4}. Check-out is by 9:00 AM.\nReception is on the first floor: enter at the left corner of the building and take the stairs up, near the Mahaprabhu photo.\nFor anything you need, just reply here or call +91 75011 01137.',
-  nikadi_membership: 'Hare Krishna {1} 🙏 Thank you for choosing Nikadi Guest House.\nJoin the free Nikadi Membership and get 100 welcome points:\n⭐ Silver (on joining): 5% off every stay, 1 point per ₹100, birthday points\n⭐ Gold (15 nights in 2 years): 10% off, 1.5 points per ₹100, early check-in\n⭐ Platinum (40 nights in 2 years): 15% off, 2 points per ₹100, late check-out till 11 AM, free room upgrade, free dental kit\n⭐ Platinum Plus (100 nights, kept for 10 years): 20% off, 4 points per ₹100, late check-out till 12 noon, free extra mattress, festival booking priority\nJoin before you check out and this stay counts too: {2}',
+  nikadi_membership: 'Hare Krishna {1} 🙏 Thank you for choosing Nikadi Guest House.\nJoin the free Nikadi Membership and get 100 welcome points:\n⭐ Silver (on joining): 5% off every stay, 1 point per ₹100, birthday points\n⭐ Gold (15 nights in 2 years): 10% off, 1.5 points per ₹100, early check-in\n⭐ Platinum (40 nights in 2 years): 15% off, 2 points per ₹100, late check-out till 11 AM, free room upgrade, free dental kit\n⭐ Platinum Plus (100 nights, kept for 10 years): 20% off, 4 points per ₹100, late check-out till 12 noon, free extra mattress, festival booking priority\nJoin before you check out and this stay counts too. Tap the button below to join in one minute 👇',
   nikadi_booking_confirmed: 'Hare Krishna {1} 🙏 Your booking {2} at Nikadi Guest House is confirmed: {3} room(s), {4} to {5}. Advance received: {6}.\nCheck-in from 11:00 AM, check-out by 9:00 AM. Cancel 3 or more days before check-in for a full refund; after that the advance is not refundable.\nReception: first floor, left corner of the building, near the Mahaprabhu photo. Questions: +91 75011 01137.',
   nikadi_bill: 'Dear {1}, thank you so much for staying with us at Nikadi Guest House. Your bill {2} is attached as a PDF. Total {3} (incl. GST), {4}.\nWe hope your time in Sri Dham Mayapur was peaceful and full of blessings, and we will be happy to welcome you again.'
+};
+/* Free-form version of each template's button (a WhatsApp message can carry one link button). */
+var WA_CTA = {
+  nikadi_welcome: { text: 'Visit our website', url: NK_SITE },
+  nikadi_membership: { text: 'Join free now', url: NK_SITE + '/app/?join=1' },
+  nikadi_booking_confirmed: { text: 'Visit our website', url: NK_SITE }
 };
 function ycUploadPdf_(pdf, fileName) {
   var y = ycProps_();
@@ -1205,6 +1212,9 @@ function ycDeskSend_(template, to10, params, pdf, fileName, url, lang) {
   if (open && WA_TEXTS[template]) {
     var body = WA_TEXTS[template].replace(/\{(\d)\}/g, function (_, i) { return params && params[i - 1] != null ? String(params[i - 1]) : ''; });
     if (media) return ycSend_(to10, { type: 'document', document: { id: media, filename: fileName || 'bill.pdf', caption: body.slice(0, 1024) } });
+    var cta = WA_CTA[template];
+    if (cta) return ycSend_(to10, { type: 'interactive', interactive: { type: 'cta_url', body: { text: body.slice(0, 1024) }, footer: { text: 'Nikadi Guest House · Mayapur' },
+      action: { name: 'cta_url', parameters: { display_text: cta.text, url: cta.url } } } });
     return waText_(to10, body);
   }
   var comps = [];
