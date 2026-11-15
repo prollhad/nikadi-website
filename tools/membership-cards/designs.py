@@ -268,104 +268,119 @@ def jali(cv, x0, x1, y0, y1, g, E, lw):
             cv.stroke(s1, E, lw, 'ENGRAVE'); cv.stroke(s2, E, lw, 'ENGRAVE')
             x += g
         y += g * .5; j += 1
-# =========================================================== PLATINUM PLUS: Peacock feather (metal)
-def _bez(p0, p1, p2, p3, t):
-    u = 1 - t
-    x = u**3 * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t**3 * p3[0]
-    y = u**3 * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t**3 * p3[1]
-    dx = 3 * u * u * (p1[0] - p0[0]) + 6 * u * t * (p2[0] - p1[0]) + 3 * t * t * (p3[0] - p2[0])
-    dy = 3 * u * u * (p1[1] - p0[1]) + 6 * u * t * (p2[1] - p1[1]) + 3 * t * t * (p3[1] - p2[1])
-    d = math.hypot(dx, dy) or 1
-    return (x, y), (dx / d, dy / d)
+# =========================================================== PLATINUM PLUS: Temple (metal)
 def ellipse(cx, cy, a, b, ang, n=72):
     ca, sa = math.cos(ang), math.sin(ang)
     return poly([(cx + a * math.cos(2 * math.pi * i / n) * ca - b * math.sin(2 * math.pi * i / n) * sa,
                   cy + a * math.cos(2 * math.pi * i / n) * sa + b * math.sin(2 * math.pi * i / n) * ca) for i in range(n)])
-def teardrop(cx, cy, a, b, ang, point=.35, n=90):
-    """egg/teardrop: pointed toward the base (negative local x)."""
-    ca, sa = math.cos(ang), math.sin(ang); pts = []
+def _onion(cx, base, w, h):
+    hw = w / 2
+    return [('M', cx - hw, base),
+            ('C', cx - hw * 1.18, base + h * .34, cx - hw * .95, base + h * .56, cx - hw * .42, base + h * .74),
+            ('C', cx - hw * .16, base + h * .84, cx - hw * .04, base + h * .93, cx, base + h),
+            ('C', cx + hw * .04, base + h * .93, cx + hw * .16, base + h * .84, cx + hw * .42, base + h * .74),
+            ('C', cx + hw * .95, base + h * .56, cx + hw * 1.18, base + h * .34, cx + hw, base), ('Z',)]
+def _onion_x(w, h, f):
+    """half-width of the onion at height fraction f (approx, for bands)."""
+    import bisect
+    prof = [(0, .5), (.15, .57), (.3, .585), (.45, .55), (.6, .45), (.74, .21), (.85, .09), (1, 0)]
+    for i in range(len(prof) - 1):
+        if prof[i][0] <= f <= prof[i + 1][0]:
+            a, b = prof[i], prof[i + 1]; return w * (a[1] + (b[1] - a[1]) * (f - a[0]) / (b[0] - a[0]))
+    return 0
+def kalash(cv, cx, y, s, G):
+    cv.fill(ellipse(cx, y + s * .5, s * .55, s * .32, 0), G, 'GOLD')
+    cv.fill(ellipse(cx, y + s * 1.25, s * .42, s * .42, 0), G, 'GOLD')
+    cv.fill(ellipse(cx, y + s * 1.95, s * .3, s * .22, 0), G, 'GOLD')
+    cv.fill(poly([(cx - s * .16, y + s * 2.1), (cx, y + s * 3.6), (cx + s * .16, y + s * 2.1)]), G, 'GOLD')
+    cv.fill(poly([(cx - s * .09, y + s * 2.6), (cx - s * .09, y + s * 2.75), (cx + s * .09, y + s * 2.75), (cx + s * .09, y + s * 2.6)]), '#0b0b0c', 'KNOCKOUT')
+def temple_dome(cv, cx, base, w, h, E, G, lw, ribs=9, bands=(.2, .42, .62)):
+    path = _onion(cx, base, w, h)
+    cv.fill(path, '#0d0d0e', 'KNOCKOUT')
+    for k in range(1, ribs):
+        f = -1 + 2 * k / ribs
+        cv.stroke([('M', cx + w / 2 * f, base), ('C', cx + w / 2 * f * 1.12, base + h * .4, cx + w / 2 * f * .55, base + h * .7, cx, base + h)], E, lw * .45, 'ENGRAVE')
+    for fb in bands:
+        hx = _onion_x(w, h, fb)
+        cv.stroke([('M', cx - hx, base + h * fb), ('C', cx - hx * .5, base + h * fb - h * .03, cx + hx * .5, base + h * fb - h * .03, cx + hx, base + h * fb)], E, lw * .5, 'ENGRAVE')
+    cv.stroke(path, E, lw * 1.2, 'ENGRAVE')
+    # lotus ring at the base of the dome (gold)
+    n = max(6, int(w / 1.3))
     for i in range(n):
-        th = 2 * math.pi * i / n; x = a * math.cos(th); y = b * math.sin(th)
-        if x < 0: y *= (1 - point * (-x / a) ** 1.6); x *= 1 + point * .5 * (-x / a) ** 2
-        pts.append((cx + x * ca - y * sa, cy + x * sa + y * ca))
-    return poly(pts)
-def feather(cv, p0, p1, p2, p3, s, E, G, Gb, lw=.12, eye_t=.82, nb=120, width=10.5, gold_barbs=True):
-    # spine
-    pts = [_bez(p0, p1, p2, p3, i / 100)[0] for i in range(101)]
-    cv.stroke(poly(pts[:int(eye_t * 100) + 6], False), G, lw * 2.6, 'GOLD')
-    (ex, ey), (tx, ty) = _bez(p0, p1, p2, p3, eye_t)
-    ang = math.atan2(ty, tx)
-    # barbs
-    for i in range(nb):
-        t = .04 + .96 * i / nb
-        (x, y), (dx, dy) = _bez(p0, p1, p2, p3, t)
-        nx, ny = -dy, dx
-        env = math.sin(math.pi * min(1, t / 1.02) ** .85)
-        L = s * (2.2 + width * env ** 1.2)
-        if t > eye_t - .1: L *= 1 + .25 * math.exp(-((t - eye_t) / .08) ** 2)
-        if t > eye_t: continue
-        for sg in (1, -1):
-            ex2 = x + sg * nx * L + dx * L * .72; ey2 = y + sg * ny * L + dy * L * .72
-            c1 = (x + sg * nx * L * .55 + dx * L * .08, y + sg * ny * L * .55 + dy * L * .08)
-            col, layer = (Gb, 'GOLD') if (gold_barbs and abs(t - eye_t) < .07 and i % 2 == 0) else (E, 'ENGRAVE')
-            cv.stroke([('M', x, y), ('C', c1[0], c1[1], (c1[0] + ex2) / 2, (c1[1] + ey2) / 2, ex2, ey2)], col, lw, layer)
-    # the eye (ocellus), centred a little beyond the spine point
-    cx, cy = ex + tx * s * 1.2, ey + ty * s * 1.2
-    # loose fibres radiating around the eye (the feather's halo)
-    ca, sa = math.cos(ang), math.sin(ang)
-    for k in range(150):
-        th = -math.pi * .86 + 2 * math.pi * .86 * k / 149
-        a0, b0 = s * 6.6, s * 5.4
-        bx, by = a0 * math.cos(th), b0 * math.sin(th)
-        Lh = s * (3.2 + 1.6 * math.sin(k * 1.7) ** 2) * (1 - .55 * abs(th) / math.pi)
-        nxl, nyl = math.cos(th) / a0, math.sin(th) / b0; nl = math.hypot(nxl, nyl); nxl /= nl; nyl /= nl
-        ex3, ey3 = bx + nxl * Lh + Lh * .25, by + nyl * Lh
-        mx3, my3 = bx + nxl * Lh * .5, by + nyl * Lh * .5 + (Lh * .12 if th > 0 else -Lh * .12)
-        P = lambda q: (cx + q[0] * ca - q[1] * sa, cy + q[0] * sa + q[1] * ca)
-        col, layer = (Gb, 'GOLD') if k % 4 == 0 else (E, 'ENGRAVE')
-        cv.stroke([('M',) + P((bx, by)), ('C',) + P((mx3, my3)) + P((mx3, my3)) + P((ex3, ey3))], col, lw * .8, layer)
-    cv.fill(teardrop(cx, cy, s * 6.4, s * 5.2, ang), '#0b0b0c', 'KNOCKOUT')
-    cv.stroke(teardrop(cx, cy, s * 6.4, s * 5.2, ang), G, lw * 2.4, 'GOLD')
-    cv.stroke(teardrop(cx, cy, s * 5.7, s * 4.6, ang), G, lw * .9, 'GOLD')
-    # engraved radial fibres in the outer band
-    for k in range(64):
-        th = 2 * math.pi * k / 64
-        a1, b1, a2, b2 = s * 3.6, s * 2.9, s * 5.4, s * 4.35
-        ca, sa = math.cos(ang), math.sin(ang)
-        p_in = (a1 * math.cos(th), b1 * math.sin(th)); p_out = (a2 * math.cos(th), b2 * math.sin(th))
-        P = lambda q: (cx + q[0] * ca - q[1] * sa, cy + q[0] * sa + q[1] * ca)
-        cv.stroke(poly([P(p_in), P(p_out)], False), E, lw * .7, 'ENGRAVE')
-    cv.stroke(teardrop(cx + tx * s * .5, cy + ty * s * .5, s * 3.5, s * 2.8, ang, .25), G, lw * 1.6, 'GOLD')
-    cv.fill(teardrop(cx + tx * s * .9, cy + ty * s * .9, s * 2.3, s * 1.9, ang, .3), G, 'GOLD')
-    # heart of the eye, left dark
-    cv.fill(teardrop(cx + tx * s * 1.25, cy + ty * s * 1.25, s * 1.15, s * .95, ang, .3), '#0b0b0c', 'KNOCKOUT')
+        x0 = cx - w / 2 + w * i / n; x1 = cx - w / 2 + w * (i + 1) / n; xm = (x0 + x1) / 2
+        cv.stroke([('M', x0, base), ('C', x0, base + h * .07, xm, base + h * .09, xm, base + h * .1), ('C', xm, base + h * .09, x1, base + h * .07, x1, base)], G, lw * .6, 'GOLD')
+    kalash(cv, cx, base + h - .2, h * .085, G)
+def drum(cv, cx, y0, w, hgt, E, lw):
+    cv.stroke(rect(cx - w / 2, y0, w, hgt), E, lw * .8, 'ENGRAVE')
+    n = max(3, int(w / 1.7))
+    for j in range(n):
+        x = cx - w / 2 + w * (j + .5) / n
+        cv.stroke(poly([(x - .32, y0 + .5), (x - .32, y0 + hgt * .62)], False), E, lw * .4, 'ENGRAVE')
+        cv.stroke(poly([(x + .32, y0 + .5), (x + .32, y0 + hgt * .62)], False), E, lw * .4, 'ENGRAVE')
+        cv.stroke(arc(x, y0 + hgt * .62, .32, 0, math.pi), E, lw * .4, 'ENGRAVE')
+    cv.stroke(poly([(cx - w / 2 - .4, y0 + hgt), (cx + w / 2 + .4, y0 + hgt)], False), E, lw * .9, 'ENGRAVE')
+def cusped_arch(cv, x, y, w, h, E, lw):
+    hw = w / 2
+    cv.stroke([('M', x - hw, y), ('L', x - hw, y + h * .55), ('C', x - hw, y + h * .85, x - hw * .3, y + h * .95, x, y + h),
+               ('C', x + hw * .3, y + h * .95, x + hw, y + h * .85, x + hw, y + h * .55), ('L', x + hw, y)], E, lw, 'ENGRAVE')
+def temple2(cv, E, G, lw=.14):
+    cx = 63.5
+    # halo behind the main dome
+    pass
+    # steps / plinth
+    for y, x0, x1 in ((2.6, 41.5, W + 2), (4.2, 43, W + 2), (5.8, 44.5, W + 2)):
+        cv.stroke(poly([(x0, y), (x1, y)], False), E, lw * (1.1 if y > 5 else .7), 'ENGRAVE')
+    # colonnade with cusped arches
+    cv.stroke(poly([(44.5, 14.6), (W + 2, 14.6)], False), E, lw * 1.1, 'ENGRAVE')
+    cv.stroke(poly([(44.5, 15.6), (W + 2, 15.6)], False), E, lw * .5, 'ENGRAVE')
+    x = 46.4
+    while x < W + 2:
+        cusped_arch(cv, x, 5.8, 2.4, 7.2, E, lw * .6); x += 3.2
+    for xx in range(46, int(W) + 3, 2):
+        cv.fill(circle(xx + .5, 15.1, .14), G, 'GOLD')
+    # side towers + domes
+    for sx in (-1, 1):
+        tx = cx + sx * 15.5
+        drum(cv, tx, 15.6, 6.2, 3.4, E, lw)
+        temple_dome(cv, tx, 19.0, 7.0, 9.4, E, G, lw, ribs=7, bands=(.22, .45))
+        tx2 = cx + sx * 25.5
+        if tx2 < W - 1:
+            drum(cv, tx2, 15.6, 3.6, 2.4, E, lw)
+            temple_dome(cv, tx2, 18.0, 4.0, 5.6, E, G, lw * .8, ribs=5, bands=(.3,))
+    # main tower + dome
+    drum(cv, cx, 15.6, 13.4, 5.2, E, lw)
+    temple_dome(cv, cx, 20.8, 14.8, 19.0, E, G, lw * 1.1, ribs=11, bands=(.18, .36, .56))
+    # a few stars
+    for (x, y, r) in ((44, 47, .18), (52, 44, .12), (77, 48.5, .2), (82, 41, .12), (71, 46, .1), (48, 38.5, .1), (80.5, 34, .14)):
+        cv.fill(circle(x, y, r), G if r > .17 else E, 'GOLD' if r > .17 else 'ENGRAVE')
 def plus_front(cv, m, art_only=False):
-    cv.fill(rrect(0, 0, W, H, R), ('lin', 0, 0, W, H, X['bg']), 'BASE')
-    clipped(cv, rrect(0, 0, W, H, R), lambda: feather(cv, (W + 3, -4), (W - 6, 14), (W - 4, 30), (53, H - 5.5), 1.0, X['steel'], X['gold'], X['gold3']))
+    cv.fill(rrect(0, 0, W, H, R), ('lin', 0, H, 0, 0, [(0, '#060607'), (.6, '#141416'), (1, '#1d1c20')]), 'BASE')
+    clipped(cv, rrect(0, 0, W, H, R), lambda: temple2(cv, X['steel'], X['gold']))
     brand_row(cv, 6, H - 6 - 8.2, 8.2, {'dark': X['gold3'], 'light': X['gold2'], 'arc': X['gold']}, 'gloock', 13.5, X['gold3'], X['steel'], layer='GOLD', word_track=.2, sub=False)
-    T(cv, 'work', 'GUEST HOUSE  ·  SRI DHAM MAYAPUR', 6, H - 18.0, 3.2, X['steel'], .32, layer='ENGRAVE')
-    T(cv, 'arsenal', 'P L A T I N U M   P L U S', 6, H - 24.4, 5.2, X['gold3'], .3, layer='GOLD')
-    cv.stroke(poly([(6, H - 26.2), (18, H - 26.2)], False), X['gold'], .14, 'GOLD')
+    T(cv, 'arsenal', 'P L A T I N U M   P L U S', 6, H - 19.6, 5.0, X['gold3'], .3, layer='GOLD')
+    cv.stroke(poly([(6, H - 21.4), (17, H - 21.4)], False), X['gold'], .14, 'GOLD')
+    T(cv, 'work', 'SRI DHAM MAYAPUR', 6, H - 24.6, 3.2, X['steel'], .4, layer='ENGRAVE')
     if not art_only:
-        T(cv, 'arsenal', m['name'].upper(), 6, 10.6, 8.0, X['bright'], .14, layer='PERSONALISE')
-        T(cv, 'plexmono', m['no'], 6, 6.4, 4.8, X['steel'], .14, layer='PERSONALISE')
-        T(cv, 'work', 'SINCE ' + m['since'], 6 + text_width('plexmono', m['no'], 4.8, .14) + 3.4, 6.4, 3.4, X['gold'], .4, layer='PERSONALISE')
+        T(cv, 'arsenal', m['name'].upper(), 6, 12.4, 7.8, X['bright'], .14, layer='PERSONALISE')
+        T(cv, 'plexmono', m['no'], 6, 8.2, 4.6, X['steel'], .14, layer='PERSONALISE')
+        T(cv, 'work', 'SINCE ' + m['since'], 6, 4.6, 3.1, X['gold'], .4, layer='PERSONALISE')
 def plus_back(cv, m):
     cv.fill(rrect(0, 0, W, H, R), ('lin', 0, H, W, 0, X['bg']), 'BASE')
-    clipped(cv, rect(0, 0, 13, H), lambda: feather(cv, (6.5, -3), (5.2, 14), (7.8, 28), (6.4, H - 7.5), .52, X['steel'], X['gold'], X['gold3'], eye_t=.86, nb=90, width=9))
-    L = 16
-    T(cv, 'gloock', 'NIKADI MEMBERSHIP', L, H - 8.6, 8.2, X['gold3'], .2, layer='GOLD')
-    T(cv, 'work', 'PLATINUM PLUS  ·  YOUR PRIVILEGES', L, H - 12.0, 3.6, X['steel'], .36, layer='ENGRAVE')
-    y = H - 16.8
+    cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), X['gold'], .2, 'GOLD')
+    L = 7
+    temple_dome(cv, L + 2.2, H - 11.2, 4.2, 5.6, X['steel'], X['gold'], .12, ribs=5, bands=(.3,))
+    T(cv, 'gloock', 'NIKADI MEMBERSHIP', L + 6, H - 10.6, 8.2, X['gold3'], .2, layer='GOLD')
+    T(cv, 'work', 'PLATINUM PLUS  ·  YOUR PRIVILEGES', L + 6, H - 14.0, 3.6, X['steel'], .36, layer='ENGRAVE')
+    y = H - 19.0
     for b in BEN['plus']:
         cv.fill(circle(L + .55, y + .85, .32), X['gold'], 'GOLD')
         T(cv, 'work', b, L + 2, y, 4.7, X['bright'], .01, layer='ENGRAVE'); y -= 3.2
-    qs = 13; qx = W - 6 - qs; qy = H - 10.5 - qs - 2.5
+    qs = 13; qx = W - 7.4 - qs; qy = H - 11 - qs - 2.5
     cv.fill(rect(qx - 1.4, qy - 1.4, qs + 2.8, qs + 2.8), X['bright'], 'ENGRAVE')
     cv.fill(qr_cmds(APP_URL, qx, qy, qs), '#0a0a0b', 'KNOCKOUT')
     T(cv, 'work', 'YOUR CARD & POINTS', qx + qs / 2, qy - 4.3, 3.2, X['steel'], .24, align='center', layer='ENGRAVE')
-    cv.stroke(poly([(L, 10.2), (W - 6, 10.2)], False), X['gold2'], .1, 'GOLD')
-    T(cv, 'work', '+91 75011 01137   ·   www.nikadiguesthouse.com   ·   Opp. ISKCON Gate No. 4', (L + W - 6) / 2, 7.1, 3.8, X['bright'], .04, align='center', layer='ENGRAVE')
-    T(cv, 'work', 'Personal and not transferable. Metal card: please do not bend. If found, return to Nikadi Guest House.', (L + W - 6) / 2, 4.6, 2.9, X['steel'], .02, align='center', layer='ENGRAVE')
+    cv.stroke(poly([(L, 10.2), (W - 7.4, 10.2)], False), X['gold2'], .1, 'GOLD')
+    T(cv, 'work', CONTACT, (L + W - 7.4) / 2, 7.1, 3.8, X['bright'], .04, align='center', layer='ENGRAVE')
+    T(cv, 'work', 'Personal and not transferable. Metal card: please do not bend. If found, return to Nikadi Guest House.', (L + W - 7.4) / 2, 4.5, 2.9, X['steel'], .02, align='center', layer='ENGRAVE')
 
 TIERS = {'silver': (silver_front, silver_back), 'gold': (gold_front, gold_back), 'platinum': (platinum_front, platinum_back), 'plus': (plus_front, plus_back)}

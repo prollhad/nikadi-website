@@ -101,13 +101,13 @@ def metal_pdf(path, m):
          [((f, b), '')],
          [('Size', 'CR80: 85.60 × 53.98 mm, corner radius 3.18 mm, 0.8 mm thick'),
           ('Material', 'Stainless steel, matte black PVD coating both sides'),
-          ('ENGRAVE (spot)', 'Laser engraving through the coating: peacock-feather barbs and eye fibres, small text, QR square'),
-          ('GOLD_24K (spot)', '24k gold plating or gold fill: logo, NIKADI, PLATINUM PLUS, feather spine and eye, gold fibres'),
+          ('ENGRAVE (spot)', 'Laser engraving through the coating: temple domes, drums, arches, steps, small text, QR square'),
+          ('GOLD_24K (spot)', '24k gold plating or gold fill: logo, NIKADI, PLATINUM PLUS, kalash finials, lotus rings, stars, frame (back)'),
           ('PERSONALISE (spot)', 'Engraved per card: member name, member number, year'),
           ('DIELINE (spot)', 'Card outline only, do not engrave')],
          ['Pages: 1 this sheet · 2 FRONT proof · 3 BACK proof · 4 FRONT ENGRAVE · 5 FRONT GOLD_24K · 6 FRONT PERSONALISE · 7 BACK ENGRAVE · 8 BACK GOLD_24K · 9 DIELINE.',
           'All layers are 1:1, vector, with text converted to outlines. Every layer page is the card plus a 6 mm margin, and the die line is on each page to register the layers.',
-          'The feather barbs are hairlines of about 0.1 mm. Engrave them as single-pass lines and widen them only to your machine minimum.',
+          'The dome ribs and bands are hairlines of about 0.06 to 0.15 mm. Engrave them as single-pass lines and widen them only to your machine minimum.',
           'The QR square on the back is ENGRAVED and the modules are left black, so it reads like a normal QR code. Please test-scan the first card.',
           'No magnetic stripe or chip. Please send a photo of the first finished card before the full run.'])
     for fn in (f, b):

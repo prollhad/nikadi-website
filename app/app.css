@@ -264,7 +264,9 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 /* Plus: everything on the clean black panel, left of the jali */
 .mcard.tier-plus{padding:0 7% 4% 7%}
 .mcard.tier-plus .mc-ptsr b{font-size:1.45rem}
-.mcard.tier-plus .mc-bot{display:grid;justify-content:start;gap:4px;max-width:52%}
+.mcard.tier-plus .mc-bot{display:grid;justify-content:start;gap:4px;max-width:46%}
+.mcard.tier-plus .mc-name{font-size:.8rem}
+.mcard.tier-plus .mc-ptsr{gap:4px}
 .mcard.tier-plus .mc-ptsr{order:-1;justify-items:start;text-align:left;grid-auto-flow:column;align-items:baseline;gap:6px;text-shadow:none}
 .mcard.tier-plus .mc-ptsr small{display:none}
 /* Platinum: keep the bottom row below the arch base */
