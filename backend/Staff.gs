@@ -68,7 +68,7 @@ var DESK_SCHEMA = {
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
     ['advanceDue', 'Advance required, 50% (₹)', 'n'], ['advancePaid', 'Advance paid (₹)', 'n'], ['refunded', 'Refunded (₹)', 'n'], ['notes', 'Notes'],
     ['created', 'Created', 't'], ['createdBy', 'Created by'], ['confirmedBy', 'Confirmed by'], ['confirmedAt', 'Confirmed at', 't'],
-    ['closedBy', 'Closed by'], ['closedAt', 'Closed at', 't'], ['closeNote', 'Cancellation / closing note']] },
+    ['closedBy', 'Closed by'], ['closedAt', 'Closed at', 't'], ['closeNote', 'Cancellation / closing note'], ['advanceSet', 'Advance agreed (₹, blank = 50%)', 'n']] },
   charges: { sheet: 'Room charges', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['item', 'Item'], ['qty', 'Qty', 'n'],
     ['price', 'Unit price (₹)', 'n'], ['total', 'Total (₹)', 'n'], ['free', 'Free'], ['note', 'Note'], ['by', 'Added by'], ['removed', 'Removed']] },
   payments: { sheet: 'Payments', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['amount', 'Amount (₹)', 'n'],
@@ -191,7 +191,7 @@ function deskCore(db, hooks) {
     var pays = bookingPays(b.id);
     var paid = pays.filter(function (p) { return Number(p.amount) > 0; }).reduce(function (a, p) { return a + Number(p.amount); }, 0);
     var refunded = -pays.filter(function (p) { return Number(p.amount) < 0; }).reduce(function (a, p) { return a + Number(p.amount); }, 0);
-    db.set('bookings', b, { nights: nights, total: total, advanceDue: Math.ceil(total * DESK_POLICY.advancePct / 100), advancePaid: paid, refunded: refunded });
+    db.set('bookings', b, { nights: nights, total: total, advanceDue: Number(b.advanceSet) > 0 ? Number(b.advanceSet) : Math.ceil(total * DESK_POLICY.advancePct / 100), advancePaid: paid, refunded: refunded });
   }
   function daysBefore(b) { return Math.round(dayNum(b.checkin) - dayNum(today())); }
   function bookingView(b, me) {
@@ -200,7 +200,7 @@ function deskCore(db, hooks) {
       roomType: b.roomType, rooms: roomList(b.rooms), checkin: b.checkin, checkout: b.checkout, nights: b.nights, created: b.created, createdBy: b.createdBy,
       confirmedBy: b.confirmedBy, confirmedAt: b.confirmedAt, closedBy: b.closedBy, closedAt: b.closedAt, closeNote: b.closeNote, daysBefore: daysBefore(b) };
     if (mgr) {
-      v.phone = b.phone; v.email = b.email; v.rate = b.rate; v.total = b.total; v.advanceDue = b.advanceDue; v.advancePaid = b.advancePaid; v.refunded = b.refunded; v.notes = b.notes;
+      v.phone = b.phone; v.email = b.email; v.rate = b.rate; v.total = b.total; v.advanceDue = b.advanceDue; v.advanceSet = Number(b.advanceSet) > 0; v.advancePaid = b.advancePaid; v.refunded = b.refunded; v.notes = b.notes;
       v.payments = bookingPays(b.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: p.note, by: p.by }; }).reverse();
       v.refundable = b.status === 'Confirmed' && daysBefore(b) >= DESK_POLICY.freeCancelDays ? Number(b.advancePaid || 0) - Number(b.refunded || 0) : 0;
     }
@@ -1195,6 +1195,25 @@ function deskCore(db, hooks) {
     return {};
   };
 
+  /* change the amount of a recorded payment (the old entry is kept as voided, a corrected one is added) */
+  api.payAmount = function (req) {
+    var me = auth(req); needMgr(me);
+    var p = find('payments', 'id', req.id) || fail('no_payment');
+    if (p.voided || p.method === FROM_ADV) fail('no_payment');
+    var neg = Number(p.amount) < 0, a = money(req.amount); if (!(a > 0)) fail('invalid_amount');
+    if (a === Math.abs(Number(p.amount))) fail('same_amount');
+    if (!text(req.reason, 200)) fail('reason_required');
+    if (p.stay) lockedOut(me, stay(p.stay));
+    var g = gate(me, 'payAmount', req, (p.stay ? 'Room ' + p.room : 'Booking ' + p.booking) + ': change ' + (neg ? 'refund' : 'payment') + ' of ₹' + Math.abs(p.amount) + ' to ₹' + a + ' (' + p.method + (p.ref ? ' ' + p.ref : '') + ', ' + p.at + ')');
+    if (g) return g;
+    db.set('payments', p, { voided: 'Corrected to ₹' + a + ' by ' + who(me, req) + ' ' + stamp() + ': ' + text(req.reason, 120) });
+    db.add('payments', { id: id('P'), at: p.at, stay: p.stay, room: p.room, amount: neg ? -a : a, method: p.method, note: text((p.note ? p.note + ' · ' : '') + 'corrected from ₹' + Math.abs(p.amount), 120), by: p.by, booking: p.booking, ref: p.ref });
+    if (p.stay) { var s = stay(p.stay); recompute(s); afterChange(s, me, s.roomTotal); return { stay: stayView(s, me) }; }
+    var b = find('bookings', 'id', p.booking);
+    if (b) { recomputeBooking(b); db.all('stays').forEach(function (x) { if (x.booking === b.id) recompute(x); }); return { booking: bookingView(b, me) }; }
+    return {};
+  };
+
   api.checkOut = function (req) {
     var me = auth(req); needMgr(me);
     var s = stay(req.id);
@@ -1625,10 +1644,23 @@ function deskCore(db, hooks) {
     var ref = text(req.ref, 40);
     if ((req.method === 'UPI' || req.method === 'Bank transfer') && !ref) fail('ref_required');
     db.set('bookings', b, { rooms: rooms.join(', '), roomsNeeded: rooms.length, status: 'Confirmed', confirmedBy: me.name, confirmedAt: stamp() });
+    recomputeBooking(b);
+    if (amt < Number(b.advanceDue)) db.set('bookings', b, { advanceSet: amt }); // the guest paid less than 50%: that is the agreed advance
     db.add('payments', { id: id('P'), at: stamp(), stay: '', room: rooms.join(', '), amount: amt, method: req.method, note: 'Booking advance', by: me.name, booking: b.id, ref: ref });
     recomputeBooking(b);
     if (waReady()) waQueue('booking', b.phone, b.guest, b.id);
     var wc = find('wachats', 'phone', String(b.phone || '')); if (wc && wc.important) db.set('wachats', wc, { important: '', readBy: me.name, readAt: stamp() }); // advance checked
+    return { booking: bookingView(b, me) };
+  };
+
+  /* front desk: the advance this guest has to pay (blank / 0 = the usual 50%) */
+  api.bookingAdvance = function (req) {
+    var me = auth(req); needMgr(me);
+    var b = find('bookings', 'id', req.id) || fail('no_booking');
+    if (b.status !== 'Pending' && b.status !== 'Confirmed') fail('booking_closed');
+    var a = req.amount === '' || req.amount == null ? 0 : money(req.amount); if (isNaN(a) || a < 0) fail('invalid_amount');
+    db.set('bookings', b, { advanceSet: a > 0 ? a : '' });
+    recomputeBooking(b);
     return { booking: bookingView(b, me) };
   };
 
@@ -1787,7 +1819,7 @@ function deskCore(db, hooks) {
   };
 
   /* ================= Approvals ================= */
-  var APPROVABLE = ['editCharge', 'refund', 'voidPayment', 'updateStay', 'bookingUpdate', 'bookingCancel', 'bookingRefund', 'undoCheckout'];
+  var APPROVABLE = ['editCharge', 'refund', 'voidPayment', 'payAmount', 'updateStay', 'bookingUpdate', 'bookingCancel', 'bookingRefund', 'undoCheckout'];
   function reqView(r) { return { id: r.id, at: r.at, by: r.by, type: r.type, summary: r.summary, reason: r.reason, status: r.status, decidedBy: r.decidedBy, decidedAt: r.decidedAt, decisionNote: r.decisionNote }; }
   api.requests = function (req) {
     var me = auth(req); needMgr(me);

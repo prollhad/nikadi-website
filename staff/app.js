@@ -29,7 +29,7 @@
     network: 'No internet connection. Please try again.', server_error: 'Something went wrong. Please try again.',
     not_setup: 'The staff app is not connected to the Google Sheet yet.',
     room_booked: 'A room you chose is already booked or occupied on those dates. Check the calendar and pick a free room.',
-    phone_required: 'Please enter the guest\'s phone number.', wa_window_closed: 'More than 24 hours since the guest last wrote, so WhatsApp does not allow a free message. Call the guest instead.', wa_send_failed: 'The WhatsApp message could not be sent. Try again.', message_required: 'Write a message first.', wa_not_connected: 'WhatsApp is not connected.', bad_guests: 'Please check the number of guests.',
+    phone_required: 'Please enter the guest\'s phone number.', wa_window_closed: 'More than 24 hours since the guest last wrote, so WhatsApp does not allow a free message. Call the guest instead.', wa_send_failed: 'The WhatsApp message could not be sent. Try again.', message_required: 'Write a message first.', same_amount: 'That is already the amount.', wa_not_connected: 'WhatsApp is not connected.', bad_guests: 'Please check the number of guests.',
     pick_rooms: 'Choose which room numbers this booking gets.', advance_required: 'Enter the amount received. A booking is confirmed only after money is received.',
     ref_required: 'Enter the UPI or bank transaction reference number.', booking_closed: 'This booking is already closed.', no_booking: 'Booking not found.',
     not_arrival_day: 'A booking can be marked as no-show only on or after its check-in date.',
@@ -1393,7 +1393,7 @@
       (b.notes ? '<div class="note"><b>Notes</b>' + esc(b.notes) + '</div>' : '') +
       '<div class="bill"><h3>Money</h3>' +
       '<div class="bl sum"><span class="t">' + b.nights + (b.nights > 1 ? ' nights' : ' night') + ' × ' + Math.max(b.rooms.length, b.roomsNeeded) + (Math.max(b.rooms.length, b.roomsNeeded) > 1 ? ' rooms' : ' room') + ' × ' + inr(b.rate) + '</span><span class="d">Rate per room per night</span><span class="a">' + inr(b.total) + '</span></div>' +
-      '<div class="bl"><span class="t">Advance needed (50%)</span><span class="a">' + inr(b.advanceDue) + '</span></div>' +
+      '<div class="bl' + (open && mgr() ? ' tap' : '') + '" id="k-adv"><span class="t">' + (b.advanceSet ? 'Advance agreed' : 'Advance needed (50%)') + '</span><span class="d">' + (open && mgr() ? 'Tap to change the advance for this guest' : '') + '</span><span class="a">' + inr(b.advanceDue) + '</span></div>' +
       b.payments.map(function (p) { return '<div class="bl tap ' + (p.amount < 0 ? 'refund' : 'paid') + '" data-pay="' + esc(p.id) + '"><span class="t">' + (p.amount < 0 ? 'Refunded · ' : 'Received · ') + esc(p.method) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + '</span><span class="a">' + (p.amount < 0 ? '+ ' + inr(-p.amount) : '− ' + inr(p.amount)) + '</span></div>'; }).join('') +
       (b.status === 'Pending' ? '<div class="bl due"><span class="t">Not confirmed yet</span><span class="a">' + inr(b.advanceDue) + ' to receive</span></div>'
         : b.status === 'Confirmed' ? '<div class="bl due"><span class="t">Balance at check-in</span><span class="a">' + inr(bal) + '</span></div>' : '') + '</div>' +
@@ -1413,6 +1413,7 @@
     body.innerHTML = h;
     var q = function (sel) { return $(sel, body); };
     if (q('#k-conf')) q('#k-conf').onclick = function () { openConfirm(b, body); };
+    if (open && mgr()) q('#k-adv').onclick = function () { openAdvance(b, body); };
     if (q('#k-edit')) q('#k-edit').onclick = function () { openBookingForm(b, body); };
     if (q('#k-cancel')) q('#k-cancel').onclick = function () { openCancel(b, body); };
     if (q('#k-pay')) q('#k-pay').onclick = function () { openBookingPay(b, body); };
@@ -1539,11 +1540,26 @@
       var btn = this, amt = Number($('#c-amt', body).value.replace(/\D/g, '')) || 0, need = Math.ceil(total() / 2);
       if (amt > 0 && amt < need && !btn.dataset.sure) {
         btn.dataset.sure = 1;
-        $('#c-warn', body).innerHTML = '<div class="conf">' + inr(amt) + ' is less than the 50% advance (' + inr(need) + '). Tap the button again to confirm anyway.</div>';
+        $('#c-warn', body).innerHTML = '<div class="conf">' + inr(amt) + ' is less than the 50% advance (' + inr(need) + '). Tap the button again to confirm: the advance for this booking will be set to ' + inr(amt) + '.</div>';
         return;
       }
       submit(btn, $('#err', body), 'deskBookingConfirm', { id: b.id, rooms: picked, rate: $('#c-rate', body).value.replace(/\D/g, ''), amount: $('#c-amt', body).value.replace(/\D/g, ''), method: segVal(body, 'method'), ref: $('#c-ref', body).value },
         function (r) { vibrate(); toast('Confirmed · room ' + r.booking.rooms.join(', ') + ' blocked'); X.cal = null; X.bookings = null; closeSheet(); drawBooking(parentBody, r.booking); refresh(); });
+    };
+  }
+
+  function openAdvance(b, parentBody) {
+    var body = openSheet('Advance for this booking'), half = Math.ceil(b.total / 2);
+    body.innerHTML = '<div class="calc">Total ' + inr(b.total) + ' · usual 50% advance <b>' + inr(half) + '</b> · received so far <b>' + inr(b.advancePaid - b.refunded) + '</b></div>' +
+      field('Advance this guest pays (₹)', '<input class="input" id="a-amt" inputmode="numeric" value="' + b.advanceDue + '">', true) +
+      '<div class="btns"><button class="btn btn-quiet" type="button" id="a-half">Use 50% (' + inr(half) + ')</button><button class="btn btn-quiet" type="button" id="a-paid">Use amount received (' + inr(b.advancePaid - b.refunded) + ')</button></div>' +
+      '<p class="small">Some guests pay less than 50%. Set the amount you agreed here: the booking then shows it as the advance, and the rest is collected at check-in.</p>' +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">Save advance</button>';
+    $('#a-half', body).onclick = function () { $('#a-amt', body).value = half; };
+    $('#a-paid', body).onclick = function () { $('#a-amt', body).value = b.advancePaid - b.refunded; };
+    $('#go', body).onclick = function () {
+      var v = Number($('#a-amt', body).value.replace(/\D/g, '')) || 0;
+      submit(this, $('#err', body), 'deskBookingAdvance', { id: b.id, amount: v === half ? 0 : v }, function (r) { toast('Advance set to ' + inr(r.booking.advanceDue)); closeSheet(); drawBooking(parentBody, r.booking); X.bookings = null; });
     };
   }
 
@@ -1610,10 +1626,18 @@
     body.innerHTML = '<div class="bill"><div class="bl ' + (p.amount < 0 ? 'refund' : 'paid') + '"><span class="t">' + (p.amount < 0 ? 'Refund · ' : 'Payment · ') + esc(p.method) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + (p.note ? ' · ' + esc(p.note) : '') + '</span><span class="a">' + inr(Math.abs(p.amount)) + '</span></div></div>' +
       '<div class="sec-h"><h2>Transaction number</h2></div>' + field('Transaction / reference no.', '<input class="input" id="v-ref" maxlength="40" value="' + esc(p.ref || '') + '">') +
       '<p class="err" id="rerr" role="alert"></p><button class="btn btn-line" type="button" id="sref">Save transaction no.</button>' +
-      '<div class="sec-h"><h2>Wrong amount?</h2></div>' +
-      '<p class="small">Use this only if the entry is wrong, for example the wrong amount or entered twice. The entry is cancelled (it stays visible in the sheet as voided). Then record the correct amount again.</p>' +
-      approvalNote() + reasonField('v-why', 'e.g. Entered twice by mistake') +
+      '<div class="sec-h"><h2>Change the amount</h2></div>' +
+      '<p class="small">The guest paid a different amount than what was written? Put the exact amount. The old entry stays in the sheet as corrected.</p>' +
+      field('Correct amount (₹)', '<input class="input" id="v-amt" inputmode="numeric" value="' + Math.abs(p.amount) + '">') + approvalNote() + reasonField('v-why2', 'e.g. Guest paid ₹2,000, not ₹3,500') +
+      '<p class="err" id="aerr" role="alert"></p><button class="btn btn-line" type="button" id="samt">' + goLabel('Save new amount') + '</button>' +
+      '<div class="sec-h"><h2>Entered by mistake?</h2></div>' +
+      '<p class="small">Use this only if the whole entry is wrong, for example entered twice. The entry is cancelled (it stays visible in the sheet as voided).</p>' +
+      reasonField('v-why', 'e.g. Entered twice by mistake') +
       '<p class="err" id="err" role="alert"></p><button class="btn btn-danger big-cta" id="go" type="button">' + goLabel('Cancel this entry') + '</button>';
+    $('#samt', body).onclick = function () {
+      submit(this, $('#aerr', body), 'deskPayAmount', { id: p.id, amount: $('#v-amt', body).value.replace(/\D/g, ''), reason: $('#v-why2', body).value }, function (r) {
+        toast('Amount corrected'); closeSheet(); if (r.stay) drawStay(parentBody, r.stay); else if (r.booking) drawBooking(parentBody, r.booking); });
+    };
     $('#sref', body).onclick = function () {
       submit(this, $('#rerr', body), 'deskPaymentRef', { id: p.id, ref: $('#v-ref', body).value.trim() }, function (r) {
         toast('Transaction number saved'); closeSheet(); if (r.stay) drawStay(parentBody, r.stay); else if (r.booking) drawBooking(parentBody, r.booking); });
@@ -1628,7 +1652,7 @@
   }
 
   /* ---------- Approvals (managers) / My requests (reception) ---------- */
-  var TYPE_LABEL = { editCharge: 'Bill item', refund: 'Refund', voidPayment: 'Payment correction', updateStay: 'Rate change', bookingUpdate: 'Rate change', bookingCancel: 'Cancellation', bookingRefund: 'Refund', undoCheckout: 'Reverse check-out' };
+  var TYPE_LABEL = { editCharge: 'Bill item', refund: 'Refund', voidPayment: 'Payment correction', payAmount: 'Payment amount change', updateStay: 'Rate change', bookingUpdate: 'Rate change', bookingCancel: 'Cancellation', bookingRefund: 'Refund', undoCheckout: 'Reverse check-out' };
   var REQ = null;
   function viewApprovals(v) {
     var title = approver() ? 'Approvals' : 'My requests';
@@ -2043,7 +2067,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 32</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 33</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
