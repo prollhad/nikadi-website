@@ -1,17 +1,17 @@
 /* Nikadi member app — shared settings and helpers */
 
-/* After deploying backend/Code.gs as a Google Apps Script web app,
-   paste its URL here (ends with /exec). Leave empty until then. */
-var NIKADI_API_URL = "https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec";
-/* The new Nikadi server (Supabase, Mumbai). While it is being tested it holds a COPY of the data:
-   open the app with ?api=new to try it (a blue "Test copy" bar shows), ?api=old to go back. */
+/* The Nikadi server (Supabase, Mumbai) since 16 Nov 2026. The old Google Apps Script address still works
+   (it passes everything on); ?api=old uses it directly, ?api=new goes back to the normal setting. */
+var NIKADI_GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec";
 var NIKADI_EDGE_URL = "https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api";
+var NIKADI_API_URL = NIKADI_EDGE_URL;
 var NIKADI_TEST_DB = false;
 try {
   var nkApiQ = new URLSearchParams(location.search).get('api');
-  if (nkApiQ === 'new') localStorage.setItem('nk-api', 'new');
-  if (nkApiQ === 'old') localStorage.removeItem('nk-api');
-  if (localStorage.getItem('nk-api') === 'new') { NIKADI_API_URL = NIKADI_EDGE_URL; NIKADI_TEST_DB = true; }
+  if (nkApiQ === 'old') localStorage.setItem('nk-api', 'old');
+  if (nkApiQ === 'new') localStorage.removeItem('nk-api');
+  if (localStorage.getItem('nk-api') === 'old') NIKADI_API_URL = NIKADI_GOOGLE_URL;
+  else localStorage.removeItem('nk-api');
 } catch (e) {}
 
 var NIKADI = {
