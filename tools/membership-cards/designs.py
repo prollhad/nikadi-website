@@ -353,9 +353,104 @@ def temple2(cv, E, G, lw=.14):
     # a few stars
     for (x, y, r) in ((44, 47, .18), (52, 44, .12), (77, 48.5, .2), (82, 41, .12), (71, 46, .1), (48, 38.5, .1), (80.5, 34, .14)):
         cv.fill(circle(x, y, r), G if r > .17 else E, 'GOLD' if r > .17 else 'ENGRAVE')
+# ---------- Hindu temple (Nagara style): shikhara, amalaka, kalash, dhwaja, mandapa
+def _shw(hw, t, top=.2):
+    """half-width of a curvilinear shikhara at height fraction t."""
+    return hw * (top + (1 - top) * (1 - t ** 1.3) ** .5)
+def shikhara(cv, cx, base, w, h, E, G, lw, tiers=14, ribs=(.36, .7), flag=True, mini=True):
+    hw = w / 2; N = 60
+    L = [(cx - _shw(hw, i / N), base + h * i / N) for i in range(N + 1)]
+    Rr = [(cx + _shw(hw, i / N), base + h * i / N) for i in range(N + 1)]
+    outline = poly(L + Rr[::-1])
+    cv.fill(outline, '#0d0d0e', 'KNOCKOUT')
+    cv.stroke(outline, E, lw * 1.2, 'ENGRAVE')
+    # vertical rathas (ribs) following the curve
+    for f in ribs:
+        for sg in (-1, 1):
+            cv.stroke(poly([(cx + sg * f * _shw(hw, i / N), base + h * i / N) for i in range(int(N * .96) + 1)], False), E, lw * .5, 'ENGRAVE')
+    cv.stroke(poly([(cx, base), (cx, base + h * .97)], False), E, lw * .35, 'ENGRAVE')
+    # horizontal bhumi tiers
+    for k in range(1, tiers):
+        t = k / tiers; y = base + h * t; x = _shw(hw, t)
+        cv.stroke(poly([(cx - x, y), (cx + x, y)], False), E, lw * (.55 if k % 3 else .8), 'ENGRAVE')
+        if k % 3 == 0:
+            for sg in (-1, 1):
+                cv.fill(circle(cx + sg * x * .53, y + h / tiers * .5, .16), E, 'ENGRAVE')
+    # miniature shikharas (urushringa) clustered on the shoulders
+    if mini:
+        for sg in (-1, 1):
+            for j, (tf, sc) in enumerate(((.12, .42), (.36, .3))):
+                y0 = base + h * tf; xx = cx + sg * _shw(hw, tf) * .78
+                ww = w * sc * .55; hh = h * sc * .62
+                ML = [(xx - _shw(ww / 2, i / 30), y0 + hh * i / 30) for i in range(31)]
+                MR = [(xx + _shw(ww / 2, i / 30), y0 + hh * i / 30) for i in range(31)]
+                mo = poly(ML + MR[::-1]); cv.fill(mo, '#0d0d0e', 'KNOCKOUT'); cv.stroke(mo, E, lw * .8, 'ENGRAVE')
+                for k in range(1, 6):
+                    t = k / 6; cv.stroke(poly([(xx - _shw(ww / 2, t), y0 + hh * t), (xx + _shw(ww / 2, t), y0 + hh * t)], False), E, lw * .4, 'ENGRAVE')
+                cv.fill(ellipse(xx, y0 + hh + .25, ww * .2, .28, 0), G, 'GOLD')
+    # amalaka: ribbed disc
+    top = base + h; aw = _shw(hw, 1) * 1.5; ah = h * .055
+    cv.fill(ellipse(cx, top + ah * .55, aw, ah, 0), '#0d0d0e', 'KNOCKOUT')
+    cv.stroke(ellipse(cx, top + ah * .55, aw, ah, 0), G, lw, 'GOLD')
+    for k in range(-5, 6):
+        x = cx + aw * k / 6 * .95
+        cv.stroke(poly([(x, top + ah * .55 - ah * .85 * math.sqrt(max(0, 1 - (k / 6) ** 2))), (x, top + ah * .55 + ah * .85 * math.sqrt(max(0, 1 - (k / 6) ** 2)))], False), G, lw * .45, 'GOLD')
+    # kalash
+    ky = top + ah * 1.1; ks = h * .045
+    cv.fill(ellipse(cx, ky + ks * .9, ks * .95, ks * .85, 0), G, 'GOLD')
+    cv.fill(poly([(cx - ks * .35, ky + ks * 1.6), (cx + ks * .35, ky + ks * 1.6), (cx + ks * .5, ky + ks * 2.1), (cx - ks * .5, ky + ks * 2.1)]), G, 'GOLD')
+    cv.fill(poly([(cx - ks * .22, ky + ks * 2.1), (cx, ky + ks * 3.3), (cx + ks * .22, ky + ks * 2.1)]), G, 'GOLD')
+    # dhwaja (flag)
+    if flag:
+        px = cx + ks * .9; py0 = ky + ks * 1.4; py1 = py0 + h * .3
+        cv.stroke(poly([(px, py0), (px, py1)], False), G, lw * .9, 'GOLD')
+        fw, fh = h * .2, h * .1
+        cv.fill([('M', px, py1), ('C', px + fw * .35, py1 + fh * .12, px + fw * .6, py1 - fh * .18, px + fw, py1 - fh * .3),
+                 ('C', px + fw * .62, py1 - fh * .52, px + fw * .35, py1 - fh * .78, px, py1 - fh), ('Z',)], G, 'GOLD')
+def mandapa(cv, cx, base, w, slabs, E, G, lw):
+    """stepped pyramidal roof (phamsana) with a small amalaka + kalash."""
+    y = base; sw = w
+    for k in range(slabs):
+        hh = .95 - k * .03
+        cv.fill(rect(cx - sw / 2, y, sw, hh), '#0d0d0e', 'KNOCKOUT')
+        cv.stroke(rect(cx - sw / 2, y, sw, hh), E, lw * .7, 'ENGRAVE')
+        y += hh; sw *= .84
+    aw = sw * .7
+    cv.stroke(ellipse(cx, y + .35, aw, .38, 0), G, lw * .8, 'GOLD')
+    cv.fill(ellipse(cx, y + 1.15, .5, .45, 0), G, 'GOLD')
+    cv.fill(poly([(cx - .14, y + 1.5), (cx, y + 2.4), (cx + .14, y + 1.5)]), G, 'GOLD')
+def hindu_temple(cv, E, G, lw=.14):
+    cx = 64.5
+    # stepped jagati platform
+    for y, x0 in ((2.6, 40.5), (4.0, 42), (5.4, 43.5)):
+        cv.stroke(poly([(x0, y), (W + 2, y)], False), E, lw * .8, 'ENGRAVE')
+    # pillared hall
+    cv.stroke(poly([(43.5, 13.2), (W + 2, 13.2)], False), E, lw * 1.1, 'ENGRAVE')
+    cv.stroke(poly([(43.5, 14.1), (W + 2, 14.1)], False), E, lw * .55, 'ENGRAVE')
+    x = 45
+    while x < W + 2:
+        if abs(x - cx) > 3.2:
+            cv.stroke(poly([(x, 5.4), (x, 12.2)], False), E, lw * .7, 'ENGRAVE')
+            cv.stroke(poly([(x - .7, 12.2), (x + .7, 12.2), (x + .4, 13.2), (x - .4, 13.2), (x - .7, 12.2)], False), E, lw * .5, 'ENGRAVE')
+            cv.stroke(poly([(x - .55, 5.4), (x - .55, 6.2), (x + .55, 6.2), (x + .55, 5.4)], False), E, lw * .4, 'ENGRAVE')
+        x += 3.0
+    # central doorway with toran garland (gold)
+    cv.stroke(poly([(cx - 2.4, 5.4), (cx - 2.4, 11.0), (cx + 2.4, 11.0), (cx + 2.4, 5.4)], False), E, lw, 'ENGRAVE')
+    cv.stroke(poly([(cx - 1.6, 5.4), (cx - 1.6, 10.2), (cx + 1.6, 10.2), (cx + 1.6, 5.4)], False), E, lw * .5, 'ENGRAVE')
+    for k in range(7):
+        xx = cx - 2.1 + 4.2 * k / 6
+        cv.stroke(arc(xx, 11.9, .35, math.pi, 2 * math.pi), G, lw * .6, 'GOLD')
+    # mandapa roof (left) + small shrine (right)
+    mandapa(cv, cx - 15.5, 14.1, 12.5, 7, E, G, lw)
+    mandapa(cv, cx + 15.5, 14.1, 9.0, 6, E, G, lw)
+    # main shikhara
+    shikhara(cv, cx, 14.1, 15.5, 24.5, E, G, lw * 1.05)
+    # side mini temple far left
+    shikhara(cv, cx - 25, 14.1, 5.4, 8.2, E, G, lw * .8, tiers=6, ribs=(.5,), flag=False, mini=False)
+
 def plus_front(cv, m, art_only=False):
     cv.fill(rrect(0, 0, W, H, R), ('lin', 0, H, 0, 0, [(0, '#060607'), (.6, '#141416'), (1, '#1d1c20')]), 'BASE')
-    clipped(cv, rrect(0, 0, W, H, R), lambda: temple2(cv, X['steel'], X['gold']))
+    clipped(cv, rrect(0, 0, W, H, R), lambda: hindu_temple(cv, X['steel'], X['gold']))
     brand_row(cv, 6, H - 6 - 8.2, 8.2, {'dark': X['gold3'], 'light': X['gold2'], 'arc': X['gold']}, 'gloock', 13.5, X['gold3'], X['steel'], layer='GOLD', word_track=.2, sub=False)
     T(cv, 'arsenal', 'P L A T I N U M   P L U S', 6, H - 19.6, 5.0, X['gold3'], .3, layer='GOLD')
     cv.stroke(poly([(6, H - 21.4), (17, H - 21.4)], False), X['gold'], .14, 'GOLD')
@@ -368,7 +463,7 @@ def plus_back(cv, m):
     cv.fill(rrect(0, 0, W, H, R), ('lin', 0, H, W, 0, X['bg']), 'BASE')
     cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), X['gold'], .2, 'GOLD')
     L = 7
-    temple_dome(cv, L + 2.2, H - 11.2, 4.2, 5.6, X['steel'], X['gold'], .12, ribs=5, bands=(.3,))
+    shikhara(cv, L + 2.2, H - 11.6, 3.6, 5.2, X['steel'], X['gold'], .1, tiers=5, ribs=(.5,), flag=True, mini=False)
     T(cv, 'gloock', 'NIKADI MEMBERSHIP', L + 6, H - 10.6, 8.2, X['gold3'], .2, layer='GOLD')
     T(cv, 'work', 'PLATINUM PLUS  ·  YOUR PRIVILEGES', L + 6, H - 14.0, 3.6, X['steel'], .36, layer='ENGRAVE')
     y = H - 19.0
