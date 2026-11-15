@@ -267,8 +267,13 @@
     /* turn so the long side of the card is across */
     var top = dist(q[0], q[1]) + dist(q[2], q[3]), side = dist(q[1], q[2]) + dist(q[3], q[0]);
     if (side > top * 1.05) q = [q[3], q[0], q[1], q[2]];
-    if ((rot || 0) % 2) q = [q[2], q[3], q[0], q[1]]; // "rotate" turns the card upside down
-    return enhance(warp(src, q, W, H));
+    var base = enhance(warp(src, q, W, H)), r = (((rot || 0) % 4) + 4) % 4;
+    if (!r) return base;
+    /* turned by quarter turns (clockwise); a sideways turn keeps the whole picture, with white at the sides */
+    var out = canvasOf(W, H), x = out.getContext('2d'), k = r % 2 ? Math.min(W / H, H / W) : 1;
+    x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.translate(W / 2, H / 2); x.rotate(r * Math.PI / 2);
+    x.drawImage(base, -W * k / 2, -H * k / 2, W * k, H * k);
+    return out;
   }
   function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
@@ -297,7 +302,7 @@
         (st ? '<div class="idc-stay"><b>Room ' + esc(st.room) + ' · ' + esc(st.guest) + '</b><span>' + esc(opt.stayLine || '') + '</span></div>' :
         '<div class="idc-info"><input class="input" id="idc-g" placeholder="Guest name (printed on top, optional)" maxlength="60" value="' + esc(state.info.guest) + '"><input class="input" id="idc-r" placeholder="Room" maxlength="10" value="' + esc(state.info.room) + '"></div>') +
         '<div class="idc-actions"><button class="btn btn-gold" type="button" id="idc-print">🖨 Print A4</button><button class="btn btn-line" type="button" id="idc-pdf">Download PDF</button><button class="btn btn-quiet" type="button" id="idc-clear">Clear page</button></div></div>' +
-        '<p class="small">Drag a photo or PDF of the ID onto a box, or tap a box to take / choose a photo or PDF. The ID is found, cut out from the background, straightened and sharpened automatically. Tap <b>Adjust</b> if the corners need fixing. ' +
+        '<p class="small">Drag a photo or PDF of the ID onto a box, or tap a box to take / choose a photo or PDF. The ID is found, cut out from the background, straightened and sharpened automatically. Tap a taken ID to <b>view it big, rotate it, fix the corners, replace or delete</b> it. ' +
         (st ? 'Each copy is <b>saved to this stay</b> in Google Drive (Nikadi Guest House Records › year › month › check-in day), so you can open and print it again later.' : 'Photos stay on this device only and are not saved anywhere.') + '</p>' +
         '<div class="idc-sheet idc-' + state.kind + '"><div class="idc-page">' +
         '<div class="idc-head"><b>Nikadi Guest House</b><span>' + esc([state.info.guest, state.info.room ? 'Room ' + state.info.room : '', state.info.date].filter(Boolean).join(' · ')) + '</span></div>' +
@@ -308,10 +313,10 @@
             (s && s.out ? '<img alt="' + esc(name) + '" src="' + s.out + '">' : s ? '<span class="idc-ph"><small>' + (s.failed ? 'Could not open the saved copy' : 'Opening saved copy…') + '</small></span>' : '<span class="idc-ph"><b>' + esc(name) + '</b><small>Drop photo here or tap</small></span>') +
             '<span class="idc-tag">' + esc(name) + '</span>' +
             (st && s ? '<span class="idc-st ' + (s.saving ? 'ing' : s.saved ? 'ok' : 'bad') + '">' + (s.saving ? 'Saving…' : s.saved ? 'Saved ✓' : '<button type="button" data-retry="' + i + '">Not saved · retry</button>') + '</span>' : '') +
-            (s && s.out ? '<span class="idc-tools"><button type="button" data-adj="' + i + '">Adjust</button><button type="button" data-rot="' + i + '">↻</button><button type="button" data-del="' + i + '">✕</button></span>' : '') + '</div>';
+            (s && s.out ? '<span class="idc-tools"><span class="idc-hint">Tap to view · rotate · adjust</span></span>' : '') + '</div>';
         }).join('') + '</div></div></div><input type="file" accept="image/*,application/pdf,.pdf" id="idc-file" hidden>';
       fit();
-      var file = el.querySelector('#idc-file'), target = -1;
+      var file = el.querySelector('#idc-file');
       el.querySelectorAll('[data-kind]').forEach(function (b) { b.onclick = function () { state.kind = b.dataset.kind; draw(); }; });
       function head() { el.querySelector('.idc-head span').textContent = [state.info.guest, state.info.room ? 'Room ' + state.info.room : '', state.info.date].filter(Boolean).join(' · '); }
       if (!st) {
@@ -324,26 +329,14 @@
       el.querySelector('#idc-pdf').onclick = function () { pdfPage(this); };
       el.querySelectorAll('.idc-slot').forEach(function (sl) {
         var i = +sl.dataset.i;
-        sl.onclick = function (e) { if (e.target.closest('.idc-tools,.idc-st')) return; var cur = state.slots[state.kind][i]; if (cur && cur.loading) return; target = i; file.click(); };
-        sl.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); target = i; file.click(); } };
+        sl.onclick = function (e) { if (e.target.closest('.idc-st button')) return; var cur = state.slots[state.kind][i]; if (cur && cur.loading) return; if (cur && cur.out) viewer(i); else pick(i); };
+        sl.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); var cur = state.slots[state.kind][i]; if (cur && cur.out) viewer(i); else pick(i); } };
         sl.ondragover = function (e) { e.preventDefault(); sl.classList.add('over'); };
         sl.ondragleave = function () { sl.classList.remove('over'); };
         sl.ondrop = function (e) { e.preventDefault(); sl.classList.remove('over'); var f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) take(i, f); };
       });
       file.onchange = function () { if (file.files[0] && target >= 0) take(target, file.files[0]); file.value = ''; };
-      el.querySelectorAll('[data-del]').forEach(function (b) {
-        b.onclick = function () {
-          var i = +b.dataset.del, s = state.slots[state.kind][i];
-          if (st && s && s.fid) {
-            if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'Remove?'; b.classList.add('sure'); setTimeout(function () { if (b.isConnected) { b.dataset.sure = ''; b.textContent = '✕'; b.classList.remove('sure'); } }, 3000); return; }
-            opt.remove(s.fid).then(function () { if (opt.toast) opt.toast('Removed'); }, function () { if (opt.toast) opt.toast('Could not remove it'); });
-          }
-          state.slots[state.kind][i] = null; draw();
-        };
-      });
-      el.querySelectorAll('[data-rot]').forEach(function (b) { b.onclick = function () { var kind = state.kind, i = +b.dataset.rot, s = state.slots[kind][i]; withSrc(s).then(function () { s.rot = (s.rot || 0) + 1; s.out = render(s.src, s.quad, LAYOUTS[kind], s.rot).toDataURL('image/jpeg', 0.9); draw(); store(kind, i, s); }); }; });
       el.querySelectorAll('[data-retry]').forEach(function (b) { b.onclick = function () { var i = +b.dataset.retry; store(state.kind, i, state.slots[state.kind][i]); }; });
-      el.querySelectorAll('[data-adj]').forEach(function (b) { b.onclick = function () { adjust(+b.dataset.adj); }; });
     }
     /* paste a photo: goes into the first empty box */
     document.addEventListener('paste', function (e) {
@@ -354,6 +347,56 @@
       if (i < L.slots.length) take(i, f);
     });
     /* a saved copy has no original photo on this device: use the saved picture itself for Adjust / rotate */
+    var target = -1;
+    function pick(i) { var f = el.querySelector('#idc-file'); if (!f) return; target = i; f.click(); }
+    function removeSlot(kind, i) {
+      var s = state.slots[kind][i];
+      if (st && s && s.fid) opt.remove(s.fid).then(function () { if (opt.toast) opt.toast('Removed'); }, function () { if (opt.toast) opt.toast('Could not remove it'); });
+      state.slots[kind][i] = null; draw();
+    }
+    function turn(kind, i, by) {
+      var s = state.slots[kind][i];
+      return withSrc(s).then(function () { s.rot = (((s.rot || 0) + by) % 4 + 4) % 4; s.out = render(s.src, s.quad, LAYOUTS[kind], s.rot).toDataURL('image/jpeg', 0.9); draw(); store(kind, i, s); return s; });
+    }
+    /* tap a saved ID: see it big, turn it, fix the corners, replace or delete it */
+    function viewer(i) {
+      var kind = state.kind, name = LAYOUTS[kind].slots[i];
+      var ov = document.createElement('div'); ov.className = 'idc-view';
+      ov.innerHTML = '<div class="idc-view-top"><b>' + esc(name) + '</b><span class="idc-view-st"></span><button type="button" class="idc-x" data-a="close" aria-label="Close">✕</button></div>' +
+        '<div class="idc-view-pic"><img alt="' + esc(name) + '"></div>' +
+        '<div class="idc-view-bar">' +
+        '<button type="button" data-a="left"><span>↺</span>Rotate left</button>' +
+        '<button type="button" data-a="right"><span>↻</span>Rotate right</button>' +
+        '<button type="button" data-a="adj"><span>⌗</span>Adjust corners</button>' +
+        '<button type="button" data-a="new"><span>📷</span>Replace</button>' +
+        '<button type="button" data-a="del" class="del"><span>🗑</span>Delete</button></div>' +
+        '<div class="idc-view-ask" hidden><p>Delete this ID copy' + (st ? ' from the stay' : '') + '?</p><div><button type="button" class="btn btn-quiet" data-a="no">Keep it</button><button type="button" class="btn btn-quiet danger" data-a="yes">Delete</button></div></div>';
+      document.body.appendChild(ov);
+      var img = ov.querySelector('img'), pic = ov.querySelector('.idc-view-pic'), ask = ov.querySelector('.idc-view-ask'), stEl = ov.querySelector('.idc-view-st');
+      function show() {
+        var s = state.slots[kind][i]; if (!s) { close(); return; }
+        img.src = s.out;
+        stEl.textContent = !st ? '' : s.saving ? 'Saving…' : s.saved ? 'Saved ✓' : 'Not saved';
+        stEl.className = 'idc-view-st ' + (s.saving ? 'ing' : s.saved ? 'ok' : 'bad');
+      }
+      var tick = setInterval(function () { if (!ov.isConnected) { clearInterval(tick); return; } show(); }, 700);
+      function close() { clearInterval(tick); document.removeEventListener('keydown', key); ov.remove(); }
+      function key(e) { if (e.key === 'Escape') close(); else if (e.key === 'ArrowLeft') act('left'); else if (e.key === 'ArrowRight') act('right'); }
+      document.addEventListener('keydown', key);
+      img.onclick = function () { pic.classList.toggle('zoom'); };
+      function act(a) {
+        if (a === 'close') return close();
+        if (a === 'left' || a === 'right') { turn(kind, i, a === 'left' ? -1 : 1).then(show); return; }
+        if (a === 'adj') { close(); adjust(i); return; }
+        if (a === 'new') { close(); pick(i); return; }
+        if (a === 'del') { ask.hidden = false; return; }
+        if (a === 'no') { ask.hidden = true; return; }
+        if (a === 'yes') { close(); removeSlot(kind, i); }
+      }
+      ov.querySelectorAll('[data-a]').forEach(function (b) { b.onclick = function () { act(b.dataset.a); }; });
+      ov.onclick = function (e) { if (e.target === ov) close(); };
+      show();
+    }
     function withSrc(s) {
       if (s.src) return Promise.resolve(s);
       return loadImage(s.out).then(function (im) { s.src = baseCanvas(im); s.quad = null; s.rot = 0; return s; });
@@ -452,9 +495,9 @@
           if (pdf && kind === 'id' && cards.length >= 2 && i % 2 === 0 && !state.slots[kind][i + 1]) { put(i + 1, cards[1]); both = true; }
           draw(); store(kind, i, s1); if (both) store(kind, i + 1, state.slots[kind][i + 1]);
           if (pdf && !cards.length && state.kind === kind) adjust(i); /* nothing card-shaped found: let staff set the corners */
-          else if (both && opt.toast) opt.toast('Front and back taken from the PDF. Tap Adjust if a corner is off.');
-          else if (pdf && opt.toast) opt.toast('ID taken from the PDF. Tap Adjust if a corner is off.');
-          else if (!quad && opt.toast) opt.toast('Could not find the ID edges. Tap Adjust to set the corners.');
+          else if (both && opt.toast) opt.toast('Front and back taken from the PDF. Tap an ID to fix a corner.');
+          else if (pdf && opt.toast) opt.toast('ID taken from the PDF. Tap it to fix a corner.');
+          else if (!quad && opt.toast) opt.toast('Could not find the ID edges. Tap the ID → Adjust corners.');
         }, 30);
       }, function (e) {
         busy(i, false);

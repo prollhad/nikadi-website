@@ -398,6 +398,7 @@
       '<div><dt>Check-in</dt><dd>' + esc(dShort(s.checkin)) + '</dd></div><div><dt>Check-out</dt><dd>' + esc(dShort(s.checkout)) + '</dd></div>' +
       (m ? '<div><dt>Phone</dt><dd>' + (s.phone ? '<a href="tel:+91' + esc(s.phone) + '">' + esc(s.phone) + '</a>' : '—') + '</dd></div><div><dt>Checked in by</dt><dd>' + esc(s.inBy) + '</dd></div>' : '') +
       '</dl>';
+    if (m && s.companions && s.companions.length) h += '<div class="note"><b>Other guests in the room</b>' + s.companions.map(esc).join(' · ') + '</div>';
     if (s.member) h += memberBox(s.member, false);
     if (s.service) h += serviceBox(s.service);
     if (m && s.notes) h += '<div class="note"><b>Notes</b>' + esc(s.notes) + '</div>';
@@ -746,6 +747,17 @@
     });
   }
   function stepper(id, val, min, max) { return '<div class="stepper" data-min="' + min + '" data-max="' + max + '"><button type="button" data-d="-1" aria-label="Less">−</button><output id="' + id + '">' + val + '</output><button type="button" data-d="1" aria-label="More">+</button></div>'; }
+  /* names of the other guests in the room: one box per extra person (up to 9) */
+  function compBox() { return '<div class="field comp" id="f-compw"><span>Other guests in the room <small>(names, optional)</small></span><div class="comp-list" id="f-comp"></div></div>'; }
+  function compDraw(body, guests, keep) {
+    var box = $('#f-comp', body); if (!box) return;
+    var have = $$('input', box).map(function (x) { return x.value; }), vals = keep || have, n = Math.min(9, Math.max(0, guests - 1));
+    $('#f-compw', body).hidden = n === 0;
+    box.innerHTML = Array.apply(null, Array(n)).map(function (_, i) {
+      return '<div class="comp-row"><b>' + (i + 2) + '</b><input class="input" maxlength="80" autocomplete="off" placeholder="Guest ' + (i + 2) + ' name" value="' + esc(vals[i] || '') + '"></div>';
+    }).join('') + (guests > 10 ? '<p class="small">Names for up to 10 people. Write the others in Notes.</p>' : '');
+  }
+  function compVal(body) { return $$('#f-comp input', body).map(function (x) { return x.value.trim(); }).filter(Boolean); }
   function wireSteppers(root, onchange) {
     $$('.stepper', root).forEach(function (st) {
       st.onclick = function (e) {
@@ -771,7 +783,7 @@
       field('Guest name', '<input class="input" id="f-guest" autocomplete="off" maxlength="80">', true) +
       field('Phone (optional)', '<div class="phonewrap"><span class="cc">+91</span><input class="input" id="f-phone" inputmode="numeric" maxlength="14" autocomplete="off"></div>') +
       '<div id="f-mem"></div>' +
-      '<div class="field"><span>Guests in this room <i>*</i></span>' + stepper('f-guests', 2, 1, 20) + '</div>' +
+      '<div class="field"><span>Guests in this room <i>*</i></span>' + stepper('f-guests', 2, 1, 20) + '</div>' + compBox() +
       '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="f-in" value="' + t + '">', true) +
       field('Check-out', '<input class="input" type="date" id="f-out" value="' + addDays(t, 1) + '">', true) + '</div>' +
       field('Agreed rate per night (₹)', '<input class="input" id="f-rate" inputmode="numeric" value="' + r.rate + '">', true) +
@@ -786,7 +798,7 @@
       $('#calc', body).innerHTML = n > 0 ? n + (n > 1 ? ' nights' : ' night') + ' × ' + inr(rate) + ' = <b>' + inr(n * rate) + '</b>' : 'Check-out must be after check-in';
     }
     ['#f-in', '#f-out', '#f-rate'].forEach(function (s) { $(s, body).addEventListener('input', calc); });
-    wireSegs(body); wireSteppers(body); calc();
+    wireSegs(body); wireSteppers(body, function () { compDraw(body, Number($('#f-guests', body).textContent)); }); calc(); compDraw(body, 2);
     var lastPh = '';
     $('#f-phone', body).addEventListener('input', function () {
       var ph = this.value.replace(/\D/g, '').slice(-10);
@@ -806,7 +818,7 @@
     });
     $('#go', body).onclick = function () {
       submit(this, $('#err', body), 'deskCheckIn', {
-        room: r.room, guest: $('#f-guest', body).value, phone: $('#f-phone', body).value, guests: Number($('#f-guests', body).textContent),
+        room: r.room, guest: $('#f-guest', body).value, phone: $('#f-phone', body).value, guests: Number($('#f-guests', body).textContent), companions: compVal(body),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''),
         rateNote: $('#f-rnote', body).value, advance: $('#f-adv', body).value.replace(/[^\d]/g, ''), method: segVal(body, 'method'), ref: $('#f-ref', body).value, notes: $('#f-notes', body).value
       }, function (res) { vibrate(); toast(res.stay.guest + ' checked in to room ' + r.room); after(2); });
@@ -833,7 +845,7 @@
     var free = S.st.rooms.filter(function (r) { return r.status === 'Ready'; });
     body.innerHTML = field('Guest name', '<input class="input" id="f-guest" maxlength="80" value="' + esc(s.guest) + '">', true) +
       field('Phone', '<div class="phonewrap"><span class="cc">+91</span><input class="input" id="f-phone" inputmode="numeric" maxlength="14" value="' + esc(s.phone || '') + '"></div>') +
-      '<div class="field"><span>Guests</span>' + stepper('f-guests', s.guests, 1, 20) + '</div>' +
+      '<div class="field"><span>Guests</span>' + stepper('f-guests', s.guests, 1, 20) + '</div>' + compBox() +
       '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="f-in" value="' + esc(s.checkin) + '">') +
       field('Check-out', '<input class="input" type="date" id="f-out" value="' + esc(s.checkout) + '">') + '</div>' +
       '<div class="btns"><button class="btn btn-quiet" type="button" id="x1">+1 night</button><button class="btn btn-quiet" type="button" id="x2">+2 nights</button></div>' +
@@ -851,9 +863,9 @@
     ['#f-in', '#f-out', '#f-rate'].forEach(function (x) { $(x, body).addEventListener('input', calc); });
     $('#x1', body).onclick = function () { $('#f-out', body).value = addDays($('#f-out', body).value, 1); calc(); };
     $('#x2', body).onclick = function () { $('#f-out', body).value = addDays($('#f-out', body).value, 2); calc(); };
-    wireSteppers(body); calc();
+    wireSteppers(body, function () { compDraw(body, Number($('#f-guests', body).textContent)); }); calc(); compDraw(body, s.guests, s.companions || []);
     $('#go', body).onclick = function () {
-      var d = { id: s.id, guest: $('#f-guest', body).value, phone: $('#f-phone', body).value, guests: Number($('#f-guests', body).textContent),
+      var d = { id: s.id, companions: compVal(body), guest: $('#f-guest', body).value, phone: $('#f-phone', body).value, guests: Number($('#f-guests', body).textContent),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''), rateNote: $('#f-rnote', body).value, notes: $('#f-notes', body).value };
       if ($('#f-why', body)) d.reason = $('#f-why', body).value;
       if ($('#f-room', body).value) d.room = Number($('#f-room', body).value);
@@ -1927,7 +1939,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 29</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 30</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

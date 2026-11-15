@@ -5,6 +5,7 @@
    It never touches a sheet or the browser directly: it only uses the small `db` object it is given. */
 
 var DESK_TZ_MIN = 330; // India Standard Time, UTC+5:30 (no daylight saving)
+var DESK_MAX_COMPANIONS = 9; // names of the other guests in a room (up to 10 people with the main guest)
 var DESK_MAX_GUESTS = 20; // people allowed in one room (rooms normally sleep 3; extra mattresses let more stay)
 /* Free things housekeeping gives every staying room each day from the 2nd day (water etc.). The Items sheet column
    "Free daily per room" overrides this when filled in. */
@@ -55,7 +56,7 @@ var DESK_SCHEMA = {
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
     ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't'],
-    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)'], ['address', 'Guest address']] },
+    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)'], ['address', 'Guest address'], ['companions', 'Other guests in the room']] },
   bookings: { sheet: 'Bookings', cols: [['id', 'Booking ID'], ['status', 'Status'], ['source', 'Source'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['email', 'Email'],
     ['guests', 'Guests', 'n'], ['roomsNeeded', 'Rooms needed', 'n'], ['roomType', 'Room preference'], ['rooms', 'Room numbers', 's'], ['checkin', 'Check-in date', 'd'],
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
@@ -292,6 +293,12 @@ function deskCore(db, hooks) {
   }
 
   function memberOf(phone) { if (!hooks.memberInfo || !phone) return null; try { return hooks.memberInfo(String(phone)); } catch (e) { return null; } }
+  /* other guests' names: kept as one cell, "Name; Name; …" (never more names than people in the room, max 9) */
+  function companionsIn(v, guests) {
+    var list = (Array.isArray(v) ? v : String(v || '').split(/[;\n]/)).map(function (x) { return text(x, 80); }).filter(Boolean);
+    return list.slice(0, Math.min(DESK_MAX_COMPANIONS, Math.max(0, Number(guests || 1) - 1))).join('; ');
+  }
+  function companionsOut(v) { return String(v || '').split(';').map(function (x) { return x.trim(); }).filter(Boolean); }
   function stayView(s, me) {
     var mgr = isMgr(me);
     var v = { id: s.id, room: s.room, guest: s.guest, guests: s.guests, checkin: s.checkin, checkout: s.checkout, nights: s.nights, status: s.status,
@@ -305,7 +312,7 @@ function deskCore(db, hooks) {
     var mem = s.status === 'In house' ? memberOf(s.phone) : null;
     if (mem) v.member = { name: mem.name, tier: mem.tier, tierKey: mem.tierKey, discount: mem.discount, onsite: mem.onsite, email: mgr ? mem.email || '' : '' };
     if (mgr) {
-      v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes; v.email = s.email || ''; v.gstin = s.gstin || ''; v.company = s.company || ''; v.bill = s.bill || ''; v.title = s.title || '';
+      v.phone = s.phone; v.rate = s.rate; v.rateNote = s.rateNote; v.notes = s.notes; v.email = s.email || ''; v.companions = companionsOut(s.companions); v.gstin = s.gstin || ''; v.company = s.company || ''; v.bill = s.bill || ''; v.title = s.title || '';
       v.roomTotal = s.roomTotal; v.extras = s.extras; v.paid = s.paid; v.balance = s.balance;
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
@@ -516,7 +523,7 @@ function deskCore(db, hooks) {
     var row = function (k, v) { return v === '' || v == null ? '' : '<tr><th>' + hx(k) + '</th><td>' + hx(v) + '</td></tr>'; };
     var body = '<h1>Nikadi Guest House · Stay record</h1><p class="s">Room ' + hx(s.room) + ' · ' + hx(s.guest) + ' · ' + hx(s.status) + '</p>' +
       '<table>' + row('Room', s.room + (r0.type ? ' · ' + r0.type : '')) + row('Guest', [s.title, s.guest].filter(Boolean).join(' ')) + row('Phone', s.phone) + row('Email', s.email) + row('Address', s.address) +
-      row('Company / GSTIN', [s.company, s.gstin].filter(Boolean).join(' · ')) + row('Guests in room', s.guests) +
+      row('Company / GSTIN', [s.company, s.gstin].filter(Boolean).join(' · ')) + row('Guests in room', s.guests) + row('Other guests', companionsOut(s.companions).join(', ')) +
       row('Check-in', dd(s.checkin) + (s.inAt ? ' · arrived ' + tm(s.inAt) : '')) + row('Room given by', s.inBy) +
       row(s.status === 'Checked out' ? 'Check-out' : 'Check-out (planned)', dd(s.checkout) + (s.outAt ? ' · left ' + tm(s.outAt) : '')) + row('Checked out by', s.outBy) +
       row('Nights', s.nights) + row('Rate per night', rupees(s.rate) + (s.rateNote ? ' · ' + s.rateNote : '')) + row('From booking', s.booking) + row('Bill no.', b ? b.no : '') +
@@ -746,7 +753,7 @@ function deskCore(db, hooks) {
     var clash = roomClash(r.room, cin, cout); if (clash) clashFail(r.room, clash);
     var s = db.add('stays', { id: id('S'), room: r.room, guest: guest, phone: phoneOk(req.phone), guests: guests, checkin: cin, checkout: cout,
       nights: nightsBetween(cin, cout), rate: rate, rateNote: text(req.rateNote, 160), status: 'In house', roomTotal: 0, extras: 0, paid: 0, balance: 0,
-      notes: text(req.notes, 300), inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: '' });
+      notes: text(req.notes, 300), inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: '', companions: companionsIn(req.companions, guests) });
     if (adv > 0) {
       if (METHODS.indexOf(req.method) < 0) fail('method_required');
       db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: r.room, amount: adv, method: req.method, note: 'Paid at check-in', by: me.name, booking: '', ref: text(req.ref, 40) });
@@ -769,6 +776,7 @@ function deskCore(db, hooks) {
     if (req.rate != null) { p.rate = money(req.rate); if (!(p.rate > 0)) fail('rate_required'); }
     if (req.rateNote != null) p.rateNote = text(req.rateNote, 160);
     if (req.notes != null) p.notes = text(req.notes, 300);
+    if (req.companions != null) p.companions = companionsIn(req.companions, p.guests != null ? p.guests : s.guests);
     var cin = req.checkin != null ? String(req.checkin) : s.checkin, cout = req.checkout != null ? String(req.checkout) : s.checkout;
     if (!isYmd(cin) || !isYmd(cout) || dayNum(cout) <= dayNum(cin)) fail('bad_dates');
     p.checkin = cin; p.checkout = cout; p.nights = nightsBetween(cin, cout);

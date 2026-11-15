@@ -584,3 +584,27 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 /* Reverse a mistaken check-out */
 .undo-box{margin-top:14px;border:1px dashed var(--line);border-radius:var(--r-sm);padding:14px;display:grid;gap:6px;background:var(--band)}
 .undo-box span{color:var(--muted);font-size:.9rem}.undo-box .btn{justify-self:start;width:auto}
+
+/* tap-to-view ID copy (v30) */
+.idc-hint{font:600 7.5pt Helvetica,Arial,sans-serif;background:rgba(20,24,26,.78);color:#fff;border-radius:2mm;padding:1.2mm 2.4mm;white-space:nowrap}
+.idc-slot.full{cursor:zoom-in}
+.idc-view{position:fixed;inset:0;z-index:310;background:rgba(8,10,12,.94);display:flex;flex-direction:column;padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));gap:10px}
+.idc-view-top{display:flex;align-items:center;gap:10px;color:#eee}.idc-view-top b{font-size:1.05rem}
+.idc-view-st{font-size:.85rem;flex:1}.idc-view-st.ok{color:#7fd19b}.idc-view-st.ing{color:#8fd0e0}.idc-view-st.bad{color:#f0a08a}
+.idc-x{background:rgba(255,255,255,.1);color:#fff;border:0;border-radius:50%;width:40px;height:40px;font-size:1.1rem;cursor:pointer;flex:none}
+.idc-view-pic{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:auto;-webkit-overflow-scrolling:touch}
+.idc-view-pic img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.6);cursor:zoom-in}
+.idc-view-pic.zoom{align-items:flex-start;justify-content:flex-start}
+.idc-view-pic.zoom img{max-width:none;max-height:none;width:auto;min-width:160%;cursor:zoom-out}
+.idc-view-bar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;max-width:640px;width:100%;margin:0 auto}
+.idc-view-bar button{display:grid;justify-items:center;gap:3px;background:rgba(255,255,255,.08);color:#f2ede4;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:9px 4px;font:600 .74rem/1.15 inherit;cursor:pointer;min-height:58px}
+.idc-view-bar button span{font-size:1.3rem;line-height:1}
+.idc-view-bar button:active{background:rgba(224,190,122,.25)}
+.idc-view-bar button.del{color:#ffb3a3;border-color:rgba(240,120,100,.35)}
+.idc-view-ask{position:absolute;left:50%;bottom:max(90px,calc(env(safe-area-inset-bottom) + 90px));transform:translateX(-50%);background:#1b1714;border:1px solid #3a322a;border-radius:14px;padding:14px 16px;display:grid;gap:10px;width:min(360px,calc(100% - 32px));text-align:center;color:#eee}
+.idc-view-ask p{margin:0}.idc-view-ask div{display:flex;gap:8px;justify-content:center}.idc-view-ask .btn{width:auto}
+/* other guests in the room (v30) */
+.comp-list{display:grid;gap:6px}.comp-list .small{margin:2px 0 0}
+.comp-row{display:grid;grid-template-columns:28px 1fr;align-items:center;gap:8px}
+.comp-row b{color:var(--muted);font-weight:600;text-align:center;font-variant-numeric:tabular-nums}
+.field.comp>span small{color:var(--muted);font-weight:400}
