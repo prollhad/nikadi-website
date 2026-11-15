@@ -2256,7 +2256,7 @@
         Object.keys(byDay).map(function (day) {
           return '<tr class="day"><td colspan="5">' + esc(day === today ? 'Today' : dShort(day)) + '</td></tr>' + byDay[day].map(function (r) {
             return '<tr><td><b>' + esc(r.name) + '</b><small>' + esc(r.role) + '</small></td><td>' + esc(clock(r.first)) + '<small class="dev">' + esc(r.device || '') + '</small></td>' +
-              '<td>' + (r.now ? '<span class="ptag k-ok">Still here</span><small class="dev">last ' + esc(clock(r.last)) + '</small>' : esc(clock(r.last)) + (r.lastDevice && r.lastDevice !== r.device ? '<small class="dev">' + esc(r.lastDevice) + '</small>' : '')) + '</td>' +
+              '<td><button type="button" class="att-ex" data-ex="' + esc(day + '|' + r.name) + '">' + (r.now ? '<span class="ptag k-ok">Still here</span><small class="dev">last ' + esc(clock(r.last)) + '</small>' : esc(clock(r.last)) + (r.exitSet ? '<small class="dev set">✓ chosen by owner</small>' : r.lastDevice && r.lastDevice !== r.device ? '<small class="dev">' + esc(r.lastDevice) + '</small>' : '')) + '<small class="dev edit">Change exit ›</small></button></td>' +
               '<td class="r">' + dur(hm(r.first, r.last)) + '</td><td class="r hide-s">' + r.opens + '</td></tr>';
           }).join('');
         }).join('') + '</tbody></table></div>' : '<p class="small">No one opened the app on the guest house Wi-Fi in this period.</p>') +
@@ -2278,6 +2278,26 @@
       var x = this; busy(x, true);
       publicIp().then(function (ip) { save(ip, false, x); }, function () { busy(x, false); $('#aerr', v).textContent = 'Could not check the network. Check the internet and try again.'; });
     };
+    $$('[data-ex]', v).forEach(function (b) {
+      b.onclick = function () {
+        var k = b.dataset.ex.split('|'), r = rows.filter(function (x) { return x.date === k[0] && x.name === k[1]; })[0]; if (!r) return;
+        var sb = openSheet('Exit · ' + r.name + ' · ' + dShort(r.date)), cur = r.exitSet || '';
+        sb.innerHTML = '<p class="small">Came in at <b>' + esc(clock(r.first)) + '</b>. Pick the real exit: the last ' + (r.choices.length > 1 ? r.choices.length + ' times' : 'time') + ' the app was opened on the guest house desktop that day.</p>' +
+          '<div class="list">' + r.choices.map(function (c) {
+            return '<button type="button" class="bl bl-btn ex-pick' + (cur === c.at ? ' on' : '') + '" data-at="' + esc(c.at) + '"><span class="t"><b>' + esc(clock(c.at)) + '</b><small>' + esc(c.dev || '') + ' · worked ' + dur(hm(r.first, c.at)) + '</small></span><span class="a">' + (cur === c.at ? '✓ chosen' : 'Use this') + '</span></button>';
+          }).join('') + '</div>' +
+          (cur ? '<button type="button" class="btn btn-quiet" id="ex-auto">Go back to automatic (last app open ' + esc(clock(r.autoLast)) + ')</button>' : '') +
+          '<p class="err" id="exerr" role="alert"></p>';
+        function setExit(at, x) {
+          busy(x, true);
+          var r0 = attRange(ATT.range);
+          api('deskAttendanceExit', { date: r.date, name: r.name, at: at, from: r0[0], to: r0[1], name2: ATT.name }).then(function () { toast(at ? 'Exit set to ' + clock(at) : 'Exit is automatic again'); closeSheet(); ATT.data = null; render(); },
+            function (e) { busy(x, false); $('#exerr', sb).textContent = errText(e); });
+        }
+        $$('.ex-pick', sb).forEach(function (x) { x.onclick = function () { setExit(x.dataset.at, x); }; });
+        if ($('#ex-auto', sb)) $('#ex-auto', sb).onclick = function () { setExit('', this); };
+      };
+    });
     $$('[data-rm]', v).forEach(function (b) { b.onclick = function () { save(b.dataset.rm, true, b); }; });
     $$('[data-add]', v).forEach(function (b) { b.onclick = function () { save(b.dataset.add, false, b); }; });
   }
@@ -2288,7 +2308,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 39</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 40</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

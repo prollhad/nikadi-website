@@ -676,3 +676,6 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .own-chk{display:flex;gap:8px;align-items:flex-start;font-size:.9rem;color:var(--muted);margin:8px 0}
 .own-msg{font-size:.85rem;white-space:pre-wrap}
 .own-prev{width:100%;height:78vh;border:0;background:#fff;border-radius:8px}
+.att-ex{background:none;border:0;color:inherit;font:inherit;text-align:left;padding:0;cursor:pointer;display:grid;gap:1px}
+.att-ex .dev.edit{color:var(--gold-hi,#e0be7a);opacity:.8}.att-ex .dev.set{color:#9fdcb8}
+.ex-pick.on{border-color:rgba(80,170,120,.5);background:rgba(80,170,120,.08)}

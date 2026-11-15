@@ -107,7 +107,8 @@ var DESK_SCHEMA = {
     ['outAt', 'Logged out', 't'], ['outPlace', 'Log-out place'], ['outLat', 'Log-out latitude', 'n'], ['outLng', 'Log-out longitude', 'n'], ['outAcc', 'Log-out accuracy (m)', 'n'],
     ['outDevice', 'Log-out device'], ['outHow', 'How it ended'], ['lastSeen', 'Last active', 't'], ['session', 'Session (system)', 's']] },
   wifi: { sheet: 'Wi-Fi attendance', lazy: true, cols: [['date', 'Date', 'd'], ['name', 'Name'], ['role', 'Role'], ['first', 'Entry (first app open on Wi-Fi)', 't'],
-    ['last', 'Exit (last app open on Wi-Fi)', 't'], ['opens', 'App opens on Wi-Fi', 'n'], ['device', 'Device'], ['lastDevice', 'Last device']] },
+    ['last', 'Exit (last app open on Wi-Fi)', 't'], ['opens', 'App opens on Wi-Fi', 'n'], ['device', 'Device'], ['lastDevice', 'Last device'],
+    ['exitSet', 'Exit chosen by owner', 't'], ['exitBy', 'Exit chosen by'], ['recent', 'Recent app opens (system)', 's']] },
   config: { sheet: 'Staff app settings', lazy: true, hidden: true, cols: [['key', 'Setting'], ['value', 'Value', 's']] }
 };
 
@@ -952,6 +953,15 @@ function deskCore(db, hooks) {
   function wifiList() { try { return JSON.parse(cfgGet('wifi') || '[]'); } catch (e) { return []; } }
   function otherNets() { try { return JSON.parse(cfgGet('otherNets') || '[]'); } catch (e) { return []; } }
   function cleanIp(v) { v = String(v || '').trim(); return /^[0-9a-fA-F:.]{3,45}$/.test(v) ? v : ''; }
+  function wifiRecent(w) { try { var a = JSON.parse(w.recent || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function isDesk(dev) { return /PC|Mac/.test(String(dev || '')); } // the guest house desktop / laptop (not a phone)
+  /* the last 3 app opens on the guest house desktop that day (or on any device if none), newest first: the owner picks the real exit from these */
+  function exitChoices(w) {
+    var rec = wifiRecent(w), desk = rec.filter(function (x) { return isDesk(x.dev); });
+    var pick = (desk.length ? desk : rec).slice(-3).reverse();
+    if (!pick.length && w.last) pick = [{ at: w.last, dev: w.lastDevice || '' }];
+    return pick;
+  }
   /* Called by the app each time it is opened / comes back to the screen (and every 10 minutes while open). */
   api.presence = function (req) {
     var me = auth(req);
@@ -964,8 +974,11 @@ function deskCore(db, hooks) {
       return { counted: false, atHouse: false };
     }
     var d = today(), row = db.all('wifi').filter(function (w) { return w.date === d && w.name === me.name; })[0];
-    if (!row) db.add('wifi', { date: d, name: me.name, role: me.role, first: stamp(), last: stamp(), opens: 1, device: dev, lastDevice: dev });
-    else db.set('wifi', row, { last: stamp(), opens: Number(row.opens || 0) + 1, lastDevice: dev });
+    var now = stamp(), rec = row ? wifiRecent(row) : [];
+    if (rec.length && rec[rec.length - 1].at === now) rec[rec.length - 1].dev = dev; else rec.push({ at: now, dev: dev });
+    rec = JSON.stringify(rec.slice(-15));
+    if (!row) db.add('wifi', { date: d, name: me.name, role: me.role, first: now, last: now, opens: 1, device: dev, lastDevice: dev, exitSet: '', exitBy: '', recent: rec });
+    else db.set('wifi', row, { last: now, opens: Number(row.opens || 0) + 1, lastDevice: dev, recent: rec });
     return { counted: true, atHouse: true };
   };
   /* Housekeeping checklist: rooms with guests staying (2nd day onwards) and the free things to give today. Everyone can see it. */
@@ -1199,10 +1212,21 @@ function deskCore(db, hooks) {
     var me = auth(req); needOwner(me);
     var from = isYmd(req.from) ? req.from : addDays(today(), -6), to = isYmd(req.to) ? req.to : today(), soon = plusHours(stamp(), -0.25);
     var rows = db.all('wifi').filter(function (w) { return w.date >= from && w.date <= to && (!req.name || w.name === req.name); })
-      .map(function (w) { return { date: w.date, name: w.name, role: w.role, first: w.first, last: w.last, opens: Number(w.opens || 0), device: w.device, lastDevice: w.lastDevice, now: w.date === today() && w.last >= soon }; })
+      .map(function (w) { return { date: w.date, name: w.name, role: w.role, first: w.first, last: w.exitSet || w.last, autoLast: w.last, exitSet: w.exitSet || '', exitBy: w.exitBy || '', choices: exitChoices(w),
+        opens: Number(w.opens || 0), device: w.device, lastDevice: w.lastDevice, now: !w.exitSet && w.date === today() && w.last >= soon }; })
       .sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : (a.first < b.first ? -1 : 1); });
     var people = db.all('staff').filter(function (p) { return DESK_WIFI_ROLES.indexOf(p.role) >= 0; }).map(function (p) { return { name: p.name, role: p.role, active: yes(p.active) }; });
     return { from: from, to: to, rows: rows, people: people, wifi: wifiList(), others: otherNets().filter(function (x) { return wifiList().indexOf(x.ip) < 0; }) };
+  };
+  /* Owner: choose the real exit time for a person's day (one of their last 3 app opens on the desk computer), or go back to automatic. */
+  api.attendanceExit = function (req) {
+    var me = auth(req); needOwner(me);
+    var w = db.all('wifi').filter(function (x) { return x.date === req.date && x.name === req.name; })[0] || fail('not_found');
+    var at = String(req.at || '');
+    if (at && !exitChoices(w).some(function (c) { return c.at === at; }) && at !== w.first) fail('bad_time');
+    if (at && at < w.first) fail('bad_time');
+    db.set('wifi', w, { exitSet: at, exitBy: at ? me.name + ' · ' + stamp() : '' });
+    return { ok: true };
   };
   /* Owner: save / remove the guest house Wi-Fi (its internet address). */
   api.attendanceWifi = function (req) {
