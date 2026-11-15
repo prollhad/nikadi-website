@@ -1265,6 +1265,16 @@ function deskCore(db, hooks) {
     return { pc: pc, last: last, others: all.filter(function (x) { return !(x.wifi && isDesk(x.dev)) && x.name !== me.name; }).map(function (x) { return { name: x.name, role: x.role, dev: x.dev, wifi: x.wifi, ago: Math.round((now - x.t) / 1000) }; }) };
   };
 
+  /* Owner: who changed what (new server only: every change is written in the database's change log) */
+  api.changeLog = function (req) {
+    var me = auth(req); needOwner(me);
+    if (!hooks.changeLog) fail('changelog_unavailable');
+    var rows = hooks.changeLog({ lim: 80, before: req.before ? Number(req.before) : null, who: req.who ? text(req.who, 60) : null }) || [];
+    var names = {}; Object.keys(DESK_SCHEMA).forEach(function (t) { names[t] = DESK_SCHEMA[t].sheet; });
+    return { rows: rows.map(function (r) { return { id: r.id, at: r.at, who: r.who || '', action: r.action || '', tab: names[r.tbl] || String(r.tbl || '').replace(/^sheet:/, ''), tbl: r.tbl, after: r.after, before: r.before }; }),
+      people: db.all('staff').map(function (p) { return p.name; }) };
+  };
+
   /* Owner: choose the real exit time for a person's day (one of their last 3 app opens on the desk computer), or go back to automatic. */
   api.attendanceExit = function (req) {
     var me = auth(req); needOwner(me);
@@ -2633,6 +2643,7 @@ function deskHandle_(req) {
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
+    changeLog: typeof nkChangeLog_ === 'function' && typeof CTX !== 'undefined' && CTX ? nkChangeLog_ : null,
     sendBill: deskSendBill_, ownBillFile: deskOwnBillFile_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
@@ -2646,6 +2657,11 @@ function deskHandle_(req) {
 
 /** Timer: emails bills 12 hours after check-out. Set in Apps Script → Triggers → sendDueBills → Time-driven → every 15 minutes. */
 function sendDueBills() {
+  if (PropertiesService.getScriptProperties().getProperty('NK_LIVE') === '1') { // the new server does the bills now: only the weekly backup here
+    var h0 = +Utilities.formatDate(new Date(), 'Asia/Kolkata', 'H'), d0 = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'u');
+    if (h0 >= 3 && h0 < 5 && d0 === '7') try { deskWeeklyBackup_(); } catch (e) { deskAlert_('Weekly backup failed', e); }
+    return;
+  }
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return;
   try {

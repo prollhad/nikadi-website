@@ -528,7 +528,7 @@ function doGet() {
 }
 
 function doPost(e) {
-  if (e && e.parameter && e.parameter.yc) return ycWebhook_(e); // WhatsApp (YCloud) webhook
+  if (e && e.parameter && e.parameter.yc) return nkForwardLive_() ? nkForward_(e) : ycWebhook_(e); // WhatsApp (YCloud) webhook
   var req;
   try { req = JSON.parse(e.postData.contents || '{}'); } catch (err) { return json_({ ok: false, error: 'bad_request' }); }
   var actions = {
@@ -540,6 +540,7 @@ function doPost(e) {
   };
   if (req.action === 'nkBridge') return nkBridgeRun_(req); // the new Nikadi server asks Google to do Drive / email work
   if (req.action === 'nkPair') return nkPair_(req);
+  if (nkForwardLive_()) return nkForward_(e); // after the switch: this old address passes everything to the new server
   var fn = actions[req.action];
   // Staff app (Staff.gs): every action starting with "desk"
   if (!fn && /^desk[A-Z]\w*$/.test(String(req.action)) && typeof deskHandle_ === 'function') fn = deskHandle_;
@@ -548,7 +549,7 @@ function doPost(e) {
   // (so a busy WhatsApp minute or another device saving can't make every phone slow).
   if (DESK_READ_ONLY_[req.action]) {
     try { DESK_NO_LOCK_ = true; return json_(Object.assign({ ok: true }, fn(req))); }
-    catch (err) { var c0 = String(err && err.message || err); if (!/^[a-z_]+$/.test(c0)) { console.error(err); nkAlert_('Error in ' + req.action, nkErr_(err)); c0 = 'server_error'; } return json_({ ok: false, error: c0 }); }
+    catch (err) { var c0 = String(err && err.message || err); if (c0 === '__NK_WAIT__') throw err; if (!/^[a-z_]+$/.test(c0)) { console.error(err); nkAlert_('Error in ' + req.action, nkErr_(err)); c0 = 'server_error'; } return json_({ ok: false, error: c0 }); }
   }
   var lock = LockService.getScriptLock();
   try {
@@ -557,6 +558,7 @@ function doPost(e) {
     return json_(Object.assign({ ok: true }, out));
   } catch (err) {
     var code = String(err && err.message || err);
+    if (code === '__NK_WAIT__') throw err; // new server: waiting for an answer from the internet
     if (!/^[a-z_]+$/.test(code)) { console.error(err); code = 'server_error'; nkAlert_(/Lock|timed out|lock/i.test(String(err)) ? 'App was too busy (' + req.action + ')' : 'Error in ' + req.action, nkErr_(err)); }
     return json_({ ok: false, error: code });
   } finally {
@@ -569,6 +571,7 @@ var DESK_NO_LOCK_ = false;
 
 /* Error alerts: an email to the owner when something fails in the background (same problem at most once in 6 hours). */
 function nkAlert_(subject, detail) {
+  if (/__NK_WAIT__/.test(String(subject) + String(detail))) return; // new server: only waiting for an answer, not an error
   try {
     var c = CacheService.getScriptCache(), k = 'alert_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, subject)).slice(0, 20);
     if (c.get(k)) return; c.put(k, '1', 21600);
@@ -1397,10 +1400,11 @@ function ycWebhook_(e) {
       }
     }
   } catch (err) {
+    if (String(err && err.message) === '__NK_WAIT__') throw err;
     console.error(err); nkAlert_('WhatsApp message from a guest could not be handled', nkErr_(err));
   } finally { try { lock.releaseLock(); } catch (e2) {} }
   var out = _waOutbox || []; _waOutbox = null;
-  out.forEach(function (b) { try { ycCall_('whatsapp/messages/sendDirectly', b); } catch (e) { console.error(e); nkAlert_('WhatsApp reply could not be sent', nkErr_(e) + '\n\nMessage: ' + JSON.stringify(b).slice(0, 500)); } }); // in order, without holding up the staff app
+  out.forEach(function (b) { try { ycCall_('whatsapp/messages/sendDirectly', b); } catch (e) { if (String(e && e.message) === '__NK_WAIT__') throw e; console.error(e); nkAlert_('WhatsApp reply could not be sent', nkErr_(e) + '\n\nMessage: ' + JSON.stringify(b).slice(0, 500)); } }); // in order, without holding up the staff app
   return json_({ ok: true });
 }
 
@@ -1736,7 +1740,7 @@ function nkPair_(req) {
   var j = {}; try { j = JSON.parse(r.getContentText()); } catch (e) {}
   return json_({ ok: !!j.ok });
 }
-var NK_BRIDGE_FNS = { deskSavePhoto_: 1, deskGetPhoto_: 1, deskStayFolder_: 1, deskTrash_: 1, deskOwnBillFile_: 1, deskSendBill_: 1, deskArchive_: 1, waSaveMedia_: 1, nkMail_: 1, nkExport_: 1 };
+var NK_BRIDGE_FNS = { nkSetLive_: 1, nkImport_: 1, deskSavePhoto_: 1, deskGetPhoto_: 1, deskStayFolder_: 1, deskTrash_: 1, deskOwnBillFile_: 1, deskSendBill_: 1, deskArchive_: 1, waSaveMedia_: 1, nkMail_: 1, nkExport_: 1 };
 function nkBridgeRun_(req) {
   if (!req.key || req.key !== PropertiesService.getScriptProperties().getProperty('NK_BRIDGE_KEY')) return json_({ ok: false, error: 'forbidden' });
   if (!NK_BRIDGE_FNS[req.fn]) return json_({ ok: false, error: 'not_allowed' });
@@ -1767,6 +1771,55 @@ function nkExport_() {
   var props = PropertiesService.getScriptProperties().getProperties();
   props.OWNER_GMAIL = NikadiBill.HOTEL.email;
   return { desk: desk, sheets: sheets, props: props };
+}
+
+/* ----- the switch ----- */
+function nkForwardLive_() { return !(typeof CTX !== 'undefined' && CTX) && PropertiesService.getScriptProperties().getProperty('NK_LIVE') === '1'; }
+function nkForward_(e) {
+  var q = e && e.parameter && e.parameter.yc ? '?yc=' + encodeURIComponent(e.parameter.yc) : '';
+  var r = UrlFetchApp.fetch(NK_EDGE + q, { method: 'post', contentType: 'text/plain', payload: e && e.postData ? e.postData.contents : '{}', muteHttpExceptions: true });
+  return ContentService.createTextOutput(r.getContentText()).setMimeType(ContentService.MimeType.JSON);
+}
+/** on = the new server is the real one (this Apps Script only does Drive / email / the Sheet copy). off = back to this one. */
+function nkSetLive_(on) {
+  var p = PropertiesService.getScriptProperties();
+  if (on) p.setProperty('NK_LIVE', '1'); else p.deleteProperty('NK_LIVE');
+  return !!on;
+}
+/** nightly: the database written into this Sheet (same tabs and columns). Only once the new server is the real one. */
+function nkImport_(data) {
+  if (PropertiesService.getScriptProperties().getProperty('NK_LIVE') !== '1') throw new Error('not_live');
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), n = 0;
+  Object.keys(data.desk || {}).forEach(function (t) {
+    var def = DESK_SCHEMA[t]; if (!def) return;
+    var sh = ss.getSheetByName(def.sheet);
+    if (!sh) { sh = ss.insertSheet(def.sheet); sh.appendRow(def.cols.map(function (c) { return c[1]; })); }
+    var rows = (data.desk[t] || []).map(function (o) { return def.cols.map(function (c) { var v = o[c[0]]; return v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : v; }); });
+    var last = sh.getLastRow();
+    if (last > 1) sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), def.cols.length)).clearContent();
+    if (rows.length) sh.getRange(2, 1, rows.length, def.cols.length).setValues(rows);
+    n += rows.length;
+  });
+  Object.keys(data.sheets || {}).forEach(function (name) {
+    var sh = ss.getSheetByName(name) || ss.insertSheet(name), vals = data.sheets[name] || [];
+    var w = vals.reduce(function (m, r) { return Math.max(m, r.length); }, 1);
+    vals = vals.map(function (r) { var a = r.map(function (v) { return v && typeof v === 'object' && v.$d ? new Date(v.$d) : v == null ? '' : v; }); while (a.length < w) a.push(''); return a; });
+    sh.clearContents();
+    if (vals.length) sh.getRange(1, 1, vals.length, w).setValues(vals);
+    n += vals.length;
+  });
+  try { deskSheetEdited_(''); } catch (e) {}
+  return n;
+}
+/* the timer jobs (run on the new server every 10 minutes) */
+function nkCronRun_(opts) {
+  opts = opts || {};
+  var core = deskTimerCore_(), out = {};
+  function err(what, e) { if (String(e && e.message) === '__NK_WAIT__') throw e; deskAlert_(what, e); }
+  try { out.due = core._sendDue({ archive: opts.archive !== false, limit: opts.limit || 6 }); } catch (e) { err('Bills / WhatsApp timer failed', e); }
+  var h = +Utilities.formatDate(new Date(), 'Asia/Kolkata', 'H');
+  if (opts.old || (h >= 2 && h < 5)) try { out.old = core._archiveOld(opts.old ? { force: true } : null); } catch (e) { err('Night archive of old records failed', e); }
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, out: out }));
 }
 
 /**
@@ -3034,6 +3087,16 @@ function deskCore(db, hooks) {
     var pc = all.filter(function (x) { return x.wifi && isDesk(x.dev); }).map(function (x) { return { name: x.name, role: x.role, dev: x.dev, shown: x.shown, ago: Math.round((now - x.t) / 1000) }; });
     var last = null; try { last = JSON.parse(db.kvGet('pclast') || 'null'); } catch (e) {}
     return { pc: pc, last: last, others: all.filter(function (x) { return !(x.wifi && isDesk(x.dev)) && x.name !== me.name; }).map(function (x) { return { name: x.name, role: x.role, dev: x.dev, wifi: x.wifi, ago: Math.round((now - x.t) / 1000) }; }) };
+  };
+
+  /* Owner: who changed what (new server only: every change is written in the database's change log) */
+  api.changeLog = function (req) {
+    var me = auth(req); needOwner(me);
+    if (!hooks.changeLog) fail('changelog_unavailable');
+    var rows = hooks.changeLog({ lim: 80, before: req.before ? Number(req.before) : null, who: req.who ? text(req.who, 60) : null }) || [];
+    var names = {}; Object.keys(DESK_SCHEMA).forEach(function (t) { names[t] = DESK_SCHEMA[t].sheet; });
+    return { rows: rows.map(function (r) { return { id: r.id, at: r.at, who: r.who || '', action: r.action || '', tab: names[r.tbl] || String(r.tbl || '').replace(/^sheet:/, ''), tbl: r.tbl, after: r.after, before: r.before }; }),
+      people: db.all('staff').map(function (p) { return p.name; }) };
   };
 
   /* Owner: choose the real exit time for a person's day (one of their last 3 app opens on the desk computer), or go back to automatic. */
@@ -4404,6 +4467,7 @@ function deskHandle_(req) {
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
+    changeLog: typeof nkChangeLog_ === 'function' && typeof CTX !== 'undefined' && CTX ? nkChangeLog_ : null,
     sendBill: deskSendBill_, ownBillFile: deskOwnBillFile_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
@@ -4417,6 +4481,11 @@ function deskHandle_(req) {
 
 /** Timer: emails bills 12 hours after check-out. Set in Apps Script → Triggers → sendDueBills → Time-driven → every 15 minutes. */
 function sendDueBills() {
+  if (PropertiesService.getScriptProperties().getProperty('NK_LIVE') === '1') { // the new server does the bills now: only the weekly backup here
+    var h0 = +Utilities.formatDate(new Date(), 'Asia/Kolkata', 'H'), d0 = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'u');
+    if (h0 >= 3 && h0 < 5 && d0 === '7') try { deskWeeklyBackup_(); } catch (e) { deskAlert_('Weekly backup failed', e); }
+    return;
+  }
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return;
   try {
@@ -4637,6 +4706,7 @@ function deskOwnBillFile_(b64, name, ym) { return nkBridge_('deskOwnBillFile_', 
 function deskSendBill_(d, to, pdf) { return nkBridge_('deskSendBill_', [d, to, pdf]); }
 function deskArchive_(rec, was) { return nkBridge_('deskArchive_', [rec, was]); }
 function waSaveMedia_(media, type, phone, name) { return nkBridge_('waSaveMedia_', [media, type, phone, name]); }
+function nkChangeLog_(o) { return nkWait_({ key: 'cl|' + JSON.stringify(o), kind: 'changelog', lim: o.lim, before: o.before, who: o.who }); }
 
 /* ===== Nikadi server: runs the staff app, website membership and WhatsApp bot on the database =====
    Each request: 1) one call to the database gets what changed (nk_sync); 2) the old code runs on that copy;
@@ -4669,7 +4739,7 @@ async function nkSync() {
   NK_BASE.kv = res.kv || {};
 }
 
-function nkRun(body, query, memo, now, seed) {
+function nkRun(body, query, memo, now, seed, entry) {
   var ctx = { ops: [], read: {}, cl: {}, kv: Object.assign({}, NK_BASE.kv), pend: [], memo: memo, now: now, seed: seed, selfUrl: NK_SELF };
   ctx.need = function (t) { if (!ctx.pend.some(function (p) { return p.key === 'load|' + t; })) ctx.pend.push({ key: 'load|' + t, kind: 'load', t: t }); };
   ctx.db = nkDb(NK_BASE, ctx, { normalize: NK_NORM, lazy: NK_LAZY, firstCol: function (t) { return DESK_SCHEMA[t] ? DESK_SCHEMA[t].cols[0][0] : 'id'; } });
@@ -4678,7 +4748,7 @@ function nkRun(body, query, memo, now, seed) {
   CTX = ctx;
   try {
     var e = { postData: { contents: body, type: 'text/plain' }, parameter: query || {}, parameters: {} };
-    var out = query && query.__get ? doGet(e) : doPost(e);
+    var out = entry ? entry(e) : query && query.__get ? doGet(e) : doPost(e);
     ctx.out = out && out.getContent ? out.getContent() : JSON.stringify({ ok: true });
   } catch (err) {
     if (String(err && err.message) !== '__NK_WAIT__') { console.error(err); ctx.out = JSON.stringify({ ok: false, error: 'server_error' }); ctx.crash = String(err && err.stack || err); }
@@ -4698,7 +4768,9 @@ async function nkDo(p, memo) {
     } else if (p.kind === 'fetch') {
       memo[p.key] = await nkFetch(p.req);
     } else if (p.kind === 'bridge') {
-      memo[p.key] = await nkBridgeCall(p.fn, p.args);
+      memo[p.key] = await nkBridgePhoto(p.fn, p.args);
+    } else if (p.kind === 'changelog') {
+      memo[p.key] = await nkRpc('nk_changelog', { lim: p.lim, before_id: p.before || null, who_f: p.who || null });
     }
   } catch (e) { memo[p.key] = { __err: String(e && e.message || e).slice(0, 300) }; }
 }
@@ -4721,6 +4793,28 @@ async function nkFetch(q) {
   if (!/json|text|xml|html/.test(ct)) out.b64 = nkBytesB64_(buf);
   return out;
 }
+/* ID copies and payment screenshots: kept in fast storage after the first time they come from Google Drive */
+async function nkStore(method, path, body, type) {
+  var h = { apikey: NK_SB_KEY, Authorization: 'Bearer ' + NK_SB_KEY };
+  if (type) { h['Content-Type'] = type; h['x-upsert'] = 'true'; }
+  return fetch(NK_SB + '/storage/v1/object/files/' + path, { method: method, headers: h, body: body });
+}
+function nkSafeId(id) { return String(id || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 120); }
+async function nkBridgePhoto(fn, argsJson) {
+  if (fn === 'deskGetPhoto_' && NK_SB_KEY) {
+    var id = nkSafeId(JSON.parse(argsJson)[0]);
+    try {
+      var r = await nkStore('GET', 'photos/' + id);
+      if (r.ok) { var ct = r.headers.get('content-type') || 'image/jpeg', b = new Uint8Array(await r.arrayBuffer()); return 'data:' + ct + ';base64,' + nkBytesB64_(b); }
+    } catch (e) {}
+    var url = await nkBridgeCall(fn, argsJson), m = /^data:([^;]+);base64,(.*)$/.exec(String(url || ''));
+    if (m) try { await nkStore('POST', 'photos/' + id, nkB64Bytes_(m[2]), m[1]); } catch (e) {}
+    return url;
+  }
+  var res = await nkBridgeCall(fn, argsJson);
+  if (fn === 'deskSavePhoto_' && res && NK_SB_KEY) try { await nkStore('POST', 'photos/' + nkSafeId(res), nkB64Bytes_(JSON.parse(argsJson)[0]), 'image/jpeg'); } catch (e) {}
+  return res;
+}
 async function nkBridgeCall(fn, argsJson) {
   if (nkTestMode() && fn === 'nkMail_') return true; // test copy: no emails
   var key = NK_BASE.kv['p:NK_BRIDGE_KEY'], url = NK_BASE.kv['p:NK_GOOGLE_URL'];
@@ -4740,17 +4834,22 @@ function nkWho(body) {
   } catch (e) { return ''; }
 }
 
-async function nkHandle(body, query) {
+async function nkHandle(body, query, entry, actName) {
   var memo = {}, now = RealDate.now(), seed = (RealMath.random() * 4294967296) >>> 0, action = '';
   try { action = JSON.parse(body || '{}').action || ''; } catch (e) {}
   if (query && query.yc) action = 'whatsapp-webhook';
+  if (actName) action = actName;
   for (var attempt = 0; attempt < 6; attempt++) {
     await nkSync();
     var ctx = null;
-    for (var pass = 0; pass < 20; pass++) {
-      ctx = nkRun(body, query, memo, now, seed);
+    for (var pass = 0; pass < 60; pass++) {
+      ctx = nkRun(body, query, memo, now, seed, entry);
       if (!ctx.pend.length) break;
-      for (var i = 0; i < ctx.pend.length; i++) await nkDo(ctx.pend[i], memo); // in order: one may depend on the one before
+      /* do the FIRST thing it waited for (anything after it may come from a branch that assumed it failed);
+         database reads are safe to do together */
+      var reads = ctx.pend.filter(function (p) { return p.kind === 'load' || p.kind === 'findOld' || p.kind === 'changelog'; });
+      if (reads.length) { for (var i = 0; i < reads.length; i++) await nkDo(reads[i], memo); }
+      else await nkDo(ctx.pend[0], memo);
     }
     if (ctx.pend.length) return JSON.stringify({ ok: false, error: 'server_error' });
     var pay = nkCommitPayload(NK_BASE, ctx);
@@ -4799,9 +4898,43 @@ async function nkKvPut(map, sec) {
 async function nkSpecial(body, q) {
   var b = {}; try { b = body ? JSON.parse(body) : {}; } catch (e) { return null; }
   var a = b.action;
-  if (a !== 'nkPair' && a !== 'nkPaired' && a !== 'nkMigrate' && a !== 'nkStatus') return null;
+  if (['nkPair', 'nkPaired', 'nkMigrate', 'nkStatus', 'nkCron', 'nkCronSetup', 'nkSetLive', 'nkExport'].indexOf(a) < 0) return null;
   await nkSync();
   var live = NK_BASE.kv['p:NK_MODE'] === 'live';
+  function owner() { // a logged-in Owner of the staff app
+    var s = (NK_BASE.tables.sessions || []).filter(function (r) { return r[1].token === b.token; })[0]; if (!s) return false;
+    var p = (NK_BASE.tables.staff || []).filter(function (r) { return r[1].name === s[1].name; })[0];
+    return !!p && p[1].role === 'Owner' && String(p[1].active).toLowerCase() === 'yes' && String(s[1].expires) > Utilities.formatDate(new RealDate(), 'Asia/Kolkata', 'yyyy-MM-dd HH:mm');
+  }
+  if (a === 'nkCronSetup') { // the database timer reads this key from the database itself
+    if (!NK_BASE.kv['p:NK_CRON_KEY']) await nkKvPut({ 'p:NK_CRON_KEY': Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '') });
+    return JSON.stringify({ ok: true });
+  }
+  if (a === 'nkCron') {
+    if (!b.key || b.key !== NK_BASE.kv['p:NK_CRON_KEY']) return JSON.stringify({ ok: false, error: 'forbidden' });
+    if (!live && !b.force) return JSON.stringify({ ok: true, skipped: 'test copy' });
+    var opts = b.opts || {};
+    var out = await nkHandle('{}', {}, function () { return nkCronRun_(opts); }, 'timer');
+    var hour = +Utilities.formatDate(new RealDate(), 'Asia/Kolkata', 'H'), day = Utilities.formatDate(new RealDate(), 'Asia/Kolkata', 'yyyy-MM-dd');
+    if (live && hour >= 3 && hour < 5 && NK_BASE.kv['p:NK_LAST_EXPORT'] !== day) {
+      try { await nkExportToSheet(); await nkKvPut({ 'p:NK_LAST_EXPORT': day }); }
+      catch (e) { console.error(e); try { await nkBridgeCall('nkMail_', JSON.stringify([{ to: NikadiBill.HOTEL.email, subject: '⚠ Nikadi app: nightly copy to the Google Sheet failed', body: String(e && e.message || e) }])); } catch (e2) {} }
+    }
+    return out;
+  }
+  if (a === 'nkExport') { // copy the database into the Google Sheet now (Owner, live only)
+    if (!owner()) return JSON.stringify({ ok: false, error: 'not_allowed' });
+    if (!live) return JSON.stringify({ ok: false, error: 'test_copy' });
+    var n = await nkExportToSheet();
+    return JSON.stringify({ ok: true, rows: n });
+  }
+  if (a === 'nkSetLive') { // the switch (and the way back): Owner only
+    if (!owner()) return JSON.stringify({ ok: false, error: 'not_allowed' });
+    var on = !!b.on;
+    await nkBridgeCall('nkSetLive_', JSON.stringify([on]));
+    await nkKvPut({ 'p:NK_MODE': on ? 'live' : null, 'p:NK_TEST_MODE': on ? null : '1' });
+    return JSON.stringify({ ok: true, live: on });
+  }
   if (a === 'nkStatus') return JSON.stringify({ ok: true, paired: !!NK_BASE.kv['p:NK_BRIDGE_KEY'], mode: NK_BASE.kv['p:NK_MODE'] || 'test', test: nkTestMode(),
     tables: Object.keys(NK_BASE.versions).length, rows: Object.keys(NK_BASE.tables).reduce(function (s, t) { return s + NK_BASE.tables[t].length; }, 0) });
   if (a === 'nkPair') { // ask Google to send its key straight to this server (it goes only to this fixed address)
@@ -4818,21 +4951,36 @@ async function nkSpecial(body, q) {
     await nkKvPut({ 'p:NK_BRIDGE_KEY': b.key, 'p:NK_GOOGLE_URL': String(b.url || NK_API_EXEC), 'c:nk_pair': null });
     return JSON.stringify({ ok: true });
   }
-  if (a === 'nkMigrate') { // copy everything from the Google Sheet (only before the switch)
+  if (a === 'nkMigrate') { // copy everything from the Google Sheet (only before the switch; Owner once there is data)
     if (live) return JSON.stringify({ ok: false, error: 'live_database' });
+    if ((NK_BASE.tables.sessions || []).length && !owner()) return JSON.stringify({ ok: false, error: 'not_allowed' });
     var data = await nkBridgeCall('nkExport_', '[]');
     await nkRpc('nk_reset', {});
     var ops = [], count = {};
     Object.keys(data.desk || {}).forEach(function (t) { (data.desk[t] || []).forEach(function (o) { ops.push({ op: 'add', t: t, data: o }); }); count[t] = (data.desk[t] || []).length; });
     Object.keys(data.sheets || {}).forEach(function (n) { (data.sheets[n] || []).forEach(function (row) { ops.push({ op: 'add', t: 'sheet:' + n, data: { v: row } }); }); count['sheet:' + n] = (data.sheets[n] || []).length; });
     for (var i = 0; i < ops.length; i += 800) await nkRpc('nk_commit', { ops: ops.slice(i, i + 800), expect: {}, who: 'migrate', act: 'migrate' });
-    var props = {}; Object.keys(data.props || {}).forEach(function (k) { if (k !== 'NK_BRIDGE_KEY') props['p:' + k] = data.props[k]; });
-    props['p:NK_TEST_MODE'] = b.live ? null : '1';
+    var props = {}; Object.keys(data.props || {}).forEach(function (k) { if (k !== 'NK_BRIDGE_KEY' && k !== 'NK_LIVE') props['p:' + k] = data.props[k]; });
+    props['p:NK_TEST_MODE'] = '1'; // stays a test copy until nkSetLive
     await nkKvPut(props);
     NK_BASE = { versions: {}, tables: {}, kv: {} };
     return JSON.stringify({ ok: true, rows: ops.length, tables: count });
   }
   return null;
+}
+
+/* the whole database into the Google Sheet (it becomes the readable copy / way back) */
+async function nkExportToSheet() {
+  await nkSync();
+  for (var t in NK_LAZY) if (!(t in NK_BASE.tables) && NK_BASE.versions[t] != null) { var r = await nkRpc('nk_load', { tbls: [t] }); nkLoadRows(t, (r.rows || {})[t] || []); }
+  var desk = {}, sheets = {}, n = 0;
+  Object.keys(NK_BASE.tables).forEach(function (t) {
+    var rows = NK_BASE.tables[t].map(function (r) { return r[1]; }); n += rows.length;
+    if (t.indexOf('sheet:') === 0) sheets[t.slice(6)] = rows.map(function (o) { return o.v || []; });
+    else if (DESK_SCHEMA[t]) desk[t] = rows;
+  });
+  await nkBridgeCall('nkImport_', JSON.stringify([{ desk: desk, sheets: sheets }]));
+  return n;
 }
 
 if (typeof Deno !== 'undefined' && Deno.serve) Deno.serve(nkServe);

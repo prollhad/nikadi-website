@@ -148,7 +148,7 @@ function doGet() {
 }
 
 function doPost(e) {
-  if (e && e.parameter && e.parameter.yc) return ycWebhook_(e); // WhatsApp (YCloud) webhook
+  if (e && e.parameter && e.parameter.yc) return nkForwardLive_() ? nkForward_(e) : ycWebhook_(e); // WhatsApp (YCloud) webhook
   var req;
   try { req = JSON.parse(e.postData.contents || '{}'); } catch (err) { return json_({ ok: false, error: 'bad_request' }); }
   var actions = {
@@ -160,6 +160,7 @@ function doPost(e) {
   };
   if (req.action === 'nkBridge') return nkBridgeRun_(req); // the new Nikadi server asks Google to do Drive / email work
   if (req.action === 'nkPair') return nkPair_(req);
+  if (nkForwardLive_()) return nkForward_(e); // after the switch: this old address passes everything to the new server
   var fn = actions[req.action];
   // Staff app (Staff.gs): every action starting with "desk"
   if (!fn && /^desk[A-Z]\w*$/.test(String(req.action)) && typeof deskHandle_ === 'function') fn = deskHandle_;
@@ -168,7 +169,7 @@ function doPost(e) {
   // (so a busy WhatsApp minute or another device saving can't make every phone slow).
   if (DESK_READ_ONLY_[req.action]) {
     try { DESK_NO_LOCK_ = true; return json_(Object.assign({ ok: true }, fn(req))); }
-    catch (err) { var c0 = String(err && err.message || err); if (!/^[a-z_]+$/.test(c0)) { console.error(err); nkAlert_('Error in ' + req.action, nkErr_(err)); c0 = 'server_error'; } return json_({ ok: false, error: c0 }); }
+    catch (err) { var c0 = String(err && err.message || err); if (c0 === '__NK_WAIT__') throw err; if (!/^[a-z_]+$/.test(c0)) { console.error(err); nkAlert_('Error in ' + req.action, nkErr_(err)); c0 = 'server_error'; } return json_({ ok: false, error: c0 }); }
   }
   var lock = LockService.getScriptLock();
   try {
@@ -177,6 +178,7 @@ function doPost(e) {
     return json_(Object.assign({ ok: true }, out));
   } catch (err) {
     var code = String(err && err.message || err);
+    if (code === '__NK_WAIT__') throw err; // new server: waiting for an answer from the internet
     if (!/^[a-z_]+$/.test(code)) { console.error(err); code = 'server_error'; nkAlert_(/Lock|timed out|lock/i.test(String(err)) ? 'App was too busy (' + req.action + ')' : 'Error in ' + req.action, nkErr_(err)); }
     return json_({ ok: false, error: code });
   } finally {
@@ -189,6 +191,7 @@ var DESK_NO_LOCK_ = false;
 
 /* Error alerts: an email to the owner when something fails in the background (same problem at most once in 6 hours). */
 function nkAlert_(subject, detail) {
+  if (/__NK_WAIT__/.test(String(subject) + String(detail))) return; // new server: only waiting for an answer, not an error
   try {
     var c = CacheService.getScriptCache(), k = 'alert_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, subject)).slice(0, 20);
     if (c.get(k)) return; c.put(k, '1', 21600);
@@ -1017,10 +1020,11 @@ function ycWebhook_(e) {
       }
     }
   } catch (err) {
+    if (String(err && err.message) === '__NK_WAIT__') throw err;
     console.error(err); nkAlert_('WhatsApp message from a guest could not be handled', nkErr_(err));
   } finally { try { lock.releaseLock(); } catch (e2) {} }
   var out = _waOutbox || []; _waOutbox = null;
-  out.forEach(function (b) { try { ycCall_('whatsapp/messages/sendDirectly', b); } catch (e) { console.error(e); nkAlert_('WhatsApp reply could not be sent', nkErr_(e) + '\n\nMessage: ' + JSON.stringify(b).slice(0, 500)); } }); // in order, without holding up the staff app
+  out.forEach(function (b) { try { ycCall_('whatsapp/messages/sendDirectly', b); } catch (e) { if (String(e && e.message) === '__NK_WAIT__') throw e; console.error(e); nkAlert_('WhatsApp reply could not be sent', nkErr_(e) + '\n\nMessage: ' + JSON.stringify(b).slice(0, 500)); } }); // in order, without holding up the staff app
   return json_({ ok: true });
 }
 
@@ -1356,7 +1360,7 @@ function nkPair_(req) {
   var j = {}; try { j = JSON.parse(r.getContentText()); } catch (e) {}
   return json_({ ok: !!j.ok });
 }
-var NK_BRIDGE_FNS = { deskSavePhoto_: 1, deskGetPhoto_: 1, deskStayFolder_: 1, deskTrash_: 1, deskOwnBillFile_: 1, deskSendBill_: 1, deskArchive_: 1, waSaveMedia_: 1, nkMail_: 1, nkExport_: 1 };
+var NK_BRIDGE_FNS = { nkSetLive_: 1, nkImport_: 1, deskSavePhoto_: 1, deskGetPhoto_: 1, deskStayFolder_: 1, deskTrash_: 1, deskOwnBillFile_: 1, deskSendBill_: 1, deskArchive_: 1, waSaveMedia_: 1, nkMail_: 1, nkExport_: 1 };
 function nkBridgeRun_(req) {
   if (!req.key || req.key !== PropertiesService.getScriptProperties().getProperty('NK_BRIDGE_KEY')) return json_({ ok: false, error: 'forbidden' });
   if (!NK_BRIDGE_FNS[req.fn]) return json_({ ok: false, error: 'not_allowed' });
@@ -1387,4 +1391,53 @@ function nkExport_() {
   var props = PropertiesService.getScriptProperties().getProperties();
   props.OWNER_GMAIL = NikadiBill.HOTEL.email;
   return { desk: desk, sheets: sheets, props: props };
+}
+
+/* ----- the switch ----- */
+function nkForwardLive_() { return !(typeof CTX !== 'undefined' && CTX) && PropertiesService.getScriptProperties().getProperty('NK_LIVE') === '1'; }
+function nkForward_(e) {
+  var q = e && e.parameter && e.parameter.yc ? '?yc=' + encodeURIComponent(e.parameter.yc) : '';
+  var r = UrlFetchApp.fetch(NK_EDGE + q, { method: 'post', contentType: 'text/plain', payload: e && e.postData ? e.postData.contents : '{}', muteHttpExceptions: true });
+  return ContentService.createTextOutput(r.getContentText()).setMimeType(ContentService.MimeType.JSON);
+}
+/** on = the new server is the real one (this Apps Script only does Drive / email / the Sheet copy). off = back to this one. */
+function nkSetLive_(on) {
+  var p = PropertiesService.getScriptProperties();
+  if (on) p.setProperty('NK_LIVE', '1'); else p.deleteProperty('NK_LIVE');
+  return !!on;
+}
+/** nightly: the database written into this Sheet (same tabs and columns). Only once the new server is the real one. */
+function nkImport_(data) {
+  if (PropertiesService.getScriptProperties().getProperty('NK_LIVE') !== '1') throw new Error('not_live');
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), n = 0;
+  Object.keys(data.desk || {}).forEach(function (t) {
+    var def = DESK_SCHEMA[t]; if (!def) return;
+    var sh = ss.getSheetByName(def.sheet);
+    if (!sh) { sh = ss.insertSheet(def.sheet); sh.appendRow(def.cols.map(function (c) { return c[1]; })); }
+    var rows = (data.desk[t] || []).map(function (o) { return def.cols.map(function (c) { var v = o[c[0]]; return v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : v; }); });
+    var last = sh.getLastRow();
+    if (last > 1) sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), def.cols.length)).clearContent();
+    if (rows.length) sh.getRange(2, 1, rows.length, def.cols.length).setValues(rows);
+    n += rows.length;
+  });
+  Object.keys(data.sheets || {}).forEach(function (name) {
+    var sh = ss.getSheetByName(name) || ss.insertSheet(name), vals = data.sheets[name] || [];
+    var w = vals.reduce(function (m, r) { return Math.max(m, r.length); }, 1);
+    vals = vals.map(function (r) { var a = r.map(function (v) { return v && typeof v === 'object' && v.$d ? new Date(v.$d) : v == null ? '' : v; }); while (a.length < w) a.push(''); return a; });
+    sh.clearContents();
+    if (vals.length) sh.getRange(1, 1, vals.length, w).setValues(vals);
+    n += vals.length;
+  });
+  try { deskSheetEdited_(''); } catch (e) {}
+  return n;
+}
+/* the timer jobs (run on the new server every 10 minutes) */
+function nkCronRun_(opts) {
+  opts = opts || {};
+  var core = deskTimerCore_(), out = {};
+  function err(what, e) { if (String(e && e.message) === '__NK_WAIT__') throw e; deskAlert_(what, e); }
+  try { out.due = core._sendDue({ archive: opts.archive !== false, limit: opts.limit || 6 }); } catch (e) { err('Bills / WhatsApp timer failed', e); }
+  var h = +Utilities.formatDate(new Date(), 'Asia/Kolkata', 'H');
+  if (opts.old || (h >= 2 && h < 5)) try { out.old = core._archiveOld(opts.old ? { force: true } : null); } catch (e) { err('Night archive of old records failed', e); }
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, out: out }));
 }

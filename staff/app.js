@@ -13,6 +13,7 @@
   var ERR = {
     busy_retry: 'The Sheet was just changed. Please try again.',
     hk_checklist: 'Tick every line of the checklist first.',
+    changelog_unavailable: 'The change log starts when the app moves to the new fast server.',
     comp_host: 'Pick whose guest this is.',
     comp_no_money: 'This is a free stay. No money is taken.',
     bill_no_required: 'Write the invoice number.',
@@ -218,6 +219,8 @@
 
   /* ---------- shell: side menu on computers, tabs at the bottom on phones ---------- */
   var ICON = {
+    help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.1-2.4 3.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
+    changelog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16M4 10h10M4 15h12M4 20h8"/><circle cx="19" cy="17" r="3"/><path d="M19 15.6V17l1 .8"/></svg>',
     whatsapp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 20.5l1.3-4A8.5 8.5 0 1 1 8 19.6z"/><path d="M9 8.6c.2-.6.6-.7.9-.7h.5c.2 0 .4.1.5.4l.7 1.6c.1.2 0 .5-.1.6l-.5.6c.6 1.2 1.6 2.2 2.8 2.8l.6-.5c.2-.2.4-.2.6-.1l1.6.7c.3.1.4.3.4.5v.5c0 .3-.1.7-.7.9-.9.4-2.6.4-4.7-1.4-2-1.8-2.7-3.6-2.6-4.8z"/></svg>',
     idcopy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="5" width="19" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M5 16.5c.6-1.6 2-2.4 3.5-2.4s2.9.8 3.5 2.4M14.5 10h4.5M14.5 13.5h3.5"/></svg>',
     expenses: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/><path d="M7 6V4h10v2"/></svg>',
@@ -236,10 +239,10 @@
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies', whatsapp: 'WhatsApp' };
+  var NAMES = { help: 'Help', changelog: 'Change log', today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies', whatsapp: 'WhatsApp' };
   function navFor(desk) {
     if (!mgr()) return ['rooms', 'housekeeping', 'add', 'stock', 'calendar'];
-    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'whatsapp', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'attendance', 'settings'] : []);
+    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'whatsapp', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'attendance', 'changelog', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
@@ -257,7 +260,7 @@
   }
   function go(tab) {
     closeAllSheetsQuiet();
-    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; if (tab === 'expenses') EXP.data = null; if (tab === 'commission') COM.data = null; if (tab === 'idcopy') { IDC.stay = null; IDC.list = null; } if (tab === 'whatsapp') WA.list = null; nav(); render(); window.scrollTo(0, 0);
+    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; if (tab === 'expenses') EXP.data = null; if (tab === 'commission') COM.data = null; if (tab === 'idcopy') { IDC.stay = null; IDC.list = null; } if (tab === 'whatsapp') WA.list = null; if (tab === 'changelog') CL.rows = null; nav(); render(); window.scrollTo(0, 0);
     if (tab === 'calendar' || tab === 'bookings') loadExtra();
   }
 
@@ -267,17 +270,18 @@
     if (!S.st) S.tab = mgr() ? (isDesk() ? 'today' : 'rooms') : 'rooms';
     app.innerHTML = '<div class="app-frame">' +
       '<aside class="side" aria-label="Menu"><a class="brand brand-row" href="./"><img class="brand-logo" src="../img/brand/lockup-light.png" alt="Nikadi Guest House"><span>Staff</span></a>' + (demo ? '<p class="side-demo">Demo · sample data</p>' : '') +
-      '<nav id="side-nav"></nav><div class="side-me"><div class="chip-me"><b>' + esc(S.me.name) + '</b>' + esc(S.me.role) + '</div><button class="iconbtn" id="out2" type="button">Log out</button></div></aside>' +
+      '<nav id="side-nav"></nav><div class="side-me"><div class="chip-me"><b>' + esc(S.me.name) + '</b>' + esc(S.me.role) + '</div><button class="iconbtn" id="help2" type="button">Help</button><button class="iconbtn" id="out2" type="button">Log out</button></div></aside>' +
       '<div class="shell">' + (demo ? '<div class="demo-flag">Demo mode · sample data on this device only</div>' : '') + (typeof NIKADI_TEST_DB !== 'undefined' && NIKADI_TEST_DB ? '<div class="demo-flag test-db">Test copy on the new fast server · changes here are NOT real · open with ?api=old to go back</div>' : '') +
       '<header class="bar pad"><a class="brand brand-row" href="./"><img class="brand-logo" src="../img/brand/lockup-light.png" alt="Nikadi Guest House"><span>Staff</span></a><div class="who"><div class="chip-me"><b>' + esc(S.me.name) + '</b>' + esc(S.me.role) + '</div>' +
-      '<button class="iconbtn" id="out" type="button">Log out</button></div></header>' +
+      '<button class="iconbtn" id="help1" type="button">Help</button><button class="iconbtn" id="out" type="button">Log out</button></div></header>' +
       '<main class="pad view" id="view"><div class="loading">Loading…</div></main>' +
       '<nav class="tabs" id="tabs" role="tablist"></nav></div></div>';
     $('#out').onclick = $('#out2').onclick = function () { logout(false); };
+    $('#help1').onclick = $('#help2').onclick = function () { go('help'); };
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission', 'idcopy', 'whatsapp'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission', 'idcopy', 'whatsapp', 'help', 'changelog'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -292,7 +296,7 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, whatsapp: viewWhatsApp }[S.tab] || viewRooms)(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog }[S.tab] || viewRooms)(v);
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -2224,6 +2228,87 @@
     };
   }
 
+  /* ---------- Change log (owner only, new server): who changed what ---------- */
+  var CL = { rows: null, who: '', more: true, people: [] };
+  var CL_ACT = { deskCheckIn: 'Check-in', deskCheckOut: 'Check-out', deskUpdateStay: 'Edit stay', deskCharge: 'Item added', deskEditCharge: 'Item changed', deskPay: 'Payment', deskRefund: 'Refund', deskVoidPayment: 'Payment cancelled',
+    deskPayAmount: 'Payment amount changed', deskBookingSave: 'Booking', deskBookingConfirm: 'Booking confirmed', deskBookingCancel: 'Booking cancelled', deskBookingUpdate: 'Booking changed', deskRoomStatus: 'Room status', deskServiceDone: 'Housekeeping',
+    deskStock: 'Stock', deskExpenseSave: 'Expense', deskCommissionSave: 'Commission', deskIdSave: 'ID copy', deskItemSave: 'Item / price', deskStaffSave: 'Team', deskApprove: 'Approval', deskKit: 'Free kit', deskBillEdit: 'Bill edited',
+    deskOwnBillSave: 'Own bill', timer: 'Automatic (timer)', 'whatsapp-webhook': 'WhatsApp bot', join: 'Member joined (website)', book: 'Booking (website)' };
+  function clAct(a) { return CL_ACT[a] || String(a || '').replace(/^desk/, '').replace(/([a-z])([A-Z])/g, '$1 $2') || 'Change'; }
+  function clVal(v) { if (v && typeof v === 'object') return v.$d ? String(v.$d).slice(0, 16).replace('T', ' ') : JSON.stringify(v).slice(0, 60); v = String(v == null ? '' : v); return v.length > 60 ? v.slice(0, 60) + '…' : v; }
+  var CL_KEYS = ['guest', 'name', 'room', 'item', 'qty', 'amount', 'method', 'total', 'price', 'rate', 'status', 'nights', 'checkin', 'checkout', 'note', 'reason', 'category', 'phone'];
+  function clDetail(r) {
+    var o = r.after || {}, keys;
+    if (r.before && !r.after) return 'Removed' + (r.before.guest ? ': ' + clVal(r.before.guest) : r.before.item ? ': ' + clVal(r.before.item) : '');
+    if (o.v) return o.v.filter(function (x) { return x !== '' && x != null; }).slice(0, 5).map(clVal).join(' · ');
+    keys = Object.keys(o).filter(function (k) { return !/^(id|at|by|updated|inAt|inBy|outAt|outBy|edited|data|sendAt|_)/.test(k) && o[k] !== '' && o[k] != null; });
+    var main = CL_KEYS.filter(function (k) { return keys.indexOf(k) >= 0; }), rest = keys.filter(function (k) { return main.indexOf(k) < 0; });
+    return main.concat(rest).slice(0, 7).map(function (k) { return k + ': ' + clVal(o[k]); }).join(' · ');
+  }
+  function clTime(at) { var d = new Date(at), i = new Date(d.getTime() + 330 * 60000); return i.toISOString().slice(0, 10) + ' ' + i.toISOString().slice(11, 16); }
+  function viewChangeLog(v) {
+    if (!owner()) { v.innerHTML = '<p class="small">Only the owner can see this.</p>'; return; }
+    if (!CL.rows) {
+      v.innerHTML = '<div><p class="kicker">Owner only</p><h1>Change log</h1></div><div class="loading">Loading…</div>';
+      api('deskChangeLog', { who: CL.who }).then(function (r) { CL.rows = r.rows; CL.people = r.people || []; CL.more = r.rows.length >= 80; if (S.tab === 'changelog') render(); },
+        function (e) { v.innerHTML = '<div><p class="kicker">Owner only</p><h1>Change log</h1></div><p class="small">' + (e === 'changelog_unavailable' ? 'The change log starts when the app moves to the new fast server.' : esc(errText(e))) + '</p>'; });
+      return;
+    }
+    var byDay = {}; CL.rows.forEach(function (r) { var d = clTime(r.at).slice(0, 10); (byDay[d] = byDay[d] || []).push(r); });
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Owner only · every change, with who did it</p><h1>Change log</h1></div><button class="btn btn-quiet" type="button" id="clrf">Refresh</button></div>' +
+      '<div class="att-filters"><select class="input" id="clwho"><option value="">Everyone</option>' + CL.people.map(function (p) { return '<option' + (p === CL.who ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select></div>' +
+      (CL.rows.length ? Object.keys(byDay).map(function (d) {
+        return '<div class="panel"><div class="sec-h"><h2>' + esc(d === S.st.today ? 'Today' : dShort(d)) + '</h2></div><div class="list">' + byDay[d].map(function (r) {
+          return '<div class="bl cl-row"><span class="t"><b>' + esc(clAct(r.action)) + ' · ' + esc(r.tab) + '</b><small>' + esc(clDetail(r)) + '</small></span><span class="a"><span class="cl-who">' + esc(r.who || '—') + '</span><time>' + esc(clTime(r.at).slice(11)) + '</time></span></div>';
+        }).join('') + '</div></div>';
+      }).join('') : '<p class="small">No changes yet.</p>') +
+      (CL.more && CL.rows.length ? '<button class="btn btn-line" type="button" id="clmore">Show older</button>' : '');
+    $('#clrf', v).onclick = function () { CL.rows = null; render(); };
+    $('#clwho', v).onchange = function () { CL.who = this.value; CL.rows = null; render(); };
+    var m = $('#clmore', v); if (m) m.onclick = function () {
+      busy(m, true);
+      api('deskChangeLog', { who: CL.who, before: CL.rows[CL.rows.length - 1].id }).then(function (r) { CL.rows = CL.rows.concat(r.rows); CL.more = r.rows.length >= 80; render(); }, function (e) { busy(m, false); toast(errText(e)); });
+    };
+  }
+
+  /* ---------- Help: a short guide for each job ---------- */
+  var GUIDE = [
+    ['Everyone', [
+      ['Log in', 'Type your PIN. The app stays logged in on your phone; press Log out when you hand the phone to someone else.'],
+      ['Room colours', 'Green = ready · Blue = guest staying · Gold = leaves today / arriving · Red = needs cleaning. Tap a room to see or do everything for it.'],
+      ['Slow internet?', 'The app keeps working: wait for "Saved" before closing. If something says "Try again", tap the button again; nothing is saved twice.'],
+      ['Mistakes', 'Money mistakes (payments, refunds, rates) are corrected, never deleted: tap the payment or item and choose the correction. The owner sees every change.']]],
+    ['Housekeeping', [
+      ['Guest staying on', 'Housekeeping → the room → Checklist: tick water, towels, dental kit, bathroom, both dustbins, floor, bedding. "Housekeeping done" works only when all is ticked.'],
+      ['After check-out (red room)', 'Tap the red room → Open cleaning checklist → tick everything fresh → "Room is ready". The room turns green.'],
+      ['Giving items', 'Add item → choose the room and the item (water, dental kit, mattress…). Free items are shown as free; stock goes down by itself.'],
+      ['Stock', 'Stock shows what is in storage and what to buy (red). Tell reception when something runs out.']]],
+    ['Reception', [
+      ['Check-in', 'Tap a green room → Check in a guest: name, phone, guests (+ other names), dates, rate, advance paid, free kit (Morning / Dental). Free stays: Stay = Free stay → whose guest + reference.'],
+      ['ID copies', 'Room → ID copies → photo of each ID (front / back). They are cropped and saved to the stay; print 3 people per A4.'],
+      ['Payments', 'Room → Take payment (cash / UPI / card / bank). For UPI or bank write the transaction number.'],
+      ['Check-out', 'Room → Check out: nights, bill details (email, company, GSTIN) → the bill is made. It goes to the guest by email and WhatsApp 12 hours later, or press "Send PDF on WhatsApp" now.'],
+      ['Bookings', 'Bookings → new / pending / confirmed. Confirm only after the advance is paid; on the day the booking shows on the room in gold.'],
+      ['WhatsApp', 'WhatsApp → lists: New enquiry, Advance paid (check the screenshot, then Confirm booking), Checked in, Member. Reply from the app inside 24 hours of the guest\'s last message.'],
+      ['Expenses & commission', 'More → Expenses (with bill photo) and Commission (drivers / brokers with phone number).'],
+      ['Needs approval', 'Changing a rate, refunds and payment corrections go to the manager / owner: write the reason and wait for "Approved".']]],
+    ['Owner', [
+      ['Every day', 'Today: arrivals, money in, balance due. Sales: month and year. Attendance: who was at work, live PC status, change a wrong exit time.'],
+      ['Checking', 'Change log: every change with who did it and the before / after. Approvals: money changes from reception.'],
+      ['Settings', 'Team and PINs, item prices and stock warnings, the policy text. My own bills: under Bills (only you see them).'],
+      ['Safety', 'Every night the data is copied into the Google Sheet and every Sunday a backup copy goes to Drive (Nikadi Guest House Records → Backups). Problems are emailed to the guest house Gmail.']]]
+  ];
+  function viewHelp(v) {
+    var role = S.me.role, order = role === 'Owner' ? [3, 2, 1, 0] : role === 'Staff' ? [1, 0] : [2, 1, 0];
+    v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(role) + '</p><h1>Help</h1></div><p class="small">A short guide. Ask the owner if anything is not clear.</p>' +
+      order.map(function (i, n) {
+        var g = GUIDE[i];
+        return '<details class="panel guide"' + (n === 0 ? ' open' : '') + '><summary><h2>' + esc(g[0]) + '</h2></summary><div class="list">' + g[1].map(function (x) {
+          return '<div class="bl"><span class="t"><b>' + esc(x[0]) + '</b><small>' + esc(x[1]) + '</small></span></div>';
+        }).join('') + '</div></details>';
+      }).join('');
+  }
+
   /* ---------- Attendance (owner only): first and last app opening on the guest house Wi-Fi each day ---------- */
   var ATT = { data: null, range: 'week', name: '' };
   function attRange(k) {
@@ -2337,10 +2422,10 @@
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
     var list = [['whatsapp', 'WhatsApp', 'Guest chats: new enquiries, advance paid, checked in, members'], ['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['idcopy', 'ID copies', 'Guest ID / passport copies for each room, print on A4'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
-      ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
+      ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 45</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 46</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

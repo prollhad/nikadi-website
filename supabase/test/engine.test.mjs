@@ -6,6 +6,7 @@ globalThis.NK_TEST_RPC = async (fn, a) => {
   if (fn === 'nk_sync') { calls.sync++; const rows = {}; for (const t of Object.keys(DB.versions)) { if ((a.skip || []).includes(t)) continue; if (a.have[t] == null || a.have[t] !== DB.versions[t]) rows[t] = DB.records.filter(r => r.tbl === t).map(r => [r.rid, JSON.parse(JSON.stringify(r.data))]); } return { versions: { ...DB.versions }, kv: { ...DB.kv }, rows }; }
   if (fn === 'nk_load') { const rows = {}; for (const t of a.tbls) rows[t] = DB.records.filter(r => r.tbl === t).map(r => [r.rid, JSON.parse(JSON.stringify(r.data))]); return { versions: { ...DB.versions }, rows }; }
   if (fn === 'nk_find_old') { const r = DB.archive.filter(r => r.tbl === a.t && String(r.data[a.field]) === a.val).pop(); return r ? [r.rid, r.data] : null; }
+  if (fn === 'nk_changelog') return [{ id: 5, at: new Date().toISOString(), who: 'Owner', action: 'deskCheckIn', tbl: 'stays', after: { guest: 'X', room: 1 } }];
   if (fn === 'nk_reset') { DB.records = []; DB.versions = {}; return null; }
   if (fn === 'nk_commit') {
     calls.commit++;
@@ -80,3 +81,19 @@ const out = await call('deskCheckOut', { token: tok, id: ci.stay.id, nights: 1 }
 console.log('checkout', out.ok, out.error || (out.bill && out.bill.no));
 console.log('calls', JSON.stringify({ sync: calls.sync, commit: calls.commit, bridge: calls.bridge, fetch: calls.fetch.length }), 'ms', Date.now() - t0);
 console.log('db rows', DB.records.length, 'versions', JSON.stringify(DB.versions));
+
+// change log (owner)
+const cl = await call('deskChangeLog', { token: tok });
+console.log('changelog', cl.ok, cl.error || cl.rows.length, cl.rows && cl.rows[0].tab);
+// timer
+DB.kv['p:NK_CRON_KEY'] = 'k1';
+const cr = await call('nkCron', { key: 'k1', force: true, opts: { archive: false } });
+console.log('cron', JSON.stringify(cr).slice(0, 200));
+// WhatsApp webhook: a guest says hi
+Object.assign(DB.kv, { 'p:YC_HOOK_KEY': 'hook1', 'p:YC_API_KEY': 'ycKEY', 'p:YC_FROM': '+917501101137' });
+const ev = { id: 'ev1', type: 'whatsapp.inbound_message.received', whatsappInboundMessage: { id: 'm1', from: '+919812345678', customerProfile: { name: 'Asha' }, type: 'text', text: { body: 'Hi' } } };
+const before = calls.fetch.length;
+const wh = await M.nkServe(new Request('https://test.local/functions/v1/api?yc=hook1', { method: 'POST', body: JSON.stringify(ev) })).then(r => r.json());
+console.log('webhook', JSON.stringify(wh), 'ycloud calls', calls.fetch.length - before, calls.fetch.slice(before).map(u => String(u).replace('https://api.ycloud.com/v2/', '')).join(','));
+const chats = await call('deskWaChats', { token: tok });
+console.log('chats', chats.ok, chats.error || JSON.stringify(chats).slice(0, 160));

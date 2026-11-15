@@ -1259,6 +1259,16 @@ function deskCore(db, hooks) {
     return { pc: pc, last: last, others: all.filter(function (x) { return !(x.wifi && isDesk(x.dev)) && x.name !== me.name; }).map(function (x) { return { name: x.name, role: x.role, dev: x.dev, wifi: x.wifi, ago: Math.round((now - x.t) / 1000) }; }) };
   };
 
+  /* Owner: who changed what (new server only: every change is written in the database's change log) */
+  api.changeLog = function (req) {
+    var me = auth(req); needOwner(me);
+    if (!hooks.changeLog) fail('changelog_unavailable');
+    var rows = hooks.changeLog({ lim: 80, before: req.before ? Number(req.before) : null, who: req.who ? text(req.who, 60) : null }) || [];
+    var names = {}; Object.keys(DESK_SCHEMA).forEach(function (t) { names[t] = DESK_SCHEMA[t].sheet; });
+    return { rows: rows.map(function (r) { return { id: r.id, at: r.at, who: r.who || '', action: r.action || '', tab: names[r.tbl] || String(r.tbl || '').replace(/^sheet:/, ''), tbl: r.tbl, after: r.after, before: r.before }; }),
+      people: db.all('staff').map(function (p) { return p.name; }) };
+  };
+
   /* Owner: choose the real exit time for a person's day (one of their last 3 app opens on the desk computer), or go back to automatic. */
   api.attendanceExit = function (req) {
     var me = auth(req); needOwner(me);

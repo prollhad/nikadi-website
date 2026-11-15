@@ -683,3 +683,6 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .live-dot.off{background:#7a7068;animation:none;box-shadow:none}
 @keyframes livep{0%{box-shadow:0 0 0 0 rgba(63,191,122,.55)}70%{box-shadow:0 0 0 8px rgba(63,191,122,0)}100%{box-shadow:0 0 0 0 rgba(63,191,122,0)}}
 .demo-flag.test-db{background:#2d5fa8;color:#fff}
+.cl-row .a{display:grid;justify-items:end;gap:2px}.cl-who{font-size:.8rem;color:var(--gold-hi,#e0be7a)}.cl-row time{font-size:.75rem;color:var(--muted)}
+.guide summary{cursor:pointer;list-style:none}.guide summary h2{display:inline}.guide summary::after{content:" ▾";color:var(--muted)}
+.bar .who .iconbtn+.iconbtn{margin-left:6px}

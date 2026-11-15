@@ -137,3 +137,28 @@ begin
 end $$;
 revoke all on function public.nk_reset from anon, authenticated, public;
 grant execute on function public.nk_reset to service_role;
+
+-- change log for the owner screen (newest first; noisy system tabs left out)
+create or replace function public.nk_changelog(lim int default 100, before_id bigint default null, who_f text default null)
+returns jsonb language sql stable security definer set search_path = public as $$
+  select coalesce(jsonb_agg(to_jsonb(x) order by x.id desc), '[]'::jsonb) from (
+    select id, at, who, action, tbl, rid, before, after from change_log
+    where (before_id is null or id < before_id) and (who_f is null or who = who_f)
+      and coalesce(action, '') not in ('migrate', 'setup', 'deskBeat', 'deskPresence')
+      and coalesce(tbl, '') not in ('wachats', 'wamsgs', 'wifi', 'attendance', 'sessions', 'config', 'archive', 'billpdfs', 'sheet:Sessions', 'sheet:Otps')
+    order by id desc limit least(greatest(lim, 1), 300)) x;
+$$;
+revoke all on function public.nk_changelog from anon, authenticated, public;
+grant execute on function public.nk_changelog to service_role;
+
+-- the timer: every 10 minutes the database calls the server (the key is read from the database itself)
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+select cron.unschedule('nikadi-timer') where exists (select 1 from cron.job where jobname = 'nikadi-timer');
+select cron.schedule('nikadi-timer', '*/10 * * * *', $cron$
+  select net.http_post(
+    url := 'https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api',
+    body := jsonb_build_object('action', 'nkCron', 'key', (select v from public.kv where k = 'p:NK_CRON_KEY')),
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    timeout_milliseconds := 140000)
+$cron$);

@@ -29,7 +29,7 @@ async function nkSync() {
   NK_BASE.kv = res.kv || {};
 }
 
-function nkRun(body, query, memo, now, seed) {
+function nkRun(body, query, memo, now, seed, entry) {
   var ctx = { ops: [], read: {}, cl: {}, kv: Object.assign({}, NK_BASE.kv), pend: [], memo: memo, now: now, seed: seed, selfUrl: NK_SELF };
   ctx.need = function (t) { if (!ctx.pend.some(function (p) { return p.key === 'load|' + t; })) ctx.pend.push({ key: 'load|' + t, kind: 'load', t: t }); };
   ctx.db = nkDb(NK_BASE, ctx, { normalize: NK_NORM, lazy: NK_LAZY, firstCol: function (t) { return DESK_SCHEMA[t] ? DESK_SCHEMA[t].cols[0][0] : 'id'; } });
@@ -38,7 +38,7 @@ function nkRun(body, query, memo, now, seed) {
   CTX = ctx;
   try {
     var e = { postData: { contents: body, type: 'text/plain' }, parameter: query || {}, parameters: {} };
-    var out = query && query.__get ? doGet(e) : doPost(e);
+    var out = entry ? entry(e) : query && query.__get ? doGet(e) : doPost(e);
     ctx.out = out && out.getContent ? out.getContent() : JSON.stringify({ ok: true });
   } catch (err) {
     if (String(err && err.message) !== '__NK_WAIT__') { console.error(err); ctx.out = JSON.stringify({ ok: false, error: 'server_error' }); ctx.crash = String(err && err.stack || err); }
@@ -58,7 +58,9 @@ async function nkDo(p, memo) {
     } else if (p.kind === 'fetch') {
       memo[p.key] = await nkFetch(p.req);
     } else if (p.kind === 'bridge') {
-      memo[p.key] = await nkBridgeCall(p.fn, p.args);
+      memo[p.key] = await nkBridgePhoto(p.fn, p.args);
+    } else if (p.kind === 'changelog') {
+      memo[p.key] = await nkRpc('nk_changelog', { lim: p.lim, before_id: p.before || null, who_f: p.who || null });
     }
   } catch (e) { memo[p.key] = { __err: String(e && e.message || e).slice(0, 300) }; }
 }
@@ -81,6 +83,28 @@ async function nkFetch(q) {
   if (!/json|text|xml|html/.test(ct)) out.b64 = nkBytesB64_(buf);
   return out;
 }
+/* ID copies and payment screenshots: kept in fast storage after the first time they come from Google Drive */
+async function nkStore(method, path, body, type) {
+  var h = { apikey: NK_SB_KEY, Authorization: 'Bearer ' + NK_SB_KEY };
+  if (type) { h['Content-Type'] = type; h['x-upsert'] = 'true'; }
+  return fetch(NK_SB + '/storage/v1/object/files/' + path, { method: method, headers: h, body: body });
+}
+function nkSafeId(id) { return String(id || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 120); }
+async function nkBridgePhoto(fn, argsJson) {
+  if (fn === 'deskGetPhoto_' && NK_SB_KEY) {
+    var id = nkSafeId(JSON.parse(argsJson)[0]);
+    try {
+      var r = await nkStore('GET', 'photos/' + id);
+      if (r.ok) { var ct = r.headers.get('content-type') || 'image/jpeg', b = new Uint8Array(await r.arrayBuffer()); return 'data:' + ct + ';base64,' + nkBytesB64_(b); }
+    } catch (e) {}
+    var url = await nkBridgeCall(fn, argsJson), m = /^data:([^;]+);base64,(.*)$/.exec(String(url || ''));
+    if (m) try { await nkStore('POST', 'photos/' + id, nkB64Bytes_(m[2]), m[1]); } catch (e) {}
+    return url;
+  }
+  var res = await nkBridgeCall(fn, argsJson);
+  if (fn === 'deskSavePhoto_' && res && NK_SB_KEY) try { await nkStore('POST', 'photos/' + nkSafeId(res), nkB64Bytes_(JSON.parse(argsJson)[0]), 'image/jpeg'); } catch (e) {}
+  return res;
+}
 async function nkBridgeCall(fn, argsJson) {
   if (nkTestMode() && fn === 'nkMail_') return true; // test copy: no emails
   var key = NK_BASE.kv['p:NK_BRIDGE_KEY'], url = NK_BASE.kv['p:NK_GOOGLE_URL'];
@@ -100,17 +124,22 @@ function nkWho(body) {
   } catch (e) { return ''; }
 }
 
-async function nkHandle(body, query) {
+async function nkHandle(body, query, entry, actName) {
   var memo = {}, now = RealDate.now(), seed = (RealMath.random() * 4294967296) >>> 0, action = '';
   try { action = JSON.parse(body || '{}').action || ''; } catch (e) {}
   if (query && query.yc) action = 'whatsapp-webhook';
+  if (actName) action = actName;
   for (var attempt = 0; attempt < 6; attempt++) {
     await nkSync();
     var ctx = null;
-    for (var pass = 0; pass < 20; pass++) {
-      ctx = nkRun(body, query, memo, now, seed);
+    for (var pass = 0; pass < 60; pass++) {
+      ctx = nkRun(body, query, memo, now, seed, entry);
       if (!ctx.pend.length) break;
-      for (var i = 0; i < ctx.pend.length; i++) await nkDo(ctx.pend[i], memo); // in order: one may depend on the one before
+      /* do the FIRST thing it waited for (anything after it may come from a branch that assumed it failed);
+         database reads are safe to do together */
+      var reads = ctx.pend.filter(function (p) { return p.kind === 'load' || p.kind === 'findOld' || p.kind === 'changelog'; });
+      if (reads.length) { for (var i = 0; i < reads.length; i++) await nkDo(reads[i], memo); }
+      else await nkDo(ctx.pend[0], memo);
     }
     if (ctx.pend.length) return JSON.stringify({ ok: false, error: 'server_error' });
     var pay = nkCommitPayload(NK_BASE, ctx);
