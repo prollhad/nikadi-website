@@ -5,7 +5,7 @@
    Tax is worked out backwards from the amount after discount, line by line, and summarised by HSN/SAC.
    Works in the browser and in Google Apps Script (no DOM needed). */
 (function (root) {
-  var HOTEL = {
+  var HOTEL = { review: 'https://g.page/r/CfDIGanjxtFCEAE/review',
     name: 'Nikadi Guest House',
     company: 'Nikadi Projects Private Limited',
     gstin: '19AAHCN7789F1ZR',
@@ -267,6 +267,7 @@
       '</table></td></tr>' +
       (m && m.earned ? p('As our ' + esc(m.level) + ' member, you earned <b>' + m.earned + ' points</b> on this stay' + (m.balance != null ? ' and now have <b>' + grp(String(m.balance)) + ' points</b>' : '') + '. Thank you for being part of the Nikadi family.') : '') +
       p('Whenever the Dham calls you back, we will be happy to welcome you again.') +
+      '<tr><td style="padding:4px 30px 18px"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#156b82;border-radius:6px"><a href="' + HOTEL.review + '" style="display:inline-block;padding:11px 20px;color:#ffffff;font-weight:bold;text-decoration:none;font-size:14px">⭐ Share your stay on Google</a></td></tr></table><div style="font-size:13px;color:#66737a;padding-top:8px">A few words from you help other devotees find us. It takes less than a minute.</div></td></tr>' +
       p('With warm regards,<br><b>Team Nikadi Guest House</b><br>' + HOTEL.phone, ';padding-bottom:22px') +
       (d.url ? '<tr><td style="padding:0 30px 24px;font-size:13px;color:#66737a">You can also <a href="' + esc(d.url) + '" style="color:#156b82">view your bill online</a>.</td></tr>' : '') +
       '<tr><td style="padding:16px 30px 24px;border-top:1px solid #eef1f2;font-size:11.5px;color:#7d8a8e;line-height:1.6">' + HOTEL.company + ' · GSTIN ' + HOTEL.gstin + '<br>' + HOTEL.address.join(', ') + '<br>' + HOTEL.web + '</td></tr>' +
@@ -286,6 +287,7 @@
       'Total ' + inr(c.total) + ' (incl. GST) · ' + (paid ? 'Paid in full ✅' : c.due > 0 ? 'Balance due ' + inr(c.due) : 'To be refunded ' + inr(-c.due)) + '\n' +
       (opt.link && d.url ? d.url + '\n' : '') +
       (m && m.earned ? '\n⭐ As our ' + m.level + ' member, you earned ' + m.earned + ' points on this stay' + (m.balance != null ? '. Your balance is now ' + grp(String(m.balance)) + ' points' : '') + '.\n' : '') +
+      '\n⭐ If you enjoyed your stay, a short Google review helps other devotees find us: ' + HOTEL.review + '\n' +
       '\nWhenever the Dham calls you back, we will be happy to welcome you again.\n\n' +
       'With warm regards,\nTeam Nikadi Guest House\n' + HOTEL.phone;
   }
