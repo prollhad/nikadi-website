@@ -136,15 +136,16 @@ function nkApplySafe(pay, res) {
 var NK_CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type, authorization, apikey, x-client-info', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS' };
 async function nkServe(req) {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: NK_CORS });
-  var u = new URL(req.url), q = {};
+  var u = new URL(req.url), q = {}, body = '';
   u.searchParams.forEach(function (v, k) { q[k] = v; });
   try {
-    var body = req.method === 'POST' ? await req.text() : '';
+
     var special = await nkSpecial(body, q);
     var out = special != null ? special : req.method === 'GET' && !q.yc ? JSON.stringify({ ok: true, service: 'nikadi' }) : await nkHandle(body, q);
     return new Response(out, { headers: Object.assign({ 'Content-Type': 'application/json' }, NK_CORS) });
   } catch (e) {
     console.error(e);
-    return new Response(JSON.stringify({ ok: false, error: 'server_error' }), { headers: Object.assign({ 'Content-Type': 'application/json' }, NK_CORS) });
+    var setup = /"action"\s*:\s*"nk[A-Z]/.test(body || '');
+    return new Response(JSON.stringify({ ok: false, error: 'server_error', detail: setup ? String(e && e.message || e).slice(0, 400) : undefined }), { headers: Object.assign({ 'Content-Type': 'application/json' }, NK_CORS) });
   }
 }
