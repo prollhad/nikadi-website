@@ -84,6 +84,7 @@ function deskHandle_(req) {
     sendBill: deskSendBill_, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
+  if (typeof DESK_NO_LOCK_ !== 'undefined' && DESK_NO_LOCK_) return out; // read-only call without the lock: leave the bill timer to locked calls
   try { // send bills that are due (at most every 10 minutes), so emails go out even without the timer
     var c = CacheService.getScriptCache();
     if (!c.get('desk_due_check')) { c.put('desk_due_check', '1', 600); api._sendDue(); }

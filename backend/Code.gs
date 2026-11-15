@@ -162,6 +162,12 @@ function doPost(e) {
   // Staff app (Staff.gs): every action starting with "desk"
   if (!fn && /^desk[A-Z]\w*$/.test(String(req.action)) && typeof deskHandle_ === 'function') fn = deskHandle_;
   if (!fn) return json_({ ok: false, error: 'unknown_action' });
+  // Screens the staff app refreshes all the time only read the sheet: they don't wait in the queue for the lock
+  // (so a busy WhatsApp minute or another device saving can't make every phone slow).
+  if (DESK_READ_ONLY_[req.action]) {
+    try { DESK_NO_LOCK_ = true; return json_(Object.assign({ ok: true }, fn(req))); }
+    catch (err) { var c0 = String(err && err.message || err); if (!/^[a-z_]+$/.test(c0)) { console.error(err); c0 = 'server_error'; } return json_({ ok: false, error: c0 }); }
+  }
   var lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
@@ -175,6 +181,9 @@ function doPost(e) {
     try { lock.releaseLock(); } catch (e2) {}
   }
 }
+
+var DESK_READ_ONLY_ = { deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1 };
+var DESK_NO_LOCK_ = false;
 
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
@@ -892,10 +901,12 @@ function ycCall_(path, body, method) {
   return j;
 }
 /** One message to one number (msg is the WhatsApp message body without from/to: {type:'text', text:{body}} etc.). */
+var _waOutbox = null; // while a WhatsApp webhook is being handled, messages wait here and go out after the lock is released
 function ycSend_(to, msg, noLog) {
   var y = ycProps_(), d = String(to).replace(/\D/g, '');
   var num = d.length > 10 && d.slice(0, 2) !== '91' ? '+' + d : '+91' + d.slice(-10); // overseas numbers keep their country code
-  var j = ycCall_('whatsapp/messages/sendDirectly', Object.assign({ from: y.from, to: num }, msg));
+  var body = Object.assign({ from: y.from, to: num }, msg), j = {};
+  if (_waOutbox) _waOutbox.push(body); else j = ycCall_('whatsapp/messages/sendDirectly', body);
   if (!noLog && d.length === 10) { // keep the conversation complete in the staff app
     var t = msg.text ? msg.text.body : msg.interactive ? msg.interactive.body && msg.interactive.body.text : msg.document ? '📄 ' + (msg.document.caption || msg.document.filename || 'File') :
       msg.image ? '📷 ' + (msg.image.caption || 'Photo') : msg.location ? '📍 Location pin' : msg.template ? '[' + msg.template.name + ']' : '';
@@ -974,6 +985,7 @@ function ycWebhook_(e) {
   if (ev.id && cache.get(evId)) return json_({ ok: true }); // YCloud may deliver the same event twice
   if (ev.id) cache.put(evId, '1', 21600);
   var lock = LockService.getScriptLock();
+  _waOutbox = [];
   try {
     lock.waitLock(25000);
     var type = String(ev.type || '');
@@ -990,6 +1002,8 @@ function ycWebhook_(e) {
   } catch (err) {
     console.error(err);
   } finally { try { lock.releaseLock(); } catch (e2) {} }
+  var out = _waOutbox || []; _waOutbox = null;
+  out.forEach(function (b) { try { ycCall_('whatsapp/messages/sendDirectly', b); } catch (e) { console.error(e); } }); // in order, without holding up the staff app
   return json_({ ok: true });
 }
 
