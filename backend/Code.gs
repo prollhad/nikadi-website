@@ -895,8 +895,9 @@ function ycWebhook_(e) {
     lock.waitLock(25000);
     var type = String(ev.type || '');
     if (type === 'whatsapp.inbound_message.received' && ev.whatsappInboundMessage) waInbound_(ev.whatsappInboundMessage);
-    else if (/echo/i.test(type)) { // reception replied from the WhatsApp Business app: let them talk
-      var m = ev.whatsappMessage || ev.smbMessageEcho || ev.whatsappSmbMessageEcho || {};
+    else if (type === 'whatsapp.smb.message.echoes') { // reception replied from the WhatsApp Business app: let them talk
+      var m = ev.whatsappMessage || ev.smbMessageEchoes || ev.whatsappSmbMessageEchoes || ev.smbMessageEcho || {};
+      if (!m.to) Object.keys(ev).forEach(function (k) { if (ev[k] && typeof ev[k] === 'object' && ev[k].to && !m.to) m = ev[k]; });
       var to = String(m.to || m.recipient || '').replace(/\D/g, '').slice(-10);
       if (to && m.bizType !== 'api') waHuman_(to, 'staff replied from the phone');
     }
