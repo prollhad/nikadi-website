@@ -159,7 +159,7 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 .mcard.tier-silver{--art:url(icons/card-silver.svg);color:#23272c}
 .mcard.tier-gold{--art:url(icons/card-gold.svg);color:#efd594;padding:0 9% 7.4% 9%}
 .mcard.tier-gold .mc-ptsr b{color:#f3dda0}
-.mcard.tier-platinum{--art:url(icons/card-platinum.svg);color:#e6ebf2;padding:0 9% 7.4% 9%}
+.mcard.tier-platinum{--art:url(icons/card-platinum.svg);color:#e6ebf2;padding:0 7% 5%}
 .mcard.tier-plus{--art:url(icons/card-plus.svg);color:#d9dadc;padding:0 9% 7.4% 9%}
 .mcard.tier-plus .mc-ptsr b{background:linear-gradient(180deg,#f3dfa6,#c9a35a 70%,#a9823e);-webkit-background-clip:text;background-clip:text;color:transparent}
 .ladder{display:grid;gap:8px}
@@ -261,3 +261,14 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 .login .brand-logo.big{height:auto;width:min(220px,60vw);margin:0 auto 6px}
 .mcard.tier-gold .mc-ptsr,.mcard.tier-platinum .mc-ptsr,.mcard.tier-plus .mc-ptsr{text-shadow:0 0 10px rgba(0,0,0,.85),0 0 22px rgba(0,0,0,.6)}
 .mcard.tier-plus .mc-ptsr b{filter:drop-shadow(0 0 8px rgba(0,0,0,.9))}
+/* Plus: everything on the clean black panel, left of the jali */
+.mcard.tier-plus{padding:0 7% 4% 7%}
+.mcard.tier-plus .mc-ptsr b{font-size:1.45rem}
+.mcard.tier-plus .mc-bot{display:grid;justify-content:start;gap:4px;max-width:52%}
+.mcard.tier-plus .mc-ptsr{order:-1;justify-items:start;text-align:left;grid-auto-flow:column;align-items:baseline;gap:6px;text-shadow:none}
+.mcard.tier-plus .mc-ptsr small{display:none}
+/* Platinum: keep the bottom row below the arch base */
+.mcard.tier-platinum{padding:0 6% 3.2%}
+.mcard.tier-platinum .mc-name{font-size:.78rem}
+.mcard.tier-platinum .mc-ptsr b{font-size:1.45rem}
+.mcard.tier-platinum .mc-ptsr small{display:none}
