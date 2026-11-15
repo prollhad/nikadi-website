@@ -841,6 +841,35 @@ var WA_ROOM_INFO = {
   'Large Twin': { title: 'Large Twin', beds: '2 single beds, more space', fits: 'up to 3 adults' }
 };
 
+/* Google Sheet menu "Nikadi" → "Connect WhatsApp (YCloud)": the owner pastes the YCloud API key here (kept in Script Properties)
+   and copies the webhook address for YCloud → Developers → Webhooks. */
+var NK_API_EXEC = 'https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec';
+function onOpen() {
+  try { SpreadsheetApp.getUi().createMenu('Nikadi').addItem('Connect WhatsApp (YCloud)', 'whatsappConnect').addItem('Show WhatsApp webhook address', 'whatsappShowWebhook').addToUi(); } catch (e) {}
+}
+function whatsappConnect() {
+  var ui = SpreadsheetApp.getUi(), p = PropertiesService.getScriptProperties();
+  var r = ui.prompt('Connect WhatsApp (YCloud)', 'Paste the YCloud API key (YCloud → Developers → API key → Look → copy).' + (p.getProperty('YC_API_KEY') ? '\nA key is already saved; pasting a new one replaces it.' : ''), ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  var key = String(r.getResponseText() || '').trim();
+  if (!/^[A-Za-z0-9_\-]{16,128}$/.test(key)) { ui.alert('That does not look like a YCloud API key. Nothing was saved.'); return; }
+  p.setProperty('YC_API_KEY', key);
+  whatsappShowWebhook();
+}
+function whatsappShowWebhook() {
+  var p = PropertiesService.getScriptProperties();
+  if (!p.getProperty('YC_HOOK_KEY')) p.setProperty('YC_HOOK_KEY', Utilities.getUuid().replace(/-/g, ''));
+  if (!p.getProperty('YC_FROM')) p.setProperty('YC_FROM', '+917501101137');
+  var url = NK_API_EXEC + '?yc=' + p.getProperty('YC_HOOK_KEY');
+  var html = HtmlService.createHtmlOutput('<div style="font:14px Arial;line-height:1.5">' +
+    '<p><b>' + (p.getProperty('YC_API_KEY') ? '✅ YCloud API key saved.' : '⚠️ No YCloud API key saved yet.') + '</b></p>' +
+    '<p>In YCloud → Developers → Webhooks → <b>Add Endpoints</b>, paste this as the <b>Endpoint URL</b>:</p>' +
+    '<textarea id="u" readonly style="width:100%;height:70px;font:12px monospace" onclick="this.select()">' + url + '</textarea>' +
+    '<p><button onclick="var t=document.getElementById(\'u\');t.select();document.execCommand(\'copy\');this.textContent=\'Copied ✓\'">Copy</button></p>' +
+    '<p>Events: tick <b>whatsapp.inbound_message.received</b> and <b>whatsapp.smb.message.echoes</b>, then Confirm.</p></div>').setWidth(520).setHeight(330);
+  SpreadsheetApp.getUi().showModalDialog(html, 'WhatsApp webhook');
+}
+
 function ycProps_() { var p = PropertiesService.getScriptProperties(); return { key: p.getProperty('YC_API_KEY') || '', from: p.getProperty('YC_FROM') || '', hook: p.getProperty('YC_HOOK_KEY') || '' }; }
 function ycReady_() { var y = ycProps_(); return !!(y.key && y.from); }
 
