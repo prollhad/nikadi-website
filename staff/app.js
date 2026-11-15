@@ -16,6 +16,7 @@
     comp_host: 'Pick whose guest this is.',
     comp_no_money: 'This is a free stay. No money is taken.',
     bill_no_required: 'Write the invoice number.',
+    old_record: 'This record is more than a few months old and is kept in the archive Sheet. It can be viewed but not changed.',
     drive_unavailable: 'Google Drive is not connected here.',
     too_big: 'This bill is too long to save.',
     category_required: 'Choose what kind of expense it is.', date_future: 'The date can\'t be in the future.', bad_photo: 'That photo could not be uploaded. Try another photo.', photos_unavailable: 'Photo upload is not set up yet. Save without the photo for now.', not_found: 'That entry was not found. Refresh and try again.',
@@ -2339,7 +2340,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 43</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 44</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

@@ -60,6 +60,7 @@ function deskDb_() {
       return o;
     },
     set: function (t, o, patch) {
+      if (o._old) throw new Error('old_record'); // records in the archive Sheet are read-only
       var s = sh(t);
       if (!rowOk[t + o._r]) { // rows can move if someone deletes a row in the Sheet: check the row still holds this record
         var k0 = DESK_SCHEMA[t].cols[0], got = read(s.getRange(o._r, 1).getValue(), k0[2]);
@@ -77,6 +78,42 @@ function deskDb_() {
         s.getRange(o._r, j + 1).setValue(patch[k]);
       });
       SpreadsheetApp.flush(); deskTblBump_(t);
+    },
+    /* move old records to the archive Sheet (checked row by row first; then removed from this Sheet) */
+    moveOut: function (t, rows) {
+      if (!rows || !rows.length) return 0;
+      var s = sh(t), c = DESK_SCHEMA[t].cols, n = s.getLastRow();
+      var now = n > 1 ? s.getRange(2, 1, n - 1, c.length).getValues() : [];
+      var ok = rows.every(function (o) {
+        var r = now[o._r - 2]; if (!r) return false;
+        return c.every(function (col, j) { return String(read(r[j], col[2])) === String(o[col[0]] == null ? '' : o[col[0]]); });
+      });
+      if (!ok) { deskTblBump_(t); cache[t] = null; return 0; } // the Sheet changed under us: try again next night
+      var arch = deskArchiveTab_(t);
+      arch.getRange(arch.getLastRow() + 1, 1, rows.length, c.length).setValues(rows.map(function (o) { return c.map(function (col) { var v = o[col[0]]; return v == null ? '' : v; }); }));
+      SpreadsheetApp.flush();
+      var nums = rows.map(function (o) { return o._r; }).sort(function (a, b) { return b - a; });
+      for (var i = 0; i < nums.length;) { // delete runs of rows from the bottom up
+        var end = nums[i], start = end; i++;
+        while (i < nums.length && nums[i] === start - 1) { start = nums[i]; i++; }
+        s.deleteRows(start, end - start + 1);
+      }
+      SpreadsheetApp.flush(); deskTblBump_(t); cache[t] = null;
+      return rows.length;
+    },
+    /* look up one record in the archive Sheet by its first column (e.g. an old bill opened from its QR code) */
+    findOld: function (t, key, field) {
+      var id = PropertiesService.getScriptProperties().getProperty('ARCHIVE_SS'); if (!id || !key) return null;
+      try {
+        var tab = SpreadsheetApp.openById(id).getSheetByName(DESK_SCHEMA[t].sheet); if (!tab) return null;
+        var j0 = field ? colIndex(t, field) : 0; if (j0 < 0) return null;
+        var hits = tab.getRange(1, j0 + 1, tab.getLastRow(), 1).createTextFinder(String(key)).matchEntireCell(true).findAll(); if (!hits.length) return null;
+        var hit = hits[hits.length - 1];
+        var c = DESK_SCHEMA[t].cols, r = tab.getRange(hit.getRow(), 1, 1, c.length).getValues()[0], o = {};
+        c.forEach(function (col, j) { o[col[0]] = read(r[j], col[2]); });
+        o._old = true;
+        return o;
+      } catch (e) { return null; }
     },
     kvGet: function (k) { return CacheService.getScriptCache().get('desk_' + k); },
     kvSet: function (k, v, sec) { CacheService.getScriptCache().put('desk_' + k, String(v), sec || 600); }
@@ -122,6 +159,36 @@ function deskSheetEdited_(sheetName) {
 }
 function deskRefreshData() { deskSheetEdited_(''); SpreadsheetApp.getActive().toast('Staff app will read the Sheet fresh now.'); }
 
+/* The archive Sheet: "Nikadi Records Archive" in the Nikadi Guest House Records folder, same tab names as this Sheet. */
+function deskArchiveSS_() {
+  var p = PropertiesService.getScriptProperties(), id = p.getProperty('ARCHIVE_SS'), ss = null;
+  if (id) try { ss = SpreadsheetApp.openById(id); } catch (e) { ss = null; }
+  if (!ss) {
+    ss = SpreadsheetApp.create('Nikadi Records Archive');
+    try { DriveApp.getFileById(ss.getId()).moveTo(deskArchiveRoot_()); } catch (e) {}
+    p.setProperty('ARCHIVE_SS', ss.getId());
+  }
+  return ss;
+}
+function deskArchiveTab_(t) {
+  var ss = deskArchiveSS_(), def = DESK_SCHEMA[t], tab = ss.getSheetByName(def.sheet);
+  if (!tab) {
+    tab = ss.insertSheet(def.sheet); tab.getRange(1, 1, 1, def.cols.length).setValues([def.cols.map(function (c) { return c[1]; })]).setFontWeight('bold'); tab.setFrozenRows(1);
+    def.cols.forEach(function (c, j) { if (c[2] === 's') tab.getRange(1, j + 1, tab.getMaxRows(), 1).setNumberFormat('@'); });
+    var first = ss.getSheetByName('Sheet1'); if (first && ss.getSheets().length > 1) ss.deleteSheet(first);
+  }
+  return tab;
+}
+/** Sheet menu "Nikadi → Move old records to the archive now" (also runs by itself every night). */
+function deskArchiveNow() {
+  var lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    var r = deskTimerCore_()._archiveOld({ force: true }), m = r.moved || {}, n = Object.keys(m).reduce(function (a, k) { return a + m[k]; }, 0);
+    try { SpreadsheetApp.getActive().toast(n ? n + ' old records moved to "Nikadi Records Archive".' : 'Nothing old enough to move yet (kept: the last ' + 13 + ' months).'); } catch (e) {}
+    return r;
+  } finally { lock.releaseLock(); }
+}
+
 /** Called by doPost in Code.gs for every action that starts with "desk". */
 function deskHandle_(req) {
   var name = String(req.action).slice(4);
@@ -151,7 +218,10 @@ function sendDueBills() {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return;
   try {
-    deskTimerCore_()._sendDue({ archive: true, limit: 8 });
+    var core = deskTimerCore_();
+    core._sendDue({ archive: true, limit: 8 });
+    var h = +Utilities.formatDate(new Date(), 'Asia/Kolkata', 'H');
+    if (h >= 2 && h < 5) try { core._archiveOld(); } catch (e) { console.error('archive: ' + (e && e.message || e)); } // once a night: move old records out so the app stays fast
   } finally { lock.releaseLock(); }
 }
 

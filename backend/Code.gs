@@ -854,7 +854,7 @@ var WA_ROOM_INFO = {
    and copies the webhook address for YCloud → Developers → Webhooks. */
 var NK_API_EXEC = 'https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec';
 function onOpen() {
-  try { SpreadsheetApp.getUi().createMenu('Nikadi').addItem('Connect WhatsApp (YCloud)', 'whatsappConnect').addItem('Show WhatsApp webhook address', 'whatsappShowWebhook').addSeparator().addItem('Refresh staff app data', 'deskRefreshData').addToUi(); } catch (e) {}
+  try { SpreadsheetApp.getUi().createMenu('Nikadi').addItem('Connect WhatsApp (YCloud)', 'whatsappConnect').addItem('Show WhatsApp webhook address', 'whatsappShowWebhook').addSeparator().addItem('Refresh staff app data', 'deskRefreshData').addItem('Move old records to the archive now', 'deskArchiveNow').addToUi(); } catch (e) {}
 }
 /* Hand edits in the Sheet: the staff app re-reads that tab (it keeps a fast copy otherwise). */
 function onEdit(e) { try { if (typeof deskSheetEdited_ === 'function') deskSheetEdited_(e && e.range ? e.range.getSheet().getName() : ''); } catch (x) {} }

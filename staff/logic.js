@@ -109,6 +109,8 @@ var DESK_SCHEMA = {
   wifi: { sheet: 'Wi-Fi attendance', lazy: true, cols: [['date', 'Date', 'd'], ['name', 'Name'], ['role', 'Role'], ['first', 'Entry (first app open on Wi-Fi)', 't'],
     ['last', 'Exit (last app open on Wi-Fi)', 't'], ['opens', 'App opens on Wi-Fi', 'n'], ['device', 'Device'], ['lastDevice', 'Last device'],
     ['exitSet', 'Exit chosen by owner', 't'], ['exitBy', 'Exit chosen by'], ['recent', 'Recent app opens (system)', 's'], ['logs', 'Log-ins / log-outs (system)', 's']] },
+  summary: { sheet: 'Monthly totals (old records)', lazy: true, cols: [['month', 'Month', 's'], ['rooms', 'Room sales (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['nights', 'Room nights', 'n'],
+    ['stays', 'Stays', 'n'], ['guests', 'Guests', 'n'], ['collected', 'Collected (₹)', 'n'], ['refunds', 'Refunded (₹)', 'n'], ['byMethod', 'By payment method (system)', 's'], ['items', 'Items (system)', 's']] },
   config: { sheet: 'Staff app settings', lazy: true, hidden: true, cols: [['key', 'Setting'], ['value', 'Value', 's']] }
 };
 
@@ -371,7 +373,7 @@ function deskCore(db, hooks) {
   /* ---- GST bills ---- */
   function fyOf(ymd) { var y = +ymd.slice(0, 4), m = +ymd.slice(5, 7), a = m >= 4 ? y : y - 1; return String(a).slice(2) + '-' + String(a + 1).slice(2); }
   function newBillNo() {
-    var pre = DESK_BILL_PREFIX + '/' + fyOf(today()) + '/', n = 0;
+    var pre = DESK_BILL_PREFIX + '/' + fyOf(today()) + '/', n = Number(cfgGet('billMax ' + pre)) || 0; // highest number already moved to the archive
     db.all('bills').forEach(function (b) { if (String(b.no).indexOf(pre) === 0) n = Math.max(n, Number(String(b.no).slice(pre.length)) || 0); });
     var x = String(n + 1); while (x.length < 4) x = '0' + x;
     return pre + x;
@@ -386,7 +388,7 @@ function deskCore(db, hooks) {
     var it = find('items', 'item', name), f = DESK_HSN[name] || DESK_HSN._default;
     return { hsn: (it && String(it.hsn || '').trim()) || f[0], gst: it && it.gst !== '' && it.gst != null && Number(it.gst) > 0 ? Number(it.gst) : f[1], unit: f[2], label: f[3] || name };
   }
-  function billOfStay(sid) { var a = db.all('bills').filter(function (b) { return b.stay === sid; }); return a[a.length - 1] || null; }
+  function billOfStay(sid) { var a = db.all('bills').filter(function (b) { return b.stay === sid; }); return a[a.length - 1] || (db.findOld ? db.findOld('bills', sid, 'stay') : null); }
   function prettyPhone(p) { p = String(p || ''); return p.length === 10 ? '+91 ' + p.slice(0, 5) + ' ' + p.slice(5) : p; }
   /* Everything printed on the bill, frozen at the time it is made. */
   function billData(s, me, old) {
@@ -1456,6 +1458,83 @@ function deskCore(db, hooks) {
     var a = find('archive', 'stay', req.stay);
     return { folder: a && a.folder ? a.folder : '', at: a ? a.at : '', waiting: !!(a && a.dirty) };
   };
+  /* ================= Keeping the app fast for years =================
+     Once a day (night timer) records older than the cut-off are MOVED (never deleted) to the archive Sheet
+     "Nikadi Records Archive", same tab names. Whole months only, so the yearly report stays exact: before a month
+     leaves, its totals are added to "Monthly totals (old records)". Old bills still open from their QR code. */
+  var KEEP_MONTHS = 13, KEEP_MONTHS_FAST = 3, KEEP_MONTHS_BILLS = 4; // bills: 4 months (the full bill stays in the archive and opens from its QR code)
+  // money records: 13 months · stock log, WhatsApp inbox, sessions: 3 months
+  function monthsBack(n) { var y = +today().slice(0, 4), m = +today().slice(5, 7) - n; while (m < 1) { m += 12; y--; } return y + '-' + pad(m) + '-01'; }
+  function archivePlan() {
+    var cut = monthsBack(KEEP_MONTHS), cutFast = monthsBack(KEEP_MONTHS_FAST), cutBills = monthsBack(KEEP_MONTHS_BILLS), now = stamp();
+    function before(v, c) { v = String(v || ''); return !!v && v.slice(0, 10) < (c || cut); }
+    var inHouse = {}; db.all('stays').forEach(function (x) { if (x.status === 'In house') inHouse[x.id] = 1; });
+    var oldStay = {}; db.all('stays').forEach(function (x) { if (x.status === 'Checked out' && before(x.checkout)) oldStay[x.id] = 1; });
+    var openBk = { Pending: 1, Confirmed: 1 };
+    return {
+      cut: cut,
+      stays: function (x) { return !!oldStay[x.id]; },
+      charges: function (x) { return before(x.at) && !inHouse[x.stay]; },
+      payments: function (x) { return before(x.at) && !inHouse[x.stay]; },
+      bookings: function (x) { return !openBk[x.status] && before(x.checkout); },
+      bills: function (x) { return before(x.at, cutBills) && !inHouse[x.stay] && x.wa !== 'Waiting' && x.status !== 'Scheduled' && !/^On hold/.test(String(x.status || '')); },
+      requests: function (x) { return x.status !== 'Pending' && before(x.at); },
+      service: function (x) { return before(x.date); },
+      expenses: function (x) { return before(x.date); },
+      commissions: function (x) { return before(x.date); },
+      guestids: function (x) { return before(x.at) && !inHouse[x.stay]; },
+      archive: function (x) { return !!oldStay[x.stay]; },
+      wa: function (x) { return x.status !== 'Waiting' && before(x.at); },
+      wifi: function (x) { return before(x.date); },
+      attendance: function (x) { return before(x.inAt); },
+      stocklog: function (x) { return before(x.at, cutFast); },
+      wamsgs: function (x) { return before(x.at, cutFast); },
+      sessions: function (x) { return String(x.expires || '') < now && before(x.expires, cutFast); }
+    };
+  }
+  /* add the totals of the records that are leaving to "Monthly totals" (per month, added to what is already there) */
+  function summarize(moving) {
+    var add = {};
+    function mo(k) { return add[k] || (add[k] = { rooms: 0, extras: 0, nights: 0, stays: 0, guests: 0, collected: 0, refunds: 0, byMethod: {}, items: {} }); }
+    (moving.stays || []).forEach(function (st) { var m = mo(String(st.checkout).slice(0, 7)); m.rooms += Number(st.roomTotal || 0); m.extras += Number(st.extras || 0); m.nights += Number(st.nights || 0); m.stays++; m.guests += Number(st.guests || 0); });
+    (moving.charges || []).forEach(function (c) {
+      if (c.removed) return; var it = mo(String(c.at).slice(0, 7)).items, k = c.item; it[k] = it[k] || { qty: 0, free: 0, amount: 0 };
+      if (c.free === 'Yes') it[k].free += Number(c.qty || 0); else { it[k].qty += Number(c.qty || 0); it[k].amount += Number(c.total || 0); }
+    });
+    (moving.payments || []).forEach(function (p) {
+      if (p.voided || p.method === FROM_ADV || !p.at) return; var m = mo(String(p.at).slice(0, 7)), a = Number(p.amount || 0);
+      if (a >= 0) m.collected += a; else m.refunds += -a; m.byMethod[p.method] = (m.byMethod[p.method] || 0) + a;
+    });
+    Object.keys(add).sort().forEach(function (k) {
+      var a = add[k], row = find('summary', 'month', k), o = row ? { rooms: +row.rooms, extras: +row.extras, nights: +row.nights, stays: +row.stays, guests: +row.guests, collected: +row.collected, refunds: +row.refunds,
+        byMethod: jsonOr(row.byMethod, {}), items: jsonOr(row.items, {}) } : { rooms: 0, extras: 0, nights: 0, stays: 0, guests: 0, collected: 0, refunds: 0, byMethod: {}, items: {} };
+      ['rooms', 'extras', 'nights', 'stays', 'guests', 'collected', 'refunds'].forEach(function (f) { o[f] += a[f]; });
+      Object.keys(a.byMethod).forEach(function (m) { o.byMethod[m] = (o.byMethod[m] || 0) + a.byMethod[m]; });
+      Object.keys(a.items).forEach(function (i) { var t = o.items[i] = o.items[i] || { qty: 0, free: 0, amount: 0 }; t.qty += a.items[i].qty; t.free += a.items[i].free; t.amount += a.items[i].amount; });
+      var rec = { rooms: o.rooms, extras: o.extras, nights: o.nights, stays: o.stays, guests: o.guests, collected: o.collected, refunds: o.refunds, byMethod: JSON.stringify(o.byMethod), items: JSON.stringify(o.items) };
+      if (row) db.set('summary', row, rec); else db.add('summary', Object.assign({ month: k }, rec));
+    });
+  }
+  function jsonOr(v, d) { try { return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+  function archiveOld() {
+    if (!db.moveOut) return { moved: {} };
+    var plan = archivePlan(), moving = {}, moved = {};
+    Object.keys(plan).forEach(function (t) { if (t === 'cut') return; var a = db.all(t).filter(plan[t]); if (a.length) moving[t] = a; });
+    if (!Object.keys(moving).length) return { moved: {}, cut: plan.cut };
+    (moving.bills || []).forEach(function (b) { // remember the highest invoice number of each year, so numbering carries on
+      var m = /^(.*\/)(\d+)$/.exec(String(b.no)); if (!m) return;
+      if (Number(m[2]) > (Number(cfgGet('billMax ' + m[1])) || 0)) cfgSet('billMax ' + m[1], m[2]);
+    });
+    summarize(moving); // totals first: if anything fails after this, the records are still in the main Sheet (nothing lost)
+    Object.keys(moving).forEach(function (t) { db.moveOut(t, moving[t]); moved[t] = moving[t].length; });
+    return { moved: moved, cut: plan.cut };
+  }
+  api._archiveOld = function (opt) {
+    var d = today();
+    if (!(opt && opt.force) && cfgGet('lastArchive') === d) return { skipped: true };
+    var r = archiveOld(); cfgSet('lastArchive', d); return r;
+  };
+
   api._sendDue = function (opt) { var arch = opt && opt.archive ? archiveRun(opt.limit || 8) : []; return { sent: sendDue(opt && opt.waOnly), archived: arch }; };
   /* Recent bills for the front desk list. */
   api.bills = function (req) {
@@ -1505,7 +1584,9 @@ function deskCore(db, hooks) {
   api.billView = function (req) {
     var key = String(req.id || '');
     if (!/^[A-Za-z0-9]{12,40}$/.test(key)) fail('no_bill');
-    var b = find('bills', 'id', key); if (!b) fail('no_bill');
+    var b = find('bills', 'id', key);
+    if (!b && db.findOld) b = db.findOld('bills', key); // older bills live in the archive Sheet
+    if (!b) fail('no_bill');
     var d = JSON.parse(b.data); d.id = b.id;
     return { bill: d };
   };
@@ -1965,6 +2046,13 @@ function deskCore(db, hooks) {
       var mo = months[Number(String(p.at).slice(5, 7)) - 1], a = Number(p.amount || 0);
       if (a >= 0) mo.collected += a; else mo.refunds += -a;
       mo.byMethod[p.method] = (mo.byMethod[p.method] || 0) + a;
+    });
+    db.all('summary').forEach(function (r) { // months whose records moved to the archive Sheet
+      var y = String(r.month).slice(0, 4); years[y] = 1; if (y !== year) return;
+      var mo = months[Number(String(r.month).slice(5, 7)) - 1];
+      ['rooms', 'extras', 'nights', 'stays', 'guests', 'collected', 'refunds'].forEach(function (f) { mo[f] += Number(r[f] || 0); });
+      var bm = jsonOr(r.byMethod, {}); Object.keys(bm).forEach(function (m) { mo.byMethod[m] = (mo.byMethod[m] || 0) + bm[m]; });
+      var it = jsonOr(r.items, {}); Object.keys(it).forEach(function (k) { var t = items[k] = items[k] || { item: k, qty: 0, free: 0, amount: 0 }; t.qty += it[k].qty; t.free += it[k].free; t.amount += it[k].amount; });
     });
     var tot = blank(0); tot.byMethod = {};
     months.forEach(function (mo) {
