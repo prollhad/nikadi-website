@@ -142,74 +142,124 @@ def gold_back(cv, m):
                 layer='INK', right=W - 7.4)
 
 # =========================================================== PLATINUM: Deco
-P_ = dict(bg=[(0, '#1f304a'), (.55, '#122036'), (1, '#0b1524')], ray='#1a2a43', line='#45587a', plat='#e2e8ef', plat2='#a9b6c6', sub='#8d9bb0')
-def deco_sun(cv, cx, cy, r0, r1, n, a0, a1, layer='INK'):
+# =========================================================== shared ornament parts
+def petal_ring(cv, cx, cy, s, n, r0, r1, wd, color, lw, layer, rot=0, vein=True, pointed=True):
     for i in range(n):
-        t0 = a0 + (a1 - a0) * i / n; t1 = a0 + (a1 - a0) * (i + .5) / n
-        if i % 2 == 0:
-            cv.fill(poly([(cx + r0 * math.cos(t0), cy + r0 * math.sin(t0)), (cx + r1 * math.cos(t0), cy + r1 * math.sin(t0)),
-                          (cx + r1 * math.cos(t1), cy + r1 * math.sin(t1)), (cx + r0 * math.cos(t1), cy + r0 * math.sin(t1))]), P_['ray'], layer)
-        tm = a0 + (a1 - a0) * (i + .25) / n
-        cv.stroke(poly([(cx + (r0 + 1) * math.cos(tm), cy + (r0 + 1) * math.sin(tm)), (cx + r1 * math.cos(tm), cy + r1 * math.sin(tm))], False), P_['line'], .09, layer)
-    for r, lw in ((r0, .3), (r0 - 1.2, .12), (r0 + 4.5, .1), (r0 + 9.5, .1)):
-        cv.stroke(arc(cx, cy, r, a0, a1), P_['plat2'], lw, layer)
-def deco_corner(cv, x, y, sx, sy, color, layer='INK'):
-    pts = [(x, y + sy * 7), (x, y), (x + sx * 7, y)]
-    cv.stroke(poly(pts, False), color, .22, layer)
-    pts2 = [(x + sx * 1.4, y + sy * 4.6), (x + sx * 1.4, y + sy * 1.4), (x + sx * 4.6, y + sy * 1.4)]
-    cv.stroke(poly(pts2, False), color, .12, layer)
-    cv.fill(rect(x + sx * 2.6 - .35, y + sy * 2.6 - .35, .7, .7), color, layer)
-def platinum_front(cv, m, art_only=False):
-    cv.fill(rect(-3, -3, W + 6, H + 6), ('lin', 0, H, 0, 0, P_['bg']), 'BASE')
-    clipped(cv, rect(-3, -3, W + 6, H + 6), lambda: deco_sun(cv, W / 2, -10, 15, 70, 44, math.radians(8), math.radians(172)))
-    for (x, y, sx, sy) in ((3.2, H - 3.2, 1, -1), (W - 3.2, H - 3.2, -1, -1)):
-        deco_corner(cv, x, y, sx, sy, P_['plat2'], 'FOIL')
-    shapes, mw = mark_shapes(W / 2 - 3.2, H - 5.6 - 7.6, 7.6)
-    for t, c in shapes: cv.fill(c, {'dark': P_['plat'], 'light': P_['plat2'], 'arc': P_['plat2']}[t], 'FOIL')
-    T(cv, 'poiret', 'NIKADI', W / 2, H - 19.4, 15, P_['plat'], .42, align='center', layer='FOIL')
-    tw = T(cv, 'poiret', 'PLATINUM', W / 2, H - 24.2, 6.4, P_['plat'], .62, align='center', layer='FOIL')
-    for sgn in (-1, 1):
-        x0 = W / 2 + sgn * (tw / 2 + 2.2); cv.stroke(poly([(x0, H - 23.45), (x0 + sgn * 9, H - 23.45)], False), P_['plat2'], .14, 'FOIL')
-        cv.fill(poly([(x0 + sgn * 9.6, H - 23.45), (x0 + sgn * 9.0, H - 22.85), (x0 + sgn * 8.4, H - 23.45), (x0 + sgn * 9.0, H - 24.05)]), P_['plat2'], 'FOIL')
-    if not art_only: personal(cv, m, P_['plat'], P_['sub'], P_['plat2'], year_font='poiret', layer='INK')
-def platinum_back(cv, m):
-    cv.fill(rect(-3, -3, W + 6, H + 6), ('lin', 0, 0, 0, H, P_['bg']), 'BASE')
-    for (x, y, sx, sy) in ((W - 3.2, H - 3.2, -1, -1),):
-        deco_corner(cv, x, y, sx, sy, P_['plat2'], 'FOIL')
-    back_common(cv, 'platinum', 'poiret', P_['plat'], P_['sub'], P_['plat'], P_['plat2'], '#0b1524', P_['plat'], P_['plat2'], P_['sub'], title_track=.36)
+        a = 2 * math.pi * i / n + rot
+        def P(r, da): return (cx + s * r * math.cos(a + da), cy + s * r * math.sin(a + da))
+        b1, b2, tip = P(r0, -wd), P(r0, wd), P(r1, 0)
+        k = .35 if pointed else .9
+        c1, c2 = P(r0 + (r1 - r0) * .55, -wd * 1.05), P(r1 - (r1 - r0) * .15, -wd * k)
+        c3, c4 = P(r1 - (r1 - r0) * .15, wd * k), P(r0 + (r1 - r0) * .55, wd * 1.05)
+        cv.stroke([('M',) + b1, ('C',) + c1 + c2 + tip, ('C',) + c3 + c4 + b2], color, lw, layer)
+        if vein: cv.stroke(poly([P(r0 + (r1 - r0) * .2, 0), P(r1 - (r1 - r0) * .28, 0)], False), color, lw * .6, layer)
+def ring(cv, cx, cy, r, color, lw, layer): cv.stroke(circle(cx, cy, r), color, lw, layer)
+def dots(cv, cx, cy, r, n, d, color, layer, rot=0):
+    for i in range(n):
+        a = 2 * math.pi * i / n + rot
+        cv.fill(circle(cx + r * math.cos(a), cy + r * math.sin(a), d), color, layer)
 
-# =========================================================== PLATINUM PLUS: Obsidian metal
-X = dict(bg=[(0, '#0a0a0b'), (.5, '#1b1a1d'), (1, '#0a0a0b')], steel='#8f9297', bright='#d9dadc', gold='#d4b06a', gold2='#a8823f', gold3='#f0d99a')
-def plus_front(cv, m, art_only=False):
-    card = rrect(0, 0, W, H, R)
-    cv.fill(card, ('lin', 0, 0, W, H, X['bg']), 'BASE')
-    def rip():
-        r = 4.0
-        while r < 33:
-            cv.stroke(circle(W - 9.2, H + 3, r), X['steel'], .1, 'ENGRAVE'); r += .95
-    clipped(cv, rect(0, 0, W - 9.2, H), rip)
-    cv.stroke(poly([(W - 9.2, 4.2), (W - 9.2, H - 4.2)], False), X['gold'], .22, 'GOLD')
-    T(cv, 'arsenal', 'PLATINUM  PLUS', W - 4.4, H / 2, 6.4, X['gold3'], .62, align='center', layer='GOLD', rot=-math.pi / 2)
-    brand_row(cv, 6, H - 6 - 9, 9, {'dark': X['gold3'], 'light': X['gold2'], 'arc': X['gold']}, 'italiana', 16, X['gold3'], X['steel'], layer='GOLD', sub=False)
-    T(cv, 'work', 'GUEST HOUSE  ·  SRI DHAM MAYAPUR', 6 + 9 * 318 / 345 + 2.6, H - 15.4, 3.5, X['steel'], .3, layer='ENGRAVE')
+# =========================================================== PLATINUM: Sapphire Lace
+P_ = dict(bg=[(0, '#22427a'), (.5, '#142a57'), (1, '#08142f')], lat='#1e3664', orn='#9aa9c2', plat='#e6ebf2', plat2='#b3bfcf', sub='#9fb0c8')
+def lace(cv, cx, cy, s, color, lw, layer='FOIL'):
+    petal_ring(cv, cx, cy, s, 12, 1.8, 6.6, .42, color, lw, layer)
+    ring(cv, cx, cy, s * 1.3, color, lw, layer); ring(cv, cx, cy, s * 7.4, color, lw * 1.2, layer)
+    # interlaced circles (lace)
+    for i in range(24):
+        a = 2 * math.pi * i / 24
+        cv.stroke(circle(cx + s * 11.2 * math.cos(a), cy + s * 11.2 * math.sin(a), s * 3.9), color, lw * .8, layer)
+    ring(cv, cx, cy, s * 15.4, color, lw * 1.1, layer)
+    # pointed arches
+    petal_ring(cv, cx, cy, s, 24, 15.4, 22.6, .13, color, lw, layer, rot=math.pi / 24)
+    petal_ring(cv, cx, cy, s, 24, 16.2, 20.2, .07, color, lw * .7, layer, rot=math.pi / 24, vein=False)
+    ring(cv, cx, cy, s * 23.4, color, lw * 1.2, layer)
+    # scalloped edge
+    n = 48
+    for i in range(n):
+        a0 = 2 * math.pi * i / n; a1 = 2 * math.pi * (i + 1) / n; am = (a0 + a1) / 2
+        p0 = (cx + s * 23.4 * math.cos(a0), cy + s * 23.4 * math.sin(a0)); p1 = (cx + s * 23.4 * math.cos(a1), cy + s * 23.4 * math.sin(a1))
+        q = (cx + s * 26.4 * math.cos(am), cy + s * 26.4 * math.sin(am))
+        cv.stroke([('M',) + p0, ('C', p0[0] + (q[0] - p0[0]) * .9, p0[1] + (q[1] - p0[1]) * .9, p1[0] + (q[0] - p1[0]) * .9, p1[1] + (q[1] - p1[1]) * .9) + p1], color, lw, layer)
+    dots(cv, cx, cy, s * 27.6, 48, s * .3, color, layer, rot=math.pi / 48)
+    dots(cv, cx, cy, s * 29.4, 96, s * .16, color, layer)
+def lattice(cv, color, layer='INK', step=4.2):
+    for k in range(-30, 30):
+        x = k * step
+        cv.stroke(poly([(x, -3), (x + H + 6, H + 3)], False), color, .08, layer)
+        cv.stroke(poly([(x + H + 6, -3), (x, H + 3)], False), color, .08, layer)
+def platinum_front(cv, m, art_only=False):
+    cv.fill(rect(-3, -3, W + 6, H + 6), ('rad', 64, 30, 80, P_['bg']), 'BASE')
+    clipped(cv, rect(-3, -3, W + 6, H + 6), lambda: lattice(cv, P_['lat']))
+    inner = rrect(3.6, 3.6, W - 7.2, H - 7.2, 1.2)
+    clipped(cv, inner, lambda: lace(cv, 70, 27, .8, P_['orn'], .15))
+    cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), P_['plat2'], .3, 'FOIL')
+    cv.stroke(inner, P_['plat2'], .12, 'FOIL')
+    brand_row(cv, 7, H - 7 - 7.8, 7.8, {'dark': P_['plat'], 'light': P_['plat2'], 'arc': P_['plat2']}, 'gloock', 13.5, P_['plat'], P_['sub'], layer='FOIL', word_track=.2)
+    T(cv, 'arsenal', 'P L A T I N U M   M E M B E R', 7, H - 21.6, 5.0, P_['plat'], .3, layer='FOIL')
+    cv.stroke(poly([(7, H - 23.4), (19, H - 23.4)], False), P_['plat2'], .14, 'FOIL')
     if not art_only:
-        personal(cv, m, X['bright'], X['steel'], X['steel'], right=W - 12.4, year_c=X['gold3'], layer='PERSONALISE', lab_layer='ENGRAVE')
+        T(cv, 'arsenal', m['name'].upper(), 7, 10.6, 8.4, P_['plat'], .16, layer='FOIL')
+        T(cv, 'plexmono', m['no'], 7, 6.4, 5.0, P_['plat2'], .14, layer='FOIL')
+        T(cv, 'work', 'SINCE ' + m['since'], 7 + text_width('plexmono', m['no'], 5.0, .14) + 4, 6.4, 3.6, P_['plat2'], .4, layer='FOIL')
+def platinum_back(cv, m):
+    cv.fill(rect(-3, -3, W + 6, H + 6), ('rad', 20, 40, 80, P_['bg']), 'BASE')
+    clipped(cv, rect(-3, -3, W + 6, H + 6), lambda: lattice(cv, P_['lat']))
+    clipped(cv, rrect(3.6, 3.6, W - 7.2, H - 7.2, 1.2), lambda: lace(cv, 30, 22, .8, '#2a4478', .13, 'INK'))
+    cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), P_['plat2'], .3, 'FOIL')
+    cv.stroke(rrect(3.6, 3.6, W - 7.2, H - 7.2, 1.2), P_['plat2'], .12, 'FOIL')
+    back_common(cv, 'platinum', 'gloock', P_['plat'], P_['sub'], '#e9eef5', P_['plat2'], '#0c1a3a', '#eef2f7', P_['plat2'], '#a7b5c9', title_track=.2,
+                right=W - 7.4)
+
+# =========================================================== PLATINUM PLUS: Obsidian Star (metal)
+X = dict(bg=[(0, '#0a0a0b'), (.5, '#1b1a1d'), (1, '#0a0a0b')], steel='#8f9297', bright='#d9dadc', gold='#d4b06a', gold2='#a8823f', gold3='#f0d99a')
+def star_mandala(cv, cx, cy, s, E, G, lw, gold_core=True):
+    # gold core: 8-petal lotus + ring
+    petal_ring(cv, cx, cy, s, 8, 1.6, 6.8, .5, G, lw * 1.2, 'GOLD' if gold_core else 'ENGRAVE')
+    ring(cv, cx, cy, s * 1.2, G, lw * 1.2, 'GOLD' if gold_core else 'ENGRAVE')
+    ring(cv, cx, cy, s * 7.6, G, lw * 1.4, 'GOLD' if gold_core else 'ENGRAVE')
+    # temple-arch star: 16 tall pointed arches + 16 short ones between (engraved)
+    petal_ring(cv, cx, cy, s, 16, 7.6, 16.2, .2, E, lw, 'ENGRAVE')
+    petal_ring(cv, cx, cy, s, 16, 7.6, 12.4, .16, E, lw * .8, 'ENGRAVE', rot=math.pi / 16, vein=False)
+    ring(cv, cx, cy, s * 16.9, E, lw, 'ENGRAVE'); ring(cv, cx, cy, s * 17.5, E, lw * .6, 'ENGRAVE')
+    petal_ring(cv, cx, cy, s, 32, 17.5, 23.8, .1, E, lw * .9, 'ENGRAVE')
+    petal_ring(cv, cx, cy, s, 32, 17.5, 21.2, .1, E, lw * .55, 'ENGRAVE', rot=math.pi / 32, vein=False)
+    ring(cv, cx, cy, s * 24.5, E, lw * 1.1, 'ENGRAVE'); ring(cv, cx, cy, s * 25.1, E, lw * .6, 'ENGRAVE')
+    # fine lace of small interlaced rings
+    for i in range(60):
+        a = 2 * math.pi * i / 60
+        cv.stroke(circle(cx + s * 26.7 * math.cos(a), cy + s * 26.7 * math.sin(a), s * 1.6), E, lw * .55, 'ENGRAVE')
+    ring(cv, cx, cy, s * 28.3, E, lw * .8, 'ENGRAVE')
+    dots(cv, cx, cy, s * 29.6, 72, s * .24, G, 'GOLD')
+def plus_front(cv, m, art_only=False):
+    cv.fill(rrect(0, 0, W, H, R), ('lin', 0, 0, W, H, X['bg']), 'BASE')
+    inner = rrect(3.6, 3.6, W - 7.2, H - 7.2, 1.2)
+    clipped(cv, inner, lambda: star_mandala(cv, 70, 27, .8, X['steel'], X['gold'], .14))
+    cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), X['gold'], .3, 'GOLD')
+    cv.stroke(inner, X['steel'], .12, 'ENGRAVE')
+    brand_row(cv, 7, H - 7 - 7.8, 7.8, {'dark': X['gold3'], 'light': X['gold2'], 'arc': X['gold']}, 'gloock', 13.5, X['gold3'], X['steel'], layer='GOLD', word_track=.2, sub=False)
+    T(cv, 'work', 'GUEST HOUSE  ·  SRI DHAM MAYAPUR', 7 + 7.8 * 318 / 345 + 2.6, H - 15.2, 3.5, X['steel'], .3, layer='ENGRAVE')
+    T(cv, 'arsenal', 'P L A T I N U M   P L U S', 7, H - 21.6, 5.0, X['gold3'], .3, layer='GOLD')
+    cv.stroke(poly([(7, H - 23.4), (19, H - 23.4)], False), X['gold'], .14, 'GOLD')
+    if not art_only:
+        T(cv, 'arsenal', m['name'].upper(), 7, 10.6, 8.4, X['bright'], .16, layer='PERSONALISE')
+        T(cv, 'plexmono', m['no'], 7, 6.4, 5.0, X['steel'], .14, layer='PERSONALISE')
+        T(cv, 'work', 'SINCE ' + m['since'], 7 + text_width('plexmono', m['no'], 5.0, .14) + 4, 6.4, 3.6, X['gold'], .4, layer='PERSONALISE')
 def plus_back(cv, m):
     cv.fill(rrect(0, 0, W, H, R), ('lin', 0, H, W, 0, X['bg']), 'BASE')
-    cv.stroke(poly([(9.2, 4.2), (9.2, H - 4.2)], False), X['gold'], .22, 'GOLD')
-    T(cv, 'arsenal', 'SRI DHAM MAYAPUR', 4.6, H / 2, 5.4, X['gold3'], .62, align='center', layer='GOLD', rot=math.pi / 2)
-    # content shifted right of the strip
-    T(cv, 'italiana', 'NIKADI MEMBERSHIP', 13, H - 8.4, 8.2, X['gold3'], .28, layer='GOLD')
-    T(cv, 'work', 'PLATINUM PLUS  ·  YOUR PRIVILEGES', 13, H - 11.8, 3.6, X['steel'], .36, layer='ENGRAVE')
-    y = H - 16.6
+    cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), X['gold'], .3, 'GOLD')
+    cv.stroke(rrect(3.6, 3.6, W - 7.2, H - 7.2, 1.2), X['steel'], .12, 'ENGRAVE')
+    T(cv, 'gloock', 'NIKADI MEMBERSHIP', 7, H - 8.6, 8.2, X['gold3'], .2, layer='GOLD')
+    T(cv, 'work', 'PLATINUM PLUS  ·  YOUR PRIVILEGES', 7, H - 12.0, 3.6, X['steel'], .36, layer='ENGRAVE')
+    y = H - 16.8
     for b in BEN['plus']:
-        cv.fill(circle(13.55, y + .85, .32), X['steel'], 'ENGRAVE')
-        T(cv, 'work', b, 15.0, y, 4.8, X['bright'], .01, layer='ENGRAVE'); y -= 3.3
-    qs = 13.5; qx = W - 6 - qs; qy = 15.4
-    cv.fill(rect(qx - 1.4, qy - 1.4, qs + 2.8, qs + 2.8), X['bright'], 'ENGRAVE')   # engraved square
-    cv.fill(qr_cmds(APP_URL, qx, qy, qs), '#0a0a0b', 'KNOCKOUT')                    # modules left black
-    cv.stroke(poly([(13, 10.2), (W - 6, 10.2)], False), X['steel'], .1, 'ENGRAVE')
-    T(cv, 'work', '+91 75011 01137   ·   www.nikadiguesthouse.com   ·   Opp. ISKCON Gate No. 4', (13 + W - 6) / 2, 7.1, 3.9, X['bright'], .04, align='center', layer='ENGRAVE')
-    T(cv, 'work', 'Personal and not transferable. Metal card: please do not bend. If found, return to Nikadi Guest House.', (13 + W - 6) / 2, 4.4, 3.0, X['steel'], .02, align='center', layer='ENGRAVE')
+        cv.fill(circle(7.55, y + .85, .32), X['gold'], 'GOLD')
+        T(cv, 'work', b, 9.0, y, 4.8, X['bright'], .01, layer='ENGRAVE'); y -= 3.25
+    qs = 13.5; qx = W - 7.4 - qs; qy = H - 10.5 - qs - 2.5
+    cv.fill(rect(qx - 1.4, qy - 1.4, qs + 2.8, qs + 2.8), X['bright'], 'ENGRAVE')
+    cv.fill(qr_cmds(APP_URL, qx, qy, qs), '#0a0a0b', 'KNOCKOUT')
+    T(cv, 'work', 'YOUR CARD & POINTS', qx + qs / 2, qy - 4.3, 3.2, X['steel'], .24, align='center', layer='ENGRAVE')
+    cv.stroke(poly([(7, 10.2), (W - 7.4, 10.2)], False), X['gold2'], .1, 'GOLD')
+    T(cv, 'work', CONTACT, (7 + W - 7.4) / 2, 7.1, 3.9, X['bright'], .04, align='center', layer='ENGRAVE')
+    T(cv, 'work', 'Personal and not transferable. Metal card: please do not bend. If found, return to Nikadi Guest House.', (7 + W - 7.4) / 2, 4.6, 3.0, X['steel'], .02, align='center', layer='ENGRAVE')
 
 TIERS = {'silver': (silver_front, silver_back), 'gold': (gold_front, gold_back), 'platinum': (platinum_front, platinum_back), 'plus': (plus_front, plus_back)}

@@ -159,8 +159,8 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 .mcard.tier-silver{--art:url(icons/card-silver.svg);color:#23272c}
 .mcard.tier-gold{--art:url(icons/card-gold.svg);color:#efd594;padding:0 9% 7.4% 9%}
 .mcard.tier-gold .mc-ptsr b{color:#f3dda0}
-.mcard.tier-platinum{--art:url(icons/card-platinum.svg);color:#e2e8ef}
-.mcard.tier-plus{--art:url(icons/card-plus.svg);color:#d9dadc;padding-right:14%}
+.mcard.tier-platinum{--art:url(icons/card-platinum.svg);color:#e6ebf2;padding:0 9% 7.4% 9%}
+.mcard.tier-plus{--art:url(icons/card-plus.svg);color:#d9dadc;padding:0 9% 7.4% 9%}
 .mcard.tier-plus .mc-ptsr b{background:linear-gradient(180deg,#f3dfa6,#c9a35a 70%,#a9823e);-webkit-background-clip:text;background-clip:text;color:transparent}
 .ladder{display:grid;gap:8px}
 .rung{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 14px}
@@ -259,3 +259,5 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 
 .brand-logo{display:block;height:36px;width:auto}.brand-row{display:flex!important;align-items:center;gap:12px}.brand-row>span{margin:0!important;padding-left:12px;border-left:1px solid var(--line)}
 .login .brand-logo.big{height:auto;width:min(220px,60vw);margin:0 auto 6px}
+.mcard.tier-gold .mc-ptsr,.mcard.tier-platinum .mc-ptsr,.mcard.tier-plus .mc-ptsr{text-shadow:0 0 10px rgba(0,0,0,.85),0 0 22px rgba(0,0,0,.6)}
+.mcard.tier-plus .mc-ptsr b{filter:drop-shadow(0 0 8px rgba(0,0,0,.9))}
