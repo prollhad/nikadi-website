@@ -4,7 +4,7 @@
 
 function deskDb_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), cache = {};
-  var checked = {};
+  var checked = {}, rowOk = {};
   function sh(t) {
     var def = DESK_SCHEMA[t], s = ss.getSheetByName(def.sheet);
     if (!s) {
@@ -38,6 +38,8 @@ function deskDb_() {
   return {
     all: function (t) {
       if (cache[t]) return cache[t];
+      var hit = deskTblGet_(t); if (hit) return (cache[t] = hit);
+      var ver = deskTblVer_(t);
       var s = sh(t), c = DESK_SCHEMA[t].cols, n = s.getLastRow(), out = [];
       if (n > 1) s.getRange(2, 1, n - 1, c.length).getValues().forEach(function (r, i) {
         var o = { _r: i + 2 };
@@ -45,6 +47,7 @@ function deskDb_() {
         out.push(o);
       });
       cache[t] = out;
+      deskTblPut_(t, ver, out);
       return out;
     },
     add: function (t, o) {
@@ -52,21 +55,72 @@ function deskDb_() {
       this.all(t);
       s.appendRow(c.map(function (col) { var v = o[col[0]]; return v === undefined ? '' : v; }));
       o._r = s.getLastRow();
+      SpreadsheetApp.flush(); deskTblBump_(t); // new version only once the Sheet really has the row
       cache[t].push(o);
       return o;
     },
     set: function (t, o, patch) {
       var s = sh(t);
+      if (!rowOk[t + o._r]) { // rows can move if someone deletes a row in the Sheet: check the row still holds this record
+        var k0 = DESK_SCHEMA[t].cols[0], got = read(s.getRange(o._r, 1).getValue(), k0[2]);
+        if (String(got) !== String(o[k0[0]])) {
+          var col = s.getRange(2, 1, Math.max(1, s.getLastRow() - 1), 1).getValues(), at = -1;
+          for (var i = 0; i < col.length; i++) if (String(read(col[i][0], k0[2])) === String(o[k0[0]])) { at = i + 2; break; }
+          if (at < 0) throw new Error('busy_retry');
+          o._r = at;
+        }
+        rowOk[t + o._r] = true;
+      }
       Object.keys(patch).forEach(function (k) {
         var j = colIndex(t, k); if (j < 0) return;
         o[k] = patch[k];
         s.getRange(o._r, j + 1).setValue(patch[k]);
       });
+      SpreadsheetApp.flush(); deskTblBump_(t);
     },
     kvGet: function (k) { return CacheService.getScriptCache().get('desk_' + k); },
     kvSet: function (k, v, sec) { CacheService.getScriptCache().put('desk_' + k, String(v), sec || 600); }
   };
 }
+
+/* ---- fast reads: each table is kept in the script cache (in pieces) and re-read from the Sheet only after a change ----
+   Every write gives the table a new version, so a stale copy is never used. Edits made by hand in the Sheet clear it (onEdit),
+   and "Nikadi → Refresh staff app data" clears everything. */
+var DESK_NOCACHE_ = { billpdfs: 1 };
+function deskTblVer_(t) {
+  var c = CacheService.getScriptCache(), v = c.get('dv_' + t);
+  if (!v) { v = String(Date.now()) + Math.floor(Math.random() * 1e6); c.put('dv_' + t, v, 21600); }
+  return v;
+}
+function deskTblBump_(t) { try { CacheService.getScriptCache().put('dv_' + t, String(Date.now()) + Math.floor(Math.random() * 1e6), 21600); } catch (e) {} }
+function deskTblKey_(t, v) { return 'dt_' + t + '_' + DESK_SCHEMA[t].cols.length + '_' + v; }
+function deskTblGet_(t) {
+  if (DESK_NOCACHE_[t]) return null;
+  try {
+    var c = CacheService.getScriptCache(), v = c.get('dv_' + t); if (!v) return null;
+    var k = deskTblKey_(t, v), head = c.get(k); if (!head) return null;
+    var n = Number(head), keys = []; for (var i = 0; i < n; i++) keys.push(k + '_' + i);
+    var got = n ? c.getAll(keys) : {}, txt = '';
+    for (var j = 0; j < n; j++) { if (got[keys[j]] == null) return null; txt += got[keys[j]]; }
+    return n ? JSON.parse(txt) : [];
+  } catch (e) { return null; }
+}
+function deskTblPut_(t, v, rows) {
+  if (DESK_NOCACHE_[t]) return;
+  try {
+    var txt = JSON.stringify(rows), size = 90000, parts = {}, k = deskTblKey_(t, v), n = Math.ceil(txt.length / size);
+    if (txt.length > 2400000) return;
+    for (var i = 0; i < n; i++) parts[k + '_' + i] = txt.slice(i * size, (i + 1) * size);
+    var c = CacheService.getScriptCache();
+    if (n) c.putAll(parts, 21600);
+    c.put(k, String(n), 21600);
+  } catch (e) {}
+}
+/* a hand edit in the Sheet: forget the cached copy of that tab */
+function deskSheetEdited_(sheetName) {
+  Object.keys(DESK_SCHEMA).forEach(function (t) { if (!sheetName || DESK_SCHEMA[t].sheet === sheetName) deskTblBump_(t); });
+}
+function deskRefreshData() { deskSheetEdited_(''); SpreadsheetApp.getActive().toast('Staff app will read the Sheet fresh now.'); }
 
 /** Called by doPost in Code.gs for every action that starts with "desk". */
 function deskHandle_(req) {

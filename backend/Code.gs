@@ -854,8 +854,10 @@ var WA_ROOM_INFO = {
    and copies the webhook address for YCloud → Developers → Webhooks. */
 var NK_API_EXEC = 'https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec';
 function onOpen() {
-  try { SpreadsheetApp.getUi().createMenu('Nikadi').addItem('Connect WhatsApp (YCloud)', 'whatsappConnect').addItem('Show WhatsApp webhook address', 'whatsappShowWebhook').addToUi(); } catch (e) {}
+  try { SpreadsheetApp.getUi().createMenu('Nikadi').addItem('Connect WhatsApp (YCloud)', 'whatsappConnect').addItem('Show WhatsApp webhook address', 'whatsappShowWebhook').addSeparator().addItem('Refresh staff app data', 'deskRefreshData').addToUi(); } catch (e) {}
 }
+/* Hand edits in the Sheet: the staff app re-reads that tab (it keeps a fast copy otherwise). */
+function onEdit(e) { try { if (typeof deskSheetEdited_ === 'function') deskSheetEdited_(e && e.range ? e.range.getSheet().getName() : ''); } catch (x) {} }
 function whatsappConnect() {
   var ui = SpreadsheetApp.getUi(), p = PropertiesService.getScriptProperties();
   var r = ui.prompt('Connect WhatsApp (YCloud)', 'Paste the YCloud API key (YCloud → Developers → API key → Look → copy).' + (p.getProperty('YC_API_KEY') ? '\nA key is already saved; pasting a new one replaces it.' : ''), ui.ButtonSet.OK_CANCEL);

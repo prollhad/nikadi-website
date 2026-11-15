@@ -10,6 +10,12 @@ var DESK_MAX_GUESTS = 20; // people allowed in one room (rooms normally sleep 3;
 /* Free things housekeeping gives every staying room each day from the 2nd day (water etc.). The Items sheet column
    "Free daily per room" overrides this when filled in. */
 var DESK_DAILY_FREE = { 'Water bottle': 2 };
+/* Housekeeping checklists: every line must be ticked (or an option picked) before "Done" / "Room ready" works.
+   [key, label, options]: no options = a tick; with options = pick one. */
+var DESK_HK_STAY = [['water', '2 free water bottles given'], ['towels', 'Towels', ['Changed', 'Not needed']], ['dental', 'Dental kit', ['Not needed', '1 given', '2 given', '3 given']],
+  ['bathroom', 'Bathroom cleaned'], ['binRoom', 'Dustbin in the room checked'], ['binToilet', 'Dustbin in the toilet checked'], ['floor', 'Floor cleaned'], ['bedding', 'Bedding', ['Changed', 'Not needed']]];
+var DESK_HK_OUT = [['water', '2 fresh water bottles in the room'], ['towels', 'Fresh towels put out'], ['kit', 'Used dental kit / toiletries removed'], ['bathroom', 'Bathroom cleaned'],
+  ['binRoom', 'Dustbin in the room emptied'], ['binToilet', 'Dustbin in the toilet emptied'], ['floor', 'Floor cleaned'], ['bedding', 'Fresh bedsheets and pillow covers']];
 var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
 var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
 var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
@@ -262,6 +268,15 @@ function deskCore(db, hooks) {
     var it = null; KITS[kind].some(function (n) { it = find('items', 'item', n); return it; });
     db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: s.room, item: it ? it.item : kind, qty: qty, price: 0, total: 0, free: 'Yes', note: 'Welcome kit', by: by, removed: '' });
     if (it) moveStock(it, -qty, 'Free welcome kit', s.room, by);
+  }
+  function hkCheck(list, got) {
+    got = got || {}; var out = [];
+    list.forEach(function (l) {
+      var v = got[l[0]];
+      if (l[2]) { if (l[2].indexOf(v) < 0) fail('hk_checklist'); out.push(l[1] + ': ' + v.toLowerCase()); }
+      else { if (v !== true) fail('hk_checklist'); out.push(l[1]); }
+    });
+    return out;
   }
   /* ---- daily housekeeping checklist ---- */
   function dailyFree() {
@@ -721,7 +736,7 @@ function deskCore(db, hooks) {
     var bks = db.all('bookings');
     var reqs = db.all('requests');
     me.canApprove = canApprove(me);
-    var out = { me: me, today: t, now: stamp(), rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
+    var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
       approvals: canApprove(me) ? reqs.filter(function (r) { return r.status === 'Pending'; }).length : 0,
       myRequests: me.role === 'Receptionist' ? reqs.filter(function (r) { return r.status === 'Pending' && r.by === me.name; }).length : 0,
       stocklog: db.all('stocklog').slice(-15).reverse(),
@@ -963,14 +978,16 @@ function deskCore(db, hooks) {
     var s = stay(r.stay);
     if (!serviceDue(s)) fail('no_service_today');
     if (serviceOf(s.id)) fail('already_done');
+    var checks = hkCheck(DESK_HK_STAY, req.check);
     var day = nightsBetween(s.checkin, today()) + 1, ids = [], given = [];
-    dailyFree().forEach(function (d) {
+    var dk = parseInt(req.check.dental, 10) || 0, extra = dk ? [{ item: 'Dental kit', qty: dk }] : [];
+    dailyFree().concat(extra).forEach(function (d) {
       var it = find('items', 'item', d.item), cid = id('C');
       db.add('charges', { id: cid, at: stamp(), stay: s.id, room: r.room, item: d.item, qty: d.qty, price: 0, total: 0, free: 'Yes', note: 'Daily housekeeping (day ' + day + ')', by: me.name, removed: '' });
       if (it && yes(it.track)) moveStock(it, -d.qty, 'Free daily housekeeping', r.room, me.name);
       ids.push(cid); given.push(d.qty + ' × ' + d.item);
     });
-    db.add('service', { id: id('H'), date: today(), room: r.room, stay: s.id, items: given.join(', ') || 'Room serviced', by: me.name, at: stamp(), charges: ids.join(','), undone: '' });
+    db.add('service', { id: id('H'), date: today(), room: r.room, stay: s.id, items: (given.join(', ') || 'Room serviced') + ' · Checked: ' + checks.join(', '), by: me.name, at: stamp(), charges: ids.join(','), undone: '' });
     recompute(s);
     return api.housekeeping(req);
   };
@@ -1386,6 +1403,10 @@ function deskCore(db, hooks) {
     if (req.status === 'Ready') { if (r.status !== 'Needs cleaning') fail('bad_status'); }
     else if (req.status === 'Needs cleaning') { if (r.status !== 'Ready') fail('bad_status'); }
     else fail('bad_status');
+    if (req.status === 'Ready') {
+      var checks = hkCheck(DESK_HK_OUT, req.check);
+      db.add('service', { id: id('H'), date: today(), room: r.room, stay: '', items: 'Check-out cleaning · ' + checks.join(', '), by: me.name, at: stamp(), charges: '', undone: '' });
+    }
     db.set('rooms', r, { status: req.status, updated: stamp(), by: me.name });
     return {};
   };

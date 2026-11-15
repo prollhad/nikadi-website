@@ -16,6 +16,12 @@ var DESK_MAX_GUESTS = 20; // people allowed in one room (rooms normally sleep 3;
 /* Free things housekeeping gives every staying room each day from the 2nd day (water etc.). The Items sheet column
    "Free daily per room" overrides this when filled in. */
 var DESK_DAILY_FREE = { 'Water bottle': 2 };
+/* Housekeeping checklists: every line must be ticked (or an option picked) before "Done" / "Room ready" works.
+   [key, label, options]: no options = a tick; with options = pick one. */
+var DESK_HK_STAY = [['water', '2 free water bottles given'], ['towels', 'Towels', ['Changed', 'Not needed']], ['dental', 'Dental kit', ['Not needed', '1 given', '2 given', '3 given']],
+  ['bathroom', 'Bathroom cleaned'], ['binRoom', 'Dustbin in the room checked'], ['binToilet', 'Dustbin in the toilet checked'], ['floor', 'Floor cleaned'], ['bedding', 'Bedding', ['Changed', 'Not needed']]];
+var DESK_HK_OUT = [['water', '2 fresh water bottles in the room'], ['towels', 'Fresh towels put out'], ['kit', 'Used dental kit / toiletries removed'], ['bathroom', 'Bathroom cleaned'],
+  ['binRoom', 'Dustbin in the room emptied'], ['binToilet', 'Dustbin in the toilet emptied'], ['floor', 'Floor cleaned'], ['bedding', 'Fresh bedsheets and pillow covers']];
 var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
 var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
 var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
@@ -268,6 +274,15 @@ function deskCore(db, hooks) {
     var it = null; KITS[kind].some(function (n) { it = find('items', 'item', n); return it; });
     db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: s.room, item: it ? it.item : kind, qty: qty, price: 0, total: 0, free: 'Yes', note: 'Welcome kit', by: by, removed: '' });
     if (it) moveStock(it, -qty, 'Free welcome kit', s.room, by);
+  }
+  function hkCheck(list, got) {
+    got = got || {}; var out = [];
+    list.forEach(function (l) {
+      var v = got[l[0]];
+      if (l[2]) { if (l[2].indexOf(v) < 0) fail('hk_checklist'); out.push(l[1] + ': ' + v.toLowerCase()); }
+      else { if (v !== true) fail('hk_checklist'); out.push(l[1]); }
+    });
+    return out;
   }
   /* ---- daily housekeeping checklist ---- */
   function dailyFree() {
@@ -727,7 +742,7 @@ function deskCore(db, hooks) {
     var bks = db.all('bookings');
     var reqs = db.all('requests');
     me.canApprove = canApprove(me);
-    var out = { me: me, today: t, now: stamp(), rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
+    var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
       approvals: canApprove(me) ? reqs.filter(function (r) { return r.status === 'Pending'; }).length : 0,
       myRequests: me.role === 'Receptionist' ? reqs.filter(function (r) { return r.status === 'Pending' && r.by === me.name; }).length : 0,
       stocklog: db.all('stocklog').slice(-15).reverse(),
@@ -969,14 +984,16 @@ function deskCore(db, hooks) {
     var s = stay(r.stay);
     if (!serviceDue(s)) fail('no_service_today');
     if (serviceOf(s.id)) fail('already_done');
+    var checks = hkCheck(DESK_HK_STAY, req.check);
     var day = nightsBetween(s.checkin, today()) + 1, ids = [], given = [];
-    dailyFree().forEach(function (d) {
+    var dk = parseInt(req.check.dental, 10) || 0, extra = dk ? [{ item: 'Dental kit', qty: dk }] : [];
+    dailyFree().concat(extra).forEach(function (d) {
       var it = find('items', 'item', d.item), cid = id('C');
       db.add('charges', { id: cid, at: stamp(), stay: s.id, room: r.room, item: d.item, qty: d.qty, price: 0, total: 0, free: 'Yes', note: 'Daily housekeeping (day ' + day + ')', by: me.name, removed: '' });
       if (it && yes(it.track)) moveStock(it, -d.qty, 'Free daily housekeeping', r.room, me.name);
       ids.push(cid); given.push(d.qty + ' × ' + d.item);
     });
-    db.add('service', { id: id('H'), date: today(), room: r.room, stay: s.id, items: given.join(', ') || 'Room serviced', by: me.name, at: stamp(), charges: ids.join(','), undone: '' });
+    db.add('service', { id: id('H'), date: today(), room: r.room, stay: s.id, items: (given.join(', ') || 'Room serviced') + ' · Checked: ' + checks.join(', '), by: me.name, at: stamp(), charges: ids.join(','), undone: '' });
     recompute(s);
     return api.housekeeping(req);
   };
@@ -1392,6 +1409,10 @@ function deskCore(db, hooks) {
     if (req.status === 'Ready') { if (r.status !== 'Needs cleaning') fail('bad_status'); }
     else if (req.status === 'Needs cleaning') { if (r.status !== 'Ready') fail('bad_status'); }
     else fail('bad_status');
+    if (req.status === 'Ready') {
+      var checks = hkCheck(DESK_HK_OUT, req.check);
+      db.add('service', { id: id('H'), date: today(), room: r.room, stay: '', items: 'Check-out cleaning · ' + checks.join(', '), by: me.name, at: stamp(), charges: '', undone: '' });
+    }
     db.set('rooms', r, { status: req.status, updated: stamp(), by: me.name });
     return {};
   };
@@ -2213,7 +2234,7 @@ function deskCore(db, hooks) {
 
 function deskDb_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), cache = {};
-  var checked = {};
+  var checked = {}, rowOk = {};
   function sh(t) {
     var def = DESK_SCHEMA[t], s = ss.getSheetByName(def.sheet);
     if (!s) {
@@ -2247,6 +2268,8 @@ function deskDb_() {
   return {
     all: function (t) {
       if (cache[t]) return cache[t];
+      var hit = deskTblGet_(t); if (hit) return (cache[t] = hit);
+      var ver = deskTblVer_(t);
       var s = sh(t), c = DESK_SCHEMA[t].cols, n = s.getLastRow(), out = [];
       if (n > 1) s.getRange(2, 1, n - 1, c.length).getValues().forEach(function (r, i) {
         var o = { _r: i + 2 };
@@ -2254,6 +2277,7 @@ function deskDb_() {
         out.push(o);
       });
       cache[t] = out;
+      deskTblPut_(t, ver, out);
       return out;
     },
     add: function (t, o) {
@@ -2261,21 +2285,72 @@ function deskDb_() {
       this.all(t);
       s.appendRow(c.map(function (col) { var v = o[col[0]]; return v === undefined ? '' : v; }));
       o._r = s.getLastRow();
+      SpreadsheetApp.flush(); deskTblBump_(t); // new version only once the Sheet really has the row
       cache[t].push(o);
       return o;
     },
     set: function (t, o, patch) {
       var s = sh(t);
+      if (!rowOk[t + o._r]) { // rows can move if someone deletes a row in the Sheet: check the row still holds this record
+        var k0 = DESK_SCHEMA[t].cols[0], got = read(s.getRange(o._r, 1).getValue(), k0[2]);
+        if (String(got) !== String(o[k0[0]])) {
+          var col = s.getRange(2, 1, Math.max(1, s.getLastRow() - 1), 1).getValues(), at = -1;
+          for (var i = 0; i < col.length; i++) if (String(read(col[i][0], k0[2])) === String(o[k0[0]])) { at = i + 2; break; }
+          if (at < 0) throw new Error('busy_retry');
+          o._r = at;
+        }
+        rowOk[t + o._r] = true;
+      }
       Object.keys(patch).forEach(function (k) {
         var j = colIndex(t, k); if (j < 0) return;
         o[k] = patch[k];
         s.getRange(o._r, j + 1).setValue(patch[k]);
       });
+      SpreadsheetApp.flush(); deskTblBump_(t);
     },
     kvGet: function (k) { return CacheService.getScriptCache().get('desk_' + k); },
     kvSet: function (k, v, sec) { CacheService.getScriptCache().put('desk_' + k, String(v), sec || 600); }
   };
 }
+
+/* ---- fast reads: each table is kept in the script cache (in pieces) and re-read from the Sheet only after a change ----
+   Every write gives the table a new version, so a stale copy is never used. Edits made by hand in the Sheet clear it (onEdit),
+   and "Nikadi → Refresh staff app data" clears everything. */
+var DESK_NOCACHE_ = { billpdfs: 1 };
+function deskTblVer_(t) {
+  var c = CacheService.getScriptCache(), v = c.get('dv_' + t);
+  if (!v) { v = String(Date.now()) + Math.floor(Math.random() * 1e6); c.put('dv_' + t, v, 21600); }
+  return v;
+}
+function deskTblBump_(t) { try { CacheService.getScriptCache().put('dv_' + t, String(Date.now()) + Math.floor(Math.random() * 1e6), 21600); } catch (e) {} }
+function deskTblKey_(t, v) { return 'dt_' + t + '_' + DESK_SCHEMA[t].cols.length + '_' + v; }
+function deskTblGet_(t) {
+  if (DESK_NOCACHE_[t]) return null;
+  try {
+    var c = CacheService.getScriptCache(), v = c.get('dv_' + t); if (!v) return null;
+    var k = deskTblKey_(t, v), head = c.get(k); if (!head) return null;
+    var n = Number(head), keys = []; for (var i = 0; i < n; i++) keys.push(k + '_' + i);
+    var got = n ? c.getAll(keys) : {}, txt = '';
+    for (var j = 0; j < n; j++) { if (got[keys[j]] == null) return null; txt += got[keys[j]]; }
+    return n ? JSON.parse(txt) : [];
+  } catch (e) { return null; }
+}
+function deskTblPut_(t, v, rows) {
+  if (DESK_NOCACHE_[t]) return;
+  try {
+    var txt = JSON.stringify(rows), size = 90000, parts = {}, k = deskTblKey_(t, v), n = Math.ceil(txt.length / size);
+    if (txt.length > 2400000) return;
+    for (var i = 0; i < n; i++) parts[k + '_' + i] = txt.slice(i * size, (i + 1) * size);
+    var c = CacheService.getScriptCache();
+    if (n) c.putAll(parts, 21600);
+    c.put(k, String(n), 21600);
+  } catch (e) {}
+}
+/* a hand edit in the Sheet: forget the cached copy of that tab */
+function deskSheetEdited_(sheetName) {
+  Object.keys(DESK_SCHEMA).forEach(function (t) { if (!sheetName || DESK_SCHEMA[t].sheet === sheetName) deskTblBump_(t); });
+}
+function deskRefreshData() { deskSheetEdited_(''); SpreadsheetApp.getActive().toast('Staff app will read the Sheet fresh now.'); }
 
 /** Called by doPost in Code.gs for every action that starts with "desk". */
 function deskHandle_(req) {

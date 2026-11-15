@@ -11,6 +11,8 @@
   var app = document.getElementById('app');
 
   var ERR = {
+    busy_retry: 'The Sheet was just changed. Please try again.',
+    hk_checklist: 'Tick every line of the checklist first.',
     category_required: 'Choose what kind of expense it is.', date_future: 'The date can\'t be in the future.', bad_photo: 'That photo could not be uploaded. Try another photo.', photos_unavailable: 'Photo upload is not set up yet. Save without the photo for now.', not_found: 'That entry was not found. Refresh and try again.',
     wa_not_connected: 'WhatsApp is not connected yet (Settings → WhatsApp).', bad_phone_id: 'The phone number ID should be only digits.', bad_token: 'That access token looks too short. Copy the whole token.',
     bill_locked: 'This guest has checked out. Only a manager or the owner can change the bill now.', checkout_future: 'The check-out date can\'t be in the future for a guest who already left.',
@@ -367,6 +369,28 @@
   function after(n) { var k = Math.min(n, sheets.length); if (!k) return; closingOk += 1; history.go(-k); }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheets.length) { e.preventDefault(); askClose(sheets[sheets.length - 1]); } });
 
+  /* ---------- Housekeeping checklist: every line ticked (or an option picked) before Done / Room ready ---------- */
+  function openHkCheck(room, kind, send) {
+    var list = (S.st && S.st.hk && S.st.hk[kind]) || [], body = openSheet((kind === 'out' ? 'Clean after check-out' : 'Housekeeping') + ' · Room ' + room, kind === 'out' ? 'dirty' : '');
+    var got = {};
+    body.innerHTML = '<p class="small">' + (kind === 'out' ? 'Everything fresh for the next guest. Tick each line when it is done.' : 'Guest is staying on. Tick each line, and pick what you changed.') + '</p>' +
+      '<div class="hkc">' + list.map(function (l) {
+        return l[2] ? '<div class="hkc-row opt" data-k="' + esc(l[0]) + '"><span class="hkc-l">' + esc(l[1]) + '</span>' + seg('hk-' + l[0], l[2], '') + '</div>'
+          : '<button type="button" class="hkc-row tick" data-k="' + esc(l[0]) + '" aria-pressed="false"><i aria-hidden="true"></i><span class="hkc-l">' + esc(l[1]) + '</span></button>';
+      }).join('') + '</div>' +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-ok big-cta" id="go" type="button" disabled></button>';
+    function upd() {
+      var left = list.filter(function (l) { return l[2] ? !got[l[0]] : got[l[0]] !== true; }).length, go = $('#go', body);
+      go.disabled = left > 0;
+      go.textContent = left ? left + (left > 1 ? ' things' : ' thing') + ' left to tick' : (kind === 'out' ? 'Room is ready' : 'Housekeeping done');
+      list.forEach(function (l) { var row = $('[data-k="' + l[0] + '"]', body); if (row) row.classList.toggle('ok', l[2] ? !!got[l[0]] : got[l[0]] === true); });
+    }
+    $$('.hkc-row.tick', body).forEach(function (b) { b.onclick = function () { var on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); got[b.dataset.k] = on; upd(); }; });
+    wireSegs(body, function () { list.forEach(function (l) { if (l[2]) { var v = segVal(body, 'hk-' + l[0]); if (v) got[l[0]] = v; } }); upd(); });
+    upd();
+    $('#go', body).onclick = function () { var x = this; if (x.disabled) return; busy(x, true); send(got).then(function (r) { closeSheet(); return r; }, function (e) { busy(x, false); $('#err', body).textContent = errText(e); vibrate(); }); };
+  }
+
   /* ---------- Room panel ---------- */
   function openRoom(n) {
     var r = roomOf(n); if (!r) return;
@@ -374,8 +398,10 @@
     if (r.status === 'Occupied' && r.stay) { body.innerHTML = '<div class="loading">Loading bill…</div>'; loadStay(body, r.stay.id); return; }
     if (r.status === 'Needs cleaning') {
       body.innerHTML = '<div class="note"><b>Needs cleaning</b>' + esc(r.by ? 'Marked by ' + r.by + ' · ' + tShort(r.updated) : 'Clean this room before the next guest.') + '</div>' +
-        '<button class="btn btn-ok big-cta" id="cl" type="button">Mark as cleaned</button><p class="small">The room turns green and can be given to a guest.</p>';
-      $('#cl', body).onclick = function () { var b = this; busy(b, true); api('deskRoomStatus', { room: r.room, status: 'Ready' }).then(function () { vibrate(); toast('Room ' + r.room + ' is ready'); closeSheet(); }, function (e) { busy(b, false); toast(errText(e)); }); };
+        '<button class="btn btn-ok big-cta" id="cl" type="button">Open cleaning checklist</button><p class="small">Tick every line of the checklist. Then the room turns green and can be given to a guest.</p>';
+      $('#cl', body).onclick = function () {
+        openHkCheck(r.room, 'out', function (check) { return api('deskRoomStatus', { room: r.room, status: 'Ready', check: check }).then(function () { vibrate(); toast('Room ' + r.room + ' is ready'); closeSheet(); refresh(); }); });
+      };
       return;
     }
     body.innerHTML = (r.arriving ? '<div class="note gold"><b>Booked: ' + esc(r.arriving.guest) + '</b>' + (r.arriving.late ? 'This booking was due earlier and has not checked in.' : 'Arrives today.') +
@@ -435,7 +461,7 @@
     }
     body.innerHTML = h;
     var b;
-    if ((b = $('#hk-done', body))) b.onclick = function () { var x = this; busy(x, true); api('deskServiceDone', { room: s.room }).then(function () { vibrate(); toast('Housekeeping done · Room ' + s.room); loadStay(body, s.id); refresh(); }, function (e) { busy(x, false); toast(errText(e)); }); };
+    if ((b = $('#hk-done', body))) b.onclick = function () { openHkCheck(s.room, 'stay', function (check) { return api('deskServiceDone', { room: s.room, check: check }).then(function () { vibrate(); toast('Housekeeping done · Room ' + s.room); loadStay(body, s.id); refresh(); }); }); };
     if ((b = $('#hk-undo', body))) b.onclick = function () { var x = this; busy(x, true); api('deskServiceUndo', { room: s.room }).then(function () { toast('Undone'); loadStay(body, s.id); refresh(); }, function (e) { busy(x, false); toast(errText(e)); }); };
     if ((b = $('#b-add', body))) b.onclick = function () { openAdd(s.room); };
     if ((b = $('#b-bk', body))) b.onclick = function () { openBooking(s.booking); };
@@ -476,8 +502,8 @@
   function serviceBox(sv) {
     var list = (sv.items || []).map(function (i) { return i.qty + ' × ' + i.item; }).join(', ') || 'Room service';
     return '<div class="hk-box ' + (sv.done ? 'done' : 'due') + '"><div class="hk-h">' + ICON.housekeeping + '<b>Housekeeping today · day ' + sv.day + ' of ' + sv.of + '</b></div>' +
-      (sv.done ? '<p>Done by ' + esc(sv.done.by) + ' at ' + esc(tShort(sv.done.at).split(', ').pop()) + ' · gave ' + esc(sv.done.items || list) + '</p><button class="btn btn-quiet sm" type="button" id="hk-undo">Undo</button>'
-        : '<p>Free today: <b>' + esc(list) + '</b></p><button class="btn btn-ok" type="button" id="hk-done">Mark housekeeping done</button>') + '</div>';
+      (sv.done ? '<p>Done by ' + esc(sv.done.by) + ' at ' + esc(tShort(sv.done.at).split(', ').pop()) + ' · gave ' + esc(String(sv.done.items || list).split(' · Checked')[0]) + '</p><button class="btn btn-quiet sm" type="button" id="hk-undo">Undo</button>'
+        : '<p>Free today: <b>' + esc(list) + '</b></p><button class="btn btn-ok" type="button" id="hk-done">Open housekeeping checklist</button>') + '</div>';
   }
 
   /* ---------- Housekeeping checklist (everyone) ---------- */
@@ -495,12 +521,12 @@
       (due.length ? '<div class="list hk-list">' + due.map(function (r) {
         return '<div class="hk-row ' + (r.done ? 'done' : '') + '"><div class="hk-room"><b>' + r.room + '</b><small>' + esc(r.type) + '</small></div>' +
           '<div class="hk-what"><b>' + esc(r.guest) + ' · ' + r.guests + (r.guests > 1 ? ' guests' : ' guest') + ' · day ' + r.day + ' of ' + r.of + '</b>' +
-          '<span>' + (r.done ? '✓ Done by ' + esc(r.done.by) + ' at ' + esc(tShort(r.done.at).split(', ').pop()) + ' · ' + esc(r.done.items) : 'Give: ' + esc(r.items.map(function (i) { return i.qty + ' × ' + i.item; }).join(', ') || '—')) + '</span></div>' +
-          (r.done ? '<button class="btn btn-quiet sm" type="button" data-undo="' + r.room + '">Undo</button>' : '<button class="btn btn-ok" type="button" data-done="' + r.room + '">Done</button>') + '</div>';
+          '<span>' + (r.done ? '✓ Done by ' + esc(r.done.by) + ' at ' + esc(tShort(r.done.at).split(', ').pop()) + ' · ' + esc(String(r.done.items).split(' · Checked')[0]) : 'Give: ' + esc(r.items.map(function (i) { return i.qty + ' × ' + i.item; }).join(', ') || '—')) + '</span></div>' +
+          (r.done ? '<button class="btn btn-quiet sm" type="button" data-undo="' + r.room + '">Undo</button>' : '<button class="btn btn-ok" type="button" data-done="' + r.room + '">Checklist</button>') + '</div>';
       }).join('') + '</div>' : '<p class="small">No rooms need daily housekeeping today. Rooms are on this list from the guest\'s 2nd day until the day before they leave (the first day gets the free check-in water).</p>') +
       (function () { var other = d.rooms.filter(function (r) { return !r.due; }); return other.length ? '<p class="small">Not on today\'s list: ' + other.map(function (r) { return 'Room ' + r.room + (r.firstDay ? ' (arrived today)' : r.leaves ? ' (leaves today)' : ''); }).join(', ') + '.</p>' : ''; })();
     $('#hrf', v).onclick = function () { HK.data = null; render(); };
-    $$('[data-done]', v).forEach(function (b) { b.onclick = function () { busy(b, true); api('deskServiceDone', { room: Number(b.dataset.done) }).then(function (r) { vibrate(); toast('Room ' + b.dataset.done + ' done'); HK.data = r; render(); refresh(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
+    $$('[data-done]', v).forEach(function (b) { b.onclick = function () { var n = Number(b.dataset.done); openHkCheck(n, 'stay', function (check) { return api('deskServiceDone', { room: n, check: check }).then(function (r) { vibrate(); toast('Room ' + n + ' done'); HK.data = r; render(); refresh(); }); }); }; });
     $$('[data-undo]', v).forEach(function (b) { b.onclick = function () { busy(b, true); api('deskServiceUndo', { room: Number(b.dataset.undo) }).then(function (r) { toast('Undone'); HK.data = r; render(); refresh(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
   }
 
@@ -2105,7 +2131,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 37</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 38</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
