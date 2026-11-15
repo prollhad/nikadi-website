@@ -911,6 +911,27 @@ function waList_(to, body, button, rows, footer) {
   return ycSend_(to, { type: 'interactive', interactive: it });
 }
 
+/** Run once from the editor: creates the four staff-app message templates in YCloud for Meta's approval (uses the saved API key). */
+function whatsappCreateTemplates() {
+  var waba = '2190141911588918', foot = { type: 'FOOTER', text: 'Nikadi Guest House · Mayapur' };
+  var site = { type: 'URL', text: 'Visit our website', url: NK_SITE };
+  var call = { type: 'PHONE_NUMBER', text: 'Call reception', phone_number: '+917501101137' };
+  var body = function (name, ex) { return { type: 'BODY', text: WA_TEXTS[name].replace(/\{(\d)\}/g, '{{$1}}'), example: { body_text: [ex] } }; };
+  var list = [
+    { name: 'nikadi_welcome', category: 'UTILITY', components: [body('nikadi_welcome', ['Radha', '3', '17 Nov 2026', '19 Nov 2026']), foot, { type: 'BUTTONS', buttons: [site, call] }] },
+    { name: 'nikadi_membership', category: 'MARKETING', components: [body('nikadi_membership', ['Radha']), foot, { type: 'BUTTONS', buttons: [{ type: 'URL', text: 'Join free now', url: NK_SITE + '/app/?join=1' }, site] }] },
+    { name: 'nikadi_booking_confirmed', category: 'UTILITY', components: [body('nikadi_booking_confirmed', ['Radha', 'BAOKCD14X', '1', '17 Nov 2026', '19 Nov 2026', '₹3,500']), foot, { type: 'BUTTONS', buttons: [site, call] }] },
+    { name: 'nikadi_bill', category: 'UTILITY', components: [{ type: 'HEADER', format: 'DOCUMENT', example: { header_url: [NK_SITE + '/bill/sample-bill.pdf'] } },
+      body('nikadi_bill', ['Mrs. Paul', 'NGH/26-27/0142', '₹7,000', 'paid in full']), foot] }
+  ];
+  var out = list.map(function (t) {
+    try { var j = ycCall_('whatsapp/templates', Object.assign({ wabaId: waba, language: 'en' }, t)); return t.name + ': ' + (j.status || 'sent'); }
+    catch (e) { return t.name + ': ' + e.message; }
+  });
+  console.log(out.join('\n'));
+  return out;
+}
+
 /* -------- Webhook -------- */
 function ycWebhook_(e) {
   var y = ycProps_();
