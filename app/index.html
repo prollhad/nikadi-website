@@ -72,6 +72,9 @@
   /* ---------- card + progress ---------- */
   function cardHTML(m,ghost){
     var pts=m?m.points:0,val=Math.floor(pts/S.cfg.discountPoints)*S.cfg.discountValue,tk=m&&m.tierKey?m.tierKey:'silver';
+    if(m&&!ghost)return '<div class="mcard art tier-'+tk+'" role="img" aria-label="'+nkEsc(m.firstName)+'\'s '+nkEsc(m.tier||'Silver')+' membership card, '+pts+' points">'+
+      '<div class="mc-bot"><div><div class="mc-name">'+nkEsc(m.name||m.firstName)+'</div><div class="mc-id">+91 '+nkEsc(m.masked)+'</div></div>'+
+      '<div class="mc-ptsr"><b>'+pts.toLocaleString('en-IN')+'</b><span>points</span><small>'+(val>0?'Worth '+nkInr(val)+' off':(m.tierKey==='plus'&&m.plusUntil?'Plus until '+nkEsc(m.plusUntil):'Keep earning'))+'</small></div></div></div>';
     return '<div class="mcard tier-'+(ghost?'ghost':tk)+(ghost?' ghost':'')+'" role="img" aria-label="'+(m?nkEsc(m.firstName)+'\'s '+nkEsc(m.tier||'Silver')+' membership card, '+pts+' points':'Nikadi membership card')+'">'+
       '<div class="mc-top"><span class="mc-brand">NIKADI</span><span class="mc-tier">'+(m?nkEsc(m.tier||'Silver'):'Member')+'</span></div>'+
       '<div class="mc-mid"><div class="mc-pts"><b>'+(m?pts.toLocaleString('en-IN'):'—')+'</b><span>points</span></div>'+

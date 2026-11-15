@@ -1,8 +1,18 @@
-# Membership card print files
+# Nikadi membership cards
 
-`python3 build.py OUTDIR` makes:
-- `Nikadi-Platinum-Card-Print.pdf`: personalised PVC card, CMYK with 3 mm bleed, optional SILVER_FOIL layer.
-- `Nikadi-Platinum-Plus-Metal-Card.pdf`: black stainless-steel card, with separate spot-colour layers (ENGRAVE, GOLD_24K, PERSONALISE, DIELINE) and colour proofs.
+Four designs, the same in print and in the member app:
+- Silver "Pearl": pearl silver with an embossed line drawing of the Nikadi building.
+- Gold "Lotus": temple maroon with a gold lotus mandala and a double gold frame (gold hot-foil).
+- Platinum "Deco": midnight navy with a platinum Art Deco sunburst and corner brackets (silver hot-foil).
+- Platinum Plus "Obsidian": black stainless-steel metal card, engraved ripples, 24k gold logo, vertical PLATINUM PLUS.
 
-To make a card for a member, change the name, number and year in the `__main__` block of build.py.
-All text is converted to outlines. Fonts: Italiana, Work Sans and Instrument Serif (OFL), from the canvas-fonts folder.
+Files:
+- engine.py: a small vector engine (PDF CMYK/spot colours + SVG), with text drawn as outlines.
+- designs.py: the four designs, front and back.
+- mark-raw.svg: the logo mark, vectorised.
+- build2.py: `python3 build2.py OUTDIR "Member Name" "NK 0001 2026" 2026` makes:
+  - Nikadi-Membership-Cards-Silver-Gold-Platinum.pdf (PVC, CMYK, 3 mm bleed, foil pages)
+  - Nikadi-Platinum-Plus-Metal-Card.pdf (proofs + ENGRAVE / GOLD_24K / PERSONALISE / DIELINE layers)
+  - Nikadi-Membership-Cards-1200dpi-PNG.zip (every side as a 1200 dpi PNG)
+
+App artwork: app/icons/card-<tier>.svg are exported from designs.py (front, art_only=True). Re-export them after design changes.
