@@ -4779,7 +4779,7 @@ async function nkServe(req) {
   var u = new URL(req.url), q = {}, body = '';
   u.searchParams.forEach(function (v, k) { q[k] = v; });
   try {
-
+    body = req.method === 'POST' ? await req.text() : '';
     var special = await nkSpecial(body, q);
     var out = special != null ? special : req.method === 'GET' && !q.yc ? JSON.stringify({ ok: true, service: 'nikadi' }) : await nkHandle(body, q);
     return new Response(out, { headers: Object.assign({ 'Content-Type': 'application/json' }, NK_CORS) });
