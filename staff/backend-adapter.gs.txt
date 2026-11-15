@@ -135,7 +135,7 @@ function deskHandle_(req) {
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
-    sendBill: deskSendBill_, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
+    sendBill: deskSendBill_, ownBillFile: deskOwnBillFile_, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
   if (typeof DESK_NO_LOCK_ !== 'undefined' && DESK_NO_LOCK_) return out; // read-only call without the lock: leave the bill timer to locked calls
@@ -284,6 +284,12 @@ function deskArchive_(rec, was) {
     out.notes[n.date] = { id: fid, name: n.name, target: folderId };
   });
   return out;
+}
+/** Owner's own bills as PDFs: Nikadi Guest House Records / Owner bills / 2026-11 November */
+function deskOwnBillFile_(b64, name, ym) {
+  var root = deskCachedFolder_('ARCH_OWNBILLS', function () { return deskChild_(deskArchiveRoot_(), 'Owner bills'); });
+  var m = +String(ym).slice(5, 7), folder = deskChild_(root, String(ym).slice(0, 4) + '-' + String(ym).slice(5, 7) + ' ' + (DESK_MONTHS[m - 1] || ''));
+  return folder.createFile(Utilities.newBlob(Utilities.base64Decode(b64), 'application/pdf', name)).getId();
 }
 /** Run once from the editor to file every stay now (otherwise the 15-minute timer does 8 stays at a time). */
 function archiveAllStays() {

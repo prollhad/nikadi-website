@@ -4,7 +4,7 @@
 (function (root) {
   var DEMO_PHOTOS = {}; // demo: bill photos only kept until the page reloads
   DEMO_PHOTOS['demo-proof'] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='360' height='640'><rect width='360' height='640' fill='#f4f6fb'/><rect width='360' height='110' fill='#5f259f'/><text x='180' y='70' font-family='Arial' font-size='22' fill='#fff' text-anchor='middle'>Payment successful</text><circle cx='180' cy='200' r='46' fill='#22a45d'/><path d='M158 200l15 15 30-30' stroke='#fff' stroke-width='8' fill='none'/><text x='180' y='300' font-family='Arial' font-size='40' font-weight='bold' fill='#111' text-anchor='middle'>₹7,500</text><text x='180' y='340' font-family='Arial' font-size='16' fill='#555' text-anchor='middle'>Paid to Nikadi Projects Pvt Ltd</text><text x='180' y='380' font-family='Arial' font-size='14' fill='#777' text-anchor='middle'>UPI ref 431298776512</text><text x='180' y='600' font-family='Arial' font-size='12' fill='#999' text-anchor='middle'>Demo screenshot</text></svg>");
-  var KEY = 'nikadi-staff-demo-v11';
+  var KEY = 'nikadi-staff-demo-v12';
 
   function memoryDb(data) {
     return {
@@ -132,7 +132,7 @@
         try {
           var api = deskCore(memoryDb(world), { memberInfo: demoMember, sendBill: function () {},
             savePhoto: function (b64) { var k = 'ph' + Date.now() + Math.random().toString(36).slice(2, 6); DEMO_PHOTOS[k] = 'data:image/jpeg;base64,' + b64; return k; },
-            getPhoto: function (k) { return DEMO_PHOTOS[k] || ''; }, waReply: function () { return 'demo'; } });
+            getPhoto: function (k) { return DEMO_PHOTOS[k] || ''; }, waReply: function () { return 'demo'; }, ownBillFile: function () { return 'demo-drive-file'; }, trashFile: function () {} });
           if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
           var clean = JSON.parse(JSON.stringify(req || {}));
           Object.keys(clean).forEach(function (k) { if (k.charAt(0) === '_') delete clean[k]; });

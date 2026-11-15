@@ -16,6 +16,8 @@ var DESK_HK_STAY = [['water', '2 free water bottles given'], ['towels', 'Towels'
   ['bathroom', 'Bathroom cleaned'], ['binRoom', 'Dustbin in the room checked'], ['binToilet', 'Dustbin in the toilet checked'], ['floor', 'Floor cleaned'], ['bedding', 'Bedding', ['Changed', 'Not needed']]];
 var DESK_HK_OUT = [['water', '2 fresh water bottles in the room'], ['towels', 'Fresh towels put out'], ['kit', 'Used dental kit / toiletries removed'], ['bathroom', 'Bathroom cleaned'],
   ['binRoom', 'Dustbin in the room emptied'], ['binToilet', 'Dustbin in the toilet emptied'], ['floor', 'Floor cleaned'], ['bedding', 'Fresh bedsheets and pillow covers']];
+/* Free stays (no charge): whose guest they are. Items given are still counted and taken from stock, at ₹0. */
+var DESK_COMP_HOSTS = ['AGD Guest', "Prahlad's Guest", "Debarun's Guest"];
 var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
 var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
 var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
@@ -62,7 +64,7 @@ var DESK_SCHEMA = {
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
     ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't'],
-    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)'], ['address', 'Guest address'], ['companions', 'Other guests in the room']] },
+    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)'], ['address', 'Guest address'], ['companions', 'Other guests in the room'], ['comp', 'Free stay: guest of'], ['compRef', 'Free stay: reference']] },
   bookings: { sheet: 'Bookings', cols: [['id', 'Booking ID'], ['status', 'Status'], ['source', 'Source'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['email', 'Email'],
     ['guests', 'Guests', 'n'], ['roomsNeeded', 'Rooms needed', 'n'], ['roomType', 'Room preference'], ['rooms', 'Room numbers', 's'], ['checkin', 'Check-in date', 'd'],
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
@@ -98,6 +100,8 @@ var DESK_SCHEMA = {
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
   staff: { sheet: 'Staff', cols: [['name', 'Name'], ['pin', 'PIN', 's'], ['role', 'Role'], ['active', 'Active']] },
   sessions: { sheet: 'Staff sessions', hidden: true, cols: [['token', 'Token', 's'], ['name', 'Name'], ['role', 'Role'], ['expires', 'Expires', 't']] },
+  ownbills: { sheet: 'Owner bills (private)', lazy: true, hidden: true, cols: [['id', 'ID'], ['at', 'Saved at', 't'], ['by', 'Saved by'], ['no', 'Bill no.'], ['guest', 'Billed to'],
+    ['total', 'Total (₹)', 'n'], ['data', 'Bill data (system)'], ['drive', 'Google Drive file (ID)', 's'], ['removed', 'Removed']] },
   attendance: { sheet: 'Staff attendance', lazy: true, cols: [['id', 'ID'], ['name', 'Name'], ['role', 'Role'], ['inAt', 'Logged in', 't'], ['inPlace', 'Log-in place'],
     ['inLat', 'Log-in latitude', 'n'], ['inLng', 'Log-in longitude', 'n'], ['inAcc', 'Log-in accuracy (m)', 'n'], ['inDevice', 'Log-in device'],
     ['outAt', 'Logged out', 't'], ['outPlace', 'Log-out place'], ['outLat', 'Log-out latitude', 'n'], ['outLng', 'Log-out longitude', 'n'], ['outAcc', 'Log-out accuracy (m)', 'n'],
@@ -303,7 +307,8 @@ function deskCore(db, hooks) {
   function recompute(s) {
     var extras = chargesOf(s.id).reduce(function (a, c) { return a + (c.free === 'Yes' ? 0 : Number(c.total || 0)); }, 0);
     var paid = paymentsOf(s.id).reduce(function (a, p) { return a + Number(p.amount || 0); }, 0);
-    var roomTotal = Number(s.nights || 0) * Number(s.rate || 0);
+    var roomTotal = s.comp ? 0 : Number(s.nights || 0) * Number(s.rate || 0);
+    if (s.comp) extras = 0;
     db.set('stays', s, { roomTotal: roomTotal, extras: extras, paid: paid, balance: roomTotal + extras - paid });
     archiveMark(s.id);
   }
@@ -343,6 +348,7 @@ function deskCore(db, hooks) {
       return o;
     }).reverse();
     var kc = kitCharges(s.id)[0]; v.kit = kc ? { kind: /dental/i.test(kc.item) ? 'Dental kit' : 'Morning kit', qty: Number(kc.qty), by: kc.by } : null;
+    if (s.comp) { v.comp = s.comp; v.compRef = s.compRef || ''; }
     v.service = serviceView(s);
     var mem = s.status === 'In house' ? memberOf(s.phone) : null;
     if (mem) v.member = { name: mem.name, tier: mem.tier, tierKey: mem.tierKey, discount: mem.discount, onsite: mem.onsite, email: mgr ? mem.email || '' : '' };
@@ -720,7 +726,7 @@ function deskCore(db, hooks) {
       var s = r.stay && stays[r.stay];
       if (s) {
         o.stay = { id: s.id, guest: mgr ? s.guest : String(s.guest || '').split(/\s+/)[0], guests: s.guests, checkin: s.checkin, checkout: s.checkout,
-          leavesToday: s.checkout <= t };
+          leavesToday: s.checkout <= t, comp: s.comp || '' };
         if (mgr) o.stay.balance = s.balance;
         var sv = serviceView(s); if (sv) o.service = { day: sv.day, of: sv.of, done: sv.done ? { by: sv.done.by, at: sv.done.at } : null };
       }
@@ -736,7 +742,7 @@ function deskCore(db, hooks) {
     var bks = db.all('bookings');
     var reqs = db.all('requests');
     me.canApprove = canApprove(me);
-    var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
+    var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, compHosts: DESK_COMP_HOSTS, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
       approvals: canApprove(me) ? reqs.filter(function (r) { return r.status === 'Pending'; }).length : 0,
       myRequests: me.role === 'Receptionist' ? reqs.filter(function (r) { return r.status === 'Pending' && r.by === me.name; }).length : 0,
       stocklog: db.all('stocklog').slice(-15).reverse(),
@@ -785,12 +791,14 @@ function deskCore(db, hooks) {
     var cin = String(req.checkin || today()), cout = String(req.checkout || '');
     if (!isYmd(cin) || !isYmd(cout)) fail('bad_dates');
     if (dayNum(cout) <= dayNum(cin)) fail('bad_dates');
-    var rate = money(req.rate); if (!(rate > 0)) fail('rate_required');
-    var adv = req.advance === '' || req.advance == null ? 0 : money(req.advance); if (isNaN(adv)) fail('invalid_amount');
+    var comp = req.comp ? String(req.comp) : '';
+    if (comp && DESK_COMP_HOSTS.indexOf(comp) < 0) fail('comp_host');
+    var rate = comp ? 0 : money(req.rate); if (!comp && !(rate > 0)) fail('rate_required');
+    var adv = comp || req.advance === '' || req.advance == null ? 0 : money(req.advance); if (isNaN(adv)) fail('invalid_amount');
     var clash = roomClash(r.room, cin, cout); if (clash) clashFail(r.room, clash);
     var s = db.add('stays', { id: id('S'), room: r.room, guest: guest, phone: phoneOk(req.phone), guests: guests, checkin: cin, checkout: cout,
       nights: nightsBetween(cin, cout), rate: rate, rateNote: text(req.rateNote, 160), status: 'In house', roomTotal: 0, extras: 0, paid: 0, balance: 0,
-      notes: text(req.notes, 300), inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: '', companions: companionsIn(req.companions, guests) });
+      notes: text(req.notes, 300), inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: '', companions: companionsIn(req.companions, guests), comp: comp, compRef: comp ? text(req.compRef, 120) : '' });
     if (adv > 0) {
       if (METHODS.indexOf(req.method) < 0) fail('method_required');
       db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: r.room, amount: adv, method: req.method, note: 'Paid at check-in', by: me.name, booking: '', ref: text(req.ref, 40) });
@@ -811,7 +819,8 @@ function deskCore(db, hooks) {
     if (req.guest != null) { p.guest = text(req.guest, 80); if (!p.guest) fail('name_required'); }
     if (req.phone != null) p.phone = phoneOk(req.phone);
     if (req.guests != null) { p.guests = Math.round(Number(req.guests)); if (!(p.guests >= 1 && p.guests <= DESK_MAX_GUESTS)) fail('max_guests'); }
-    if (req.rate != null) { p.rate = money(req.rate); if (!(p.rate > 0)) fail('rate_required'); }
+    if (req.rate != null && !s.comp) { p.rate = money(req.rate); if (!(p.rate > 0)) fail('rate_required'); }
+    if (req.compRef != null && s.comp) p.compRef = text(req.compRef, 120);
     if (req.rateNote != null) p.rateNote = text(req.rateNote, 160);
     if (req.notes != null) p.notes = text(req.notes, 300);
     if (req.companions != null) p.companions = companionsIn(req.companions, p.guests != null ? p.guests : s.guests);
@@ -860,7 +869,7 @@ function deskCore(db, hooks) {
     var it = item(req.item);
     if (!sellable(it)) fail('no_item');
     var qty = Math.round(Number(req.qty || 1)); if (!(qty >= 1 && qty <= 50)) fail('bad_qty');
-    var free = !!req.free;
+    var free = !!req.free || !!s.comp;
     var price = Number(it.price || 0);
     if (mgr && req.price != null && req.price !== '') { price = money(req.price); if (isNaN(price)) fail('invalid_amount'); }
     var note = text(req.note, 120);
@@ -910,6 +919,7 @@ function deskCore(db, hooks) {
   api.pay = function (req) {
     var me = auth(req); needMgr(me);
     var s = stay(req.id);
+    if (s.comp) fail('comp_no_money');
     lockedOut(me, s);
     var amt = money(req.amount); if (!(amt > 0)) fail('invalid_amount');
     if (METHODS.indexOf(req.method) < 0) fail('method_required');
@@ -1261,6 +1271,7 @@ function deskCore(db, hooks) {
     recompute(s);
     var r = find('rooms', 'room', s.room);
     if (r && r.stay === s.id) db.set('rooms', r, { status: 'Needs cleaning', stay: '', updated: stamp(), by: me.name });
+    if (s.comp) return { stay: stayView(s, me), member: null, bill: null, comp: true }; // free stay: no bill, no points
     var member = null, memBefore = memberOf(s.phone);
     if (hooks.onCheckout && s.phone) {
       try { member = hooks.onCheckout({ id: s.id, phone: s.phone, guest: s.guest, room: s.room, nights: nights, roomTotal: Number(s.roomTotal || 0), checkin: s.checkin, checkout: s.checkout }); } catch (e) { member = null; }
@@ -1390,6 +1401,45 @@ function deskCore(db, hooks) {
     return { bills: db.all('bills').slice(-60).reverse().map(function (b) { return { no: b.no, at: b.at, stay: b.stay, room: b.room, guest: b.guest, total: b.total, sent: b.sent, status: b.status || '', sendAt: b.sendAt || '', url: DESK_BILL_URL + b.id }; }) };
   };
   /* Public: the QR code / link on a bill. Only the secret bill id opens it. */
+  /* ================= Owner's own bills (Owner only) =================
+     Any bill the owner writes by hand: every field can be changed, nothing is sent from the guest house number,
+     and it is kept only if the owner saves it (in the app, and if asked also as a PDF in Google Drive). */
+  api.ownBills = function (req) {
+    var me = auth(req); needOwner(me);
+    var last = '', pre = DESK_BILL_PREFIX + '/' + fyOf(today()) + '/';
+    db.all('bills').forEach(function (b) { if (String(b.no).indexOf(pre) === 0) last = b.no; });
+    return { list: db.all('ownbills').filter(function (x) { return !x.removed; }).map(function (x) { return { id: x.id, at: x.at, by: x.by, no: x.no, guest: x.guest, total: Number(x.total || 0), drive: x.drive ? 'https://drive.google.com/file/d/' + x.drive + '/view' : '' }; }).reverse(),
+      prefix: pre, lastNo: last, canDrive: !!hooks.ownBillFile };
+  };
+  api.ownBillGet = function (req) {
+    var me = auth(req); needOwner(me);
+    var x = find('ownbills', 'id', req.id); if (!x || x.removed) fail('no_bill');
+    return { id: x.id, data: JSON.parse(x.data), drive: x.drive ? 'https://drive.google.com/file/d/' + x.drive + '/view' : '' };
+  };
+  api.ownBillSave = function (req) {
+    var me = auth(req); needOwner(me);
+    var d = req.data; if (!d || typeof d !== 'object') fail('no_bill');
+    if (!String(d.no || '').trim()) fail('bill_no_required');
+    var json = JSON.stringify(d); if (json.length > 45000) fail('too_big');
+    var total = typeof NikadiBill !== 'undefined' ? NikadiBill.compute(d).total : 0, who = d.guest ? (d.guest.company || d.guest.name || '') : '';
+    var x = req.id ? find('ownbills', 'id', req.id) : null, driveId = x ? x.drive : '';
+    if (req.drive) {
+      if (!hooks.ownBillFile) fail('drive_unavailable');
+      if (!req.pdf) fail('no_pdf');
+      if (driveId && hooks.trashFile) try { hooks.trashFile(driveId); } catch (e) {}
+      driveId = hooks.ownBillFile(req.pdf, 'Bill ' + String(d.no).replace(/[\/]+/g, '-') + ' · ' + text(who, 60) + '.pdf', String(d.date || today()).slice(0, 7));
+    }
+    var row = { at: stamp(), by: me.name, no: text(d.no, 40), guest: text(who, 80), total: total, data: json, drive: driveId || '' };
+    if (x && !x.removed) db.set('ownbills', x, row); else x = db.add('ownbills', Object.assign({ id: id('O'), removed: '' }, row));
+    return { id: x.id, drive: driveId ? 'https://drive.google.com/file/d/' + driveId + '/view' : '' };
+  };
+  api.ownBillDelete = function (req) {
+    var me = auth(req); needOwner(me);
+    var x = find('ownbills', 'id', req.id); if (!x) fail('no_bill');
+    db.set('ownbills', x, { removed: stamp() + ' · ' + me.name });
+    return {};
+  };
+
   api.billView = function (req) {
     var key = String(req.id || '');
     if (!/^[A-Za-z0-9]{12,40}$/.test(key)) fail('no_bill');
