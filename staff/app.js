@@ -170,7 +170,7 @@
   function renderLogin(msg) {
     closeAllSheets();
     var pin = '';
-    app.innerHTML = (demo ? '<div class="demo-flag">Demo mode · sample data · PINs 1111 owner · 2222 reception · 3333 staff</div>' : '') +
+    app.innerHTML = (demo ? '<div class="demo-flag">Demo mode · sample data · PINs 1111 owner · 2222 reception · 3333 staff</div>' : '') + (typeof NIKADI_TEST_DB !== 'undefined' && NIKADI_TEST_DB ? '<div class="demo-flag test-db">Test copy on the new fast server · not real</div>' : '') +
       '<div class="login"><div class="brand"><img class="brand-logo big" src="../img/brand/logo-light.png" alt="Nikadi Guest House"><span>Staff</span></div>' +
       '<p class="sub" id="lp">' + esc(msg || 'Enter your PIN') + '</p><div class="dots" id="dots"></div>' +
       '<div class="pad3" id="pad">' + [1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return '<button type="button" data-k="' + n + '">' + n + '</button>'; }).join('') +
@@ -268,7 +268,7 @@
     app.innerHTML = '<div class="app-frame">' +
       '<aside class="side" aria-label="Menu"><a class="brand brand-row" href="./"><img class="brand-logo" src="../img/brand/lockup-light.png" alt="Nikadi Guest House"><span>Staff</span></a>' + (demo ? '<p class="side-demo">Demo · sample data</p>' : '') +
       '<nav id="side-nav"></nav><div class="side-me"><div class="chip-me"><b>' + esc(S.me.name) + '</b>' + esc(S.me.role) + '</div><button class="iconbtn" id="out2" type="button">Log out</button></div></aside>' +
-      '<div class="shell">' + (demo ? '<div class="demo-flag">Demo mode · sample data on this device only</div>' : '') +
+      '<div class="shell">' + (demo ? '<div class="demo-flag">Demo mode · sample data on this device only</div>' : '') + (typeof NIKADI_TEST_DB !== 'undefined' && NIKADI_TEST_DB ? '<div class="demo-flag test-db">Test copy on the new fast server · changes here are NOT real · open with ?api=old to go back</div>' : '') +
       '<header class="bar pad"><a class="brand brand-row" href="./"><img class="brand-logo" src="../img/brand/lockup-light.png" alt="Nikadi Guest House"><span>Staff</span></a><div class="who"><div class="chip-me"><b>' + esc(S.me.name) + '</b>' + esc(S.me.role) + '</div>' +
       '<button class="iconbtn" id="out" type="button">Log out</button></div></header>' +
       '<main class="pad view" id="view"><div class="loading">Loading…</div></main>' +
@@ -2340,7 +2340,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 44</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 45</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

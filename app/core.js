@@ -3,6 +3,16 @@
 /* After deploying backend/Code.gs as a Google Apps Script web app,
    paste its URL here (ends with /exec). Leave empty until then. */
 var NIKADI_API_URL = "https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec";
+/* The new Nikadi server (Supabase, Mumbai). While it is being tested it holds a COPY of the data:
+   open the app with ?api=new to try it (a blue "Test copy" bar shows), ?api=old to go back. */
+var NIKADI_EDGE_URL = "https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api";
+var NIKADI_TEST_DB = false;
+try {
+  var nkApiQ = new URLSearchParams(location.search).get('api');
+  if (nkApiQ === 'new') localStorage.setItem('nk-api', 'new');
+  if (nkApiQ === 'old') localStorage.removeItem('nk-api');
+  if (localStorage.getItem('nk-api') === 'new') { NIKADI_API_URL = NIKADI_EDGE_URL; NIKADI_TEST_DB = true; }
+} catch (e) {}
 
 var NIKADI = {
   phone: "917501101137",
