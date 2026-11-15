@@ -961,11 +961,21 @@ function deskCore(db, hooks) {
   function cleanIp(v) { v = String(v || '').trim(); return /^[0-9a-fA-F:.]{3,45}$/.test(v) ? v : ''; }
   function wifiRecent(w) { try { var a = JSON.parse(w.recent || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
   function isDesk(dev) { return /PC|Mac/.test(String(dev || '')); } // the guest house desktop / laptop (not a phone)
-  /* the last 3 app opens on the guest house desktop that day (or on any device if none), newest first: the owner picks the real exit from these */
+  /* The owner picks the real exit from the person's last 3 records that day: app opens on the guest house desktop
+     and the work they entered (check-ins, check-outs, payments, items, housekeeping, expenses, ID copies…), newest first. */
+  var EXIT_SOURCES = [['charges', 'Added ', function (x) { return x.qty + ' × ' + x.item + ' · room ' + x.room; }], ['payments', 'Payment ', function (x) { return '₹' + x.amount + ' · ' + (x.room ? 'room ' + x.room : 'booking'); }],
+    ['service', 'Housekeeping ', function (x) { return 'room ' + x.room; }], ['stocklog', 'Stock ', function (x) { return x.item + ' ' + x.change; }], ['expenses', 'Expense ', function (x) { return x.item || x.category; }],
+    ['guestids', 'ID copy ', function (x) { return 'room ' + x.room; }], ['requests', 'Request ', function (x) { return x.type; }]];
   function exitChoices(w) {
-    var rec = wifiRecent(w), desk = rec.filter(function (x) { return isDesk(x.dev); });
-    var pick = (desk.length ? desk : rec).slice(-3).reverse();
-    if (!pick.length && w.last) pick = [{ at: w.last, dev: w.lastDevice || '' }];
+    var day = String(w.date), who = w.name, out = [];
+    function add(at, what) { at = String(at || ''); if (at.slice(0, 10) === day && (!w.first || at >= w.first)) out.push({ at: at, dev: what }); }
+    wifiRecent(w).forEach(function (x) { add(x.at, 'App opened · ' + (x.dev || '')); });
+    if (w.last) add(w.last, 'Last app open · ' + (w.lastDevice || ''));
+    db.all('stays').forEach(function (x) { if (x.inBy === who) add(x.inAt, 'Checked in room ' + x.room); if (x.outBy === who) add(x.outAt, 'Checked out room ' + x.room); });
+    EXIT_SOURCES.forEach(function (src) { try { db.all(src[0]).forEach(function (x) { if (x.by === who && !x.removed) add(x.at, src[1] + src[2](x)); }); } catch (e) {} });
+    out.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
+    var seen = {}, pick = [];
+    out.forEach(function (c) { if (!seen[c.at] && pick.length < 3) { seen[c.at] = 1; pick.push(c); } });
     return pick;
   }
   /* Called by the app each time it is opened / comes back to the screen (and every 10 minutes while open). */

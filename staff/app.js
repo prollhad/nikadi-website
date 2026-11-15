@@ -2282,7 +2282,7 @@
       b.onclick = function () {
         var k = b.dataset.ex.split('|'), r = rows.filter(function (x) { return x.date === k[0] && x.name === k[1]; })[0]; if (!r) return;
         var sb = openSheet('Exit · ' + r.name + ' · ' + dShort(r.date)), cur = r.exitSet || '';
-        sb.innerHTML = '<p class="small">Came in at <b>' + esc(clock(r.first)) + '</b>. Pick the real exit: the last ' + (r.choices.length > 1 ? r.choices.length + ' times' : 'time') + ' the app was opened on the guest house desktop that day.</p>' +
+        sb.innerHTML = '<p class="small">Came in at <b>' + esc(clock(r.first)) + '</b>. Pick the real exit from their last ' + (r.choices.length > 1 ? r.choices.length + ' records' : 'record') + ' that day (app opens and work entered).</p>' +
           '<div class="list">' + r.choices.map(function (c) {
             return '<button type="button" class="bl bl-btn ex-pick' + (cur === c.at ? ' on' : '') + '" data-at="' + esc(c.at) + '"><span class="t"><b>' + esc(clock(c.at)) + '</b><small>' + esc(c.dev || '') + ' · worked ' + dur(hm(r.first, c.at)) + '</small></span><span class="a">' + (cur === c.at ? '✓ chosen' : 'Use this') + '</span></button>';
           }).join('') + '</div>' +
@@ -2308,7 +2308,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 40</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 41</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
