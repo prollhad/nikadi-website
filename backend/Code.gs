@@ -158,6 +158,8 @@ function doPost(e) {
     staffLogin: staffLogin_, staffMember: staffMember_, staffCreate: staffCreate_, staffAddStay: staffAddStay_,
     staffRedeemStart: staffRedeemStart_, staffRedeemConfirm: staffRedeemConfirm_, staffAdjust: staffAdjust_, staffRecent: staffRecent_
   };
+  if (req.action === 'nkBridge') return nkBridgeRun_(req); // the new Nikadi server asks Google to do Drive / email work
+  if (req.action === 'nkPair') return nkPair_(req);
   var fn = actions[req.action];
   // Staff app (Staff.gs): every action starting with "desk"
   if (!fn && /^desk[A-Z]\w*$/.test(String(req.action)) && typeof deskHandle_ === 'function') fn = deskHandle_;
@@ -1336,4 +1338,53 @@ function ycDeskSend_(template, to10, params, pdf, fileName, url, lang) {
   if (media) comps.push({ type: 'header', parameters: [{ type: 'document', document: { id: media, filename: fileName || 'bill.pdf' } }] });
   if (params && params.length) comps.push({ type: 'body', parameters: params.map(function (t) { return { type: 'text', text: String(t) }; }) });
   return ycSend_(to10, { type: 'template', template: { name: template, language: { code: lang || 'en' }, components: comps } });
+}
+
+
+/* =====================================================================
+   Bridge to the new Nikadi server (Supabase). The server runs the app; Google keeps Drive, Gmail and the Sheet.
+   ===================================================================== */
+var NK_EDGE = 'https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api';
+function nkBridgeKey_() {
+  var p = PropertiesService.getScriptProperties(), k = p.getProperty('NK_BRIDGE_KEY');
+  if (!k) { k = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, ''); p.setProperty('NK_BRIDGE_KEY', k); }
+  return k;
+}
+/* pairing: the key is sent only to the fixed address of the Nikadi server */
+function nkPair_(req) {
+  var r = UrlFetchApp.fetch(NK_EDGE, { method: 'post', contentType: 'text/plain', payload: JSON.stringify({ action: 'nkPaired', nonce: String(req.nonce || ''), key: nkBridgeKey_(), url: NK_API_EXEC }), muteHttpExceptions: true });
+  var j = {}; try { j = JSON.parse(r.getContentText()); } catch (e) {}
+  return json_({ ok: !!j.ok });
+}
+var NK_BRIDGE_FNS = { deskSavePhoto_: 1, deskGetPhoto_: 1, deskStayFolder_: 1, deskTrash_: 1, deskOwnBillFile_: 1, deskSendBill_: 1, deskArchive_: 1, waSaveMedia_: 1, nkMail_: 1, nkExport_: 1 };
+function nkBridgeRun_(req) {
+  if (!req.key || req.key !== PropertiesService.getScriptProperties().getProperty('NK_BRIDGE_KEY')) return json_({ ok: false, error: 'forbidden' });
+  if (!NK_BRIDGE_FNS[req.fn]) return json_({ ok: false, error: 'not_allowed' });
+  var args = JSON.parse(req.args || '[]', function (k, v) { return v && v.__blob ? Utilities.newBlob(Utilities.base64Decode(v.__blob.b64), v.__blob.mime, v.__blob.name) : v; });
+  try {
+    var out = this[req.fn].apply(null, args);
+    return json_({ ok: true, result: out === undefined ? null : out });
+  } catch (e) { console.error(e); return json_({ ok: false, error: String(e && e.message || e).slice(0, 300) }); }
+}
+function nkMail_(msg) {
+  if (msg.attachments) msg.attachments = msg.attachments.map(function (a) { return a.getBytes ? a : Utilities.newBlob(Utilities.base64Decode(a.b64), a.mime, a.name); });
+  MailApp.sendEmail(msg);
+  return true;
+}
+/* everything in this Sheet, for copying into the new database */
+function nkExport_() {
+  var db = deskDb_(), desk = {};
+  Object.keys(DESK_SCHEMA).forEach(function (t) {
+    var def = DESK_SCHEMA[t];
+    if ((def.lazy || t === 'billpdfs' || t === 'bills') && !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(def.sheet)) return;
+    desk[t] = db.all(t).map(function (o) { var d = {}; def.cols.forEach(function (c) { d[c[0]] = o[c[0]]; }); return d; });
+  });
+  var sheets = {}, ss = SpreadsheetApp.getActiveSpreadsheet();
+  Object.keys(SHEET_NAMES).map(function (k) { return SHEET_NAMES[k]; }).concat([PAY_TAB]).forEach(function (n) {
+    var sh = ss.getSheetByName(n); if (!sh || sh.getLastRow() < 1) return;
+    sheets[n] = sh.getDataRange().getValues().map(function (row) { return row.map(function (v) { return v instanceof Date ? { $d: v.toISOString() } : v; }); });
+  });
+  var props = PropertiesService.getScriptProperties().getProperties();
+  props.OWNER_GMAIL = Session.getEffectiveUser().getEmail();
+  return { desk: desk, sheets: sheets, props: props };
 }

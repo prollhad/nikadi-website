@@ -71,7 +71,7 @@ begin
     if o->>'op' = 'add' then
       insert into records (tbl, data) values (t, o->'data') returning rid into r;
       new_ids := new_ids || r;
-      if t <> 'sheet:Sessions' and t <> 'sessions' then insert into change_log (who, action, tbl, rid, after) values (who, act, t, r, o->'data'); end if;
+      if coalesce(act, '') <> 'migrate' and t not in ('sheet:Sessions', 'sheet:Otps', 'sessions', 'wifi', 'wamsgs') then insert into change_log (who, action, tbl, rid, after) values (who, act, t, r, o->'data'); end if;
     elsif o->>'op' = 'set' then
       update records set data = data || (o->'patch'), updated_at = now() where rid = (o->>'rid')::bigint returning data into old;
       if t not in ('sessions', 'wifi', 'wachats', 'attendance') then insert into change_log (who, action, tbl, rid, after) values (who, act, t, (o->>'rid')::bigint, o->'patch'); end if;
@@ -109,3 +109,31 @@ $$;
 
 revoke all on function public.nk_load, public.nk_commit, public.nk_kv, public.nk_find_old from anon, authenticated, public;
 grant execute on function public.nk_load, public.nk_commit, public.nk_kv, public.nk_find_old to service_role;
+
+-- nk_sync: one round trip at the start of every request.
+--  have: {tbl: version} the server already holds; returns the current versions, the live key/values,
+--  and the rows of every tab that is new or changed (except the big ones in `skip`, loaded only when needed).
+create or replace function public.nk_sync(have jsonb default '{}'::jsonb, skip text[] default '{}')
+returns jsonb language sql stable security definer set search_path = public as $$
+  with need as (
+    select tbl from table_versions where not (tbl = any(skip)) and (have->>tbl is null or (have->>tbl)::bigint <> ver)
+  )
+  select jsonb_build_object(
+    'versions', coalesce((select jsonb_object_agg(tbl, ver) from table_versions), '{}'::jsonb),
+    'kv', coalesce((select jsonb_object_agg(k, v) from kv where until is null or until > now()), '{}'::jsonb),
+    'rows', coalesce((select jsonb_object_agg(n.tbl, coalesce(x.rs, '[]'::jsonb)) from need n left join (
+        select r.tbl, jsonb_agg(jsonb_build_array(r.rid, r.data) order by r.rid) rs from records r where r.tbl in (select tbl from need) group by r.tbl) x on x.tbl = n.tbl), '{}'::jsonb)
+  );
+$$;
+revoke all on function public.nk_sync from anon, authenticated, public;
+grant execute on function public.nk_sync to service_role;
+
+-- start again from an empty copy (used only while testing, before the switch)
+create or replace function public.nk_reset()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if exists (select 1 from kv where k = 'p:NK_MODE' and v = 'live') then raise exception 'live_database'; end if;
+  delete from records; delete from table_versions; delete from records_archive; delete from change_log;
+end $$;
+revoke all on function public.nk_reset from anon, authenticated, public;
+grant execute on function public.nk_reset to service_role;
