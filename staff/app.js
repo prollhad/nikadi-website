@@ -153,12 +153,15 @@
     }
     return get('https://api.ipify.org?format=json', true).catch(function () { return get('https://ipv4.icanhazip.com/', false); });
   }
+  /* "still open" signal every minute (the owner sees live if the app is open on the guest house PC) */
+  function beat() { if (!S.token || !S.me) return; api('deskBeat', { device: deviceName(), wifi: !!S.atHouse, shown: document.visibilityState === 'visible' }).catch(function () {}); }
+  setInterval(beat, 60000);
   var lastPing = 0;
   function ping(force) {
     if (!S.token || !S.me || S.me.role === 'Owner' || document.visibilityState === 'hidden') return;
     if (!force && Date.now() - lastPing < 120000) return;
     lastPing = Date.now();
-    publicIp().then(function (ip) { return api('deskPresence', { ip: ip, device: deviceName() }); }).then(function (r) { S.atHouse = !!(r && r.atHouse); }, function () {});
+    publicIp().then(function (ip) { return api('deskPresence', { ip: ip, device: deviceName() }); }).then(function (r) { var was = S.atHouse; S.atHouse = !!(r && r.atHouse); if (S.atHouse !== was) beat(); }, function () {});
   }
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') ping(); });
   window.addEventListener('focus', function () { ping(); });
@@ -2237,6 +2240,22 @@
   }
   function dur(min) { if (min == null) return '—'; var h = Math.floor(min / 60), m = min % 60; return h + 'h ' + String(m).padStart(2, '0') + 'm'; }
   function clock(st) { var m = /(\d\d):(\d\d)/.exec(String(st || '').slice(11)); if (!m) return '—'; var h = +m[1]; return ((h % 12) || 12) + ':' + m[2] + (h < 12 ? ' AM' : ' PM'); }
+  var LIVE_T = null;
+  function ago(sec) { return sec < 60 ? sec + ' s ago' : Math.round(sec / 60) + ' min ago'; }
+  function liveLoad(v) {
+    clearTimeout(LIVE_T);
+    var box = $('#livebody', v); if (!box) return;
+    api('deskLive').then(function (r) {
+      if (!box.isConnected) return;
+      box.classList.remove('loading');
+      box.innerHTML = r.pc.length ? '<div class="list">' + r.pc.map(function (x) {
+        return '<div class="bl"><span class="t"><b><span class="live-dot"></span>Open now · ' + esc(x.name) + '</b><small>' + esc(x.role) + ' is logged in · ' + esc(x.dev) + ' · ' + (x.shown ? 'on screen' : 'in the background') + ' · signal ' + ago(x.ago) + '</small></span><span class="a"><span class="ptag k-ok">Live</span></span></div>';
+      }).join('') + '</div>'
+        : '<div class="bl"><span class="t"><b><span class="live-dot off"></span>The app is not open on the guest house PC</b><small>' + (r.last ? 'Last open: ' + esc(r.last.name) + ' · ' + esc(tShort(r.last.at)) + ' · ' + esc(r.last.dev) : 'No signal from the PC yet. The PC sends one every minute while the app is open (from app version 43).') + '</small></span></div>';
+      if (r.others && r.others.length) box.innerHTML += '<p class="small">Also open elsewhere: ' + r.others.map(function (x) { return esc(x.name) + ' (' + esc(x.dev) + (x.wifi ? ', guest house Wi-Fi' : '') + ')'; }).join(' · ') + '</p>';
+    }, function () { if (box.isConnected) box.innerHTML = '<p class="small">Could not check right now.</p>'; })
+      .then(function () { LIVE_T = setTimeout(function () { if (S.tab === 'attendance' && !document.hidden && $('#livebody')) liveLoad(document); }, 30000); });
+  }
   function viewAttendance(v) {
     if (!owner()) { v.innerHTML = '<p class="small">Only the owner can see this.</p>'; return; }
     if (!ATT.data) {
@@ -2250,6 +2269,7 @@
     var byDay = {}; rows.forEach(function (r) { (byDay[r.date] = byDay[r.date] || []).push(r); });
     v.innerHTML = '<div class="hrow"><div><p class="kicker">Owner only · first and last app opening on the guest house Wi-Fi</p><h1>Attendance</h1></div><button class="btn btn-quiet" type="button" id="arf">Refresh</button></div>' +
       (d.wifi.length ? '' : '<div class="bstat k-warn">' + ICON.attendance + '<span><b>Set up first:</b> connect this phone or PC to the guest house Wi-Fi and tap “This device is on the guest house Wi-Fi” at the bottom of this page.</span></div>') +
+      '<div class="panel live-pc" id="livepc"><div class="sec-h"><h2>Guest house PC · live</h2><span class="small">updates every 30 seconds</span></div><div id="livebody" class="loading">Checking…</div></div>' +
       '<div class="panel"><div class="sec-h"><h2>At the guest house now</h2><span class="small">app opened on the Wi-Fi in the last 15 min</span></div>' + (now.length ? '<div class="list">' + now.map(function (r) {
         return '<div class="bl"><span class="t"><b>' + esc(r.name) + '</b><small>' + esc(r.role) + ' · came in ' + esc(clock(r.first)) + ' · ' + esc(r.lastDevice || r.device || '') + '</small></span><span class="a"><span class="ptag k-ok">On Wi-Fi</span></span></div>';
       }).join('') + '</div>' : '<p class="small">Nobody right now.</p>') + '</div>' +
@@ -2275,6 +2295,7 @@
     wireSegs(v, function () { ATT.range = { 'Today': 'today', 'Last 7 days': 'week', 'This month': 'month', 'Last month': 'last' }[segVal(v, 'arange')] || 'week'; ATT.data = null; render(); });
     $('#aname', v).onchange = function () { ATT.name = this.value; ATT.data = null; render(); };
     $('#arf', v).onclick = function () { ATT.data = null; render(); };
+    liveLoad(v);
     function save(ip, remove, x) {
       busy(x, true); $('#aerr', v).textContent = '';
       api('deskAttendanceWifi', { ip: ip, remove: !!remove }).then(function () { toast(remove ? 'Network removed' : 'Guest house Wi-Fi saved'); ATT.data = null; render(); }, function (e) { busy(x, false); $('#aerr', v).textContent = errText(e); });
@@ -2318,7 +2339,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 42</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 43</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

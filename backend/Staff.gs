@@ -1244,6 +1244,24 @@ function deskCore(db, hooks) {
     var people = db.all('staff').filter(function (p) { return DESK_WIFI_ROLES.indexOf(p.role) >= 0; }).map(function (p) { return { name: p.name, role: p.role, active: yes(p.active) }; });
     return { from: from, to: to, rows: rows, people: people, wifi: wifiList(), others: otherNets().filter(function (x) { return wifiList().indexOf(x.ip) < 0; }) };
   };
+  /* Live: every open copy of the app sends a small "still open" signal each minute. The owner sees if the app is open on the guest house PC. */
+  function liveList() { try { var a = JSON.parse(db.kvGet('live') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  api.beat = function (req) {
+    var me = auth(Object.assign({}, req, { _noSeen: true })), dev = text(req.device, 80), now = Date.now();
+    var a = liveList().filter(function (x) { return now - x.t < 600000 && !(x.name === me.name && x.dev === dev); });
+    a.push({ name: me.name, role: me.role, dev: dev, wifi: !!req.wifi, shown: !!req.shown, t: now, at: stamp() });
+    db.kvSet('live', JSON.stringify(a.slice(-30)), 21600);
+    if (req.wifi && isDesk(dev)) db.kvSet('pclast', JSON.stringify({ name: me.name, dev: dev, at: stamp() }), 21600);
+    return { ok: true };
+  };
+  api.live = function (req) {
+    var me = auth(req); needOwner(me);
+    var now = Date.now(), all = liveList().filter(function (x) { return now - x.t < 150000; });
+    var pc = all.filter(function (x) { return x.wifi && isDesk(x.dev); }).map(function (x) { return { name: x.name, role: x.role, dev: x.dev, shown: x.shown, ago: Math.round((now - x.t) / 1000) }; });
+    var last = null; try { last = JSON.parse(db.kvGet('pclast') || 'null'); } catch (e) {}
+    return { pc: pc, last: last, others: all.filter(function (x) { return !(x.wifi && isDesk(x.dev)) && x.name !== me.name; }).map(function (x) { return { name: x.name, role: x.role, dev: x.dev, wifi: x.wifi, ago: Math.round((now - x.t) / 1000) }; }) };
+  };
+
   /* Owner: choose the real exit time for a person's day (one of their last 3 app opens on the desk computer), or go back to automatic. */
   api.attendanceExit = function (req) {
     var me = auth(req); needOwner(me);
