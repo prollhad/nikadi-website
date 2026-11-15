@@ -81,7 +81,7 @@ function deskHandle_(req) {
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
-    sendBill: deskSendBill_ });
+    sendBill: deskSendBill_, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
   try { // send bills that are due (at most every 10 minutes), so emails go out even without the timer

@@ -92,7 +92,7 @@ var DESK_SCHEMA = {
   wa: { sheet: 'WhatsApp messages', lazy: true, cols: [['id', 'ID'], ['at', 'Made', 't'], ['sendAt', 'Send at', 't'], ['to', 'To', 's'], ['name', 'Guest'], ['kind', 'Message'], ['ref', 'Stay / booking'], ['status', 'Status'], ['info', 'Details']] },
   wachats: { sheet: 'WhatsApp chats', lazy: true, cols: [['phone', 'Phone', 's'], ['name', 'Name on WhatsApp'], ['first', 'First message', 't'], ['last', 'Last message', 't'],
     ['lastText', 'Last message text'], ['unread', 'Unread', 'n'], ['important', 'Important (why)'], ['proof', 'Payment screenshot (Drive file ID)', 's'], ['proofType', 'Screenshot type', 's'], ['proofAt', 'Screenshot at', 't'],
-    ['readBy', 'Last read by'], ['readAt', 'Last read at', 't']] },
+    ['readBy', 'Last read by'], ['readAt', 'Last read at', 't'], ['lastIn', 'Last message from guest', 't']] },
   wamsgs: { sheet: 'WhatsApp inbox', lazy: true, cols: [['at', 'Time', 't'], ['phone', 'Phone', 's'], ['dir', 'From'], ['text', 'Message'], ['file', 'Photo / file (Drive file ID)', 's'], ['type', 'Type', 's'], ['wamid', 'WhatsApp ID (system)', 's']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
@@ -1428,7 +1428,7 @@ function deskCore(db, hooks) {
     db.add('wamsgs', { at: at, phone: ph, dir: 'Guest', text: txt || (file ? '[' + type + ']' : ''), file: file, type: type, wamid: text(req.wamid, 120) });
     var c = find('wachats', 'phone', ph), b = waOpenBooking(ph);
     var proof = !!file && /image|document/.test(type);
-    var p = { last: at, lastText: (proof ? (type === 'image' ? '📷 Photo' : '📄 File') + (txt ? ': ' : '') : '') + txt, unread: (c ? Number(c.unread) || 0 : 0) + (req.attention || (file && /image|document/.test(type)) ? 1 : 0) };
+    var p = { last: at, lastIn: at, lastText: (proof ? (type === 'image' ? '📷 Photo' : '📄 File') + (txt ? ': ' : '') : '') + txt, unread: (c ? Number(c.unread) || 0 : 0) + (req.attention || (file && /image|document/.test(type)) ? 1 : 0) };
     if (req.name) p.name = text(req.name, 60);
     if (proof) { p.proof = file; p.proofType = text(req.mime, 60) || type; p.proofAt = at; p.important = b ? 'Payment screenshot for booking ' + b.id + ' · check it' : 'Photo / file received · check it'; }
     if (c) db.set('wachats', c, p); else db.add('wachats', Object.assign({ phone: ph, name: '', first: at, important: '', proof: '', proofType: '', proofAt: '', readBy: '', readAt: '' }, p));
@@ -1441,6 +1441,31 @@ function deskCore(db, hooks) {
     db.add('wamsgs', { at: stamp(), phone: c.phone, dir: 'Reception (phone)', text: text(req.text, 500), file: '', type: 'reply', wamid: '' });
     db.set('wachats', c, { unread: 0, readBy: 'Reply from phone', readAt: stamp(), last: stamp(), lastText: '↩ ' + (text(req.text, 120) || 'Reply sent') });
     return {};
+  };
+  function hoursAgo(h) { var d = new Date(ist().getTime() - h * 3600e3); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()); }
+  /* WhatsApp lets us write freely only within 24 hours of the guest's last message */
+  function waOpen(c) { var t = String(c.lastIn || ''); return !!t && t >= hoursAgo(23.5); }
+  /* internal: a message we sent (assistant / automatic) — keeps the conversation complete */
+  api.waOut = function (req) {
+    if (!req._internal) fail('unknown_action');
+    var c = find('wachats', 'phone', waPhone(req.phone)); if (!c) return {};
+    db.add('wamsgs', { at: stamp(), phone: c.phone, dir: text(req.dir, 40) || 'Assistant', text: text(req.text, 500), file: '', type: 'out', wamid: '' });
+    db.set('wachats', c, { last: stamp(), lastText: '↩ ' + text(req.text, 120) });
+    return {};
+  };
+  /* front desk writes to the guest from the staff app (goes out from +91 75011 01137 and shows in the phone's WhatsApp too) */
+  api.waSend = function (req) {
+    var me = auth(req); needMgr(me);
+    if (!hooks.waReply) fail('wa_not_connected');
+    var c = find('wachats', 'phone', waPhone(req.phone)) || fail('not_found');
+    var msg = String(req.text == null ? '' : req.text).replace(/\r/g, '').trim().slice(0, 3000), photo = req.photo ? String(req.photo) : '';
+    if (!msg && !photo) fail('message_required');
+    if (!waOpen(c)) fail('wa_window_closed');
+    try { hooks.waReply(c.phone, msg, photo); } catch (e) { throw new Error(/^[a-z_]+$/.test(String(e && e.message)) ? e.message : 'wa_send_failed'); }
+    var at = stamp();
+    db.add('wamsgs', { at: at, phone: c.phone, dir: 'Reception · ' + me.name, text: msg || '📷 Photo', file: '', type: photo ? 'image-out' : 'reply', wamid: '' });
+    db.set('wachats', c, { last: at, lastText: '↩ ' + (photo ? '📷 ' : '') + msg.slice(0, 110), unread: 0, readBy: me.name, readAt: at });
+    return { ok: true };
   };
   function waLists(c) {
     var ph = String(c.phone), t = today(), out = [];
@@ -1465,10 +1490,10 @@ function deskCore(db, hooks) {
   api.waChat = function (req) {
     var me = auth(req); needMgr(me);
     var c = find('wachats', 'phone', waPhone(req.phone)) || fail('not_found');
-    var msgs = db.all('wamsgs').filter(function (m) { return String(m.phone) === String(c.phone); }).slice(-30).map(function (m) { return { at: m.at, dir: m.dir, text: m.text, file: m.file, type: m.type }; });
+    var msgs = db.all('wamsgs').filter(function (m) { return String(m.phone) === String(c.phone); }).slice(-60).map(function (m) { return { at: m.at, dir: m.dir, text: m.text, file: m.file, type: m.type }; });
     if (Number(c.unread)) db.set('wachats', c, { unread: 0, readBy: me.name, readAt: stamp() });
     var l = waLists(c), mem = memberOf(c.phone);
-    var o = { phone: c.phone, name: c.name, important: c.important || '', lists: l.lists, stay: l.stay, booking: l.booking, msgs: msgs,
+    var o = { phone: c.phone, name: c.name, canReply: waOpen(c) && !!hooks.waReply, connected: !!hooks.waReply, lastIn: c.lastIn || '', important: c.important || '', lists: l.lists, stay: l.stay, booking: l.booking, msgs: msgs,
       member: mem ? { tier: mem.tier, name: mem.name } : null, proof: c.proof ? { file: c.proof, type: c.proofType, at: c.proofAt } : null };
     if (c.proof && req.photo !== false && hooks.getPhoto && /image/.test(c.proofType || 'image')) { try { o.proof.data = hooks.getPhoto(c.proof); } catch (e) {} }
     return { chat: o };
@@ -2190,7 +2215,7 @@ function deskHandle_(req) {
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
-    sendBill: deskSendBill_ });
+    sendBill: deskSendBill_, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
   try { // send bills that are due (at most every 10 minutes), so emails go out even without the timer

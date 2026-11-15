@@ -29,7 +29,7 @@
     network: 'No internet connection. Please try again.', server_error: 'Something went wrong. Please try again.',
     not_setup: 'The staff app is not connected to the Google Sheet yet.',
     room_booked: 'A room you chose is already booked or occupied on those dates. Check the calendar and pick a free room.',
-    phone_required: 'Please enter the guest\'s phone number.', bad_guests: 'Please check the number of guests.',
+    phone_required: 'Please enter the guest\'s phone number.', wa_window_closed: 'More than 24 hours since the guest last wrote, so WhatsApp does not allow a free message. Call the guest instead.', wa_send_failed: 'The WhatsApp message could not be sent. Try again.', message_required: 'Write a message first.', wa_not_connected: 'WhatsApp is not connected.', bad_guests: 'Please check the number of guests.',
     pick_rooms: 'Choose which room numbers this booking gets.', advance_required: 'Enter the amount received. A booking is confirmed only after money is received.',
     ref_required: 'Enter the UPI or bank transaction reference number.', booking_closed: 'This booking is already closed.', no_booking: 'Booking not found.',
     not_arrival_day: 'A booking can be marked as no-show only on or after its check-in date.',
@@ -579,35 +579,70 @@
     $$('[data-ph]', v).forEach(function (b) { b.onclick = function () { openWaChat(b.dataset.ph); }; });
   }
   function openWaChat(ph) {
-    var body = openSheet('WhatsApp chat');
+    var body = openSheet('WhatsApp chat'), first = true, lastKey = '', photo = null;
     body.innerHTML = '<div class="loading">Loading…</div>';
-    api('deskWaChat', { phone: ph }).then(function (r) {
-      var c = r.chat, bk = c.booking;
-      var h = '<div class="hrow"><div><p class="kicker">' + c.lists.map(function (k) { return WA_TABS.filter(function (t) { return t[0] === k; })[0][1]; }).join(' · ') + '</p><h2 style="font-size:1.7rem">' + esc(c.name || '+91 ' + c.phone) + '</h2><p class="small">+91 ' + esc(c.phone) + (c.member ? ' · ' + esc(c.member.tier) + ' member' : '') + '</p></div></div>';
-      if (c.important) h += '<div class="note wa-note"><b>⚠ Needs attention</b>' + esc(c.important) + '</div>';
-      if (c.proof) h += '<div class="wa-proof"><p class="kicker">Payment screenshot · ' + esc(tShort(c.proof.at)) + '</p>' + (c.proof.data ? '<img id="wa-img" alt="Payment screenshot" src="' + c.proof.data + '">' : '<a class="linkbtn" target="_blank" rel="noopener" href="https://drive.google.com/file/d/' + esc(c.proof.file) + '/view">Open the file in Google Drive →</a>') + '</div>';
-      if (bk) h += '<div class="bl"><span class="t"><b>Booking ' + esc(bk.id) + ' · ' + esc(bk.status) + '</b><small>' + esc(dShort(bk.checkin)) + ' → ' + esc(dShort(bk.checkout)) + ' · advance ' + inr(bk.advancePaid || 0) + ' of ' + inr(bk.advanceDue || 0) + '</small></span><span class="a"><button class="btn btn-line sm" type="button" id="wa-bk">' + (bk.status === 'Pending' ? 'Confirm booking' : 'Open') + '</button></span></div>';
-      if (c.stay) h += '<button class="linkbtn" type="button" id="wa-st">Staying in room ' + esc(c.stay.room) + ' →</button>';
-      h += '<div class="btns"><a class="btn btn-gold" href="https://wa.me/91' + esc(c.phone) + '" target="_blank" rel="noopener">Open chat in WhatsApp</a>' +
-        (c.important ? '<button class="btn btn-line" type="button" id="wa-done">' + (c.proof ? 'Payment checked ✓' : 'Done ✓') + '</button>' : '') +
-        '<button class="btn btn-quiet" type="button" id="wa-unr">Mark unread</button></div>';
-      h += '<h3 class="wa-h">Messages</h3><div class="wa-msgs">' + (c.msgs.length ? c.msgs.map(function (m) {
-        var mine = m.dir !== 'Guest';
-        return '<div class="wa-msg' + (mine ? ' me' : '') + '"><span>' + (m.file ? '<button type="button" class="wa-file" data-file="' + esc(m.file) + '" data-type="' + esc(m.type) + '">' + (m.type === 'image' ? '📷 Photo' : '📄 File') + ' · tap to see</button>' : '') + esc(m.text && m.text.charAt(0) !== '[' ? m.text : '') + '</span><small>' + esc(mine ? m.dir : 'Guest') + ' · ' + esc(tShort(m.at)) + '</small></div>';
-      }).join('') : '<p class="small">No messages saved yet.</p>') + '</div>' +
-        '<p class="small">Replies by the automatic assistant are not listed here. Reply to the guest in the WhatsApp Business app.</p>';
-      body.innerHTML = h;
-      var img = $('#wa-img', body); if (img) img.onclick = function () { waBig(img.src); };
-      if ($('#wa-bk', body)) $('#wa-bk', body).onclick = function () { closeSheet(); openBooking(bk.id); };
-      if ($('#wa-st', body)) $('#wa-st', body).onclick = function () { closeSheet(); openRoom(c.stay.room); };
-      if ($('#wa-done', body)) $('#wa-done', body).onclick = function () { var b = this; busy(b, true); api('deskWaDone', { phone: c.phone }).then(function () { toast('Marked as checked'); closeSheet(); refresh(); waLoad(); }, function (e) { busy(b, false); toast(errText(e)); }); };
-      $('#wa-unr', body).onclick = function () { api('deskWaMark', { phone: c.phone, unread: true }).then(function () { toast('Marked unread'); closeSheet(); refresh(); waLoad(); }); };
-      $$('[data-file]', body).forEach(function (b) { b.onclick = function () {
+    function msgsHTML(c) {
+      return c.msgs.length ? c.msgs.map(function (m) {
+        var who = m.dir === 'Guest' ? 'guest' : /^Reception/.test(m.dir) ? 'me' : 'bot';
+        return '<div class="wa-msg ' + who + '"><span>' + (m.file ? '<button type="button" class="wa-file" data-file="' + esc(m.file) + '" data-type="' + esc(m.type) + '">' + (m.type === 'image' ? '📷 Photo' : '📄 File') + ' · tap to see</button>' : '') + esc(m.text && m.text.charAt(0) !== '[' ? m.text : m.text && m.type === 'out' ? m.text : '') + '</span><small>' + esc(who === 'guest' ? (c.name || 'Guest') : m.dir) + ' · ' + esc(tShort(m.at)) + '</small></div>';
+      }).join('') : '<p class="small">No messages saved yet.</p>';
+    }
+    function wireFiles(root) {
+      $$('[data-file]', root).forEach(function (b) { b.onclick = function () {
         if (b.dataset.type !== 'image') { window.open('https://drive.google.com/file/d/' + b.dataset.file + '/view', '_blank'); return; }
         busy(b, true); api('deskWaPhoto', { file: b.dataset.file }).then(function (x) { busy(b, false); waBig(x.data); }, function (e) { busy(b, false); toast(errText(e)); });
       }; });
-      refresh();
-    }, function (e) { body.innerHTML = '<div class="note"><b>Could not load</b>' + esc(errText(e)) + '</div>'; });
+    }
+    function scrollEnd() { var m = $('#wa-msgs', body); if (m) m.scrollTop = m.scrollHeight; }
+    function load() {
+      return api('deskWaChat', { phone: ph, photo: first }).then(function (r) {
+        var c = r.chat, key = c.msgs.length + '|' + (c.msgs.length ? c.msgs[c.msgs.length - 1].at + c.msgs[c.msgs.length - 1].text : '') + '|' + c.canReply + '|' + c.important;
+        if (!first) { if (key !== lastKey && $('#wa-msgs', body)) { lastKey = key; $('#wa-msgs', body).innerHTML = msgsHTML(c); wireFiles($('#wa-msgs', body)); scrollEnd(); var cl = $('#wa-closed', body); if (cl) cl.hidden = c.canReply; var cp = $('#wa-comp', body); if (cp) cp.hidden = !c.canReply; } return; }
+        first = false; lastKey = key;
+        var bk = c.booking;
+        var h = '<div class="hrow"><div><p class="kicker">' + c.lists.map(function (k) { return WA_TABS.filter(function (t) { return t[0] === k; })[0][1]; }).join(' · ') + '</p><h2 style="font-size:1.7rem">' + esc(c.name || '+91 ' + c.phone) + '</h2><p class="small">+91 ' + esc(c.phone) + (c.member ? ' · ' + esc(c.member.tier) + ' member' : '') + '</p></div></div>';
+        if (c.important) h += '<div class="note wa-note"><b>⚠ Needs attention</b>' + esc(c.important) + '</div>';
+        if (c.proof) h += '<div class="wa-proof"><p class="kicker">Payment screenshot · ' + esc(tShort(c.proof.at)) + '</p>' + (c.proof.data ? '<img id="wa-img" alt="Payment screenshot" src="' + c.proof.data + '">' : '<a class="linkbtn" target="_blank" rel="noopener" href="https://drive.google.com/file/d/' + esc(c.proof.file) + '/view">Open the file in Google Drive →</a>') + '</div>';
+        if (bk) h += '<div class="bl"><span class="t"><b>Booking ' + esc(bk.id) + ' · ' + esc(bk.status) + '</b><small>' + esc(dShort(bk.checkin)) + ' → ' + esc(dShort(bk.checkout)) + ' · advance ' + inr(bk.advancePaid || 0) + ' of ' + inr(bk.advanceDue || 0) + '</small></span><span class="a"><button class="btn btn-line sm" type="button" id="wa-bk">' + (bk.status === 'Pending' ? 'Confirm booking' : 'Open') + '</button></span></div>';
+        if (c.stay) h += '<button class="linkbtn" type="button" id="wa-st">Staying in room ' + esc(c.stay.room) + ' →</button>';
+        h += '<div class="btns">' + (c.important ? '<button class="btn btn-line" type="button" id="wa-done">' + (c.proof ? 'Payment checked ✓' : 'Done ✓') + '</button>' : '') +
+          '<button class="btn btn-quiet" type="button" id="wa-unr">Mark unread</button><a class="btn btn-quiet" href="https://wa.me/91' + esc(c.phone) + '" target="_blank" rel="noopener">Open in WhatsApp</a></div>';
+        h += '<div class="wa-chat"><div class="wa-msgs" id="wa-msgs">' + msgsHTML(c) + '</div>' +
+          (c.connected ? '<p class="note wa-closed" id="wa-closed"' + (c.canReply ? ' hidden' : '') + '><b>Can\'t write here right now</b>WhatsApp allows free messages only within 24 hours of the guest\'s last message. Call the guest, or wait until they write again.</p>' +
+            '<div class="wa-comp" id="wa-comp"' + (c.canReply ? '' : ' hidden') + '><div class="wa-ph" id="wa-ph" hidden></div><div class="wa-row2">' +
+            '<label class="wa-att" title="Send a photo"><input type="file" accept="image/*" id="wa-pf" hidden>📎</label>' +
+            '<textarea class="input" id="wa-tx" rows="1" maxlength="3000" placeholder="Write to ' + esc(String(c.name || 'the guest').split(/\s+/)[0]) + '…"></textarea>' +
+            '<button class="btn btn-gold wa-send" type="button" id="wa-go" aria-label="Send">➤</button></div>' +
+            '<p class="small">Sent from +91 75011 01137 (shows in the phone\'s WhatsApp too). The automatic assistant stays quiet for this guest for 6 hours.</p></div>' : '<p class="small">WhatsApp is not connected.</p>') + '</div>';
+        body.innerHTML = h;
+        var img = $('#wa-img', body); if (img) img.onclick = function () { waBig(img.src); };
+        if ($('#wa-bk', body)) $('#wa-bk', body).onclick = function () { closeSheet(); openBooking(bk.id); };
+        if ($('#wa-st', body)) $('#wa-st', body).onclick = function () { closeSheet(); openRoom(c.stay.room); };
+        if ($('#wa-done', body)) $('#wa-done', body).onclick = function () { var b = this; busy(b, true); api('deskWaDone', { phone: c.phone }).then(function () { toast('Marked as checked'); b.remove(); var n = $('.wa-note', body); if (n) n.remove(); refresh(); waLoad(); }, function (e) { busy(b, false); toast(errText(e)); }); };
+        $('#wa-unr', body).onclick = function () { api('deskWaMark', { phone: c.phone, unread: true }).then(function () { toast('Marked unread'); closeSheet(); refresh(); waLoad(); }); };
+        wireFiles(body); scrollEnd();
+        var tx = $('#wa-tx', body);
+        if (tx) {
+          tx.addEventListener('input', function () { tx.style.height = 'auto'; tx.style.height = Math.min(160, tx.scrollHeight) + 'px'; });
+          tx.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(hover:hover)').matches) { e.preventDefault(); send(); } });
+          $('#wa-pf', body).onchange = function () {
+            var f = this.files[0]; this.value = ''; if (!f) return;
+            shrinkPhoto(f).then(function (p) { photo = p; var box = $('#wa-ph', body); box.hidden = false; box.innerHTML = '<img src="' + p.url + '" alt=""><button type="button" class="btn btn-quiet sm" id="wa-px">Remove photo</button>'; $('#wa-px', body).onclick = function () { photo = null; box.hidden = true; box.innerHTML = ''; }; }, function () { toast('That photo could not be opened'); });
+          };
+          $('#wa-go', body).onclick = send;
+        }
+        function send() {
+          var t = tx.value.trim(), b = $('#wa-go', body); if (!t && !photo) { tx.focus(); return; }
+          busy(b, true);
+          api('deskWaSend', { phone: c.phone, text: t, photo: photo ? photo.data : '' }).then(function () {
+            busy(b, false); tx.value = ''; tx.style.height = ''; photo = null; var box = $('#wa-ph', body); box.hidden = true; box.innerHTML = ''; vibrate(); load(); waLoad();
+          }, function (e) { busy(b, false); toast(errText(e)); if ((e && e.message) === 'wa_window_closed') { $('#wa-closed', body).hidden = false; $('#wa-comp', body).hidden = true; } });
+        }
+        refresh();
+      }, function (e) { if (first) body.innerHTML = '<div class="note"><b>Could not load</b>' + esc(errText(e)) + '</div>'; });
+    }
+    load();
+    var poll = setInterval(function () { if (!body.isConnected) { clearInterval(poll); return; } if (!document.hidden) load(); }, 8000);
   }
   function waBig(src) {
     var ov = document.createElement('div'); ov.className = 'idc-view';
@@ -2008,7 +2043,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 31</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 32</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

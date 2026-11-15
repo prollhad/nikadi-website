@@ -132,7 +132,7 @@
         try {
           var api = deskCore(memoryDb(world), { memberInfo: demoMember, sendBill: function () {},
             savePhoto: function (b64) { var k = 'ph' + Date.now() + Math.random().toString(36).slice(2, 6); DEMO_PHOTOS[k] = 'data:image/jpeg;base64,' + b64; return k; },
-            getPhoto: function (k) { return DEMO_PHOTOS[k] || ''; } });
+            getPhoto: function (k) { return DEMO_PHOTOS[k] || ''; }, waReply: function () { return 'demo'; } });
           if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
           var clean = JSON.parse(JSON.stringify(req || {}));
           Object.keys(clean).forEach(function (k) { if (k.charAt(0) === '_') delete clean[k]; });

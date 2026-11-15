@@ -892,10 +892,28 @@ function ycCall_(path, body, method) {
   return j;
 }
 /** One message to one number (msg is the WhatsApp message body without from/to: {type:'text', text:{body}} etc.). */
-function ycSend_(to, msg) {
-  var y = ycProps_();
-  var j = ycCall_('whatsapp/messages/sendDirectly', Object.assign({ from: y.from, to: '+91' + String(to).replace(/\D/g, '').slice(-10) }, msg));
+function ycSend_(to, msg, noLog) {
+  var y = ycProps_(), d = String(to).replace(/\D/g, '');
+  var num = d.length > 10 && d.slice(0, 2) !== '91' ? '+' + d : '+91' + d.slice(-10); // overseas numbers keep their country code
+  var j = ycCall_('whatsapp/messages/sendDirectly', Object.assign({ from: y.from, to: num }, msg));
+  if (!noLog && d.length === 10) { // keep the conversation complete in the staff app
+    var t = msg.text ? msg.text.body : msg.interactive ? msg.interactive.body && msg.interactive.body.text : msg.document ? '📄 ' + (msg.document.caption || msg.document.filename || 'File') :
+      msg.image ? '📷 ' + (msg.image.caption || 'Photo') : msg.location ? '📍 Location pin' : msg.template ? '[' + msg.template.name + ']' : '';
+    try { waCore_().waOut({ _internal: true, phone: d, dir: msg.template || msg.document ? 'Automatic message' : 'Assistant', text: String(t || '').slice(0, 500) }); } catch (e) {}
+  }
   return j.wamid || j.id || '';
+}
+var _waCoreInst = null;
+function waCore_() { return _waCoreInst || (_waCoreInst = deskCore(deskDb_(), { memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null })); }
+/** Staff app → "Send" in a WhatsApp chat (text and / or a photo). Reception is now handling the chat, so the assistant goes quiet. */
+function waStaffReply_(phone, text, photo) {
+  var id;
+  if (photo) {
+    var media = ycUploadMedia_(photo, 'image/jpeg', 'photo.jpg');
+    id = ycSend_(phone, { type: 'image', image: { id: media, caption: String(text || '').slice(0, 1024) } }, true);
+  } else id = ycSend_(phone, { type: 'text', text: { body: String(text).slice(0, 4000), preview_url: true } }, true);
+  waHuman_(String(phone).replace(/\D/g, '').slice(-10), 'reception replying from the staff app');
+  return id;
 }
 function waText_(to, body) { return ycSend_(to, { type: 'text', text: { body: String(body).slice(0, 4000), preview_url: true } }); }
 function waButtons_(to, body, buttons, footer) {
@@ -966,7 +984,7 @@ function ycWebhook_(e) {
       var to = String(m.to || m.recipient || '').replace(/\D/g, '').slice(-10);
       if (to && m.bizType !== 'api') {
         waHuman_(to, 'staff replied from the phone');
-        try { deskCore(deskDb_()).waSeen({ _internal: true, phone: to, text: m.text && m.text.body || (m.type && m.type !== 'text' ? '[' + m.type + ']' : '') }); } catch (e) {}
+        try { waCore_().waSeen({ _internal: true, phone: to, text: m.text && m.text.body || (m.type && m.type !== 'text' ? '[' + m.type + ']' : '') }); } catch (e) {}
       }
     }
   } catch (err) {
@@ -1052,7 +1070,7 @@ function waInbound_(msg) {
     var fileId = '';
     if (media) { try { fileId = waSaveMedia_(media, msg.type, phone, st.full || st.name || ''); } catch (e) { console.error(e); } }
     try {
-      logged = deskCore(deskDb_(), { memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null }).waIn({ _internal: true, phone: phone, name: st.full || '',
+      logged = waCore_().waIn({ _internal: true, phone: phone, name: st.full || '',
         text: text || (msg.type === 'interactive' ? '' : msg.type !== 'text' ? '[' + msg.type + ']' : ''), file: fileId, type: media ? msg.type : msg.type === 'interactive' ? 'button' : msg.type,
         mime: media ? media.mime_type || '' : '', wamid: msg.wamid || '', attention: human || (!choice && st.step === 'done') });
     } catch (e) { console.error(e); }
@@ -1104,7 +1122,7 @@ function waInbound_(msg) {
     case 'm_talk':
       waButtons_(phone, '📞 Please call us on *' + NK_PHONE_TEXT + '* (tap the number to call), or just write your question here.\n\nOur reception will reply to you in this chat personally. The automatic assistant is paused for now.', [['m_bot', 'Back to assistant']]);
       waNotify_('WhatsApp: guest wants to talk', phone, 'Name: ' + (st.name || '') + (st.ci ? '\nLooking at: ' + waDd_(st.ci) + ', ' + (st.nights || '?') + ' night(s), ' + (st.rooms || '?') + ' room(s)' + (st.type ? ', ' + st.type : '') : '') + '\nLast message: ' + text);
-      try { deskCore(deskDb_()).waMark({ _internal: true, phone: phone, important: 'Wants to talk to reception', unread: true }); } catch (e) {}
+      try { waCore_().waMark({ _internal: true, phone: phone, important: 'Wants to talk to reception', unread: true }); } catch (e) {}
       waHuman_(phone, 'guest asked'); return;
     case 'm_bot': waMenu_(phone, st, false); break;
     case 'd_today': case 'd_tom': case 'd_other': case '':
@@ -1149,7 +1167,7 @@ function waAskRooms_(phone, st) {
 /** Free rooms of each type from the staff app, with the price of every night for this guest. */
 function waAvailability_(phone, st) {
   var co = addDayYmd_(st.ci, st.nights), pct = st.member ? st.member.pct : 0;
-  var av = deskCore(deskDb_()).availability({ _internal: true, checkin: st.ci, checkout: co });
+  var av = waCore_().availability({ _internal: true, checkin: st.ci, checkout: co });
   var lines = [], rows = [], when = waDd_(st.ci) + ' → ' + waDd_(co) + ' · ' + st.nights + ' night' + (st.nights > 1 ? 's' : '') + ' · ' + st.rooms + ' room' + (st.rooms > 1 ? 's' : '');
   st.quotes = {};
   ['Deluxe Double', 'Deluxe Twin', 'Large Twin'].forEach(function (k) {
@@ -1190,16 +1208,16 @@ function waConfirm_(phone, st) {
 function waBook_(phone, st) {
   var q = st.quotes && st.quotes[st.type];
   if (!st.ci || !q) { waText_(phone, 'Sorry, that request expired. Reply "book" to start again.'); st.step = 'menu'; return; }
-  var co = addDayYmd_(st.ci, st.nights), av = deskCore(deskDb_()).availability({ _internal: true, checkin: st.ci, checkout: co });
+  var co = addDayYmd_(st.ci, st.nights), av = waCore_().availability({ _internal: true, checkin: st.ci, checkout: co });
   var t = av.types.filter(function (x) { return x.type === st.type; })[0];
   if (!t || t.free < st.rooms) { waText_(phone, 'Sorry, that room was just taken. Here is what is free now:'); return waAvailability_(phone, st); }
   var mixed = q.rates.some(function (x) { return x !== q.rates[0]; });
-  var r = deskCore(deskDb_()).bookingRequest({ _internal: true, source: 'WhatsApp bot', rate: q.perNight, guest: st.full || st.name || 'WhatsApp guest', phone: phone,
+  var r = waCore_().bookingRequest({ _internal: true, source: 'WhatsApp bot', rate: q.perNight, guest: st.full || st.name || 'WhatsApp guest', phone: phone,
     guests: st.rooms * (st.type === 'Large Twin' ? 3 : 2), roomsNeeded: st.rooms, roomType: st.type, checkin: st.ci, checkout: co,
     notes: ['Booked on WhatsApp (automatic assistant). Guest count not asked: please confirm.', st.member ? st.member.tier + ' member · ' + st.member.pct + '% off' : '',
       q.offer ? q.offer + ' price' : '', mixed ? 'nightly ₹' + q.rates.join(', ₹') + ' (average ₹' + q.perNight + ')' : '₹' + q.perNight + ' a night', 'quoted total ₹' + q.total].filter(Boolean).join(' · ') });
   st.step = 'done'; st.booking = r.id;
-  try { deskCore(deskDb_()).waMark({ _internal: true, phone: phone, unread: true }); } catch (e) {}
+  try { waCore_().waMark({ _internal: true, phone: phone, unread: true }); } catch (e) {}
   waButtons_(phone, '🙏 Thank you' + (st.name ? ' ' + st.name : '') + '! Your request *' + r.id + '* has reached our reception.' + (r.duplicate ? ' (We already had this request.)' : '') + '\n\n' +
     'Next steps:\n1️⃣ Reception checks and confirms your room in this chat.\n2️⃣ You pay the 50% advance (' + waMoney_(Math.round(q.total / 2)) + ') by UPI. Your room is then held for you.\n3️⃣ Pay the balance at check-in, from 11:00 AM.\n\n' +
     'Want to talk to us? Call *' + NK_PHONE_TEXT + '*.', [['m_talk', '📞 Talk to us'], ['menu', 'Main menu']]);
@@ -1257,12 +1275,13 @@ var WA_CTA = {
   nikadi_membership: { text: 'Join free now', url: NK_SITE + '/app/?join=1' },
   nikadi_booking_confirmed: { text: 'Visit our website', url: NK_SITE }
 };
-function ycUploadPdf_(pdf, fileName) {
+function ycUploadPdf_(pdf, fileName) { return ycUploadMedia_(pdf, 'application/pdf', fileName || 'bill.pdf'); }
+function ycUploadMedia_(b64, mime, fileName) {
   var y = ycProps_();
-  var blob = Utilities.newBlob(Utilities.base64Decode(pdf), 'application/pdf', fileName || 'bill.pdf');
+  var blob = Utilities.newBlob(Utilities.base64Decode(b64), mime, fileName);
   var r = UrlFetchApp.fetch(YC_API + 'whatsapp/media/' + encodeURIComponent(y.from) + '/upload', { method: 'post', headers: { 'X-API-Key': y.key }, payload: { file: blob }, muteHttpExceptions: true });
   var j = {}; try { j = JSON.parse(r.getContentText()); } catch (e) {}
-  if (r.getResponseCode() >= 300 || !j.id) throw new Error('WhatsApp: PDF upload failed (HTTP ' + r.getResponseCode() + ')');
+  if (r.getResponseCode() >= 300 || !j.id) throw new Error('WhatsApp: upload failed (HTTP ' + r.getResponseCode() + ')');
   return j.id;
 }
 function ycDeskSend_(template, to10, params, pdf, fileName, url, lang) {
