@@ -1303,6 +1303,12 @@ function ycUploadMedia_(b64, mime, fileName) {
 function ycDeskSend_(template, to10, params, pdf, fileName, url, lang) {
   to10 = String(to10).replace(/\D/g, '').slice(-10);
   var open = Number(CacheService.getScriptCache().get('ycwin_' + to10) || 0) > Date.now() - 23 * 3600e3;
+  if (!open) { // the cache only lasts 6 hours: check the last message time saved in "WhatsApp chats" (24-hour window)
+    try {
+      var ch = deskDb_().all('wachats').filter(function (x) { return String(x.phone).replace(/\D/g, '').slice(-10) === to10; })[0];
+      if (ch && ch.lastIn) open = new Date(String(ch.lastIn).replace(' ', 'T') + ':00+05:30').getTime() > Date.now() - 23 * 3600e3;
+    } catch (e) {}
+  }
   var media = pdf ? ycUploadPdf_(pdf, fileName) : null;
   if (template === 'nikadi_bill' && !pdf) throw new Error('no_pdf');
   if (open && WA_TEXTS[template]) {
