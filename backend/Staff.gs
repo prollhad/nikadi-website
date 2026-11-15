@@ -519,8 +519,9 @@ function deskCore(db, hooks) {
     try {
       var id1 = hooks.waSend(DESK_WA[m.kind], m.to, waParams(m), null, null);
       db.set('wa', m, { status: 'Sent', info: stamp() + (id1 ? ' · ' + String(id1).slice(-12) : '') });
-    } catch (e) { db.set('wa', m, { status: 'Failed', info: String(e && e.message || e).slice(0, 120) }); }
+    } catch (e) { db.set('wa', m, { status: 'Failed', info: String(e && e.message || e).slice(0, 120) }); raiseAlert('WhatsApp ' + m.kind + ' message not sent', 'To ' + m.to + ' (' + (m.name || '') + '): ' + String(e && e.message || e)); }
   }
+  function raiseAlert(subject, detail) { if (/template|132001|does not exist|not approved/i.test(String(detail))) return; if (hooks.alert) try { hooks.alert(subject, detail); } catch (e) {} } // template still waiting for Meta: not an error to report
   function waBill(row) { return waBillWith(row, pdfOf(row.id)); }
   function waBillWith(row, pdf) {
     var d = JSON.parse(row.data), B = typeof NikadiBill !== 'undefined' ? NikadiBill : null, c = B ? B.compute(d) : null;
@@ -538,11 +539,11 @@ function deskCore(db, hooks) {
       if (row.status === 'Scheduled' && row.email) {
         var d = JSON.parse(row.data); d.url = DESK_BILL_URL + row.id;
         try { sendBill({ row: row, data: d }, row.email, pdfOf(row.id)); out.push(row.no); }
-        catch (e) { db.set('bills', row, { status: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); }
+        catch (e) { db.set('bills', row, { status: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('Bill email not sent: ' + row.no, row.guest + ' · ' + row.email + '\n' + String(e && e.message || e)); }
       }
       if (row.wa === 'Waiting' && !/^Stopped/.test(row.status || '')) {
         if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
-        else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); } }
+        else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('WhatsApp bill not sent: ' + row.no, row.guest + ' · ' + row.phone + '\n' + String(e && e.message || e)); } }
       }
       if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting' && (billArchived(row) || plusHours(row.pdf, 72) < now)) { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
     });
@@ -2632,7 +2633,7 @@ function deskHandle_(req) {
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
-    sendBill: deskSendBill_, ownBillFile: deskOwnBillFile_, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
+    sendBill: deskSendBill_, ownBillFile: deskOwnBillFile_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
   if (typeof DESK_NO_LOCK_ !== 'undefined' && DESK_NO_LOCK_) return out; // read-only call without the lock: leave the bill timer to locked calls
@@ -2649,14 +2650,35 @@ function sendDueBills() {
   if (!lock.tryLock(20000)) return;
   try {
     var core = deskTimerCore_();
-    core._sendDue({ archive: true, limit: 8 });
-    var h = +Utilities.formatDate(new Date(), 'Asia/Kolkata', 'H');
-    if (h >= 2 && h < 5) try { core._archiveOld(); } catch (e) { console.error('archive: ' + (e && e.message || e)); } // once a night: move old records out so the app stays fast
+    try { core._sendDue({ archive: true, limit: 8 }); } catch (e) { deskAlert_('Bills / WhatsApp timer failed', e); }
+    var h = +Utilities.formatDate(new Date(), 'Asia/Kolkata', 'H'), dow = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'u');
+    if (h >= 2 && h < 5) try { core._archiveOld(); } catch (e) { deskAlert_('Night archive of old records failed', e); } // once a night: move old records out so the app stays fast
+    if (h >= 3 && h < 5 && dow === '7') try { deskWeeklyBackup_(); } catch (e) { deskAlert_('Weekly backup failed', e); } // Sunday night
   } finally { lock.releaseLock(); }
 }
 
+function deskAlert_(subject, e) { console.error(subject, e); if (typeof nkAlert_ === 'function') nkAlert_(subject, typeof nkErr_ === 'function' ? nkErr_(e) : String(e)); }
+/** Weekly backup (Sunday night, or menu "Nikadi → Back up now"): a full copy of this Sheet in
+    Drive "Nikadi Guest House Records / Backups", named with the date. The last 8 copies are kept. */
+function deskWeeklyBackup_(force) {
+  var p = PropertiesService.getScriptProperties(), day = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM-dd');
+  if (!force && p.getProperty('LAST_BACKUP') === day) return '';
+  var folder = deskCachedFolder_('ARCH_BACKUPS', function () { return deskChild_(deskArchiveRoot_(), 'Backups'); });
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), copy = DriveApp.getFileById(ss.getId()).makeCopy('Nikadi backup ' + day + ' · ' + ss.getName(), folder);
+  p.setProperty('LAST_BACKUP', day);
+  var all = [], it = folder.getFiles();
+  while (it.hasNext()) { var f = it.next(); if (/^Nikadi backup /.test(f.getName())) all.push(f); }
+  all.sort(function (a, b) { return b.getDateCreated() - a.getDateCreated(); });
+  all.slice(8).forEach(function (f) { try { f.setTrashed(true); } catch (e) {} });
+  return copy.getUrl();
+}
+function deskBackupNow() {
+  var url = deskWeeklyBackup_(true);
+  try { SpreadsheetApp.getActive().toast('Backup saved in Drive → Nikadi Guest House Records → Backups.'); } catch (e) {}
+  return url;
+}
 function deskTimerCore_() {
-  return deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_,
+  return deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     archive: deskArchive_, stayFolder: deskStayFolder_, trashFile: deskTrash_ });
 }

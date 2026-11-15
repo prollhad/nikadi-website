@@ -166,7 +166,7 @@ function doPost(e) {
   // (so a busy WhatsApp minute or another device saving can't make every phone slow).
   if (DESK_READ_ONLY_[req.action]) {
     try { DESK_NO_LOCK_ = true; return json_(Object.assign({ ok: true }, fn(req))); }
-    catch (err) { var c0 = String(err && err.message || err); if (!/^[a-z_]+$/.test(c0)) { console.error(err); c0 = 'server_error'; } return json_({ ok: false, error: c0 }); }
+    catch (err) { var c0 = String(err && err.message || err); if (!/^[a-z_]+$/.test(c0)) { console.error(err); nkAlert_('Error in ' + req.action, nkErr_(err)); c0 = 'server_error'; } return json_({ ok: false, error: c0 }); }
   }
   var lock = LockService.getScriptLock();
   try {
@@ -175,7 +175,7 @@ function doPost(e) {
     return json_(Object.assign({ ok: true }, out));
   } catch (err) {
     var code = String(err && err.message || err);
-    if (!/^[a-z_]+$/.test(code)) { console.error(err); code = 'server_error'; }
+    if (!/^[a-z_]+$/.test(code)) { console.error(err); code = 'server_error'; nkAlert_(/Lock|timed out|lock/i.test(String(err)) ? 'App was too busy (' + req.action + ')' : 'Error in ' + req.action, nkErr_(err)); }
     return json_({ ok: false, error: code });
   } finally {
     try { lock.releaseLock(); } catch (e2) {}
@@ -184,6 +184,19 @@ function doPost(e) {
 
 var DESK_READ_ONLY_ = { deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
 var DESK_NO_LOCK_ = false;
+
+/* Error alerts: an email to the owner when something fails in the background (same problem at most once in 6 hours). */
+function nkAlert_(subject, detail) {
+  try {
+    var c = CacheService.getScriptCache(), k = 'alert_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, subject)).slice(0, 20);
+    if (c.get(k)) return; c.put(k, '1', 21600);
+    var to = ''; try { to = settings_().OWNER_EMAIL; } catch (e) {}
+    if (!to) to = Session.getEffectiveUser().getEmail();
+    MailApp.sendEmail(String(to), '⚠ Nikadi app: ' + subject, 'Something did not work in the Nikadi staff app / website and may need a look.\n\n' + subject + '\n\nDetails:\n' + String(detail || '').slice(0, 3000) +
+      '\n\nTime: ' + Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd MMM yyyy, hh:mm a') + '\n(The same problem is reported at most once every 6 hours.)');
+  } catch (e) { console.error(e); }
+}
+function nkErr_(err) { return String(err && (err.stack || err.message) || err); }
 
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
@@ -854,7 +867,7 @@ var WA_ROOM_INFO = {
    and copies the webhook address for YCloud → Developers → Webhooks. */
 var NK_API_EXEC = 'https://script.google.com/macros/s/AKfycbxMHXOtCvqvzIABjr2_SCPqWIFFrZsO2cLKN6USe3qaVTmRseiQJZLU21EMqx3Y2sYW/exec';
 function onOpen() {
-  try { SpreadsheetApp.getUi().createMenu('Nikadi').addItem('Connect WhatsApp (YCloud)', 'whatsappConnect').addItem('Show WhatsApp webhook address', 'whatsappShowWebhook').addSeparator().addItem('Refresh staff app data', 'deskRefreshData').addItem('Move old records to the archive now', 'deskArchiveNow').addToUi(); } catch (e) {}
+  try { SpreadsheetApp.getUi().createMenu('Nikadi').addItem('Connect WhatsApp (YCloud)', 'whatsappConnect').addItem('Show WhatsApp webhook address', 'whatsappShowWebhook').addSeparator().addItem('Refresh staff app data', 'deskRefreshData').addItem('Move old records to the archive now', 'deskArchiveNow').addItem('Back up now (copy of this Sheet)', 'deskBackupNow').addToUi(); } catch (e) {}
 }
 /* Hand edits in the Sheet: the staff app re-reads that tab (it keeps a fast copy otherwise). */
 function onEdit(e) { try { if (typeof deskSheetEdited_ === 'function') deskSheetEdited_(e && e.range ? e.range.getSheet().getName() : ''); } catch (x) {} }
@@ -1002,10 +1015,10 @@ function ycWebhook_(e) {
       }
     }
   } catch (err) {
-    console.error(err);
+    console.error(err); nkAlert_('WhatsApp message from a guest could not be handled', nkErr_(err));
   } finally { try { lock.releaseLock(); } catch (e2) {} }
   var out = _waOutbox || []; _waOutbox = null;
-  out.forEach(function (b) { try { ycCall_('whatsapp/messages/sendDirectly', b); } catch (e) { console.error(e); } }); // in order, without holding up the staff app
+  out.forEach(function (b) { try { ycCall_('whatsapp/messages/sendDirectly', b); } catch (e) { console.error(e); nkAlert_('WhatsApp reply could not be sent', nkErr_(e) + '\n\nMessage: ' + JSON.stringify(b).slice(0, 500)); } }); // in order, without holding up the staff app
   return json_({ ok: true });
 }
 

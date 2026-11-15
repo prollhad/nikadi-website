@@ -513,8 +513,9 @@ function deskCore(db, hooks) {
     try {
       var id1 = hooks.waSend(DESK_WA[m.kind], m.to, waParams(m), null, null);
       db.set('wa', m, { status: 'Sent', info: stamp() + (id1 ? ' · ' + String(id1).slice(-12) : '') });
-    } catch (e) { db.set('wa', m, { status: 'Failed', info: String(e && e.message || e).slice(0, 120) }); }
+    } catch (e) { db.set('wa', m, { status: 'Failed', info: String(e && e.message || e).slice(0, 120) }); raiseAlert('WhatsApp ' + m.kind + ' message not sent', 'To ' + m.to + ' (' + (m.name || '') + '): ' + String(e && e.message || e)); }
   }
+  function raiseAlert(subject, detail) { if (/template|132001|does not exist|not approved/i.test(String(detail))) return; if (hooks.alert) try { hooks.alert(subject, detail); } catch (e) {} } // template still waiting for Meta: not an error to report
   function waBill(row) { return waBillWith(row, pdfOf(row.id)); }
   function waBillWith(row, pdf) {
     var d = JSON.parse(row.data), B = typeof NikadiBill !== 'undefined' ? NikadiBill : null, c = B ? B.compute(d) : null;
@@ -532,11 +533,11 @@ function deskCore(db, hooks) {
       if (row.status === 'Scheduled' && row.email) {
         var d = JSON.parse(row.data); d.url = DESK_BILL_URL + row.id;
         try { sendBill({ row: row, data: d }, row.email, pdfOf(row.id)); out.push(row.no); }
-        catch (e) { db.set('bills', row, { status: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); }
+        catch (e) { db.set('bills', row, { status: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('Bill email not sent: ' + row.no, row.guest + ' · ' + row.email + '\n' + String(e && e.message || e)); }
       }
       if (row.wa === 'Waiting' && !/^Stopped/.test(row.status || '')) {
         if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
-        else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); } }
+        else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('WhatsApp bill not sent: ' + row.no, row.guest + ' · ' + row.phone + '\n' + String(e && e.message || e)); } }
       }
       if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting' && (billArchived(row) || plusHours(row.pdf, 72) < now)) { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
     });
