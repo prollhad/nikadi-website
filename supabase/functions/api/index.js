@@ -573,7 +573,7 @@ function nkAlert_(subject, detail) {
     var c = CacheService.getScriptCache(), k = 'alert_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, subject)).slice(0, 20);
     if (c.get(k)) return; c.put(k, '1', 21600);
     var to = ''; try { to = settings_().OWNER_EMAIL; } catch (e) {}
-    if (!to) to = Session.getEffectiveUser().getEmail();
+    if (!to) to = NikadiBill.HOTEL.email; // the guest house Gmail (public address on the bills)
     MailApp.sendEmail(String(to), '⚠ Nikadi app: ' + subject, 'Something did not work in the Nikadi staff app / website and may need a look.\n\n' + subject + '\n\nDetails:\n' + String(detail || '').slice(0, 3000) +
       '\n\nTime: ' + Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd MMM yyyy, hh:mm a') + '\n(The same problem is reported at most once every 6 hours.)');
   } catch (e) { console.error(e); }
@@ -1765,7 +1765,7 @@ function nkExport_() {
     sheets[n] = sh.getDataRange().getValues().map(function (row) { return row.map(function (v) { return v instanceof Date ? { $d: v.toISOString() } : v; }); });
   });
   var props = PropertiesService.getScriptProperties().getProperties();
-  props.OWNER_GMAIL = Session.getEffectiveUser().getEmail();
+  props.OWNER_GMAIL = NikadiBill.HOTEL.email;
   return { desk: desk, sheets: sheets, props: props };
 }
 
