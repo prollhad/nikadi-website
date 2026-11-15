@@ -475,11 +475,12 @@ function deskCore(db, hooks) {
       db.set('wa', m, { status: 'Sent', info: stamp() + (id1 ? ' · ' + String(id1).slice(-12) : '') });
     } catch (e) { db.set('wa', m, { status: 'Failed', info: String(e && e.message || e).slice(0, 120) }); }
   }
-  function waBill(row) {
+  function waBill(row) { return waBillWith(row, pdfOf(row.id)); }
+  function waBillWith(row, pdf) {
     var d = JSON.parse(row.data), B = typeof NikadiBill !== 'undefined' ? NikadiBill : null, c = B ? B.compute(d) : null;
     var total = c ? c.total : Number(row.total || 0), due = c ? c.due : 0;
     var params = [B ? B.greetName(d.guest) : first(d.guest.name), d.no, rupees(total), Math.abs(due) < 0.5 ? 'paid in full' : due > 0 ? 'balance due ' + rupees(due) : 'refund due ' + rupees(-due)];
-    var mid = hooks.waSend(DESK_WA.bill, String(row.phone), params, pdfOf(row.id), 'Nikadi-Bill-' + String(d.no).replace(/[^A-Za-z0-9-]+/g, '-') + '.pdf', DESK_BILL_URL + row.id);
+    var mid = hooks.waSend(DESK_WA.bill, String(row.phone), params, pdf, 'Nikadi-Bill-' + String(d.no).replace(/[^A-Za-z0-9-]+/g, '-') + '.pdf', DESK_BILL_URL + row.id);
     db.set('bills', row, { wa: 'Sent ' + stamp() });
     return mid;
   }
@@ -1318,6 +1319,21 @@ function deskCore(db, hooks) {
     var b = saveBill(s, me, null);
     sendBill(b, String(s.email || ''), req.pdf || pdfOf(b.row.id));
     return { bill: billInfo(s, b), emailed: s.email };
+  };
+  /* "Send on WhatsApp" in the bill panel: sends the PDF bill straight to the guest from +91 75011 01137 (no need to attach anything). */
+  api.billWhatsApp = function (req) {
+    var me = auth(req); needMgr(me);
+    if (!waReady()) fail('wa_not_connected');
+    var s = checkedOut(req), b = saveBill(s, me, null);
+    var ph = String(req.phone || s.phone || '').replace(/\D/g, '').slice(-10); if (ph.length !== 10) fail('phone_required');
+    var pdf = req.pdf || pdfOf(b.row.id); if (!pdf) fail('no_pdf');
+    var row = b.row, keep = row.phone;
+    row.phone = ph;
+    try { waBillWith(row, pdf); }
+    catch (e) { row.phone = keep; var m = String(e && e.message || e); throw new Error(/template|132001|does not exist|not approved|Template/i.test(m) ? 'wa_template_pending' : /^[a-z_]+$/.test(m) ? m : 'wa_send_failed'); }
+    row.phone = keep;
+    db.set('bills', row, { wa: 'Sent ' + stamp() + ' by ' + me.name });
+    return { bill: billInfo(s, b), sentTo: ph };
   };
   /* Runs the automatic emails (called by a timer in Google, and when the app is used). */
   api.driveInfo = function (req) {

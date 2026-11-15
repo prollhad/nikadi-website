@@ -29,7 +29,7 @@
     network: 'No internet connection. Please try again.', server_error: 'Something went wrong. Please try again.',
     not_setup: 'The staff app is not connected to the Google Sheet yet.',
     room_booked: 'A room you chose is already booked or occupied on those dates. Check the calendar and pick a free room.',
-    phone_required: 'Please enter the guest\'s phone number.', wa_window_closed: 'More than 24 hours since the guest last wrote, so WhatsApp does not allow a free message. Call the guest instead.', wa_send_failed: 'The WhatsApp message could not be sent. Try again.', message_required: 'Write a message first.', same_amount: 'That is already the amount.', wa_not_connected: 'WhatsApp is not connected.', bad_guests: 'Please check the number of guests.',
+    phone_required: 'Please enter the guest\'s phone number.', wa_window_closed: 'More than 24 hours since the guest last wrote, so WhatsApp does not allow a free message. Call the guest instead.', wa_send_failed: 'The WhatsApp message could not be sent. Try again.', message_required: 'Write a message first.', no_pdf: 'The bill PDF is not ready yet. Try again in a moment.', same_amount: 'That is already the amount.', wa_not_connected: 'WhatsApp is not connected.', bad_guests: 'Please check the number of guests.',
     pick_rooms: 'Choose which room numbers this booking gets.', advance_required: 'Enter the amount received. A booking is confirmed only after money is received.',
     ref_required: 'Enter the UPI or bank transaction reference number.', booking_closed: 'This booking is already closed.', no_booking: 'Booking not found.',
     not_arrival_day: 'A booking can be marked as no-show only on or after its check-in date.',
@@ -1935,20 +1935,29 @@
       };
       $('#bw', body).onclick = function () {
         if (!ph) { toast('No phone number for this guest'); return; }
-        var x = this, text = NikadiBill.billWhatsApp(billData(b));
-        if (!pdf) {
-          busy(x, true);
-          makePdf(b).then(function () { busy(x, false); x.textContent = 'PDF ready · tap to send on WhatsApp'; x.classList.add('pulse'); }, function (e) { busy(x, false); toast(errText(e)); });
-          return;
-        }
-        try { if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {}); } catch (e) {}
-        NikadiBillPdf.share(pdf, text).then(function (ok) {
-          if (ok === true) note('Shared. If WhatsApp did not add the message, paste it: it is copied.');
-          else if (ok === false) {
-            NikadiBillPdf.download(pdf);
-            window.open('https://wa.me/91' + ph + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
-            note('The PDF is downloaded and WhatsApp is open with the message. Attach the PDF (📎) in the chat and send.');
-          }
+        var x = this, text = NikadiBill.billWhatsApp(billData(b), { link: true });
+        busy(x, true); note('');
+        makePdf(b).then(function (r) {
+          if (demo) throw { message: 'wa_not_connected' };
+          return api('deskBillWhatsApp', { id: b.stay, pdf: r.base64() });
+        }).then(function (res) {
+          busy(x, false); x.textContent = 'Sent on WhatsApp ✓';
+          note('The PDF bill was sent to +91 ' + res.sentTo + ' from the guest house WhatsApp number. It also shows in the WhatsApp Business app.');
+        }, function (e) {
+          busy(x, false);
+          var why = (e && e.message) || e;
+          if (why !== 'wa_not_connected' && why !== 'wa_template_pending' && why !== 'wa_send_failed') { toast(errText(e)); return; }
+          // fallback: share from this phone (the message carries the online bill link too)
+          try { if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {}); } catch (e2) {}
+          NikadiBillPdf.share(pdf, text).then(function (ok) {
+            var pre = why === 'wa_template_pending' ? 'The guest has not written to us in the last 24 hours and the WhatsApp bill message is still waiting for Meta approval, so it could not go automatically. ' : '';
+            if (ok === true) note(pre + 'Shared from this phone. If WhatsApp did not add the message, paste it: it is copied.');
+            else if (ok === false) {
+              NikadiBillPdf.download(pdf);
+              window.open('https://wa.me/91' + ph + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+              note(pre + 'WhatsApp is open with the message and a link to the bill. The PDF is also downloaded if you want to attach it (📎).');
+            }
+          });
         });
       };
       function sched(what, x) {
@@ -2067,7 +2076,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 35</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 36</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
