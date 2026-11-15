@@ -97,6 +97,7 @@ async function nkBridgePhoto(fn, argsJson) {
       var r = await nkStore('GET', 'photos/' + id);
       if (r.ok) { var ct = r.headers.get('content-type') || 'image/jpeg', b = new Uint8Array(await r.arrayBuffer()); return 'data:' + ct + ';base64,' + nkBytesB64_(b); }
     } catch (e) {}
+    if (/^test-/.test(id)) return '';
     var url = await nkBridgeCall(fn, argsJson), m = /^data:([^;]+);base64,(.*)$/.exec(String(url || ''));
     if (m) try { await nkStore('POST', 'photos/' + id, nkB64Bytes_(m[2]), m[1]); } catch (e) {}
     return url;
@@ -105,8 +106,14 @@ async function nkBridgePhoto(fn, argsJson) {
   if (fn === 'deskSavePhoto_' && res && NK_SB_KEY) try { await nkStore('POST', 'photos/' + nkSafeId(res), nkB64Bytes_(JSON.parse(argsJson)[0]), 'image/jpeg'); } catch (e) {}
   return res;
 }
+var NK_TEST_FAKE = { // test copy: nothing reaches guests, and the real Drive records are not touched
+  nkMail_: function () { return true; }, deskSendBill_: function () { return true; }, deskTrash_: function () { return true; },
+  deskArchive_: function (a) { return a[1] || {}; }, deskStayFolder_: function (a) { return a[1] || 'test-folder'; },
+  deskSavePhoto_: function () { return 'test-' + RealDate.now().toString(36) + RealMath.random().toString(36).slice(2, 7); },
+  deskOwnBillFile_: function () { return 'test-ownbill'; }
+};
 async function nkBridgeCall(fn, argsJson) {
-  if (nkTestMode() && fn === 'nkMail_') return true; // test copy: no emails
+  if (nkTestMode() && NK_TEST_FAKE[fn]) return NK_TEST_FAKE[fn](JSON.parse(argsJson));
   var key = NK_BASE.kv['p:NK_BRIDGE_KEY'], url = NK_BASE.kv['p:NK_GOOGLE_URL'];
   if (!key || !url) throw new Error('google_not_connected');
   var r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'nkBridge', key: key, fn: fn, args: argsJson }), redirect: 'follow' });
