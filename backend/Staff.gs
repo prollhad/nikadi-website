@@ -1400,6 +1400,34 @@ function deskCore(db, hooks) {
     return p;
   }
 
+  /* Internal only (WhatsApp bot): how many rooms of each type are free for every night from `checkin` to `checkout`.
+     Counts in-house stays and confirmed bookings (assigned rooms, plus confirmed bookings still waiting for a room number). No guest data leaves. */
+  api.availability = function (req) {
+    if (!req._internal) fail('unknown_action');
+    var ci = String(req.checkin), co = String(req.checkout);
+    if (!isYmd(ci) || !isYmd(co) || dayNum(co) <= dayNum(ci)) fail('bad_dates');
+    var types = {};
+    db.all('rooms').forEach(function (r) {
+      var t = r.type || 'Deluxe Double';
+      if (!types[t]) types[t] = { type: t, beds: r.beds || '', total: 0, free: 0, rate: deskRateOn(t, ci), rates: [] };
+      types[t].total++;
+      if (!roomClash(r.room, ci, co)) types[t].free++;
+    });
+    // confirmed bookings with no room number yet still hold a room of their type
+    db.all('bookings').forEach(function (b) {
+      if (b.status !== 'Confirmed' || roomList(b.rooms).length || !overlaps(b.checkin, b.checkout, ci, co)) return;
+      var t = types[b.roomType] ? b.roomType : null;
+      var n = Math.max(1, Number(b.roomsNeeded || 1));
+      if (t) types[t].free = Math.max(0, types[t].free - n);
+      else Object.keys(types).forEach(function (k) { while (n > 0 && types[k].free > 0) { types[k].free--; n--; } });
+    });
+    Object.keys(types).forEach(function (k) {
+      var t = types[k], d = ci; t.rates = [];
+      for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { t.rates.push(deskRateOn(k, d)); d = addDays(d, 1); }
+    });
+    return { checkin: ci, checkout: co, nights: nightsBetween(ci, co), types: Object.keys(types).map(function (k) { return types[k]; }) };
+  };
+
   /* Public: the website's Advance Booking Form sends this (no login). Lands as Pending; never blocks rooms. */
   api.bookingRequest = function (req) {
     var n = Number(db.kvGet('web_bookings') || 0);
@@ -2097,7 +2125,7 @@ function deskTimerCore_() {
    They are kept in this script's private Script Properties, not in the sheet. */
 var WA_API = 'https://graph.facebook.com/v21.0/';
 function deskWaProps_() { var p = PropertiesService.getScriptProperties(); return { phoneId: p.getProperty('WA_PHONE_ID') || '', token: p.getProperty('WA_TOKEN') || '' }; }
-function deskWaReady_() { var w = deskWaProps_(); return !!(w.phoneId && w.token); }
+function deskWaReady_() { if (typeof ycReady_ === 'function' && ycReady_()) return true; var w = deskWaProps_(); return !!(w.phoneId && w.token); }
 function deskWaInfo_() { var w = deskWaProps_(); return { phoneId: w.phoneId, hasToken: !!w.token }; }
 function deskWaSave_(o) {
   var p = PropertiesService.getScriptProperties();
@@ -2115,6 +2143,7 @@ function deskWaCall_(path, opts) {
 }
 /** Sends an approved template. params fill {{1}}, {{2}}… in the body; pdf (base64) goes as the document header. */
 function deskWaSend_(template, to10, params, pdf, fileName, url, lang) {
+  if (typeof ycReady_ === 'function' && ycReady_()) return ycDeskSend_(template, to10, params, pdf, fileName, url, lang); // YCloud (same number as the phone app)
   var w = deskWaProps_(); if (!w.phoneId || !w.token) throw new Error('wa_not_connected');
   var comps = [];
   if (pdf) {

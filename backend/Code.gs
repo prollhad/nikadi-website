@@ -148,6 +148,7 @@ function doGet() {
 }
 
 function doPost(e) {
+  if (e && e.parameter && e.parameter.yc) return ycWebhook_(e); // WhatsApp (YCloud) webhook
   var req;
   try { req = JSON.parse(e.postData.contents || '{}'); } catch (err) { return json_({ ok: false, error: 'bad_request' }); }
   var actions = {
@@ -817,4 +818,367 @@ function payVerify_(req) {
     return { paid: true, amount: r[2], ref: pid };
   }
   return { paid: true, ref: pid };
+}
+
+/* ------------------------------------------------------------------ */
+/* WhatsApp: automatic assistant + staff-app messages through YCloud   */
+/* ------------------------------------------------------------------ */
+/* The number +91 75011 01137 stays on the WhatsApp Business app (coexistence) and is also connected to YCloud.
+   YCloud sends every incoming message to this script (webhook: the web app URL + ?yc=<YC_HOOK_KEY>).
+   The assistant answers booking questions by itself, checks free rooms in the staff app, takes booking requests
+   (they land in the staff app as Pending, source "WhatsApp bot") and hands over to reception when asked.
+   When reception replies from the phone, the assistant goes quiet for that guest (6 hours).
+   Script Properties: YC_API_KEY (YCloud → Developers → API keys), YC_FROM (+917501101137), YC_HOOK_KEY (made by whatsappBotSetup). */
+var YC_API = 'https://api.ycloud.com/v2/';
+var NK_PHONE_TEXT = '+91 75011 01137';
+var NK_SITE = 'https://www.nikadiguesthouse.com';
+var NK_MAP = 'https://maps.google.com/?cid=4814848157732686064';
+var NK_GEO = { latitude: 23.42668, longitude: 88.3880999, name: 'Nikadi Guest House',
+  address: 'Bhaktisiddhanta Saraswati Marg, Opp. ISKCON Gate No. 4 (Namahatta Bhavan), Mayapur, Nadia, West Bengal 741313' };
+var WA_ROOM_INFO = {
+  'Deluxe Double': { title: 'Deluxe Double', beds: 'king bed', fits: 'up to 2 adults' },
+  'Deluxe Twin': { title: 'Deluxe Twin', beds: '2 single beds', fits: 'up to 2 adults' },
+  'Large Twin': { title: 'Large Twin', beds: '2 single beds, more space', fits: 'up to 3 adults' }
+};
+
+function ycProps_() { var p = PropertiesService.getScriptProperties(); return { key: p.getProperty('YC_API_KEY') || '', from: p.getProperty('YC_FROM') || '', hook: p.getProperty('YC_HOOK_KEY') || '' }; }
+function ycReady_() { var y = ycProps_(); return !!(y.key && y.from); }
+
+/** Run once from the editor: makes the webhook secret and logs the URL to paste in YCloud → Developers → Webhooks. */
+function whatsappBotSetup() {
+  var p = PropertiesService.getScriptProperties();
+  if (!p.getProperty('YC_HOOK_KEY')) p.setProperty('YC_HOOK_KEY', Utilities.getUuid().replace(/-/g, ''));
+  if (!p.getProperty('YC_FROM')) p.setProperty('YC_FROM', '+917501101137');
+  var url = ScriptApp.getService().getUrl() + '?yc=' + p.getProperty('YC_HOOK_KEY');
+  console.log('Webhook URL for YCloud: ' + url);
+  return url;
+}
+
+function ycCall_(path, body, method) {
+  var y = ycProps_(); if (!y.key) throw new Error('yc_not_connected');
+  var r = UrlFetchApp.fetch(YC_API + path, { method: method || 'post', contentType: 'application/json', headers: { 'X-API-Key': y.key },
+    payload: body ? JSON.stringify(body) : null, muteHttpExceptions: true });
+  var j = {}; try { j = JSON.parse(r.getContentText()); } catch (e) {}
+  if (r.getResponseCode() >= 300) throw new Error('WhatsApp: ' + ((j.error && (j.error.message || j.error.whatsappApiError && j.error.whatsappApiError.message)) || 'HTTP ' + r.getResponseCode()));
+  return j;
+}
+/** One message to one number (msg is the WhatsApp message body without from/to: {type:'text', text:{body}} etc.). */
+function ycSend_(to, msg) {
+  var y = ycProps_();
+  var j = ycCall_('whatsapp/messages/sendDirectly', Object.assign({ from: y.from, to: '+91' + String(to).replace(/\D/g, '').slice(-10) }, msg));
+  return j.wamid || j.id || '';
+}
+function waText_(to, body) { return ycSend_(to, { type: 'text', text: { body: String(body).slice(0, 4000), preview_url: true } }); }
+function waButtons_(to, body, buttons, footer) {
+  var it = { type: 'button', body: { text: String(body).slice(0, 1024) },
+    action: { buttons: buttons.slice(0, 3).map(function (b) { return { type: 'reply', reply: { id: b[0], title: String(b[1]).slice(0, 20) } }; }) } };
+  if (footer) it.footer = { text: String(footer).slice(0, 60) };
+  return ycSend_(to, { type: 'interactive', interactive: it });
+}
+function waList_(to, body, button, rows, footer) {
+  var it = { type: 'list', body: { text: String(body).slice(0, 1024) }, action: { button: String(button).slice(0, 20),
+    sections: [{ title: 'Nikadi Guest House', rows: rows.slice(0, 10).map(function (r) { return { id: r[0], title: String(r[1]).slice(0, 24), description: String(r[2] || '').slice(0, 72) }; }) }] } };
+  if (footer) it.footer = { text: String(footer).slice(0, 60) };
+  return ycSend_(to, { type: 'interactive', interactive: it });
+}
+
+/* -------- Webhook -------- */
+function ycWebhook_(e) {
+  var y = ycProps_();
+  if (!y.hook || e.parameter.yc !== y.hook) return json_({ ok: false });
+  var ev; try { ev = JSON.parse(e.postData.contents || '{}'); } catch (err) { return json_({ ok: true }); }
+  var cache = CacheService.getScriptCache(), evId = 'ycev_' + (ev.id || '');
+  if (ev.id && cache.get(evId)) return json_({ ok: true }); // YCloud may deliver the same event twice
+  if (ev.id) cache.put(evId, '1', 21600);
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(25000);
+    var type = String(ev.type || '');
+    if (type === 'whatsapp.inbound_message.received' && ev.whatsappInboundMessage) waInbound_(ev.whatsappInboundMessage);
+    else if (/echo/i.test(type)) { // reception replied from the WhatsApp Business app: let them talk
+      var m = ev.whatsappMessage || ev.smbMessageEcho || ev.whatsappSmbMessageEcho || {};
+      var to = String(m.to || m.recipient || '').replace(/\D/g, '').slice(-10);
+      if (to && m.bizType !== 'api') waHuman_(to, 'staff replied from the phone');
+    }
+  } catch (err) {
+    console.error(err);
+  } finally { try { lock.releaseLock(); } catch (e2) {} }
+  return json_({ ok: true });
+}
+
+function waState_(phone) { var c = CacheService.getScriptCache().get('wast_' + phone); return c ? JSON.parse(c) : {}; }
+function waSave_(phone, st) { CacheService.getScriptCache().put('wast_' + phone, JSON.stringify(st), 21600); }
+function waHuman_(phone, why) { var st = waState_(phone); st.human = Date.now() + 6 * 3600e3; st.step = ''; st.why = why; waSave_(phone, st); }
+function waMember_(phone) {
+  try { var m = findMember_(phone); if (!m || m.status === 'Closed') return null; var t = tierOf_(m); return { name: m.name, tier: t.tier.name, pct: t.tier.discount }; } catch (e) { return null; }
+}
+function waMoney_(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+function waDd_(ymd) { var p = ymd.split('-'), M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; return +p[2] + ' ' + M[+p[1] - 1] + ' ' + p[0]; }
+function waDow_(ymd) { var p = ymd.split('-'); return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay()]; }
+
+/** "today", "tomorrow", "24 Nov", "Nov 24", "24/11", "24-11-2026", "2026-11-24" → yyyy-mm-dd (null if not a date). */
+function waParseDate_(txt, today) {
+  var s = String(txt || '').toLowerCase().trim();
+  if (/^(today|aaj|aj)\b/.test(s)) return today;
+  if (/^(tomorrow|tmrw|tmr|kal)\b/.test(s)) return addDayYmd_(today, 1);
+  if (/^day after/.test(s) || /^parso/.test(s)) return addDayYmd_(today, 2);
+  var M = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+  var y = null, mo = null, d = null, m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  else if ((m = s.match(/^(\d{1,2})\s*[\/\-.]\s*(\d{1,2})(?:\s*[\/\-.]\s*(\d{2,4}))?/))) { d = +m[1]; mo = +m[2]; if (m[3]) y = +m[3] < 100 ? 2000 + +m[3] : +m[3]; }
+  else if ((m = s.match(/^(\d{1,2})(?:st|nd|rd|th)?\s*(?:of\s*)?([a-z]{3})[a-z]*\.?(?:,?\s*(\d{4}))?/)) && M[m[2]]) { d = +m[1]; mo = M[m[2]]; if (m[3]) y = +m[3]; }
+  else if ((m = s.match(/^([a-z]{3})[a-z]*\.?\s*(\d{1,2})(?:st|nd|rd|th)?(?:,?\s*(\d{4}))?/)) && M[m[1]]) { mo = M[m[1]]; d = +m[2]; if (m[3]) y = +m[3]; }
+  else return null;
+  if (!(mo >= 1 && mo <= 12 && d >= 1 && d <= 31)) return null;
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  if (!y) { y = +today.slice(0, 4); if (y + '-' + pad(mo) + '-' + pad(d) < today) y++; }
+  var out = y + '-' + pad(mo) + '-' + pad(d);
+  if (addDayYmd_(out, 0) !== out) return null; // 31 Nov etc.
+  return out;
+}
+
+var WA_MENU_ROWS = [
+  ['m_book', '📅 Check rooms & book', 'Free rooms and prices for your dates'],
+  ['m_rooms', '🛏️ Rooms & prices', 'Our rooms, today\'s offer and member prices'],
+  ['m_loc', '📍 Location', 'Opposite ISKCON Gate No. 4, Mayapur'],
+  ['m_policy', '🕚 Check-in & refunds', 'Timings, 50% advance, refunds'],
+  ['m_member', '⭐ Membership', 'Free to join: member prices and points'],
+  ['m_talk', '📞 Talk to us', 'Call or chat with reception']
+];
+function waMenu_(to, st, hello) {
+  var mem = st.member;
+  var head = hello
+    ? 'Hare Krishna' + (st.name ? ' ' + st.name : '') + ' 🙏 Welcome to *Nikadi Guest House*, steps away from the Mayapur ISKCON Temple.' +
+      (mem ? '\nYou are a *' + mem.tier + ' member*, so you get ' + mem.pct + '% off every night.' : '') +
+      '\n\nI am the automatic assistant. I can show free rooms and prices and book your stay right here, any time.'
+    : 'How else can I help?';
+  waList_(to, head + '\n\nPlease choose 👇', 'Menu', WA_MENU_ROWS, 'Reply "menu" any time · "call" to talk to us');
+  st.step = 'menu';
+}
+
+function waInbound_(msg) {
+  var phone = String(msg.from || '').replace(/\D/g, '');
+  if (phone.length < 10 || (phone.length > 10 && phone.slice(0, 2) !== '91')) { // overseas numbers: hand to reception
+    phone = phone.slice(-15);
+  } else phone = phone.slice(-10);
+  var cache = CacheService.getScriptCache();
+  if (msg.wamid && cache.get('ycw_' + msg.wamid)) return;
+  if (msg.wamid) cache.put('ycw_' + msg.wamid, '1', 21600);
+  cache.put('ycwin_' + phone.slice(-10), String(Date.now()), 21600); // customer-service window is open: free-form messages allowed
+
+  var st = waState_(phone), text = '', choice = '';
+  if (msg.type === 'text' && msg.text) text = String(msg.text.body || '').trim();
+  else if (msg.type === 'interactive' && msg.interactive) {
+    var r = msg.interactive.button_reply || msg.interactive.list_reply || {}; choice = r.id || ''; text = r.title || '';
+  } else if (msg.type === 'button' && msg.button) text = String(msg.button.text || '');
+  var low = text.toLowerCase();
+  if (!st.name && msg.customerProfile && msg.customerProfile.name) { st.full = String(msg.customerProfile.name).replace(/[^\p{L}\p{M} .'-]/gu, '').trim().slice(0, 60); st.name = st.full.split(/\s+/)[0].slice(0, 30); }
+  if (st.member === undefined) st.member = phone.length === 10 ? waMember_(phone) : null;
+
+  var wake = /^(menu|hi+|hello|hey|hare krishna|haribol|namaste|start|bot|0)\b/.test(low);
+  if (st.human && st.human > Date.now()) {
+    if (choice === 'm_bot' || /^(menu|bot)$/.test(low)) { st.human = 0; waMenu_(phone, st, false); }
+    waSave_(phone, st); return; // reception is handling this chat
+  }
+  if (phone.length !== 10) { waText_(phone, 'Hare Krishna 🙏 Thank you for your message. Our reception will reply to you here shortly. You can also call us on ' + NK_PHONE_TEXT + '.'); waHuman_(phone, 'overseas number'); waNotify_('WhatsApp: overseas guest', phone, text); return; }
+
+  if (!choice) { // typed words
+    if (/\b(call|talk|human|person|agent|manager|reception|baat|speak)\b/.test(low)) choice = 'm_talk';
+    else if (wake && st.step !== 'date') choice = 'menu';
+    else if (!st.step || st.step === 'menu' || st.step === 'done') {
+      if (/\b(book|booking|room|rooms|available|availability|vacan|stay|night)/.test(low)) choice = 'm_book';
+      else if (/\b(price|rate|tariff|cost|charge|kitna|koto|offer)/.test(low)) choice = 'm_rooms';
+      else if (/\b(where|location|address|map|direction|reach|route)/.test(low)) choice = 'm_loc';
+      else if (/\b(check.?in|check.?out|cancel|refund|advance|policy|time)/.test(low)) choice = 'm_policy';
+      else if (/\b(member|points|card|discount)/.test(low)) choice = 'm_member';
+    }
+  }
+  if (choice === 'menu') { waMenu_(phone, st, true); waSave_(phone, st); return; }
+  if (/^m_/.test(choice)) st.step = '';
+  var today = todayIst_();
+
+  switch (choice) {
+    case 'm_book': case 'b_dates':
+      st.step = 'date'; st.ci = st.nights = st.rooms = st.type = null;
+      waButtons_(phone, '📅 When would you like to check in?\n\nTap a button, or type the date, for example *24 Nov*.', [['d_today', 'Today'], ['d_tom', 'Tomorrow'], ['d_other', 'Another date']]);
+      break;
+    case 'm_rooms': waRooms_(phone, st); break;
+    case 'm_loc':
+      ycSend_(phone, { type: 'location', location: NK_GEO });
+      waButtons_(phone, '📍 *Nikadi Guest House*\nBhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4 (Namahatta Bhavan), Mayapur, West Bengal 741313.\n\nReception is on the first floor: enter at the left corner of the building and take the stairs up, near the Mahaprabhu photo.\n\nGoogle Maps: ' + NK_MAP, [['m_book', 'Check rooms & book'], ['menu', 'Main menu'], ['m_talk', 'Talk to us']]);
+      st.step = 'menu'; break;
+    case 'm_policy':
+      waButtons_(phone, '🕚 *Check-in* from 11:00 AM · *Check-out* by 9:00 AM (early arrival or late departure when a room is free).\n\n💳 A *50% advance* holds your room; the balance is paid at check-in. Pay by UPI or bank transfer.\n\n↩️ *Cancellation*: cancel 3 or more days before check-in for a full refund of the advance. Less than 3 days before, on the day, or no-show: the advance is not refunded.\n\nFull details: ' + NK_SITE + '/#book', [['m_book', 'Check rooms & book'], ['menu', 'Main menu'], ['m_talk', 'Talk to us']]);
+      st.step = 'menu'; break;
+    case 'm_member': waMembership_(phone, st); break;
+    case 'm_talk':
+      waButtons_(phone, '📞 Please call us on *' + NK_PHONE_TEXT + '* (tap the number to call), or just write your question here.\n\nOur reception will reply to you in this chat personally. The automatic assistant is paused for now.', [['m_bot', 'Back to assistant']]);
+      waNotify_('WhatsApp: guest wants to talk', phone, 'Name: ' + (st.name || '') + (st.ci ? '\nLooking at: ' + waDd_(st.ci) + ', ' + (st.nights || '?') + ' night(s), ' + (st.rooms || '?') + ' room(s)' + (st.type ? ', ' + st.type : '') : '') + '\nLast message: ' + text);
+      waHuman_(phone, 'guest asked'); return;
+    case 'm_bot': waMenu_(phone, st, false); break;
+    case 'd_today': case 'd_tom': case 'd_other': case '':
+      if (choice === 'd_other') { st.step = 'date'; waText_(phone, 'Please type your check-in date, for example *24 Nov* or *24/11*.'); break; }
+      if (st.step === 'date') {
+        var ci = choice === 'd_today' ? today : choice === 'd_tom' ? addDayYmd_(today, 1) : waParseDate_(low, today);
+        if (!ci) { waText_(phone, 'Sorry, I could not read that date. Please type it like *24 Nov* or *24/11*.'); break; }
+        if (ci < today) { waText_(phone, 'That date has passed. Please type a check-in date from today onwards.'); break; }
+        if (ci > addDayYmd_(today, 365)) { waText_(phone, 'We take bookings up to one year ahead. Please choose an earlier date, or tap "Talk to us".'); break; }
+        st.ci = ci; st.step = 'nights';
+        waButtons_(phone, 'Check-in *' + waDow_(ci) + ', ' + waDd_(ci) + '* ✅\n\nHow many nights will you stay? Tap a button or type a number.', [['n_1', '1 night'], ['n_2', '2 nights'], ['n_3', '3 nights']]);
+        break;
+      }
+      if (st.step === 'nights' || st.step === 'rooms') { waNumberStep_(phone, st, low, today); break; }
+      waFallback_(phone, st, text); break;
+    default:
+      if (/^n_\d$/.test(choice)) { st.nights = +choice.slice(2); waAskRooms_(phone, st); break; }
+      if (/^r_\d$/.test(choice)) { st.rooms = +choice.slice(2); waAvailability_(phone, st); break; }
+      if (/^t_/.test(choice)) { st.type = choice.slice(2); waConfirm_(phone, st); break; }
+      if (choice === 'b_yes') { waBook_(phone, st); break; }
+      waFallback_(phone, st, text);
+  }
+  waSave_(phone, st);
+}
+
+function waNumberStep_(phone, st, low, today) {
+  var n = parseInt(low.replace(/[^\d]/g, ''), 10);
+  if (st.step === 'nights') {
+    if (!(n >= 1 && n <= 30)) { waText_(phone, 'Please type the number of nights, for example *2*. For stays longer than 30 nights, reply "call".'); return; }
+    st.nights = n; waAskRooms_(phone, st);
+  } else {
+    if (!(n >= 1 && n <= 11)) { waText_(phone, 'Please type how many rooms you need, from 1 to 11.'); return; }
+    st.rooms = n; waAvailability_(phone, st);
+  }
+}
+function waAskRooms_(phone, st) {
+  st.step = 'rooms';
+  waButtons_(phone, waDd_(st.ci) + ' → ' + waDd_(addDayYmd_(st.ci, st.nights)) + ' · ' + st.nights + ' night' + (st.nights > 1 ? 's' : '') + ' ✅\n\nHow many rooms do you need? Each room is for 2 adults (Large Twin: 3). Tap a button or type a number.',
+    [['r_1', '1 room'], ['r_2', '2 rooms'], ['r_3', '3 rooms']]);
+}
+
+/** Free rooms of each type from the staff app, with the price of every night for this guest. */
+function waAvailability_(phone, st) {
+  var co = addDayYmd_(st.ci, st.nights), pct = st.member ? st.member.pct : 0;
+  var av = deskCore(deskDb_()).availability({ _internal: true, checkin: st.ci, checkout: co });
+  var lines = [], rows = [], when = waDd_(st.ci) + ' → ' + waDd_(co) + ' · ' + st.nights + ' night' + (st.nights > 1 ? 's' : '') + ' · ' + st.rooms + ' room' + (st.rooms > 1 ? 's' : '');
+  st.quotes = {};
+  ['Deluxe Double', 'Deluxe Twin', 'Large Twin'].forEach(function (k) {
+    var t = av.types.filter(function (x) { return x.type === k; })[0]; if (!t || t.free < st.rooms) return;
+    var q = stayQuote_(k, st.ci, co, st.rooms, pct), std = BASE_RATES[k === 'Deluxe Double' ? 'Deluxe Double (King)' : k] * st.nights * st.rooms;
+    var info = WA_ROOM_INFO[k], perNight = Math.round(q.total / q.nights / st.rooms);
+    var was = std > q.total ? '~' + waMoney_(std) + '~ ' : '';
+    lines.push('🛏️ *' + info.title + '* (' + info.beds + ', ' + info.fits + ')\n   ' + was + '*' + waMoney_(q.total) + '* total · ' + waMoney_(perNight) + '/night' + (t.free <= 2 ? ' · only ' + t.free + ' left' : ''));
+    rows.push(['t_' + k, info.title, waMoney_(q.total) + ' total · ' + waMoney_(perNight) + ' a night']);
+    st.quotes[k] = { total: q.total, perNight: perNight, offer: q.offer, rates: q.rates };
+  });
+  if (!rows.length) {
+    st.step = 'menu';
+    waButtons_(phone, '🙏 Sorry, we are full for ' + when + '.\n\nTry other dates, or talk to us: sometimes a room frees up.', [['b_dates', 'Change dates'], ['m_talk', 'Talk to us'], ['menu', 'Main menu']]);
+    waNotify_('WhatsApp: guest found no free room', phone, 'Name: ' + (st.name || '') + '\nWanted: ' + when);
+    return;
+  }
+  var any = st.quotes[Object.keys(st.quotes)[0]];
+  var note = (any.offer ? '🎉 *' + any.offer + '* prices' : 'Prices') + (st.member ? ', with your *' + st.member.tier + ' member* ' + st.member.pct + '% off' : '') + '.';
+  rows.push(['b_dates', 'Change dates', 'Pick other dates'], ['m_talk', 'Talk to us', 'Call or chat with reception']);
+  st.step = 'pick';
+  waList_(phone, '✨ Rooms free for *' + when + '*:\n\n' + lines.join('\n\n') + '\n\n' + note + (st.member ? '' : '\n💡 Members pay 5–20% less: reply "member" to know more.') + '\n\nTap *Choose room* to book.', 'Choose room', rows);
+}
+
+function waConfirm_(phone, st) {
+  var q = st.quotes && st.quotes[st.type];
+  if (!st.ci || !q) { waText_(phone, 'Sorry, that choice has expired. Let us check again.'); return waAvailability_(phone, st); }
+  var co = addDayYmd_(st.ci, st.nights), adv = Math.round(q.total / 2);
+  st.step = 'confirm';
+  waButtons_(phone, '📝 *Your booking request*\n\n' +
+    '👤 ' + (st.full || st.name || 'Guest') + ' · ' + phone + '\n' +
+    '🛏️ ' + st.rooms + ' × ' + st.type + '\n' +
+    '📅 ' + waDow_(st.ci) + ' ' + waDd_(st.ci) + ' → ' + waDow_(co) + ' ' + waDd_(co) + ' (' + st.nights + ' night' + (st.nights > 1 ? 's' : '') + ')\n' +
+    '💰 Total *' + waMoney_(q.total) + '* · 50% advance ' + waMoney_(adv) + ' after we confirm\n\n' +
+    'Tap *Book it* and reception will confirm your room in this chat.', [['b_yes', '✅ Book it'], ['b_dates', 'Change dates'], ['m_talk', 'Talk to us']]);
+}
+
+function waBook_(phone, st) {
+  var q = st.quotes && st.quotes[st.type];
+  if (!st.ci || !q) { waText_(phone, 'Sorry, that request expired. Reply "book" to start again.'); st.step = 'menu'; return; }
+  var co = addDayYmd_(st.ci, st.nights), av = deskCore(deskDb_()).availability({ _internal: true, checkin: st.ci, checkout: co });
+  var t = av.types.filter(function (x) { return x.type === st.type; })[0];
+  if (!t || t.free < st.rooms) { waText_(phone, 'Sorry, that room was just taken. Here is what is free now:'); return waAvailability_(phone, st); }
+  var mixed = q.rates.some(function (x) { return x !== q.rates[0]; });
+  var r = deskCore(deskDb_()).bookingRequest({ _internal: true, source: 'WhatsApp bot', rate: q.perNight, guest: st.full || st.name || 'WhatsApp guest', phone: phone,
+    guests: st.rooms * (st.type === 'Large Twin' ? 3 : 2), roomsNeeded: st.rooms, roomType: st.type, checkin: st.ci, checkout: co,
+    notes: ['Booked on WhatsApp (automatic assistant). Guest count not asked: please confirm.', st.member ? st.member.tier + ' member · ' + st.member.pct + '% off' : '',
+      q.offer ? q.offer + ' price' : '', mixed ? 'nightly ₹' + q.rates.join(', ₹') + ' (average ₹' + q.perNight + ')' : '₹' + q.perNight + ' a night', 'quoted total ₹' + q.total].filter(Boolean).join(' · ') });
+  st.step = 'done'; st.booking = r.id;
+  waButtons_(phone, '🙏 Thank you' + (st.name ? ' ' + st.name : '') + '! Your request *' + r.id + '* has reached our reception.' + (r.duplicate ? ' (We already had this request.)' : '') + '\n\n' +
+    'Next steps:\n1️⃣ Reception checks and confirms your room in this chat.\n2️⃣ You pay the 50% advance (' + waMoney_(Math.round(q.total / 2)) + ') by UPI. Your room is then held for you.\n3️⃣ Pay the balance at check-in, from 11:00 AM.\n\n' +
+    'Want to talk to us? Call *' + NK_PHONE_TEXT + '*.', [['m_talk', '📞 Talk to us'], ['menu', 'Main menu']]);
+  waNotify_('New WhatsApp booking request ' + r.id, phone, 'Name: ' + (st.name || '') + '\n' + st.rooms + ' × ' + st.type + ', ' + waDd_(st.ci) + ' → ' + waDd_(co) + ' (' + st.nights + ' nights)\nQuoted total ₹' + q.total +
+    (st.member ? '\nMember: ' + st.member.tier : '') + '\n\nOpen the staff app → Bookings to confirm. Reply to the guest on WhatsApp with the UPI details.');
+}
+
+function waRooms_(phone, st) {
+  var today = todayIst_(), per = ratePeriod_(today), pct = st.member ? st.member.pct : 0;
+  var line = function (k, kind) {
+    var std = BASE_RATES[k === 'Deluxe Double' ? 'Deluxe Double (King)' : k], r = per[kind], m = Math.round(r * (100 - pct) / 100), i = WA_ROOM_INFO[k];
+    return '🛏️ *' + i.title + '*: ' + i.beds + ', ' + i.fits + '\n   ' + (std > m ? '~' + waMoney_(std) + '~ ' : '') + '*' + waMoney_(m) + '* a night';
+  };
+  waButtons_(phone, '✨ *Our rooms*: air conditioning, private bathroom with geyser, Wi-Fi 24/7 and TV.\n\n' +
+    line('Deluxe Double', 'double') + '\n' + line('Deluxe Twin', 'twin') + '\n' + line('Large Twin', 'double') + '\n\n' +
+    (per.offer ? '🎉 *' + per.offer + '*' + (st.member ? ' + your ' + st.member.pct + '% member discount' : '') + '.\n' : st.member ? 'Your ' + st.member.pct + '% member discount is included.\n' : '') +
+    'Prices can change by date; I show the exact price for your dates when you check rooms.\n\nPhotos: ' + NK_SITE + '/#rooms', [['m_book', 'Check rooms & book'], ['menu', 'Main menu'], ['m_talk', 'Talk to us']]);
+  st.step = 'menu';
+}
+
+function waMembership_(phone, st) {
+  var tiers = TIERS.map(function (t) { return '⭐ *' + t.name + '*' + (t.nights ? ' (' + t.nights + ' nights)' : ' (on joining)') + ': ' + t.discount + '% off every night'; }).join('\n');
+  waButtons_(phone, (st.member ? 'You are a *' + st.member.tier + ' member* 🎉 Your discount is applied automatically when you book here.\n\n' : '⭐ *Nikadi Membership* is free. Members get a lower price on every night, points on every stay, and birthday gifts.\n\n') +
+    tiers + '\n\n' + (st.member ? 'Your points and card: ' : 'Join in one minute: ') + NK_SITE + '/app/' + (st.member ? '' : '?join=1'),
+    [['m_book', 'Check rooms & book'], ['menu', 'Main menu']]);
+  st.step = 'menu';
+}
+
+function waFallback_(phone, st, text) {
+  if (st.step === 'pick' || st.step === 'confirm') { waText_(phone, 'Please tap one of the buttons above, or reply "menu" to start again, or "call" to talk to us.'); return; }
+  if (st.step === 'done') { // after a request, anything typed is for reception
+    waNotify_('WhatsApp message after booking ' + (st.booking || ''), phone, text);
+    waButtons_(phone, 'Thank you, I have passed your message to reception. They will reply here shortly.', [['m_talk', '📞 Talk to us'], ['menu', 'Main menu']]); return;
+  }
+  waMenu_(phone, st, !st.greeted); st.greeted = true;
+}
+
+function waNotify_(subject, phone, body) {
+  var s = settings_(); if (!s.OWNER_EMAIL) return;
+  try { MailApp.sendEmail(String(s.OWNER_EMAIL), subject, 'Guest WhatsApp: +91 ' + phone + '\nOpen chat: https://wa.me/91' + phone + '\n\n' + body); } catch (e) { console.error(e); }
+}
+
+/* -------- Staff-app messages (welcome, membership, booking confirmed, bill) through YCloud --------
+   Inside the 24-hour window after the guest's last message, a plain message is sent (free, no template needed).
+   Otherwise the approved template is used. */
+var WA_TEXTS = {
+  nikadi_welcome: 'Hare Krishna {1} 🙏 Welcome to Nikadi Guest House!\nYour room is {2}, from {3} to {4}. Check-out is by 9:00 AM.\nReception is on the first floor: enter at the left corner of the building and take the stairs up, near the Mahaprabhu photo.\nFor anything you need, just reply here or call +91 75011 01137.',
+  nikadi_membership: 'Hare Krishna {1} 🙏 Thank you for choosing Nikadi Guest House.\nJoin the free Nikadi Membership and get 100 welcome points:\n⭐ Silver (on joining): 5% off every stay, 1 point per ₹100, birthday points\n⭐ Gold (15 nights in 2 years): 10% off, 1.5 points per ₹100, early check-in\n⭐ Platinum (40 nights in 2 years): 15% off, 2 points per ₹100, late check-out till 11 AM, free room upgrade, free dental kit\n⭐ Platinum Plus (100 nights, kept for 10 years): 20% off, 4 points per ₹100, late check-out till 12 noon, free extra mattress, festival booking priority\nJoin before you check out and this stay counts too: {2}',
+  nikadi_booking_confirmed: 'Hare Krishna {1} 🙏 Your booking {2} at Nikadi Guest House is confirmed: {3} room(s), {4} to {5}. Advance received: {6}.\nCheck-in from 11:00 AM, check-out by 9:00 AM. Cancel 3 or more days before check-in for a full refund; after that the advance is not refundable.\nReception: first floor, left corner of the building, near the Mahaprabhu photo. Questions: +91 75011 01137.',
+  nikadi_bill: 'Dear {1}, thank you so much for staying with us at Nikadi Guest House. Your bill {2} is attached as a PDF. Total {3} (incl. GST), {4}.\nWe hope your time in Sri Dham Mayapur was peaceful and full of blessings, and we will be happy to welcome you again.'
+};
+function ycUploadPdf_(pdf, fileName) {
+  var y = ycProps_();
+  var blob = Utilities.newBlob(Utilities.base64Decode(pdf), 'application/pdf', fileName || 'bill.pdf');
+  var r = UrlFetchApp.fetch(YC_API + 'whatsapp/media/' + encodeURIComponent(y.from) + '/upload', { method: 'post', headers: { 'X-API-Key': y.key }, payload: { file: blob }, muteHttpExceptions: true });
+  var j = {}; try { j = JSON.parse(r.getContentText()); } catch (e) {}
+  if (r.getResponseCode() >= 300 || !j.id) throw new Error('WhatsApp: PDF upload failed (HTTP ' + r.getResponseCode() + ')');
+  return j.id;
+}
+function ycDeskSend_(template, to10, params, pdf, fileName, url, lang) {
+  to10 = String(to10).replace(/\D/g, '').slice(-10);
+  var open = Number(CacheService.getScriptCache().get('ycwin_' + to10) || 0) > Date.now() - 23 * 3600e3;
+  var media = pdf ? ycUploadPdf_(pdf, fileName) : null;
+  if (template === 'nikadi_bill' && !pdf) throw new Error('no_pdf');
+  if (open && WA_TEXTS[template]) {
+    var body = WA_TEXTS[template].replace(/\{(\d)\}/g, function (_, i) { return params && params[i - 1] != null ? String(params[i - 1]) : ''; });
+    if (media) return ycSend_(to10, { type: 'document', document: { id: media, filename: fileName || 'bill.pdf', caption: body.slice(0, 1024) } });
+    return waText_(to10, body);
+  }
+  var comps = [];
+  if (media) comps.push({ type: 'header', parameters: [{ type: 'document', document: { id: media, filename: fileName || 'bill.pdf' } }] });
+  if (params && params.length) comps.push({ type: 'body', parameters: params.map(function (t) { return { type: 'text', text: String(t) }; }) });
+  return ycSend_(to10, { type: 'template', template: { name: template, language: { code: lang || 'en' }, components: comps } });
 }

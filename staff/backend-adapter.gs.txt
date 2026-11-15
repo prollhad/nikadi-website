@@ -111,7 +111,7 @@ function deskTimerCore_() {
    They are kept in this script's private Script Properties, not in the sheet. */
 var WA_API = 'https://graph.facebook.com/v21.0/';
 function deskWaProps_() { var p = PropertiesService.getScriptProperties(); return { phoneId: p.getProperty('WA_PHONE_ID') || '', token: p.getProperty('WA_TOKEN') || '' }; }
-function deskWaReady_() { var w = deskWaProps_(); return !!(w.phoneId && w.token); }
+function deskWaReady_() { if (typeof ycReady_ === 'function' && ycReady_()) return true; var w = deskWaProps_(); return !!(w.phoneId && w.token); }
 function deskWaInfo_() { var w = deskWaProps_(); return { phoneId: w.phoneId, hasToken: !!w.token }; }
 function deskWaSave_(o) {
   var p = PropertiesService.getScriptProperties();
@@ -129,6 +129,7 @@ function deskWaCall_(path, opts) {
 }
 /** Sends an approved template. params fill {{1}}, {{2}}… in the body; pdf (base64) goes as the document header. */
 function deskWaSend_(template, to10, params, pdf, fileName, url, lang) {
+  if (typeof ycReady_ === 'function' && ycReady_()) return ycDeskSend_(template, to10, params, pdf, fileName, url, lang); // YCloud (same number as the phone app)
   var w = deskWaProps_(); if (!w.phoneId || !w.token) throw new Error('wa_not_connected');
   var comps = [];
   if (pdf) {
