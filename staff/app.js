@@ -183,6 +183,7 @@
       $('#lp').textContent = 'Checking…';
       api('deskLogin', { pin: pin, device: deviceName() }).then(function (r) {
         S.token = r.token; S.me = r.me; nkStore(TK, r.token); nkStore(MK, JSON.stringify(r.me)); S.tab = 'rooms'; start();
+        if (r.me.role !== 'Owner') { var tk = r.token; publicIp().then(function (ip) { return api('deskPresence', { token: tk, ip: ip, device: deviceName(), ev: 'login' }); }).catch(function () {}); }
       }, function (e) { going = false; pin = ''; dots(); $('#lp').textContent = errText(e); var d = $('#dots'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); vibrate(); });
     }
     $('#pad').addEventListener('click', function (e) {
@@ -202,7 +203,11 @@
   }
 
   function logout(expired) {
-    if (!expired && S.token) api('deskLogout').catch(function () {});
+    if (!expired && S.token) {
+      var tk = S.token, who = S.me;
+      (who && who.role !== 'Owner' ? publicIp().then(function (ip) { return api('deskPresence', { token: tk, ip: ip, device: deviceName(), ev: 'logout' }); }).catch(function () {}) : Promise.resolve())
+        .then(function () { return api('deskLogout', { token: tk }); }).catch(function () {});
+    }
     S.token = null; S.me = null; S.st = null; nkStore(TK, null); nkStore(MK, null);
     renderLogin(expired ? 'Please log in again' : 'Logged out');
   }
@@ -2282,10 +2287,15 @@
       b.onclick = function () {
         var k = b.dataset.ex.split('|'), r = rows.filter(function (x) { return x.date === k[0] && x.name === k[1]; })[0]; if (!r) return;
         var sb = openSheet('Exit · ' + r.name + ' · ' + dShort(r.date)), cur = r.exitSet || '';
-        sb.innerHTML = '<p class="small">Came in at <b>' + esc(clock(r.first)) + '</b>. Pick the real exit from their last ' + (r.choices.length > 1 ? r.choices.length + ' records' : 'record') + ' that day (app opens and work entered).</p>' +
-          '<div class="list">' + r.choices.map(function (c) {
+        function exList(title, list, none) {
+          return '<h3 class="own-h">' + esc(title) + '</h3>' + (list && list.length ? '<div class="list">' + list.map(function (c) {
             return '<button type="button" class="bl bl-btn ex-pick' + (cur === c.at ? ' on' : '') + '" data-at="' + esc(c.at) + '"><span class="t"><b>' + esc(clock(c.at)) + '</b><small>' + esc(c.dev || '') + ' · worked ' + dur(hm(r.first, c.at)) + '</small></span><span class="a">' + (cur === c.at ? '✓ chosen' : 'Use this') + '</span></button>';
-          }).join('') + '</div>' +
+          }).join('') + '</div>' : '<p class="small">' + esc(none) + '</p>');
+        }
+        sb.innerHTML = '<p class="small">Came in at <b>' + esc(clock(r.first)) + '</b>. Pick the real exit time.</p>' +
+          exList('Last 3 log-outs on the guest house PC', r.outs, 'No log-out recorded that day.') +
+          exList('Last 3 log-ins on the guest house PC', r.ins, 'No log-in recorded that day.') +
+          exList('Other records that day (app opens, work entered)', r.choices, 'Nothing else recorded.') +
           (cur ? '<button type="button" class="btn btn-quiet" id="ex-auto">Go back to automatic (last app open ' + esc(clock(r.autoLast)) + ')</button>' : '') +
           '<p class="err" id="exerr" role="alert"></p>';
         function setExit(at, x) {
@@ -2308,7 +2318,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 41</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 42</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
