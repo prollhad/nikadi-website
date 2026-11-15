@@ -932,6 +932,21 @@ function whatsappCreateTemplates() {
   return out;
 }
 
+/** Saves a guest's WhatsApp photo / PDF (payment screenshot) to Drive: "Nikadi WhatsApp Payments / yyyy-MM". Returns the file id. */
+function waSaveMedia_(media, type, phone, name) {
+  var y = ycProps_(), url = media.link || media.url;
+  if (!url && media.id) { var j = ycCall_('whatsapp/media/' + encodeURIComponent(media.id), null, 'get'); url = j.url || j.link; }
+  if (!url) return '';
+  var r = UrlFetchApp.fetch(url, { headers: { 'X-API-Key': y.key }, muteHttpExceptions: true });
+  if (r.getResponseCode() >= 300) throw new Error('media download ' + r.getResponseCode());
+  var mime = media.mime_type || (type === 'image' ? 'image/jpeg' : 'application/pdf');
+  var ext = /pdf/.test(mime) ? '.pdf' : /png/.test(mime) ? '.png' : '.jpg';
+  var month = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM'), stamp = Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd MMM HH.mm');
+  var folder = deskPhotoFolder_(month, 'Nikadi WhatsApp Payments');
+  var blob = r.getBlob().setContentType(mime).setName(stamp + ' · ' + (name || '').replace(/[^\w .-]+/g, '') + ' · ' + phone + (media.filename ? ' · ' + String(media.filename).slice(0, 40) : '') + ext);
+  return folder.createFile(blob).getId();
+}
+
 /* -------- Webhook -------- */
 function ycWebhook_(e) {
   var y = ycProps_();
@@ -949,7 +964,10 @@ function ycWebhook_(e) {
       var m = ev.whatsappMessage || ev.smbMessageEchoes || ev.whatsappSmbMessageEchoes || ev.smbMessageEcho || {};
       if (!m.to) Object.keys(ev).forEach(function (k) { if (ev[k] && typeof ev[k] === 'object' && ev[k].to && !m.to) m = ev[k]; });
       var to = String(m.to || m.recipient || '').replace(/\D/g, '').slice(-10);
-      if (to && m.bizType !== 'api') waHuman_(to, 'staff replied from the phone');
+      if (to && m.bizType !== 'api') {
+        waHuman_(to, 'staff replied from the phone');
+        try { deskCore(deskDb_()).waSeen({ _internal: true, phone: to, text: m.text && m.text.body || (m.type && m.type !== 'text' ? '[' + m.type + ']' : '') }); } catch (e) {}
+      }
     }
   } catch (err) {
     console.error(err);
@@ -1027,6 +1045,26 @@ function waInbound_(msg) {
   if (!st.name && msg.customerProfile && msg.customerProfile.name) { st.full = String(msg.customerProfile.name).replace(/[^\p{L}\p{M} .'-]/gu, '').trim().slice(0, 60); st.name = st.full.split(/\s+/)[0].slice(0, 30); }
   if (st.member === undefined) st.member = phone.length === 10 ? waMember_(phone) : null;
 
+  /* file every message in the staff app's WhatsApp lists; photos / PDFs (payment screenshots) are saved to Drive */
+  var human = !!(st.human && st.human > Date.now()), media = msg.image || msg.document || null, logged = null;
+  if (media && media.caption && !text) text = String(media.caption).trim();
+  if (phone.length === 10) {
+    var fileId = '';
+    if (media) { try { fileId = waSaveMedia_(media, msg.type, phone, st.full || st.name || ''); } catch (e) { console.error(e); } }
+    try {
+      logged = deskCore(deskDb_(), { memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null }).waIn({ _internal: true, phone: phone, name: st.full || '',
+        text: text || (msg.type === 'interactive' ? '' : msg.type !== 'text' ? '[' + msg.type + ']' : ''), file: fileId, type: media ? msg.type : msg.type === 'interactive' ? 'button' : msg.type,
+        mime: media ? media.mime_type || '' : '', wamid: msg.wamid || '', attention: human || (!choice && st.step === 'done') });
+    } catch (e) { console.error(e); }
+    if (media && logged && logged.proof && !human) {
+      var bk = logged.booking;
+      waButtons_(phone, '🙏 Thank you' + (st.name ? ' ' + st.name : '') + '! We have received your ' + (msg.type === 'image' ? 'photo' : 'file') + (bk ? ' for booking *' + bk.id + '*' : '') + '.\n\n' +
+        (bk ? 'Reception will check the payment and confirm your room here shortly.' : 'Our reception will look at it and reply here shortly.'), [['m_talk', '📞 Talk to us'], ['menu', 'Main menu']]);
+      waNotify_((bk ? 'Payment screenshot · booking ' + bk.id : 'WhatsApp photo / file') + ' from ' + (st.full || phone), phone, 'Open the staff app → WhatsApp → Advance paid to see it and confirm the booking.');
+      st.step = 'done'; waSave_(phone, st); return;
+    }
+  }
+
   var wake = /^(menu|hi+|hello|hey|hare krishna|haribol|namaste|start|bot|0)\b/.test(low);
   if (st.human && st.human > Date.now()) {
     if (choice === 'm_bot' || /^(menu|bot)$/.test(low)) { st.human = 0; waMenu_(phone, st, false); }
@@ -1066,6 +1104,7 @@ function waInbound_(msg) {
     case 'm_talk':
       waButtons_(phone, '📞 Please call us on *' + NK_PHONE_TEXT + '* (tap the number to call), or just write your question here.\n\nOur reception will reply to you in this chat personally. The automatic assistant is paused for now.', [['m_bot', 'Back to assistant']]);
       waNotify_('WhatsApp: guest wants to talk', phone, 'Name: ' + (st.name || '') + (st.ci ? '\nLooking at: ' + waDd_(st.ci) + ', ' + (st.nights || '?') + ' night(s), ' + (st.rooms || '?') + ' room(s)' + (st.type ? ', ' + st.type : '') : '') + '\nLast message: ' + text);
+      try { deskCore(deskDb_()).waMark({ _internal: true, phone: phone, important: 'Wants to talk to reception', unread: true }); } catch (e) {}
       waHuman_(phone, 'guest asked'); return;
     case 'm_bot': waMenu_(phone, st, false); break;
     case 'd_today': case 'd_tom': case 'd_other': case '':
@@ -1160,6 +1199,7 @@ function waBook_(phone, st) {
     notes: ['Booked on WhatsApp (automatic assistant). Guest count not asked: please confirm.', st.member ? st.member.tier + ' member · ' + st.member.pct + '% off' : '',
       q.offer ? q.offer + ' price' : '', mixed ? 'nightly ₹' + q.rates.join(', ₹') + ' (average ₹' + q.perNight + ')' : '₹' + q.perNight + ' a night', 'quoted total ₹' + q.total].filter(Boolean).join(' · ') });
   st.step = 'done'; st.booking = r.id;
+  try { deskCore(deskDb_()).waMark({ _internal: true, phone: phone, unread: true }); } catch (e) {}
   waButtons_(phone, '🙏 Thank you' + (st.name ? ' ' + st.name : '') + '! Your request *' + r.id + '* has reached our reception.' + (r.duplicate ? ' (We already had this request.)' : '') + '\n\n' +
     'Next steps:\n1️⃣ Reception checks and confirms your room in this chat.\n2️⃣ You pay the 50% advance (' + waMoney_(Math.round(q.total / 2)) + ') by UPI. Your room is then held for you.\n3️⃣ Pay the balance at check-in, from 11:00 AM.\n\n' +
     'Want to talk to us? Call *' + NK_PHONE_TEXT + '*.', [['m_talk', '📞 Talk to us'], ['menu', 'Main menu']]);

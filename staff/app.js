@@ -202,6 +202,7 @@
 
   /* ---------- shell: side menu on computers, tabs at the bottom on phones ---------- */
   var ICON = {
+    whatsapp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 20.5l1.3-4A8.5 8.5 0 1 1 8 19.6z"/><path d="M9 8.6c.2-.6.6-.7.9-.7h.5c.2 0 .4.1.5.4l.7 1.6c.1.2 0 .5-.1.6l-.5.6c.6 1.2 1.6 2.2 2.8 2.8l.6-.5c.2-.2.4-.2.6-.1l1.6.7c.3.1.4.3.4.5v.5c0 .3-.1.7-.7.9-.9.4-2.6.4-4.7-1.4-2-1.8-2.7-3.6-2.6-4.8z"/></svg>',
     idcopy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="5" width="19" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M5 16.5c.6-1.6 2-2.4 3.5-2.4s2.9.8 3.5 2.4M14.5 10h4.5M14.5 13.5h3.5"/></svg>',
     expenses: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/><path d="M7 6V4h10v2"/></svg>',
     commission: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M17 7v6M14.5 9.5h3.2a1.3 1.3 0 0 1 0 2.6H16"/></svg>',
@@ -219,17 +220,17 @@
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies' };
+  var NAMES = { today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies', whatsapp: 'WhatsApp' };
   function navFor(desk) {
     if (!mgr()) return ['rooms', 'housekeeping', 'add', 'stock', 'calendar'];
-    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'attendance', 'settings'] : []);
+    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'whatsapp', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock'].concat(owner() ? ['reports', 'attendance', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
   function badge(t) {
     if (!S.st) return '';
     var n = t === 'bookings' ? S.st.pending : t === 'stock' ? (S.st.toBuy || []).length : t === 'today' ? (S.st.arrivals || []).length
-      : t === 'approvals' ? (S.st.approvals || S.st.myRequests || 0) : t === 'more' ? (S.st.approvals || S.st.myRequests || 0) : 0;
+      : t === 'approvals' ? (S.st.approvals || S.st.myRequests || 0) : t === 'whatsapp' ? (S.st.waNew || 0) : t === 'more' ? (S.st.approvals || S.st.myRequests || 0) + (S.st.waNew || 0) : 0;
     return n ? '<em class="badge">' + n + '</em>' : '';
   }
   function nav() {
@@ -240,7 +241,7 @@
   }
   function go(tab) {
     closeAllSheetsQuiet();
-    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; if (tab === 'expenses') EXP.data = null; if (tab === 'commission') COM.data = null; if (tab === 'idcopy') { IDC.stay = null; IDC.list = null; } nav(); render(); window.scrollTo(0, 0);
+    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; if (tab === 'expenses') EXP.data = null; if (tab === 'commission') COM.data = null; if (tab === 'idcopy') { IDC.stay = null; IDC.list = null; } if (tab === 'whatsapp') WA.list = null; nav(); render(); window.scrollTo(0, 0);
     if (tab === 'calendar' || tab === 'bookings') loadExtra();
   }
 
@@ -260,7 +261,7 @@
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission', 'idcopy'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission', 'idcopy', 'whatsapp'].indexOf(S.tab) < 0) S.tab = 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -275,7 +276,7 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy }[S.tab] || viewRooms)(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, whatsapp: viewWhatsApp }[S.tab] || viewRooms)(v);
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -289,7 +290,7 @@
       Date.now() - viewTouched < 180000 || (S.tab === 'idcopy' && IDC.stay) || ['add', 'settings'].indexOf(S.tab) >= 0 && Date.now() - viewTouched < 600000;
   }
   setInterval(function () {
-    if (S.token && !document.hidden && !busyTyping()) { refresh(); if (S.tab === 'calendar' || S.tab === 'bookings') loadExtra(); }
+    if (S.token && !document.hidden && !busyTyping()) { refresh(); if (S.tab === 'calendar' || S.tab === 'bookings') loadExtra(); if (S.tab === 'whatsapp') waLoad(); }
   }, 30000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden && S.token && S.st && !busyTyping()) refresh(); });
 
@@ -547,6 +548,74 @@
     $('#idq', v).onsubmit = function (e) { e.preventDefault(); IDC.q = this.querySelector('input').value.trim(); IDC.list = null; render(); };
     $('#idfree', v).onclick = function () { IDC.stay = { id: 'free' }; render(); };
     $$('[data-sid]', v).forEach(function (b) { b.onclick = function () { var x = L.filter(function (y) { return y.id === b.dataset.sid; })[0]; IDC.stay = x; render(); }; });
+  }
+
+  /* ---------- WhatsApp: guest chats filed into 4 lists ---------- */
+  var WA = { list: null, tab: 'new' };
+  var WA_TABS = [['new', 'New enquiry'], ['paid', 'Advance paid'], ['in', 'Checked in'], ['member', 'Member']];
+  function waLoad() { return api('deskWaChats', {}).then(function (r) { WA.list = r.chats; if (S.tab === 'whatsapp' && !document.querySelector('.sheet')) render(); }, function (e) { toast(errText(e)); }); }
+  function waWhen(t) { if (!t) return ''; return String(t).slice(0, 10) === S.st.today ? String(t).slice(11, 16) : dShort(String(t).slice(0, 10)); }
+  function viewWhatsApp(v) {
+    if (!WA.list) { v.innerHTML = '<div><p class="kicker">Front desk</p><h1>WhatsApp</h1></div><div class="loading">Loading…</div>'; waLoad(); return; }
+    var L = WA.list, cnt = {}, hot = {};
+    WA_TABS.forEach(function (t) { cnt[t[0]] = 0; hot[t[0]] = 0; });
+    L.forEach(function (c) { c.lists.forEach(function (k) { cnt[k]++; if (c.unread || c.important) hot[k]++; }); });
+    var rows = L.filter(function (c) { return c.lists.indexOf(WA.tab) >= 0; });
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Guest chats on +91 75011 01137 · filed automatically</p><h1>WhatsApp</h1></div><button class="refresh" id="warf" type="button">Refresh</button></div>' +
+      '<div class="wa-tabs" role="tablist">' + WA_TABS.map(function (t) {
+        return '<button type="button" role="tab" data-wt="' + t[0] + '" aria-selected="' + (WA.tab === t[0]) + '"><span>' + t[1] + '</span><b>' + cnt[t[0]] + '</b>' + (hot[t[0]] ? '<i class="wa-dot blink" aria-label="needs attention"></i>' : '') + '</button>';
+      }).join('') + '</div>' +
+      (rows.length ? '<div class="list wa-list">' + rows.map(function (c) {
+        return '<button type="button" class="bl bl-btn wa-row' + (c.important ? ' imp' : c.unread ? ' unread' : '') + '" data-ph="' + esc(c.phone) + '">' +
+          '<span class="t"><b>' + esc(c.name || ('+91 ' + c.phone)) + (c.stay ? ' · Room ' + esc(c.stay.room) : '') + '</b>' +
+          (c.important ? '<em class="wa-imp blink">⚠ ' + esc(c.important) + '</em>' : '') +
+          '<small>' + esc(c.lastText || '') + '</small>' +
+          '<small class="wa-meta">' + (c.name ? '+91 ' + esc(c.phone) + ' · ' : '') + (c.booking ? 'Booking ' + esc(c.booking.id) + ' · ' + esc(c.booking.status) + ' · ' + esc(dShort(c.booking.checkin)) : 'No booking') + '</small></span>' +
+          '<span class="a wa-a"><span class="wa-time">' + esc(waWhen(c.last)) + '</span>' + (c.unread ? '<span class="wa-count blink">' + c.unread + '</span>' : '') + '</span></button>';
+      }).join('') + '</div>' : '<p class="small">No chats in this list right now.</p>') +
+      '<p class="small">Chats are filed by themselves: <b>New enquiry</b> (no paid booking yet) · <b>Advance paid</b> (advance received, or a payment screenshot sent for a booking) · <b>Checked in</b> (staying now) · <b>Member</b> (Nikadi members). Blinking = unread or needs checking. Opening a chat marks it read.</p>';
+    $('#warf', v).onclick = function () { refresh(this); waLoad(); };
+    $$('[data-wt]', v).forEach(function (b) { b.onclick = function () { WA.tab = b.dataset.wt; render(); }; });
+    $$('[data-ph]', v).forEach(function (b) { b.onclick = function () { openWaChat(b.dataset.ph); }; });
+  }
+  function openWaChat(ph) {
+    var body = openSheet('WhatsApp chat');
+    body.innerHTML = '<div class="loading">Loading…</div>';
+    api('deskWaChat', { phone: ph }).then(function (r) {
+      var c = r.chat, bk = c.booking;
+      var h = '<div class="hrow"><div><p class="kicker">' + c.lists.map(function (k) { return WA_TABS.filter(function (t) { return t[0] === k; })[0][1]; }).join(' · ') + '</p><h2 style="font-size:1.7rem">' + esc(c.name || '+91 ' + c.phone) + '</h2><p class="small">+91 ' + esc(c.phone) + (c.member ? ' · ' + esc(c.member.tier) + ' member' : '') + '</p></div></div>';
+      if (c.important) h += '<div class="note wa-note"><b>⚠ Needs attention</b>' + esc(c.important) + '</div>';
+      if (c.proof) h += '<div class="wa-proof"><p class="kicker">Payment screenshot · ' + esc(tShort(c.proof.at)) + '</p>' + (c.proof.data ? '<img id="wa-img" alt="Payment screenshot" src="' + c.proof.data + '">' : '<a class="linkbtn" target="_blank" rel="noopener" href="https://drive.google.com/file/d/' + esc(c.proof.file) + '/view">Open the file in Google Drive →</a>') + '</div>';
+      if (bk) h += '<div class="bl"><span class="t"><b>Booking ' + esc(bk.id) + ' · ' + esc(bk.status) + '</b><small>' + esc(dShort(bk.checkin)) + ' → ' + esc(dShort(bk.checkout)) + ' · advance ' + inr(bk.advancePaid || 0) + ' of ' + inr(bk.advanceDue || 0) + '</small></span><span class="a"><button class="btn btn-line sm" type="button" id="wa-bk">' + (bk.status === 'Pending' ? 'Confirm booking' : 'Open') + '</button></span></div>';
+      if (c.stay) h += '<button class="linkbtn" type="button" id="wa-st">Staying in room ' + esc(c.stay.room) + ' →</button>';
+      h += '<div class="btns"><a class="btn btn-gold" href="https://wa.me/91' + esc(c.phone) + '" target="_blank" rel="noopener">Open chat in WhatsApp</a>' +
+        (c.important ? '<button class="btn btn-line" type="button" id="wa-done">' + (c.proof ? 'Payment checked ✓' : 'Done ✓') + '</button>' : '') +
+        '<button class="btn btn-quiet" type="button" id="wa-unr">Mark unread</button></div>';
+      h += '<h3 class="wa-h">Messages</h3><div class="wa-msgs">' + (c.msgs.length ? c.msgs.map(function (m) {
+        var mine = m.dir !== 'Guest';
+        return '<div class="wa-msg' + (mine ? ' me' : '') + '"><span>' + (m.file ? '<button type="button" class="wa-file" data-file="' + esc(m.file) + '" data-type="' + esc(m.type) + '">' + (m.type === 'image' ? '📷 Photo' : '📄 File') + ' · tap to see</button>' : '') + esc(m.text && m.text.charAt(0) !== '[' ? m.text : '') + '</span><small>' + esc(mine ? m.dir : 'Guest') + ' · ' + esc(tShort(m.at)) + '</small></div>';
+      }).join('') : '<p class="small">No messages saved yet.</p>') + '</div>' +
+        '<p class="small">Replies by the automatic assistant are not listed here. Reply to the guest in the WhatsApp Business app.</p>';
+      body.innerHTML = h;
+      var img = $('#wa-img', body); if (img) img.onclick = function () { waBig(img.src); };
+      if ($('#wa-bk', body)) $('#wa-bk', body).onclick = function () { closeSheet(); openBooking(bk.id); };
+      if ($('#wa-st', body)) $('#wa-st', body).onclick = function () { closeSheet(); openRoom(c.stay.room); };
+      if ($('#wa-done', body)) $('#wa-done', body).onclick = function () { var b = this; busy(b, true); api('deskWaDone', { phone: c.phone }).then(function () { toast('Marked as checked'); closeSheet(); refresh(); waLoad(); }, function (e) { busy(b, false); toast(errText(e)); }); };
+      $('#wa-unr', body).onclick = function () { api('deskWaMark', { phone: c.phone, unread: true }).then(function () { toast('Marked unread'); closeSheet(); refresh(); waLoad(); }); };
+      $$('[data-file]', body).forEach(function (b) { b.onclick = function () {
+        if (b.dataset.type !== 'image') { window.open('https://drive.google.com/file/d/' + b.dataset.file + '/view', '_blank'); return; }
+        busy(b, true); api('deskWaPhoto', { file: b.dataset.file }).then(function (x) { busy(b, false); waBig(x.data); }, function (e) { busy(b, false); toast(errText(e)); });
+      }; });
+      refresh();
+    }, function (e) { body.innerHTML = '<div class="note"><b>Could not load</b>' + esc(errText(e)) + '</div>'; });
+  }
+  function waBig(src) {
+    var ov = document.createElement('div'); ov.className = 'idc-view';
+    ov.innerHTML = '<div class="idc-view-top"><b>Photo from WhatsApp</b><span class="idc-view-st"></span><button type="button" class="idc-x" aria-label="Close">✕</button></div><div class="idc-view-pic"><img alt="Photo" src="' + src + '"></div>';
+    document.body.appendChild(ov);
+    var pic = ov.querySelector('.idc-view-pic');
+    ov.querySelector('img').onclick = function () { pic.classList.toggle('zoom'); };
+    ov.querySelector('.idc-x').onclick = function () { ov.remove(); };
   }
 
   /* ---------- Expenses (front desk) ---------- */
@@ -1935,11 +2004,11 @@
 
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
-    var list = [['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['idcopy', 'ID copies', 'Guest ID / passport copies for each room, print on A4'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
+    var list = [['whatsapp', 'WhatsApp', 'Guest chats: new enquiries, advance paid, checked in, members'], ['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['idcopy', 'ID copies', 'Guest ID / passport copies for each room, print on A4'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 30</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 31</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

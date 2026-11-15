@@ -3,7 +3,8 @@
    Demo PINs: 1111 Owner · 2222 Reception (Manager) · 3333 Housekeeping (Staff) */
 (function (root) {
   var DEMO_PHOTOS = {}; // demo: bill photos only kept until the page reloads
-  var KEY = 'nikadi-staff-demo-v8';
+  DEMO_PHOTOS['demo-proof'] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='360' height='640'><rect width='360' height='640' fill='#f4f6fb'/><rect width='360' height='110' fill='#5f259f'/><text x='180' y='70' font-family='Arial' font-size='22' fill='#fff' text-anchor='middle'>Payment successful</text><circle cx='180' cy='200' r='46' fill='#22a45d'/><path d='M158 200l15 15 30-30' stroke='#fff' stroke-width='8' fill='none'/><text x='180' y='300' font-family='Arial' font-size='40' font-weight='bold' fill='#111' text-anchor='middle'>₹7,500</text><text x='180' y='340' font-family='Arial' font-size='16' fill='#555' text-anchor='middle'>Paid to Nikadi Projects Pvt Ltd</text><text x='180' y='380' font-family='Arial' font-size='14' fill='#777' text-anchor='middle'>UPI ref 431298776512</text><text x='180' y='600' font-family='Arial' font-size='12' fill='#999' text-anchor='middle'>Demo screenshot</text></svg>");
+  var KEY = 'nikadi-staff-demo-v9';
 
   function memoryDb(data) {
     return {
@@ -75,6 +76,12 @@
     api.pay({ token: rc, id: r3.id, amount: 6000, method: 'UPI', ref: 'UPI 220011998877', note: 'Balance' });
     api.refund({ token: rc, id: r3.id, amount: 770, method: 'Cash', reason: 'Guest overpaid by UPI, returning the extra in cash' });
     void w1;
+    // sample WhatsApp chats (the real app files them from the WhatsApp connection)
+    api.waIn({ _internal: true, phone: '9845012345', name: 'Priya Nair', text: 'Hi, is a room free on ' + ymd(5) + ' for 3 people?', attention: true });
+    api.waIn({ _internal: true, phone: '9811199887', name: 'Rohit Sen', text: 'What is the price for 2 nights next weekend?', attention: true });
+    api.waIn({ _internal: true, phone: '9812345678', name: 'John Smith', text: 'Advance sent, screenshot attached', file: 'demo-proof', type: 'image', mime: 'image/png' });
+    api.waIn({ _internal: true, phone: '9876543210', name: 'Radha Devi Sharma', text: 'Can we get 2 more towels please?', attention: true });
+    api.waIn({ _internal: true, phone: '9444012345', name: 'Lakshmi Venkatesh', text: 'We will reach by 1 PM' });
     // a year of past stays and payments, so the owner's Sales report has something to show
     (function () {
       var now = ist0(), y = now.getUTCFullYear(), mNow = now.getUTCMonth(), seedN = 7;

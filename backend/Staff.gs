@@ -90,6 +90,10 @@ var DESK_SCHEMA = {
   archive: { sheet: 'Drive records (system)', lazy: true, hidden: true, cols: [['stay', 'Stay ID'], ['cin', 'Check-in (filed under)', 's'], ['folder', 'Stay folder (Drive ID)', 's'], ['details', 'Stay details file', 's'],
     ['key', 'Details version (system)', 's'], ['bill', 'Bill file', 's'], ['billAt', 'Bill PDF saved', 's'], ['notes', 'Night notes (system)', 's'], ['dirty', 'To update', 's'], ['at', 'Last saved', 't'], ['error', 'Last error']] },
   wa: { sheet: 'WhatsApp messages', lazy: true, cols: [['id', 'ID'], ['at', 'Made', 't'], ['sendAt', 'Send at', 't'], ['to', 'To', 's'], ['name', 'Guest'], ['kind', 'Message'], ['ref', 'Stay / booking'], ['status', 'Status'], ['info', 'Details']] },
+  wachats: { sheet: 'WhatsApp chats', lazy: true, cols: [['phone', 'Phone', 's'], ['name', 'Name on WhatsApp'], ['first', 'First message', 't'], ['last', 'Last message', 't'],
+    ['lastText', 'Last message text'], ['unread', 'Unread', 'n'], ['important', 'Important (why)'], ['proof', 'Payment screenshot (Drive file ID)', 's'], ['proofType', 'Screenshot type', 's'], ['proofAt', 'Screenshot at', 't'],
+    ['readBy', 'Last read by'], ['readAt', 'Last read at', 't']] },
+  wamsgs: { sheet: 'WhatsApp inbox', lazy: true, cols: [['at', 'Time', 't'], ['phone', 'Phone', 's'], ['dir', 'From'], ['text', 'Message'], ['file', 'Photo / file (Drive file ID)', 's'], ['type', 'Type', 's'], ['wamid', 'WhatsApp ID (system)', 's']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   stocklog: { sheet: 'Stock log', cols: [['at', 'Date', 't'], ['item', 'Item'], ['change', 'Change', 'n'], ['left', 'Left', 'n'], ['reason', 'Reason'], ['room', 'Room'], ['by', 'By']] },
   staff: { sheet: 'Staff', cols: [['name', 'Name'], ['pin', 'PIN', 's'], ['role', 'Role'], ['active', 'Active']] },
@@ -712,6 +716,7 @@ function deskCore(db, hooks) {
       stocklog: db.all('stocklog').slice(-15).reverse(),
       toBuy: items.filter(function (i) { return i.track && Number(i.stock) < Number(i.low); }).map(function (i) { return { item: i.item, stock: i.stock, low: i.low, buy: Math.max(1, Number(i.low) * 2 - Number(i.stock)) }; }),
       pending: bks.filter(function (b) { return b.status === 'Pending'; }).length,
+      waNew: mgr ? db.all('wachats').filter(function (c) { return Number(c.unread) > 0 || c.important; }).length : 0,
       arrivals: bks.filter(function (b) { return b.status === 'Confirmed' && b.checkin <= t; }).map(function (b) { return bookingView(b, me); }) };
     if (mgr) {
       var pays = db.all('payments').filter(function (p) { return String(p.at).slice(0, 10) === t && p.method !== FROM_ADV && !p.voided; });
@@ -1408,6 +1413,87 @@ function deskCore(db, hooks) {
     return p;
   }
 
+  /* ---------------- WhatsApp inbox: the four lists (New enquiry · Advance paid · Checked in · Member) ----------------
+     Every guest message comes in through the WhatsApp connection (backend Code.gs) and is filed here. */
+  function waPhone(p) { var d = String(p || '').replace(/\D/g, ''); return d.length > 10 && d.slice(0, 2) === '91' ? d.slice(-10) : d.length === 10 ? d : d; }
+  function waOpenBooking(ph) {
+    var t = today(), list = db.all('bookings').filter(function (b) { return String(b.phone) === ph && (b.status === 'Pending' || b.status === 'Confirmed') && b.checkout >= t; });
+    return list.length ? list[list.length - 1] : null;
+  }
+  /* internal: a guest wrote to us (text, photo or file). Returns the open booking so the reply can mention it. */
+  api.waIn = function (req) {
+    if (!req._internal) fail('unknown_action');
+    var ph = waPhone(req.phone); if (!ph) fail('phone_required');
+    var txt = text(req.text, 500), at = stamp(), file = text(req.file, 120), type = text(req.type, 20) || 'text';
+    db.add('wamsgs', { at: at, phone: ph, dir: 'Guest', text: txt || (file ? '[' + type + ']' : ''), file: file, type: type, wamid: text(req.wamid, 120) });
+    var c = find('wachats', 'phone', ph), b = waOpenBooking(ph);
+    var proof = !!file && /image|document/.test(type);
+    var p = { last: at, lastText: (proof ? (type === 'image' ? '📷 Photo' : '📄 File') + (txt ? ': ' : '') : '') + txt, unread: (c ? Number(c.unread) || 0 : 0) + (req.attention || (file && /image|document/.test(type)) ? 1 : 0) };
+    if (req.name) p.name = text(req.name, 60);
+    if (proof) { p.proof = file; p.proofType = text(req.mime, 60) || type; p.proofAt = at; p.important = b ? 'Payment screenshot for booking ' + b.id + ' · check it' : 'Photo / file received · check it'; }
+    if (c) db.set('wachats', c, p); else db.add('wachats', Object.assign({ phone: ph, name: '', first: at, important: '', proof: '', proofType: '', proofAt: '', readBy: '', readAt: '' }, p));
+    return { booking: b ? { id: b.id, status: b.status, checkin: b.checkin } : null, proof: proof };
+  };
+  /* internal: reception replied from the phone → the chat is seen */
+  api.waSeen = function (req) {
+    if (!req._internal) fail('unknown_action');
+    var c = find('wachats', 'phone', waPhone(req.phone)); if (!c) return {};
+    db.add('wamsgs', { at: stamp(), phone: c.phone, dir: 'Reception (phone)', text: text(req.text, 500), file: '', type: 'reply', wamid: '' });
+    db.set('wachats', c, { unread: 0, readBy: 'Reply from phone', readAt: stamp(), last: stamp(), lastText: '↩ ' + (text(req.text, 120) || 'Reply sent') });
+    return {};
+  };
+  function waLists(c) {
+    var ph = String(c.phone), t = today(), out = [];
+    var stay = db.all('stays').filter(function (x) { return String(x.phone) === ph && x.status === 'In house'; })[0];
+    var bk = waOpenBooking(ph), paid = bk && bk.status === 'Confirmed' && Number(bk.advancePaid || 0) > 0;
+    if (stay) out.push('in');
+    else if (paid || (c.proof && bk)) out.push('paid');
+    else out.push('new');
+    if (memberOf(ph)) out.push('member');
+    return { lists: out, stay: stay ? { id: stay.id, room: stay.room } : null, booking: bk ? { id: bk.id, status: bk.status, checkin: bk.checkin, checkout: bk.checkout, advancePaid: bk.advancePaid, advanceDue: bk.advanceDue } : null };
+  }
+  api.waChats = function (req) {
+    var me = auth(req); needMgr(me);
+    var since = addDays(today(), -60);
+    var list = db.all('wachats').filter(function (c) { return String(c.last).slice(0, 10) >= since || Number(c.unread) > 0 || c.important; }).map(function (c) {
+      var l = waLists(c);
+      return { phone: c.phone, name: c.name, last: c.last, lastText: c.lastText, unread: Number(c.unread) || 0, important: c.important || '', proof: !!c.proof,
+        lists: l.lists, stay: l.stay, booking: l.booking };
+    }).sort(function (a, b) { return (b.important ? 1 : 0) - (a.important ? 1 : 0) || (b.unread > 0) - (a.unread > 0) || (a.last < b.last ? 1 : -1); });
+    return { chats: list };
+  };
+  api.waChat = function (req) {
+    var me = auth(req); needMgr(me);
+    var c = find('wachats', 'phone', waPhone(req.phone)) || fail('not_found');
+    var msgs = db.all('wamsgs').filter(function (m) { return String(m.phone) === String(c.phone); }).slice(-30).map(function (m) { return { at: m.at, dir: m.dir, text: m.text, file: m.file, type: m.type }; });
+    if (Number(c.unread)) db.set('wachats', c, { unread: 0, readBy: me.name, readAt: stamp() });
+    var l = waLists(c), mem = memberOf(c.phone);
+    var o = { phone: c.phone, name: c.name, important: c.important || '', lists: l.lists, stay: l.stay, booking: l.booking, msgs: msgs,
+      member: mem ? { tier: mem.tier, name: mem.name } : null, proof: c.proof ? { file: c.proof, type: c.proofType, at: c.proofAt } : null };
+    if (c.proof && req.photo !== false && hooks.getPhoto && /image/.test(c.proofType || 'image')) { try { o.proof.data = hooks.getPhoto(c.proof); } catch (e) {} }
+    return { chat: o };
+  };
+  api.waPhoto = function (req) {
+    var me = auth(req); needMgr(me);
+    if (!hooks.getPhoto) fail('photos_unavailable');
+    var f = text(req.file, 120), ok = db.all('wamsgs').some(function (m) { return m.file === f; }); if (!ok) fail('not_found');
+    return { data: hooks.getPhoto(f) };
+  };
+  /* reception checked the screenshot / dealt with it */
+  api.waDone = function (req) {
+    var me = auth(req); needMgr(me);
+    var c = find('wachats', 'phone', waPhone(req.phone)) || fail('not_found');
+    db.set('wachats', c, { important: '', unread: 0, readBy: me.name, readAt: stamp() });
+    return {};
+  };
+  api.waMark = function (req) { // flag a chat as important / unread again (also used by the WhatsApp assistant)
+    if (!req._internal) needMgr(auth(req));
+    var c = find('wachats', 'phone', waPhone(req.phone)) || fail('not_found');
+    var p = {}; if (req.important) p.important = text(req.important, 120); if (req.unread) p.unread = Math.max(1, Number(c.unread) || 0);
+    db.set('wachats', c, p);
+    return {};
+  };
+
   /* Internal only (WhatsApp bot): how many rooms of each type are free for every night from `checkin` to `checkout`.
      Counts in-house stays and confirmed bookings (assigned rooms, plus confirmed bookings still waiting for a room number). No guest data leaves. */
   api.availability = function (req) {
@@ -1517,6 +1603,7 @@ function deskCore(db, hooks) {
     db.add('payments', { id: id('P'), at: stamp(), stay: '', room: rooms.join(', '), amount: amt, method: req.method, note: 'Booking advance', by: me.name, booking: b.id, ref: ref });
     recomputeBooking(b);
     if (waReady()) waQueue('booking', b.phone, b.guest, b.id);
+    var wc = find('wachats', 'phone', String(b.phone || '')); if (wc && wc.important) db.set('wachats', wc, { important: '', readBy: me.name, readAt: stamp() }); // advance checked
     return { booking: bookingView(b, me) };
   };
 
