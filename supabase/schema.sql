@@ -133,7 +133,7 @@ create or replace function public.nk_reset()
 returns void language plpgsql security definer set search_path = public as $$
 begin
   if exists (select 1 from kv where k = 'p:NK_MODE' and v = 'live') then raise exception 'live_database'; end if;
-  delete from records; delete from table_versions; delete from records_archive; delete from change_log;
+  delete from records where true; delete from table_versions where true; delete from records_archive where true; delete from change_log where true;
 end $$;
 revoke all on function public.nk_reset from anon, authenticated, public;
 grant execute on function public.nk_reset to service_role;
