@@ -1656,7 +1656,10 @@ function deskCore(db, hooks) {
     if (req.status === 'Ready') { if (r.status !== 'Needs cleaning') fail('bad_status'); }
     else if (req.status === 'Needs cleaning') { if (r.status !== 'Ready') fail('bad_status'); }
     else fail('bad_status');
-    if (req.status === 'Ready') {
+    if (req.status === 'Ready' && req.asIs) { // "Back to ready": the room was not used, nothing to clean (front desk only)
+      needMgr(me);
+      db.add('service', { id: id('H'), date: today(), room: r.room, stay: '', items: 'Back to ready without cleaning (room not used)' + (req.note ? ' · ' + text(req.note, 120) : ''), by: me.name, at: stamp(), charges: '', undone: '' });
+    } else if (req.status === 'Ready') {
       var checks = hkCheck(DESK_HK_OUT, req.check);
       hkLinen(DESK_HK_OUT, req.check, r.room, me.name);
       db.add('service', { id: id('H'), date: today(), room: r.room, stay: '', items: 'Check-out cleaning · ' + checks.join(', '), by: me.name, at: stamp(), charges: '', undone: '' });
