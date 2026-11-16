@@ -36,7 +36,7 @@
 </div>
 
 <script src="../pricing.js"></script>
-<script src="core.js?v=18"></script>
+<script src="core.js?v=19"></script>
 <script src="demo.js"></script>
 <script>
 (function(){
@@ -73,13 +73,13 @@
   function cardHTML(m,ghost){
     var pts=m?m.points:0,val=Math.floor(pts/S.cfg.discountPoints)*S.cfg.discountValue,tk=m&&m.tierKey?m.tierKey:'silver';
     if(m&&!ghost)return '<div class="mcard art tier-'+tk+'" role="img" aria-label="'+nkEsc(m.firstName)+'\'s '+nkEsc(m.tier||'Silver')+' membership card, '+pts+' points">'+
-      '<div class="mc-bot"><div><div class="mc-name">'+nkEsc(m.name||m.firstName)+'</div><div class="mc-id">+91 '+nkEsc(m.masked)+'</div></div>'+
+      '<div class="mc-bot"><div><div class="mc-name">'+nkEsc(m.name||m.firstName)+'</div><div class="mc-id">'+nkEsc(nkMasked(m.masked))+'</div></div>'+
       '<div class="mc-ptsr"><b>'+pts.toLocaleString('en-IN')+'</b><span>points</span><small>'+(val>0?'Worth '+nkInr(val)+' off':(m.tierKey==='plus'&&m.plusUntil?'Plus until '+nkEsc(m.plusUntil):'Keep earning'))+'</small></div></div></div>';
     return '<div class="mcard tier-'+(ghost?'ghost':tk)+(ghost?' ghost':'')+'" role="img" aria-label="'+(m?nkEsc(m.firstName)+'\'s '+nkEsc(m.tier||'Silver')+' membership card, '+pts+' points':'Nikadi membership card')+'">'+
       '<div class="mc-top"><span class="mc-brand">NIKADI</span><span class="mc-tier">'+(m?nkEsc(m.tier||'Silver'):'Member')+'</span></div>'+
       '<div class="mc-mid"><div class="mc-pts"><b>'+(m?pts.toLocaleString('en-IN'):'—')+'</b><span>points</span></div>'+
       (m?'<span class="mc-val">'+(val>0?'Worth '+nkInr(val)+' off your next stay':'Keep earning to unlock rewards')+'</span>':'<span class="mc-val">Join free to get '+S.cfg.welcome+' welcome points</span>')+'</div>'+
-      '<div class="mc-bot"><div><div class="mc-name">'+(m?nkEsc(m.name||m.firstName):'Your name')+'</div><div class="mc-id">'+(m?'+91 '+nkEsc(m.masked):'+91 ••••• •••••')+'</div></div>'+
+      '<div class="mc-bot"><div><div class="mc-name">'+(m?nkEsc(m.name||m.firstName):'Your name')+'</div><div class="mc-id">'+(m?nkEsc(nkMasked(m.masked)):'+91 ••••• •••••')+'</div></div>'+
       '<div class="mc-since">'+(m&&m.tierKey==='plus'&&m.plusUntil?'Platinum Plus<br>until '+nkEsc(m.plusUntil):m&&m.joined?'Member since<br>'+nkEsc(String(m.joined).replace(/,.*$/,'')):'Sri Dham<br>Mayapur')+'</div></div></div>';
   }
   function tierProgress(m){
@@ -147,7 +147,7 @@
     box.onclick=function(e){var b=e.target.closest('[data-lvl]');if(!b)return;box.innerHTML=benefitsHTML(b.dataset.lvl,mine);};
   }
 
-  function phoneField(id,label){return '<label class="field"><span>'+label+'</span><div class="phonewrap"><span class="cc">+91</span><input class="input" id="'+id+'" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" placeholder="10-digit mobile number"></div></label>';}
+  function phoneField(id,label){return '<label class="field"><span>'+label+'</span>'+nkPhoneHtml(id,'',' placeholder="Mobile number"')+'<span class="small">Change +91 for a number from another country.</span></label>';}
   function pwField(id,label,auto){return '<label class="field"><span>'+label+'</span><div class="pwwrap"><input class="input" id="'+id+'" type="password" autocomplete="'+(auto||'current-password')+'" maxlength="64"><button type="button" class="pwshow" data-for="'+id+'" aria-label="Show password">Show</button></div></label>';}
   function wirePw(){document.querySelectorAll('.pwshow').forEach(function(b){b.onclick=function(){var i=$(b.dataset.for);var on=i.type==='password';i.type=on?'text':'password';b.textContent=on?'Hide':'Show';};});}
   function signedIn(r,msg){S.token=r.token;nkStore('nk_token',r.token);S.member=r.member;S.history=r.history||[];S.stays=r.stays||{stays:[],bookings:[]};dash('card');if(msg)toast(msg);}
@@ -172,9 +172,9 @@
     $('goJoin').onclick=function(){join();};wireInstall();wirePw();
     view.querySelectorAll('[data-rung]').forEach(function(r){r.onclick=function(){levelsScreen(r.dataset.rung);};});
     $('seeLevels').onclick=function(){levelsScreen('silver');};
-    $('forgot').onclick=function(){passFlow(nkPhoneOk($('lgPhone').value)||'');};
+    $('forgot').onclick=function(){passFlow(nkPhoneOk(nkPhoneVal('lgPhone'))||'');};
     $('loginForm').onsubmit=function(e){
-      e.preventDefault();var p=nkPhoneOk($('lgPhone').value),pw=$('lgPw').value,err=$('lgErr'),b=$('lgBtn');err.textContent='';
+      e.preventDefault();var p=nkPhoneOk(nkPhoneVal('lgPhone')),pw=$('lgPw').value,err=$('lgErr'),b=$('lgBtn');err.textContent='';
       if(!p){err.textContent=nkError('invalid_phone');return;}
       if(!pw){err.textContent='Please enter your password.';return;}
       busy(b,true);
@@ -200,12 +200,12 @@
       '<div id="psStep" hidden><label class="field"><span>6-digit code</span><input class="input otp" id="psCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"></label><p class="small" id="psTo"></p>'+
       pwField('psPw','New password (at least 6 characters)','new-password')+'</div>'+
       '<p class="err" id="psErr"></p><button class="btn btn-gold" id="psBtn" type="submit">Email me a code</button></form>');
-    wirePw();if(prefill)$('psPhone').value=prefill;
+    wirePw();if(prefill)nkPhoneSet('psPhone',prefill);
     var phone='',step=1;
     $('pwForm').onsubmit=function(e){
       e.preventDefault();var err=$('psErr'),b=$('psBtn');err.textContent='';
       if(step===1){
-        phone=nkPhoneOk($('psPhone').value);if(!phone){err.textContent=nkError('invalid_phone');return;}
+        phone=nkPhoneOk(nkPhoneVal('psPhone'));if(!phone){err.textContent=nkError('invalid_phone');return;}
         busy(b,true);
         nkApi('passStart',{phone:phone}).then(function(r){busy(b,false);step=2;$('psStep').hidden=false;$('psPhone').readOnly=true;$('psTo').textContent='Code sent to '+r.to+'. It is valid for 10 minutes.';b.textContent='Save password and log in';$('psCode').focus();},
           function(c){busy(b,false);err.textContent=nkError(c);});
@@ -233,11 +233,11 @@
       '<label class="check"><input type="checkbox" id="jAgree"> I agree to the Nikadi Membership terms. Points are earned on room tariff paid and added after check-out.</label>'+
       '<p class="err" id="jErr"></p><button class="btn btn-gold" id="jBtn" type="submit">Join and get '+S.cfg.welcome+' points</button></form>'+
       '<p class="small" style="text-align:center">Already a member? <a href="#" id="toLogin" style="color:var(--gold-hi)">Log in</a></p>');
-    wirePw();if(typeof prefill==='string')$('jPhone').value=prefill;
+    wirePw();if(typeof prefill==='string')nkPhoneSet('jPhone',prefill);
     $('toLogin').onclick=function(e){e.preventDefault();home();};
     $('joinForm').onsubmit=function(e){
       e.preventDefault();var err=$('jErr'),b=$('jBtn');err.textContent='';
-      var d={name:$('jName').value.trim(),phone:nkPhoneOk($('jPhone').value),email:$('jEmail').value.trim(),password:$('jPw').value,city:$('jCity').value.trim(),dob:$('jDob').value};
+      var d={name:$('jName').value.trim(),phone:nkPhoneOk(nkPhoneVal('jPhone')),email:$('jEmail').value.trim(),password:$('jPw').value,city:$('jCity').value.trim(),dob:$('jDob').value};
       if(d.name.length<2)return err.textContent=nkError('name_required');
       if(!d.phone)return err.textContent=nkError('invalid_phone');
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email))return err.textContent='Please enter your email address.';

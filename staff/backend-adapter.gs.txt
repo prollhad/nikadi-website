@@ -290,7 +290,7 @@ function deskWaSend_(template, to10, params, pdf, fileName, url, lang) {
     comps.push({ type: 'header', parameters: [{ type: 'document', document: { id: media.id, filename: fileName || 'bill.pdf' } }] });
   } else if (template === 'nikadi_bill') throw new Error('no_pdf');
   if (params && params.length) comps.push({ type: 'body', parameters: params.map(function (t) { return { type: 'text', text: String(t) }; }) });
-  var body = { messaging_product: 'whatsapp', to: '91' + String(to10).replace(/\D/g, '').slice(-10), type: 'template',
+  var body = { messaging_product: 'whatsapp', to: phoneIntl_(to10).slice(1), type: 'template',
     template: { name: template, language: { code: lang || 'en' }, components: comps } };
   var j = deskWaCall_(w.phoneId + '/messages', { method: 'post', contentType: 'application/json', payload: JSON.stringify(body) });
   return j.messages && j.messages[0] ? j.messages[0].id : '';

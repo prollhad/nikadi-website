@@ -868,7 +868,7 @@ footer .brand b{font-size:1.2rem}
           <p class="po-sub">UPI, cards, netbanking or wallets, through Razorpay. You get a receipt by SMS and email, and we see your payment straight away.</p>
           <div class="po-grid">
             <label>Your name<input id="poName" autocomplete="name" required></label>
-            <label>Mobile<input id="poPhone" type="tel" inputmode="numeric" autocomplete="tel" required></label>
+            <label>Mobile<input id="poPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="98765 43210 · other countries: +44 …" required></label>
             <label>Amount (₹)<input id="poAmt" type="number" min="100" inputmode="numeric" required></label>
             <label>Booking ref. / dates<small>Optional</small><input id="poNote" maxlength="120" placeholder="e.g. 20–22 Dec, Deluxe Double"></label>
           </div>
@@ -1475,7 +1475,7 @@ footer .brand b{font-size:1.2rem}
       <h2 id="sdTitle" style="margin-top:8px">Sign in to see your price</h2>
       <p style="margin-top:8px">Members save 5–20% on every night, even on offer rates. Sign in once and your price shows everywhere on this website.</p>
       <form id="sdForm" style="display:grid;gap:14px;margin-top:18px" novalidate>
-        <label>Mobile number<input id="sdPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10-digit mobile number" required></label>
+        <label>Mobile number<input id="sdPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="98765 43210 · other countries: +44 …" required></label>
         <label>Password<input id="sdPass" type="password" autocomplete="current-password" required></label>
         <p class="err" id="sdErr" aria-live="polite"></p>
         <button class="btn btn-gold" type="submit" id="sdGo">Sign in</button>
@@ -1495,6 +1495,7 @@ footer .brand b{font-size:1.2rem}
   </div>
 </div>
 <script src="pricing.js"></script>
+<script>function nkPh(v){var s=String(v||'').trim(),d=s.replace(/\D/g,'');if(!d)return '';var i=/^(\+|00)/.test(s);if(i&&s.charAt(0)==='0')d=d.slice(2);if(i){if(d.indexOf('91')===0&&/^[6-9]\d{9}$/.test(d.slice(2)))return d.slice(2);return d.length>=8&&d.length<=15&&d.indexOf('91')!==0?d:'';}if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);if(d.length===11&&d.charAt(0)==='0')d=d.slice(1);if(/^[6-9]\d{9}$/.test(d))return d;return d.length>=11&&d.length<=15&&d.charAt(0)!=='0'&&d.indexOf('91')!==0?d:'';}</script>
 <script>
 /* ---- Offer prices (from pricing.js) + member sign-in across the whole website ---- */
 (function(){
@@ -1563,7 +1564,7 @@ footer .brand b{font-size:1.2rem}
 
   /* sign-in dialog */
   var dlg=$('signDlg'), last=null;
-  var ERR={invalid_phone:'Please enter your 10-digit mobile number.',not_member:'This number is not a member yet. Join free to get member prices.',no_password:'Please set your password first in the membership app (tap “Forgot password or first time?”).',wrong_password:'Wrong password. Please try again.',too_many_attempts:'Too many wrong attempts. Please wait 15 minutes.',network:'No connection. Please check your internet.'};
+  var ERR={invalid_phone:'Please check your mobile number (other countries: start with + and the country code).',not_member:'This number is not a member yet. Join free to get member prices.',no_password:'Please set your password first in the membership app (tap “Forgot password or first time?”).',wrong_password:'Wrong password. Please try again.',too_many_attempts:'Too many wrong attempts. Please wait 15 minutes.',network:'No connection. Please check your internet.'};
   function open(){last=document.activeElement;var m=window.NK_MEMBER;$('sdIn').hidden=!!m;$('sdOut').hidden=!m;
     if(m){$('sdName').textContent=m.name;$('sdTier').textContent=m.tier+' member · '+m.discount+'% off every night'+(m.points?' · '+Number(m.points).toLocaleString('en-IN')+' points':'');
       $('sdSave').textContent='Tonight you pay '+inr(R.memberRate(P.double,m.discount))+' for a Deluxe Double and '+inr(R.memberRate(P.twin,m.discount))+' for a Deluxe Twin.';}
@@ -1574,8 +1575,8 @@ footer .brand b{font-size:1.2rem}
   dlg.addEventListener('click',function(e){if(e.target===dlg||e.target.closest('[data-close]'))close();});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dlg.hidden)close();});
   $('sdForm').addEventListener('submit',function(e){
-    e.preventDefault();var b=$('sdGo'),ph=$('sdPhone').value.replace(/\D/g,'').slice(-10),pw=$('sdPass').value;
-    if(!/^[6-9]\d{9}$/.test(ph)){$('sdErr').textContent=ERR.invalid_phone;return;}
+    e.preventDefault();var b=$('sdGo'),ph=nkPh($('sdPhone').value),pw=$('sdPass').value;
+    if(!ph){$('sdErr').textContent=ERR.invalid_phone;return;}
     if(!pw){$('sdErr').textContent='Please enter your password.';return;}
     $('sdErr').textContent='';b.disabled=true;b.textContent='Signing in…';
     api('login',{phone:ph,password:pw}).then(function(r){store('nk_token',r.token);setMember(r.member);$('sdPass').value='';b.disabled=false;b.textContent='Sign in';open();},
@@ -1604,17 +1605,17 @@ footer .brand b{font-size:1.2rem}
   ['ci','co','rm','gu'].forEach(function(id){var el=$(id);if(el)el.addEventListener('change',function(){if(cfg)prefill();});});
   $('poAmt').addEventListener('input',function(){this.dataset.manual='1';});
   $('poNote').addEventListener('input',function(){this.dataset.manual='1';});
-  var ERR={pay_bad_amount:'Please enter an amount between ₹100 and ₹3,00,000.',name_required:'Please enter your name.',invalid_phone:'Please enter a valid 10-digit mobile number.',pay_failed:'The payment could not start. Please try again or pay by UPI below.',network:'No connection. Please check your internet.',pay_unverified:'We could not confirm the payment. If money was taken, send us the Razorpay receipt on WhatsApp.'};
+  var ERR={pay_bad_amount:'Please enter an amount between ₹100 and ₹3,00,000.',name_required:'Please enter your name.',invalid_phone:'Please check the mobile number (other countries: start with + and the country code).',pay_failed:'The payment could not start. Please try again or pay by UPI below.',network:'No connection. Please check your internet.',pay_unverified:'We could not confirm the payment. If money was taken, send us the Razorpay receipt on WhatsApp.'};
   function loadRzp(){return new Promise(function(ok,no){if(window.Razorpay)return ok();var sc=document.createElement('script');sc.src='https://checkout.razorpay.com/v1/checkout.js';sc.onload=ok;sc.onerror=function(){no('network');};document.head.appendChild(sc);});}
   f.addEventListener('submit',function(e){
     e.preventDefault();var b=$('poGo');$('poErr').textContent='';
-    var ph=$('poPhone').value.replace(/\D/g,'').slice(-10);
+    var ph=nkPh($('poPhone').value);
     if(!$('poName').value.trim()){$('poErr').textContent=ERR.name_required;return;}
-    if(!/^[6-9]\d{9}$/.test(ph)){$('poErr').textContent=ERR.invalid_phone;return;}
+    if(!ph){$('poErr').textContent=ERR.invalid_phone;return;}
     b.disabled=true;b.textContent='Opening secure payment…';
     Promise.all([loadRzp(),api('payOrder',{name:$('poName').value,phone:ph,amount:$('poAmt').value,note:$('poNote').value,room:$('rm')?$('rm').value:'',checkin:$('ci')?$('ci').value:'',checkout:$('co')?$('co').value:''})]).then(function(x){
       var o=x[1];
-      var rz=new Razorpay({key:o.keyId,order_id:o.order,amount:o.amount,currency:'INR',name:'Nikadi Guest House',description:'Booking advance',prefill:{name:o.name,contact:'+91'+o.phone},theme:{color:'#c9a35a'},
+      var rz=new Razorpay({key:o.keyId,order_id:o.order,amount:o.amount,currency:'INR',name:'Nikadi Guest House',description:'Booking advance',prefill:{name:o.name,contact:(String(o.phone).length===10?'+91':'+')+o.phone},theme:{color:'#c9a35a'},
         handler:function(r){b.textContent='Confirming…';api('payVerify',{order:r.razorpay_order_id,payment:r.razorpay_payment_id,signature:r.razorpay_signature}).then(function(v){
           f.querySelectorAll('.po-grid,#poGo,.po-hint').forEach(function(el){el.hidden=true;});$('poOk').hidden=false;
           $('poOk').textContent='Thank you! ₹'+Number(v.amount||$('poAmt').value).toLocaleString('en-IN')+' received (ref. '+v.ref+'). We will confirm your booking on WhatsApp shortly.';

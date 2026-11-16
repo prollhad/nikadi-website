@@ -76,7 +76,7 @@ var DESK_SCHEMA = {
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
     ['advanceDue', 'Advance required, 50% (₹)', 'n'], ['advancePaid', 'Advance paid (₹)', 'n'], ['refunded', 'Refunded (₹)', 'n'], ['notes', 'Notes'],
     ['created', 'Created', 't'], ['createdBy', 'Created by'], ['confirmedBy', 'Confirmed by'], ['confirmedAt', 'Confirmed at', 't'],
-    ['closedBy', 'Closed by'], ['closedAt', 'Closed at', 't'], ['closeNote', 'Cancellation / closing note'], ['advanceSet', 'Advance agreed (₹, blank = 50%)', 'n']] },
+    ['closedBy', 'Closed by'], ['closedAt', 'Closed at', 't'], ['closeNote', 'Cancellation / closing note'], ['advanceSet', 'Advance agreed (₹, blank = 50%)', 'n'], ['comp', 'Free stay (whose guest)'], ['compRef', 'Free stay reference']] },
   charges: { sheet: 'Room charges', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['item', 'Item'], ['qty', 'Qty', 'n'],
     ['price', 'Unit price (₹)', 'n'], ['total', 'Total (₹)', 'n'], ['free', 'Free'], ['note', 'Note'], ['by', 'Added by'], ['removed', 'Removed']] },
   payments: { sheet: 'Payments', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['amount', 'Amount (₹)', 'n'],
@@ -172,14 +172,20 @@ function deskCore(db, hooks) {
   function text(s, max) { return String(s == null ? '' : s).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max || 120); }
   function money(v) { var n = Math.round(Number(v)); return isFinite(n) && n >= 0 && n <= 10000000 ? n : NaN; }
   function yes(v) { return String(v).toLowerCase() === 'yes'; }
-  function phoneOk(p) {
-    var d = String(p || '').replace(/\D/g, '');
+  /* Phone numbers: Indian mobiles are kept as 10 digits (as before); any other country is kept as its full
+     international number in digits (country code first, e.g. 447700900123). "+44 7700 900123" or "0044…" both work. */
+  function phoneNorm(p) {
+    var s = String(p || '').trim(), d = s.replace(/\D/g, '');
     if (!d) return '';
+    var intl = /^(\+|00)/.test(s);
+    if (intl && s.charAt(0) === '0') d = d.slice(2);
+    if (intl) { if (d.indexOf('91') === 0 && /^[6-9]\d{9}$/.test(d.slice(2))) return d.slice(2); return d.length >= 8 && d.length <= 15 && d.indexOf('91') !== 0 ? d : null; }
     if (d.length === 12 && d.indexOf('91') === 0) d = d.slice(2);
     if (d.length === 11 && d.charAt(0) === '0') d = d.slice(1);
-    if (!/^[6-9]\d{9}$/.test(d)) fail('invalid_phone');
-    return d;
+    if (/^[6-9]\d{9}$/.test(d)) return d;
+    return d.length >= 11 && d.length <= 15 && d.charAt(0) !== '0' && d.indexOf('91') !== 0 ? d : null;
   }
+  function phoneOk(p) { var d = phoneNorm(p); if (d === null) fail('invalid_phone'); return d; }
   function find(t, key, val) { var a = db.all(t); for (var i = 0; i < a.length; i++) if (String(a[i][key]) === String(val)) return a[i]; return null; }
   function room(n) { return find('rooms', 'room', n) || fail('no_room'); }
   function stay(sid) { return find('stays', 'id', sid) || fail('no_stay'); }
@@ -200,18 +206,18 @@ function deskCore(db, hooks) {
   function bookingPays(bid) { return db.all('payments').filter(function (p) { return p.booking === bid && !p.stay && p.method !== FROM_ADV && !p.voided; }); }
   function recomputeBooking(b) {
     var nights = nightsBetween(b.checkin, b.checkout), rooms = Math.max(1, Number(b.roomsNeeded || 1));
-    var total = nights * rooms * Number(b.rate || 0);
+    var total = b.comp ? 0 : nights * rooms * Number(b.rate || 0);
     var pays = bookingPays(b.id);
     var paid = pays.filter(function (p) { return Number(p.amount) > 0; }).reduce(function (a, p) { return a + Number(p.amount); }, 0);
     var refunded = -pays.filter(function (p) { return Number(p.amount) < 0; }).reduce(function (a, p) { return a + Number(p.amount); }, 0);
-    db.set('bookings', b, { nights: nights, total: total, advanceDue: Number(b.advanceSet) > 0 ? Number(b.advanceSet) : Math.ceil(total * DESK_POLICY.advancePct / 100), advancePaid: paid, refunded: refunded });
+    db.set('bookings', b, { nights: nights, total: total, advanceDue: b.comp ? 0 : Number(b.advanceSet) > 0 ? Number(b.advanceSet) : Math.ceil(total * DESK_POLICY.advancePct / 100), advancePaid: paid, refunded: refunded });
   }
   function daysBefore(b) { return Math.round(dayNum(b.checkin) - dayNum(today())); }
   function bookingView(b, me) {
     var mgr = isMgr(me);
     var v = { id: b.id, status: b.status, source: b.source, guest: mgr ? b.guest : String(b.guest || '').split(/\s+/)[0], guests: b.guests, roomsNeeded: b.roomsNeeded,
       roomType: b.roomType, rooms: roomList(b.rooms), checkin: b.checkin, checkout: b.checkout, nights: b.nights, created: b.created, createdBy: b.createdBy,
-      confirmedBy: b.confirmedBy, confirmedAt: b.confirmedAt, closedBy: b.closedBy, closedAt: b.closedAt, closeNote: b.closeNote, daysBefore: daysBefore(b) };
+      confirmedBy: b.confirmedBy, confirmedAt: b.confirmedAt, closedBy: b.closedBy, closedAt: b.closedAt, closeNote: b.closeNote, daysBefore: daysBefore(b), comp: b.comp || '', compRef: b.compRef || '' };
     if (mgr) {
       v.phone = b.phone; v.email = b.email; v.rate = b.rate; v.total = b.total; v.advanceDue = b.advanceDue; v.advanceSet = Number(b.advanceSet) > 0; v.advancePaid = b.advancePaid; v.refunded = b.refunded; v.notes = b.notes;
       v.payments = bookingPays(b.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: p.note, by: p.by }; }).reverse();
@@ -395,7 +401,7 @@ function deskCore(db, hooks) {
     return { hsn: (it && String(it.hsn || '').trim()) || f[0], gst: it && it.gst !== '' && it.gst != null && Number(it.gst) > 0 ? Number(it.gst) : f[1], unit: f[2], label: f[3] || name };
   }
   function billOfStay(sid) { var a = db.all('bills').filter(function (b) { return b.stay === sid; }); return a[a.length - 1] || (db.findOld ? db.findOld('bills', sid, 'stay') : null); }
-  function prettyPhone(p) { p = String(p || ''); return p.length === 10 ? '+91 ' + p.slice(0, 5) + ' ' + p.slice(5) : p; }
+  function prettyPhone(p) { p = String(p || ''); return p.length === 10 ? '+91 ' + p.slice(0, 5) + ' ' + p.slice(5) : p ? '+' + p : p; }
   /* Everything printed on the bill, frozen at the time it is made. */
   function billData(s, me, old) {
     var r = find('rooms', 'room', s.room) || {}, rate = Number(s.rate || 0), nights = Number(s.nights || 0);
@@ -493,7 +499,7 @@ function deskCore(db, hooks) {
   function dd(ymd) { var p = String(ymd || '').slice(0, 10).split('-'); return p.length < 3 ? '' : +p[2] + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+p[1] - 1] + ' ' + p[0]; }
   function rupees(n) { return '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN'); }
   function waQueue(kind, phone, name, ref, at) {
-    if (!phone || String(phone).length !== 10) return;
+    if (!phone || String(phone).length < 8) return;
     if (db.all('wa').some(function (m) { return m.kind === kind && m.ref === ref && m.status !== 'Failed'; })) return; // once per stay / booking
     db.add('wa', { id: id('W'), at: stamp(), sendAt: at || stamp(), to: String(phone), name: name, kind: kind, ref: ref, status: 'Waiting', info: '' });
   }
@@ -731,7 +737,7 @@ function deskCore(db, hooks) {
     var rooms = db.all('rooms').map(function (r) {
       var o = { room: r.room, type: r.type, beds: r.beds, status: r.status, updated: r.updated, by: r.by };
       var ab = arriving[r.room];
-      if (ab && !(r.stay && stays[r.stay])) o.arriving = { id: ab.id, guest: mgr ? ab.guest : String(ab.guest || '').split(/\s+/)[0], late: ab.checkin < t };
+      if (ab && !(r.stay && stays[r.stay])) o.arriving = { id: ab.id, guest: mgr ? ab.guest : String(ab.guest || '').split(/\s+/)[0], late: ab.checkin < t, comp: ab.comp || '' };
       if (mgr) o.rate = r.type ? deskRateOn(r.type, t) : r.rate;
       var s = r.stay && stays[r.stay];
       if (s) {
@@ -781,9 +787,8 @@ function deskCore(db, hooks) {
   /* Is this phone number a Nikadi member? (shows the level, member rates and perks at check-in) */
   api.member = function (req) {
     auth(req);
-    var ph = String(req.phone || '').replace(/\D/g, '');
-    if (ph.length === 12 && ph.indexOf('91') === 0) ph = ph.slice(2);
-    if (!/^[6-9]\d{9}$/.test(ph)) return { member: null };
+    var ph = phoneNorm(req.phone);
+    if (!ph) return { member: null };
     return { member: memberOf(ph) };
   };
 
@@ -1463,7 +1468,7 @@ function deskCore(db, hooks) {
     var me = auth(req); needMgr(me);
     if (!waReady()) fail('wa_not_connected');
     var s = checkedOut(req), b = saveBill(s, me, null);
-    var ph = String(req.phone || s.phone || '').replace(/\D/g, '').slice(-10); if (ph.length !== 10) fail('phone_required');
+    var ph = phoneOk(req.phone || s.phone || ''); if (!ph) fail('phone_required');
     var pdf = req.pdf || pdfOf(b.row.id); if (!pdf) fail('no_pdf');
     var row = b.row, keep = row.phone;
     row.phone = ph;
@@ -1684,7 +1689,8 @@ function deskCore(db, hooks) {
   function bookingInput(req, b) {
     var p = {};
     var guest = text(req.guest != null ? req.guest : b && b.guest, 80); if (!guest) fail('name_required'); p.guest = guest;
-    p.phone = phoneOk(req.phone != null ? req.phone : b && b.phone); if (!p.phone) fail('phone_required');
+    p.phone = phoneOk(req.phone != null ? req.phone : b && b.phone);
+    if (!p.phone && !(req.comp != null ? req.comp : b && b.comp)) fail('phone_required'); // free stays: phone optional
     p.email = text(req.email != null ? req.email : b && b.email, 80);
     p.guests = Math.round(Number(req.guests != null ? req.guests : b && b.guests)); if (!(p.guests >= 1 && p.guests <= DESK_MAX_GUESTS * 11)) fail('bad_guests');
     var minRooms = Math.ceil(p.guests / DESK_MAX_GUESTS), normal = Math.ceil(p.guests / 3); // suggest 3 per room, but more can share a room
@@ -1695,16 +1701,22 @@ function deskCore(db, hooks) {
     p.checkin = String(req.checkin != null ? req.checkin : b && b.checkin); p.checkout = String(req.checkout != null ? req.checkout : b && b.checkout);
     if (!isYmd(p.checkin) || !isYmd(p.checkout) || dayNum(p.checkout) <= dayNum(p.checkin)) fail('bad_dates');
     if (dayNum(p.checkout) - dayNum(p.checkin) > 60) fail('bad_dates');
+    /* free stay (AGD Guest / Prahlad's Guest / Debarun's Guest): no money, the room is still reserved for them */
+    var comp = req.comp != null ? String(req.comp || '') : b ? String(b.comp || '') : '';
+    if (comp && DESK_COMP_HOSTS.indexOf(comp) < 0) fail('comp_host');
+    if (comp && b && !b.comp && Number(b.advancePaid || 0) - Number(b.refunded || 0) > 0) fail('comp_has_advance');
+    p.comp = comp; p.compRef = comp ? text(req.compRef != null ? req.compRef : b && b.compRef, 120) : '';
     var rate = req.rate != null && req.rate !== '' ? money(req.rate) : b ? Number(b.rate) : NaN;
     if (isNaN(rate) || rate <= 0) rate = deskRateOn(p.roomType, p.checkin);
-    p.rate = rate;
+    p.rate = comp ? 0 : rate;
+    if (!comp && b && b.comp && !(Number(req.rate) > 0)) p.rate = deskRateOn(p.roomType, p.checkin); // back to a paying guest
     p.notes = text(req.notes != null ? req.notes : b && b.notes, 400);
     return p;
   }
 
   /* ---------------- WhatsApp inbox: the four lists (New enquiry · Advance paid · Checked in · Member) ----------------
      Every guest message comes in through the WhatsApp connection (backend Code.gs) and is filed here. */
-  function waPhone(p) { var d = String(p || '').replace(/\D/g, ''); return d.length > 10 && d.slice(0, 2) === '91' ? d.slice(-10) : d.length === 10 ? d : d; }
+  function waPhone(p) { var d = phoneNorm(p); return d || String(p || '').replace(/\D/g, ''); }
   function waOpenBooking(ph) {
     var t = today(), list = db.all('bookings').filter(function (b) { return String(b.phone) === ph && (b.status === 'Pending' || b.status === 'Confirmed') && b.checkout >= t; });
     return list.length ? list[list.length - 1] : null;
@@ -1883,7 +1895,7 @@ function deskCore(db, hooks) {
     var b = find('bookings', 'id', req.id) || fail('no_booking');
     if (b.status !== 'Pending' && b.status !== 'Confirmed') fail('booking_closed');
     var p = bookingInput(req, b);
-    if (b.status === 'Confirmed' && Number(p.rate) !== Number(b.rate)) {
+    if (b.status === 'Confirmed' && !p.comp && !b.comp && Number(p.rate) !== Number(b.rate)) {
       var g0 = gate(me, 'bookingUpdate', req, 'Booking ' + b.id + ' · ' + b.guest + ': change rate from ₹' + b.rate + ' to ₹' + p.rate + ' per room per night');
       if (g0) return g0;
     }
@@ -1907,8 +1919,13 @@ function deskCore(db, hooks) {
     var rooms = (req.rooms || []).map(Number).filter(function (n, i, a) { return n && a.indexOf(n) === i; });
     if (!rooms.length) fail('pick_rooms');
     if (rooms.length * DESK_MAX_GUESTS < Number(b.guests)) fail('max_guests');
-    if (req.rate != null && req.rate !== '') { var rt = money(req.rate); if (!(rt > 0)) fail('rate_required'); db.set('bookings', b, { rate: rt }); }
+    if (!b.comp && req.rate != null && req.rate !== '') { var rt = money(req.rate); if (!(rt > 0)) fail('rate_required'); db.set('bookings', b, { rate: rt }); }
     rooms.forEach(function (n) { room(n); var c = roomClash(n, b.checkin, b.checkout, { booking: b.id }); if (c) clashFail(n, c); });
+    if (b.comp) { // free stay: just reserve the rooms
+      db.set('bookings', b, { rooms: rooms.join(', '), roomsNeeded: rooms.length, status: 'Confirmed', confirmedBy: me.name, confirmedAt: stamp() });
+      recomputeBooking(b);
+      return { booking: bookingView(b, me) };
+    }
     var amt = money(req.amount); if (!(amt > 0)) fail('advance_required');
     if (METHODS.indexOf(req.method) < 0) fail('method_required');
     var ref = text(req.ref, 40);
@@ -1938,6 +1955,7 @@ function deskCore(db, hooks) {
     var me = auth(req); needMgr(me);
     var b = find('bookings', 'id', req.id) || fail('no_booking');
     if (b.status !== 'Confirmed') fail('booking_closed');
+    if (b.comp) fail('comp_no_money');
     var amt = money(req.amount); if (!(amt > 0)) fail('invalid_amount');
     if (METHODS.indexOf(req.method) < 0) fail('method_required');
     var ref = text(req.ref, 40);
@@ -2005,8 +2023,8 @@ function deskCore(db, hooks) {
     rooms.forEach(function (n, i) {
       var g = Math.min(DESK_MAX_GUESTS, Math.max(1, Math.ceil(guestsLeft / (rooms.length - i)))); guestsLeft -= g;
       var s = db.add('stays', { id: id('S'), room: n, guest: b.guest, phone: b.phone, guests: g, checkin: cin, checkout: b.checkout, nights: nightsBetween(cin, b.checkout),
-        rate: b.rate, rateNote: 'Booking ' + b.id + (rooms.length > 1 ? ' · ' + rooms.length + ' rooms' : ''), status: 'In house', roomTotal: 0, extras: 0, paid: 0, balance: 0,
-        notes: b.notes, inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: b.id });
+        rate: b.comp ? 0 : b.rate, rateNote: 'Booking ' + b.id + (rooms.length > 1 ? ' · ' + rooms.length + ' rooms' : ''), status: 'In house', roomTotal: 0, extras: 0, paid: 0, balance: 0,
+        notes: b.notes, inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: b.id, comp: b.comp || '', compRef: b.comp ? b.compRef || '' : '' });
       var share = i === 0 ? left - each * (rooms.length - 1) : each;
       if (share > 0) db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: n, amount: share, method: FROM_ADV, note: 'Advance from booking ' + b.id, by: me.name, booking: b.id, ref: '' });
       recompute(s);
@@ -2135,7 +2153,7 @@ function deskCore(db, hooks) {
     });
     db.all('bookings').forEach(function (b) {
       if (b.status === 'Confirmed' && overlaps(b.checkin, b.checkout, from, to))
-        roomList(b.rooms).forEach(function (n) { bars.push({ room: n, kind: 'booked', id: b.id, guest: nm(b.guest), guests: b.guests, from: b.checkin, to: b.checkout }); });
+        roomList(b.rooms).forEach(function (n) { bars.push({ room: n, kind: 'booked', id: b.id, guest: nm(b.guest), guests: b.guests, from: b.checkin, to: b.checkout, comp: b.comp || '' }); });
     });
     var pending = db.all('bookings').filter(function (b) { return b.status === 'Pending' && overlaps(b.checkin, b.checkout, from, to); }).map(function (b) { return bookingView(b, me); });
     var rooms = db.all('rooms').map(function (r) { return { room: r.room, type: r.type, beds: r.beds, status: r.status }; }).sort(function (a, b) { return a.room - b.room; });
@@ -2735,7 +2753,7 @@ function deskWaSend_(template, to10, params, pdf, fileName, url, lang) {
     comps.push({ type: 'header', parameters: [{ type: 'document', document: { id: media.id, filename: fileName || 'bill.pdf' } }] });
   } else if (template === 'nikadi_bill') throw new Error('no_pdf');
   if (params && params.length) comps.push({ type: 'body', parameters: params.map(function (t) { return { type: 'text', text: String(t) }; }) });
-  var body = { messaging_product: 'whatsapp', to: '91' + String(to10).replace(/\D/g, '').slice(-10), type: 'template',
+  var body = { messaging_product: 'whatsapp', to: phoneIntl_(to10).slice(1), type: 'template',
     template: { name: template, language: { code: lang || 'en' }, components: comps } };
   var j = deskWaCall_(w.phoneId + '/messages', { method: 'post', contentType: 'application/json', payload: JSON.stringify(body) });
   return j.messages && j.messages[0] ? j.messages[0].id : '';

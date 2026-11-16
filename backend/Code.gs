@@ -224,14 +224,23 @@ function settings_() {
 }
 function num_(v, d) { var n = Number(v); return isFinite(n) && v !== '' ? n : d; }
 
-function normPhone_(p) {
-  var d = String(p || '').replace(/\D/g, '');
+/* Phone numbers: Indian mobiles are kept as 10 digits; any other country as its full international number in digits
+   (country code first, e.g. 447700900123). "+44 7700 900123" or "0044…" both work. Same rules as the staff app. */
+function phoneKey_(p) {
+  var s = String(p || '').trim(), d = s.replace(/\D/g, '');
+  if (!d) return null;
+  var intl = /^(\+|00)/.test(s);
+  if (intl && s.charAt(0) === '0') d = d.slice(2);
+  if (intl) { if (d.indexOf('91') === 0 && /^[6-9]\d{9}$/.test(d.slice(2))) return d.slice(2); return d.length >= 8 && d.length <= 15 && d.indexOf('91') !== 0 ? d : null; }
   if (d.length === 12 && d.indexOf('91') === 0) d = d.slice(2);
   if (d.length === 11 && d.charAt(0) === '0') d = d.slice(1);
-  if (!/^[6-9]\d{9}$/.test(d)) throw new Error('invalid_phone');
-  return d;
+  if (/^[6-9]\d{9}$/.test(d)) return d;
+  return d.length >= 11 && d.length <= 15 && d.charAt(0) !== '0' && d.indexOf('91') !== 0 ? d : null;
 }
-function maskPhone_(p) { return p.slice(0, 2) + '******' + p.slice(-2); }
+function normPhone_(p) { var d = phoneKey_(p); if (!d) throw new Error('invalid_phone'); return d; }
+function waKey_(p) { return phoneKey_(p) || String(p || '').replace(/\D/g, ''); } // WhatsApp chats are filed under this
+function phoneIntl_(p) { var d = waKey_(p); return d.length === 10 ? '+91' + d : '+' + d; }
+function maskPhone_(p) { return p.length === 10 ? p.slice(0, 2) + '******' + p.slice(-2) : p.slice(0, 4) + '******' + p.slice(-2); } // other countries: country code stays visible
 function firstName_(n) { return String(n || '').trim().split(/\s+/)[0]; }
 function hash_(s) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s).map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join('');
@@ -479,7 +488,7 @@ function sendSms_(phone, kind, vars) {
   if (!provider || !s.SMS_API_KEY || !template) throw new Error('sms_not_configured');
   var res;
   if (provider === 'msg91') {
-    var rec = { mobiles: '91' + phone };
+    var rec = { mobiles: phone.length === 10 ? '91' + phone : phone };
     Object.keys(vars).forEach(function (k) { rec[k] = String(vars[k]); });
     res = UrlFetchApp.fetch('https://control.msg91.com/api/v5/flow', {
       method: 'post', contentType: 'application/json', muteHttpExceptions: true,
@@ -923,11 +932,11 @@ function ycCall_(path, body, method) {
 /** One message to one number (msg is the WhatsApp message body without from/to: {type:'text', text:{body}} etc.). */
 var _waOutbox = null; // while a WhatsApp webhook is being handled, messages wait here and go out after the lock is released
 function ycSend_(to, msg, noLog) {
-  var y = ycProps_(), d = String(to).replace(/\D/g, '');
-  var num = d.length > 10 && d.slice(0, 2) !== '91' ? '+' + d : '+91' + d.slice(-10); // overseas numbers keep their country code
+  var y = ycProps_(), d = waKey_(to);
+  var num = phoneIntl_(d); // overseas numbers keep their country code
   var body = Object.assign({ from: y.from, to: num }, msg), j = {};
   if (_waOutbox) _waOutbox.push(body); else j = ycCall_('whatsapp/messages/sendDirectly', body);
-  if (!noLog && d.length === 10) { // keep the conversation complete in the staff app
+  if (!noLog && d.length >= 8) { // keep the conversation complete in the staff app
     var t = msg.text ? msg.text.body : msg.interactive ? msg.interactive.body && msg.interactive.body.text : msg.document ? '📄 ' + (msg.document.caption || msg.document.filename || 'File') :
       msg.image ? '📷 ' + (msg.image.caption || 'Photo') : msg.location ? '📍 Location pin' : msg.template ? '[' + msg.template.name + ']' : '';
     try { waCore_().waOut({ _internal: true, phone: d, dir: msg.template || msg.document ? 'Automatic message' : 'Assistant', text: String(t || '').slice(0, 500) }); } catch (e) {}
@@ -943,7 +952,7 @@ function waStaffReply_(phone, text, photo) {
     var media = ycUploadMedia_(photo, 'image/jpeg', 'photo.jpg');
     id = ycSend_(phone, { type: 'image', image: { id: media, caption: String(text || '').slice(0, 1024) } }, true);
   } else id = ycSend_(phone, { type: 'text', text: { body: String(text).slice(0, 4000), preview_url: true } }, true);
-  waHuman_(String(phone).replace(/\D/g, '').slice(-10), 'reception replying from the staff app');
+  waHuman_(waKey_(phone), 'reception replying from the staff app');
   return id;
 }
 function waText_(to, body) { return ycSend_(to, { type: 'text', text: { body: String(body).slice(0, 4000), preview_url: true } }); }
@@ -1013,7 +1022,7 @@ function ycWebhook_(e) {
     else if (type === 'whatsapp.smb.message.echoes') { // reception replied from the WhatsApp Business app: let them talk
       var m = ev.whatsappMessage || ev.smbMessageEchoes || ev.whatsappSmbMessageEchoes || ev.smbMessageEcho || {};
       if (!m.to) Object.keys(ev).forEach(function (k) { if (ev[k] && typeof ev[k] === 'object' && ev[k].to && !m.to) m = ev[k]; });
-      var to = String(m.to || m.recipient || '').replace(/\D/g, '').slice(-10);
+      var to = waKey_(m.to || m.recipient || '');
       if (to && m.bizType !== 'api') {
         waHuman_(to, 'staff replied from the phone');
         try { waCore_().waSeen({ _internal: true, phone: to, text: m.text && m.text.body || (m.type && m.type !== 'text' ? '[' + m.type + ']' : '') }); } catch (e) {}
@@ -1080,14 +1089,11 @@ function waMenu_(to, st, hello) {
 }
 
 function waInbound_(msg) {
-  var phone = String(msg.from || '').replace(/\D/g, '');
-  if (phone.length < 10 || (phone.length > 10 && phone.slice(0, 2) !== '91')) { // overseas numbers: hand to reception
-    phone = phone.slice(-15);
-  } else phone = phone.slice(-10);
+  var phone = waKey_('+' + String(msg.from || '').replace(/\D/g, '')); // YCloud gives the full international number
   var cache = CacheService.getScriptCache();
   if (msg.wamid && cache.get('ycw_' + msg.wamid)) return;
   if (msg.wamid) cache.put('ycw_' + msg.wamid, '1', 21600);
-  cache.put('ycwin_' + phone.slice(-10), String(Date.now()), 21600); // customer-service window is open: free-form messages allowed
+  cache.put('ycwin_' + phone, String(Date.now()), 21600); // customer-service window is open: free-form messages allowed
 
   var st = waState_(phone), text = '', choice = '';
   if (msg.type === 'text' && msg.text) text = String(msg.text.body || '').trim();
@@ -1096,12 +1102,12 @@ function waInbound_(msg) {
   } else if (msg.type === 'button' && msg.button) text = String(msg.button.text || '');
   var low = text.toLowerCase();
   if (!st.name && msg.customerProfile && msg.customerProfile.name) { st.full = String(msg.customerProfile.name).replace(/[^\p{L}\p{M} .'-]/gu, '').trim().slice(0, 60); st.name = st.full.split(/\s+/)[0].slice(0, 30); }
-  if (st.member === undefined) st.member = phone.length === 10 ? waMember_(phone) : null;
+  if (st.member === undefined) st.member = phone.length >= 8 ? waMember_(phone) : null;
 
   /* file every message in the staff app's WhatsApp lists; photos / PDFs (payment screenshots) are saved to Drive */
   var human = !!(st.human && st.human > Date.now()), media = msg.image || msg.document || null, logged = null;
   if (media && media.caption && !text) text = String(media.caption).trim();
-  if (phone.length === 10) {
+  if (phone.length >= 8) {
     var fileId = '';
     if (media) { try { fileId = waSaveMedia_(media, msg.type, phone, st.full || st.name || ''); } catch (e) { console.error(e); } }
     try {
@@ -1123,7 +1129,7 @@ function waInbound_(msg) {
     if (choice === 'm_bot' || /^(menu|bot)$/.test(low)) { st.human = 0; waMenu_(phone, st, false); }
     waSave_(phone, st); return; // reception is handling this chat
   }
-  if (phone.length !== 10) { waText_(phone, 'Hare Krishna 🙏 Thank you for your message. Our reception will reply to you here shortly. You can also call us on ' + NK_PHONE_TEXT + '.'); waHuman_(phone, 'overseas number'); waNotify_('WhatsApp: overseas guest', phone, text); return; }
+  if (phone.length < 8) { waText_(phone, 'Hare Krishna 🙏 Thank you for your message. Our reception will reply to you here shortly. You can also call us on ' + NK_PHONE_TEXT + '.'); waHuman_(phone, 'overseas number'); waNotify_('WhatsApp: overseas guest', phone, text); return; }
 
   if (!choice) { // typed words
     if (/\b(call|talk|human|person|agent|manager|reception|baat|speak)\b/.test(low)) choice = 'm_talk';
@@ -1292,7 +1298,7 @@ function waFallback_(phone, st, text) {
 
 function waNotify_(subject, phone, body) {
   var s = settings_(); if (!s.OWNER_EMAIL) return;
-  try { MailApp.sendEmail(String(s.OWNER_EMAIL), subject, 'Guest WhatsApp: +91 ' + phone + '\nOpen chat: https://wa.me/91' + phone + '\n\n' + body); } catch (e) { console.error(e); }
+  try { MailApp.sendEmail(String(s.OWNER_EMAIL), subject, 'Guest WhatsApp: ' + phoneIntl_(phone) + '\nOpen chat: https://wa.me/' + phoneIntl_(phone).slice(1) + '\n\n' + body); } catch (e) { console.error(e); }
 }
 
 /* -------- Staff-app messages (welcome, membership, booking confirmed, bill) through YCloud --------
@@ -1320,11 +1326,11 @@ function ycUploadMedia_(b64, mime, fileName) {
   return j.id;
 }
 function ycDeskSend_(template, to10, params, pdf, fileName, url, lang) {
-  to10 = String(to10).replace(/\D/g, '').slice(-10);
+  to10 = waKey_(to10);
   var open = Number(CacheService.getScriptCache().get('ycwin_' + to10) || 0) > Date.now() - 23 * 3600e3;
   if (!open) { // the cache only lasts 6 hours: check the last message time saved in "WhatsApp chats" (24-hour window)
     try {
-      var ch = deskDb_().all('wachats').filter(function (x) { return String(x.phone).replace(/\D/g, '').slice(-10) === to10; })[0];
+      var ch = deskDb_().all('wachats').filter(function (x) { return waKey_(x.phone) === to10; })[0];
       if (ch && ch.lastIn) open = new Date(String(ch.lastIn).replace(' ', 'T') + ':00+05:30').getTime() > Date.now() - 23 * 3600e3;
     } catch (e) {}
   }

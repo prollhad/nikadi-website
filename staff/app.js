@@ -15,7 +15,7 @@
     hk_checklist: 'Tick every line of the checklist first.',
     changelog_unavailable: 'The change log starts when the app moves to the new fast server.',
     comp_host: 'Pick whose guest this is.',
-    comp_no_money: 'This is a free stay. No money is taken.',
+    comp_no_money: 'This is a free stay. No money is taken.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
     bill_no_required: 'Write the invoice number.',
     old_record: 'This record is more than a few months old and is kept in the archive Sheet. It can be viewed but not changed.',
     drive_unavailable: 'Google Drive is not connected here.',
@@ -31,7 +31,7 @@
     room_occupied: 'This room already has a guest.', room_not_clean: 'This room has not been cleaned yet. Mark it as cleaned first.',
     room_not_occupied: 'There is no guest in this room.', name_required: 'Please enter a name.', max_guests: 'A room takes 1 to 3 guests. For 4 or more, use two rooms.',
     bad_dates: 'The check-out date must be after the check-in date.', rate_required: 'Please enter the rate per night.', invalid_amount: 'Please enter an amount in rupees.',
-    method_required: 'Choose how they paid: Cash, UPI or Card.', invalid_phone: 'Please check the phone number (10 digits).', bad_qty: 'Please check the quantity.',
+    method_required: 'Choose how they paid: Cash, UPI or Card.', invalid_phone: 'Please check the phone number and its country code (+91 for India).', bad_qty: 'Please check the quantity.',
     bad_nights: 'Please check the number of nights.', not_in_house: 'This guest has already checked out.', bad_pin: 'The PIN must be 4 to 6 digits.',
     pin_taken: 'Someone else already uses this PIN. Choose another.', name_taken: 'That name is already used.', last_owner: 'There must always be at least one active Owner.',
     no_item: 'This item is not available.', not_tracked: 'Stock is not counted for this item.', bad_status: 'The room status has changed. Pull to refresh.',
@@ -326,7 +326,7 @@
       '<div class="board">' + rooms.map(function (r) {
         var k = kind(r), s = r.stay;
         var g = s ? esc(s.guest) + '<small>' + s.guests + (s.guests > 1 ? ' guests' : ' guest') + ' · till ' + esc(dShort(s.checkout)) + '</small>'
-          : r.arriving && k === 'arr' ? esc(r.arriving.guest) + '<small>Booked · ' + (r.arriving.late ? 'was due earlier' : 'arrives today') + '</small>'
+          : r.arriving && k === 'arr' ? esc(r.arriving.guest) + '<small>' + (r.arriving.comp ? 'Free stay · ' : '') + 'Booked · ' + (r.arriving.late ? 'was due earlier' : 'arrives today') + '</small>'
           : k === 'dirty' ? '<small>' + esc(r.by ? 'Since ' + tShort(r.updated) : 'Clean before next guest') + '</small>' : '<small>' + esc(r.beds) + '</small>';
         var bal = s && s.comp ? '<span class="bal comp">Free · ' + esc(s.comp) + '</span>' : mgr() && s && s.balance > 0 ? '<span class="bal">' + inr(s.balance) + ' due</span>' : '';
         if (r.service) bal += '<span class="hk-tag ' + (r.service.done ? 'done' : '') + '">' + (r.service.done ? '✓ Serviced' : 'Housekeeping') + '</span>';
@@ -441,7 +441,7 @@
     var h = '<div class="hrow"><div><p class="kicker">' + (inHouse ? (s.leavesToday ? 'Leaves today' : 'Staying') : 'Checked out') + '</p><h2 style="font-size:1.9rem">' + esc(s.guest) + '</h2></div></div>' +
       '<dl class="facts"><div><dt>Guests</dt><dd>' + s.guests + '</dd></div><div><dt>Nights</dt><dd>' + s.nights + '</dd></div>' +
       '<div><dt>Check-in</dt><dd>' + esc(dShort(s.checkin)) + '</dd></div><div><dt>Check-out</dt><dd>' + esc(dShort(s.checkout)) + '</dd></div>' +
-      (m ? '<div><dt>Phone</dt><dd>' + (s.phone ? '<a href="tel:+91' + esc(s.phone) + '">' + esc(s.phone) + '</a>' : '—') + '</dd></div><div><dt>Checked in by</dt><dd>' + esc(s.inBy) + '</dd></div>' : '') +
+      (m ? '<div><dt>Phone</dt><dd>' + (s.phone ? '<a href="tel:' + esc(nkPhoneTel(s.phone)) + '">' + esc(nkPhoneShow(s.phone)) + '</a>' : '—') + '</dd></div><div><dt>Checked in by</dt><dd>' + esc(s.inBy) + '</dd></div>' : '') +
       '</dl>';
     if (s.comp) h += '<div class="note comp-note"><b>Free stay · ' + esc(s.comp) + '</b>' + (s.compRef ? esc(s.compRef) : 'No charge') + ' · items given are counted and taken from stock</div>';
     if (m && s.companions && s.companions.length) h += '<div class="note"><b>Other guests in the room</b>' + s.companions.map(esc).join(' · ') + '</div>';
@@ -620,10 +620,10 @@
       }).join('') + '</div>' +
       (rows.length ? '<div class="list wa-list">' + rows.map(function (c) {
         return '<button type="button" class="bl bl-btn wa-row' + (c.important ? ' imp' : c.unread ? ' unread' : '') + '" data-ph="' + esc(c.phone) + '">' +
-          '<span class="t"><b>' + esc(c.name || ('+91 ' + c.phone)) + (c.stay ? ' · Room ' + esc(c.stay.room) : '') + '</b>' +
+          '<span class="t"><b>' + esc(c.name || nkPhoneShow(c.phone)) + (c.stay ? ' · Room ' + esc(c.stay.room) : '') + '</b>' +
           (c.important ? '<em class="wa-imp blink">⚠ ' + esc(c.important) + '</em>' : '') +
           '<small>' + esc(c.lastText || '') + '</small>' +
-          '<small class="wa-meta">' + (c.name ? '+91 ' + esc(c.phone) + ' · ' : '') + (c.booking ? 'Booking ' + esc(c.booking.id) + ' · ' + esc(c.booking.status) + ' · ' + esc(dShort(c.booking.checkin)) : 'No booking') + '</small></span>' +
+          '<small class="wa-meta">' + (c.name ? esc(nkPhoneShow(c.phone)) + ' · ' : '') + (c.booking ? 'Booking ' + esc(c.booking.id) + ' · ' + esc(c.booking.status) + ' · ' + esc(dShort(c.booking.checkin)) : 'No booking') + '</small></span>' +
           '<span class="a wa-a"><span class="wa-time">' + esc(waWhen(c.last)) + '</span>' + (c.unread ? '<span class="wa-count blink">' + c.unread + '</span>' : '') + '</span></button>';
       }).join('') + '</div>' : '<p class="small">No chats in this list right now.</p>') +
       '<p class="small">Chats are filed by themselves: <b>New enquiry</b> (no paid booking yet) · <b>Advance paid</b> (advance received, or a payment screenshot sent for a booking) · <b>Checked in</b> (staying now) · <b>Member</b> (Nikadi members). Blinking = unread or needs checking. Opening a chat marks it read.</p>';
@@ -659,7 +659,7 @@
         if (bk) h += '<div class="bl"><span class="t"><b>Booking ' + esc(bk.id) + ' · ' + esc(bk.status) + '</b><small>' + esc(dShort(bk.checkin)) + ' → ' + esc(dShort(bk.checkout)) + ' · advance ' + inr(bk.advancePaid || 0) + ' of ' + inr(bk.advanceDue || 0) + '</small></span><span class="a"><button class="btn btn-line sm" type="button" id="wa-bk">' + (bk.status === 'Pending' ? 'Confirm booking' : 'Open') + '</button></span></div>';
         if (c.stay) h += '<button class="linkbtn" type="button" id="wa-st">Staying in room ' + esc(c.stay.room) + ' →</button>';
         h += '<div class="btns">' + (c.important ? '<button class="btn btn-line" type="button" id="wa-done">' + (c.proof ? 'Payment checked ✓' : 'Done ✓') + '</button>' : '') +
-          '<button class="btn btn-quiet" type="button" id="wa-unr">Mark unread</button><a class="btn btn-quiet" href="https://wa.me/91' + esc(c.phone) + '" target="_blank" rel="noopener">Open in WhatsApp</a></div>';
+          '<button class="btn btn-quiet" type="button" id="wa-unr">Mark unread</button><a class="btn btn-quiet" href="https://wa.me/' + esc(nkPhoneTel(c.phone).slice(1)) + '" target="_blank" rel="noopener">Open in WhatsApp</a></div>';
         h += '<div class="wa-chat"><div class="wa-msgs" id="wa-msgs">' + msgsHTML(c) + '</div>' +
           (c.connected ? '<p class="note wa-closed" id="wa-closed"' + (c.canReply ? ' hidden' : '') + '><b>Can\'t write here right now</b>WhatsApp allows free messages only within 24 hours of the guest\'s last message. Call the guest, or wait until they write again.</p>' +
             '<div class="wa-comp" id="wa-comp"' + (c.canReply ? '' : ' hidden') + '><div class="wa-ph" id="wa-ph" hidden></div><div class="wa-row2">' +
@@ -840,10 +840,10 @@
       '<div class="kpis"><div class="kpi"><span>Paid this month</span><b>' + inr(total) + '</b><small>' + d.list.length + ' payment' + (d.list.length === 1 ? '' : 's') + '</small></div>' +
       Object.keys(byP).sort(function (a, b) { return byP[b] - byP[a]; }).slice(0, 5).map(function (k) { return '<div class="kpi"><span>' + esc(k) + '</span><b>' + inr(byP[k]) + '</b></div>'; }).join('') + '</div>' +
       (d.list.length ? '<div class="list">' + d.list.map(function (c, i) {
-        return '<button type="button" class="bl bl-btn" data-k="' + i + '"><span class="t"><b>' + esc(c.name) + ' · ' + esc(c.type) + '</b><small>' + esc(dShort(c.date)) + ' · ' + esc(c.phone) + (c.vehicle ? ' · ' + esc(c.vehicle) : '') + (c.guest || c.room ? ' · for ' + esc([c.guest, c.room].filter(Boolean).join(', ')) : '') + ' · ' + esc(c.method) + '</small></span><span class="a">' + inr(c.amount) + '</span></button>';
+        return '<button type="button" class="bl bl-btn" data-k="' + i + '"><span class="t"><b>' + esc(c.name) + ' · ' + esc(c.type) + '</b><small>' + esc(dShort(c.date)) + ' · ' + esc(nkPhoneShow(c.phone)) + (c.vehicle ? ' · ' + esc(c.vehicle) : '') + (c.guest || c.room ? ' · for ' + esc([c.guest, c.room].filter(Boolean).join(', ')) : '') + ' · ' + esc(c.method) + '</small></span><span class="a">' + inr(c.amount) + '</span></button>';
       }).join('') + '</div>' : '<p class="small">No commission paid in ' + esc(monthName(d.month)) + ' yet.</p>') +
       (d.people.length ? '<div class="panel"><div class="sec-h"><h2>Drivers and brokers</h2><span class="small">all time</span></div><div class="list">' + d.people.map(function (p1) {
-        return '<div class="bl"><span class="t"><b>' + esc(p1.name) + ' · ' + esc(p1.type) + '</b><small><a href="tel:+91' + esc(p1.phone) + '">' + esc(p1.phone) + '</a>' + (p1.vehicle ? ' · ' + esc(p1.vehicle) : '') + ' · ' + p1.times + ' time' + (p1.times > 1 ? 's' : '') + ' · last ' + esc(dShort(p1.last)) + '</small></span><span class="a">' + inr(p1.total) + '</span></div>';
+        return '<div class="bl"><span class="t"><b>' + esc(p1.name) + ' · ' + esc(p1.type) + '</b><small><a href="tel:' + esc(nkPhoneTel(p1.phone)) + '">' + esc(nkPhoneShow(p1.phone)) + '</a>' + (p1.vehicle ? ' · ' + esc(p1.vehicle) : '') + ' · ' + p1.times + ' time' + (p1.times > 1 ? 's' : '') + ' · last ' + esc(dShort(p1.last)) + '</small></span><span class="a">' + inr(p1.total) + '</span></div>';
       }).join('') + '</div></div>' : '');
     $('#kadd', v).onclick = function () { openCommission(null); };
     $('#kprev', v).onclick = function () { COM.month = monthShift(COM.month, -1); COM.data = null; render(); };
@@ -856,7 +856,7 @@
     body.innerHTML = (c && !fixable ? '<div class="note"><b>Read only</b>Only a manager or the owner can change this entry (or the person who entered it, the same day).</div>' : '') +
       field('Name', '<input class="input" id="k-name" maxlength="80" list="k-people" value="' + esc(c ? c.name : '') + '" placeholder="Driver / broker name"><datalist id="k-people">' + d.people.map(function (p1) { return '<option value="' + esc(p1.name) + '">' + esc(p1.type + ' · ' + p1.phone) + '</option>'; }).join('') + '</datalist>', true) +
       '<div class="field"><span>Who is it?</span>' + seg('k-t', d.types, c ? c.type : 'Driver') + '</div>' +
-      '<div class="two">' + field('Phone', '<input class="input" id="k-phone" inputmode="tel" maxlength="10" value="' + esc(c ? c.phone : '') + '">', true) + field('Vehicle no. (drivers)', '<input class="input" id="k-veh" maxlength="20" style="text-transform:uppercase" value="' + esc(c ? c.vehicle : '') + '" placeholder="optional">') + '</div>' +
+      '<div class="two">' + field('Phone', nkPhoneHtml('k-phone', c ? c.phone : ''), true) + field('Vehicle no. (drivers)', '<input class="input" id="k-veh" maxlength="20" style="text-transform:uppercase" value="' + esc(c ? c.vehicle : '') + '" placeholder="optional">') + '</div>' +
       '<div class="two">' + field('For which guest', '<input class="input" id="k-guest" maxlength="80" value="' + esc(c ? c.guest : '') + '" placeholder="optional">') + field('Room / booking', '<input class="input" id="k-room" maxlength="40" value="' + esc(c ? c.room : '') + '" placeholder="optional">') + '</div>' +
       '<div class="two">' + field('Date', '<input class="input" id="k-date" type="date" max="' + esc(S.st.today) + '" value="' + esc(c ? c.date : S.st.today) + '">') + field('Amount (₹)', '<input class="input" id="k-amt" inputmode="numeric" value="' + esc(c ? c.amount : '') + '">', true) + '</div>' +
       '<div class="field"><span>Paid by <i>*</i></span>' + seg('k-m', d.methods, c ? c.method : 'Cash') + '</div>' +
@@ -869,11 +869,11 @@
     wireSegs(body);
     $('#k-name', body).onchange = function () { // known person: fill phone, type, vehicle
       var p1 = d.people.filter(function (x) { return x.name.toLowerCase() === this.value.trim().toLowerCase(); }, this)[0];
-      if (p1) { if (!$('#k-phone', body).value) $('#k-phone', body).value = p1.phone; if (!$('#k-veh', body).value) $('#k-veh', body).value = p1.vehicle || ''; $$('[data-seg="k-t"] button', body).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === p1.type)); }); }
+      if (p1) { if (!$('#k-phone', body).value) { var sp = nkPhoneSplit(p1.phone); $('#k-phone-cc', body).value = sp[0]; $('#k-phone', body).value = sp[1]; } if (!$('#k-veh', body).value) $('#k-veh', body).value = p1.vehicle || ''; $$('[data-seg="k-t"] button', body).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === p1.type)); }); }
     };
     var sv = $('#k-save', body);
     if (sv) sv.onclick = function () {
-      submit(this, $('#k-err', body), 'deskCommissionSave', { id: c ? c.id : '', name: $('#k-name', body).value.trim(), type: segVal(body, 'k-t'), phone: $('#k-phone', body).value.trim(),
+      submit(this, $('#k-err', body), 'deskCommissionSave', { id: c ? c.id : '', name: $('#k-name', body).value.trim(), type: segVal(body, 'k-t'), phone: nkPhoneVal('k-phone', body),
         vehicle: $('#k-veh', body).value.trim(), guest: $('#k-guest', body).value.trim(), room: $('#k-room', body).value.trim(), date: $('#k-date', body).value,
         amount: $('#k-amt', body).value.replace(/\D/g, ''), method: segVal(body, 'k-m'), ref: $('#k-ref', body).value.trim(), note: $('#k-note', body).value.trim() },
         function () { toast(c ? 'Updated' : 'Commission saved'); COM.data = null; closeSheet(); render(); });
@@ -963,7 +963,7 @@
     var t = S.st.today, body = openSheet('Check in · Room ' + r.room, 'ready');
     body.innerHTML = '<p class="small">' + esc(r.type + ' · ' + r.beds) + '</p>' +
       field('Guest name', '<input class="input" id="f-guest" autocomplete="off" maxlength="80">', true) +
-      field('Phone (optional)', '<div class="phonewrap"><span class="cc">+91</span><input class="input" id="f-phone" inputmode="numeric" maxlength="14" autocomplete="off"></div>') +
+      field('Phone (optional)', nkPhoneHtml('f-phone', '', ' autocomplete="off"')) +
       '<div id="f-mem"></div>' +
       '<div class="field"><span>Guests in this room <i>*</i></span>' + stepper('f-guests', 2, 1, 20) + '</div>' + compBox() +
       '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="f-in" value="' + t + '">', true) +
@@ -988,9 +988,9 @@
     ['#f-in', '#f-out', '#f-rate'].forEach(function (s) { $(s, body).addEventListener('input', calc); });
     wireSegs(body, function () { var fr = segVal(body, 'stype') === 'Free stay'; $('#f-freew', body).hidden = !fr; $('#f-paid', body).hidden = fr; }); wireSteppers(body, function () { compDraw(body, Number($('#f-guests', body).textContent)); }); calc(); compDraw(body, 2);
     var lastPh = '';
-    $('#f-phone', body).addEventListener('input', function () {
-      var ph = this.value.replace(/\D/g, '').slice(-10);
-      if (ph.length !== 10 || ph === lastPh) { if (ph.length !== 10) $('#f-mem', body).innerHTML = ''; return; }
+    var memLook = function () {
+      var ph = nkPhoneOk(nkPhoneVal('f-phone', body));
+      if (!ph || ph === lastPh) { if (!ph) { $('#f-mem', body).innerHTML = ''; lastPh = ''; } return; }
       lastPh = ph;
       api('deskMember', { phone: ph }).then(function (res) {
         var mem = res.member, box = $('#f-mem', body); if (!box) return;
@@ -1003,13 +1003,14 @@
           $('#use-mr', body).onclick = function () { $('#f-rate', body).value = mr; $('#f-rnote', body).value = mem.tier + ' member rate (' + mem.discount + '% off)'; calc(); toast('Member rate applied'); };
         }
       }, function () {});
-    });
+    }, memT = 0;
+    ['#f-phone', '#f-phone-cc'].forEach(function (q) { $(q, body).addEventListener('input', function () { clearTimeout(memT); memT = setTimeout(memLook, 350); }); });
     $('#go', body).onclick = function () {
       var free = segVal(body, 'stype') === 'Free stay';
       if (free && !segVal(body, 'comp')) { $('#err', body).textContent = 'Pick whose guest this is.'; vibrate(); return; }
       submit(this, $('#err', body), 'deskCheckIn', {
         comp: free ? segVal(body, 'comp') : '', compRef: free ? $('#f-cref', body).value : '',
-        room: r.room, guest: $('#f-guest', body).value, phone: $('#f-phone', body).value, guests: Number($('#f-guests', body).textContent), companions: compVal(body),
+        room: r.room, guest: $('#f-guest', body).value, phone: nkPhoneVal('f-phone', body), guests: Number($('#f-guests', body).textContent), companions: compVal(body),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''),
         rateNote: $('#f-rnote', body).value, advance: $('#f-adv', body).value.replace(/[^\d]/g, ''), method: segVal(body, 'method'), ref: $('#f-ref', body).value, notes: $('#f-notes', body).value,
         kit: kitVal(body), kitQty: Number($('#f-guests', body).textContent)
@@ -1036,7 +1037,7 @@
     var body = openSheet('Edit stay · Room ' + s.room);
     var free = S.st.rooms.filter(function (r) { return r.status === 'Ready'; });
     body.innerHTML = field('Guest name', '<input class="input" id="f-guest" maxlength="80" value="' + esc(s.guest) + '">', true) +
-      field('Phone', '<div class="phonewrap"><span class="cc">+91</span><input class="input" id="f-phone" inputmode="numeric" maxlength="14" value="' + esc(s.phone || '') + '"></div>') +
+      field('Phone', nkPhoneHtml('f-phone', s.phone || '')) +
       '<div class="field"><span>Guests</span>' + stepper('f-guests', s.guests, 1, 20) + '</div>' + compBox() +
       '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="f-in" value="' + esc(s.checkin) + '">') +
       field('Check-out', '<input class="input" type="date" id="f-out" value="' + esc(s.checkout) + '">') + '</div>' +
@@ -1058,7 +1059,7 @@
     $('#x2', body).onclick = function () { $('#f-out', body).value = addDays($('#f-out', body).value, 2); calc(); };
     wireSteppers(body, function () { compDraw(body, Number($('#f-guests', body).textContent)); }); calc(); compDraw(body, s.guests, s.companions || []);
     $('#go', body).onclick = function () {
-      var d = { id: s.id, companions: compVal(body), guest: $('#f-guest', body).value, phone: $('#f-phone', body).value, guests: Number($('#f-guests', body).textContent),
+      var d = { id: s.id, companions: compVal(body), guest: $('#f-guest', body).value, phone: nkPhoneVal('f-phone', body), guests: Number($('#f-guests', body).textContent),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''), rateNote: $('#f-rnote', body).value, notes: $('#f-notes', body).value };
       if (s.comp) { delete d.rate; delete d.rateNote; d.compRef = $('#f-cref', body).value; }
       if ($('#f-why', body)) d.reason = $('#f-why', body).value;
@@ -1324,7 +1325,7 @@
         field('Permanent access token' + (w.hasToken ? ' (saved; leave empty to keep it)' : ''), '<input class="input" id="w-tok" type="password" autocomplete="off" placeholder="' + (w.hasToken ? '••••••••••••' : 'Paste the token here') + '">') +
         '<p class="err" id="w-err" role="alert"></p><div class="btn-row"><button class="btn btn-gold" type="button" id="w-save">Save connection</button>' + (w.phoneId || w.hasToken ? '<button class="btn btn-quiet sm danger" type="button" id="w-clear">Disconnect</button>' : '') + '</div>' +
         '<p class="small">The token is stored privately in Google, not in the sheet, and is never shown again.</p></div>' +
-        (w.connected ? '<div class="panel"><div class="sec-h"><h2>Test</h2></div>' + field('Send Meta\'s “hello world” test to', '<input class="input" id="w-to" inputmode="tel" maxlength="10" placeholder="10-digit number">') +
+        (w.connected ? '<div class="panel"><div class="sec-h"><h2>Test</h2></div>' + field('Send Meta\'s “hello world” test to', nkPhoneHtml('w-to', '')) +
           '<p class="err" id="t-err" role="alert"></p><button class="btn btn-line" type="button" id="w-test">Send test message</button></div>' : '') +
         '<div class="panel"><div class="sec-h"><h2>Recent messages</h2></div>' + (w.recent.length ? '<div class="list">' + w.recent.map(function (m) {
           return '<div class="bl"><span class="t"><b>' + esc(KIND[m.kind] || m.kind) + ' · ' + esc(m.name || '') + '</b><small>' + esc(tShort(m.at)) + ' · ' + esc(m.to) + (m.info ? ' · ' + esc(m.info) : '') + '</small></span><span class="a"><span class="ptag k-' + (m.status === 'Sent' ? 'ok' : m.status === 'Waiting' ? 'wait' : 'bad') + '">' + esc(m.status) + '</span></span></div>';
@@ -1338,7 +1339,7 @@
       var c = $('#w-clear', body); if (c) c.onclick = function () { var x = this; if (x.dataset.sure !== '1') { x.dataset.sure = '1'; x.textContent = 'Sure? Tap again'; return; } busy(x, true); api('deskWaSave', { clear: true }).then(function (r) { draw(r, 'Disconnected.'); }); };
       var t = $('#w-test', body); if (t) t.onclick = function () {
         var x = this; busy(x, true); $('#t-err', body).textContent = '';
-        api('deskWaTest', { phone: $('#w-to', body).value.trim() }).then(function () { busy(x, false); toast('Test sent'); }, function (e) { busy(x, false); $('#t-err', body).textContent = errText(e); });
+        api('deskWaTest', { phone: nkPhoneVal('w-to', body) }).then(function () { busy(x, false); toast('Test sent'); }, function (e) { busy(x, false); $('#t-err', body).textContent = errText(e); });
       };
     }
     body.innerHTML = '<div class="loading">Loading…</div>';
@@ -1426,7 +1427,7 @@
       '<div class="counts"><div class="count c-ready"><b>' + fr + '</b><span>Free</span></div><div class="count c-arr"><b>' + bk + '</b><span>Booked</span></div><div class="count c-occ"><b>' + occ + '</b><span>' + (d < c.today ? 'Stayed' : 'Occupied') + '</span></div><div class="count"><b>' + rows.length + '</b><span>Rooms</span></div></div>' +
       '<div class="list daylist">' + rows.map(function (o) {
         var x = o.x, k = x ? (x.kind === 'booked' ? 'arr' : x.kind === 'past' ? 'past' : 'occ') : (d === c.today && o.r.status === 'Needs cleaning' ? 'dirty' : 'ready');
-        var label = x ? (x.kind === 'booked' ? 'Booked' : x.kind === 'past' ? 'Stayed' : 'Occupied') : (k === 'dirty' ? 'Free · to clean' : 'Free');
+        var label = x ? (x.kind === 'booked' ? (x.comp ? 'Reserved · free' : 'Booked') : x.kind === 'past' ? 'Stayed' : 'Occupied') : (k === 'dirty' ? 'Free · to clean' : 'Free');
         return '<div class="bl' + (x || mgr() ? ' tap' : '') + ' k-' + k + '"' + (x ? ' data-bar="1" data-kind="' + x.kind + '" data-id="' + esc(x.id) + '"' : mgr() ? ' data-new="' + o.r.room + '"' : '') + '>' +
           '<span class="t"><i class="dot"></i>Room ' + o.r.room + ' · ' + esc(o.r.type.replace('Deluxe ', '')) + '</span><span class="d">' + (x ? esc(x.guest) + ' · ' + esc(dShort(x.from)) + ' to ' + esc(dShort(x.to)) : esc(o.r.beds)) + '</span><span class="a">' + label + '</span></div>';
       }).join('') + '</div></div>';
@@ -1451,16 +1452,16 @@
     else if (isDesk()) {
       html += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Status</th><th>Guest</th><th>Check-in</th><th>Nights</th><th>Guests</th><th>Rooms</th><th class="r">Total</th><th class="r">Advance</th><th>Source</th></tr></thead><tbody>' +
         list.map(function (b) {
-          return '<tr data-booking="' + esc(b.id) + '"><td><span class="st-pill s-' + BSTAT[b.status] + '">' + esc(b.status) + '</span></td><td><b>' + esc(b.guest) + '</b><small>' + esc(b.phone || '') + '</small></td>' +
+          return '<tr data-booking="' + esc(b.id) + '"><td><span class="st-pill s-' + BSTAT[b.status] + '">' + esc(b.status) + '</span></td><td><b>' + esc(b.guest) + '</b><small>' + esc(nkPhoneShow(b.phone)) + '</small></td>' +
             '<td>' + esc(dLong(b.checkin)) + '<small>to ' + esc(dShort(b.checkout)) + '</small></td><td>' + b.nights + '</td><td>' + b.guests + '</td>' +
-            '<td>' + (b.rooms.length ? b.rooms.join(', ') : '<span class="muted">' + b.roomsNeeded + ' needed</span>') + '</td><td class="r">' + inr(b.total) + '</td>' +
-            '<td class="r">' + inr(b.advancePaid) + '<small>' + (b.status === 'Pending' ? 'needs ' + inr(b.advanceDue) : b.refunded ? 'refunded ' + inr(b.refunded) : 'of ' + inr(b.advanceDue)) + '</small></td><td>' + esc(b.source) + '</td></tr>';
+            '<td>' + (b.rooms.length ? b.rooms.join(', ') : '<span class="muted">' + b.roomsNeeded + ' needed</span>') + '</td>' + (b.comp ? '<td class="r" colspan="2"><span class="bal comp">Free · ' + esc(b.comp) + '</span></td>' : '<td class="r">' + inr(b.total) + '</td>' +
+            '<td class="r">' + inr(b.advancePaid) + '<small>' + (b.status === 'Pending' ? 'needs ' + inr(b.advanceDue) : b.refunded ? 'refunded ' + inr(b.refunded) : 'of ' + inr(b.advanceDue)) + '</small></td>') + '<td>' + esc(b.source) + '</td></tr>';
         }).join('') + '</tbody></table></div>';
     } else {
       html += '<div class="bcards">' + list.map(function (b) {
         return '<button type="button" class="bcard" data-booking="' + esc(b.id) + '"><span class="st-pill s-' + BSTAT[b.status] + '">' + esc(b.status) + '</span><b>' + esc(b.guest) + '</b>' +
           '<span>' + esc(dShort(b.checkin)) + ' → ' + esc(dShort(b.checkout)) + ' · ' + b.nights + 'n · ' + b.guests + ' guests</span>' +
-          '<span>' + (b.rooms.length ? 'Room ' + b.rooms.join(', ') : b.roomsNeeded + (b.roomsNeeded > 1 ? ' rooms' : ' room') + ' needed') + ' · ' + (b.status === 'Pending' ? 'advance ' + inr(b.advanceDue) + ' needed' : 'paid ' + inr(b.advancePaid)) + '</span></button>';
+          '<span>' + (b.rooms.length ? 'Room ' + b.rooms.join(', ') : b.roomsNeeded + (b.roomsNeeded > 1 ? ' rooms' : ' room') + ' needed') + ' · ' + (b.comp ? 'Free · ' + esc(b.comp) : b.status === 'Pending' ? 'advance ' + inr(b.advanceDue) + ' needed' : 'paid ' + inr(b.advancePaid)) + '</span></button>';
       }).join('') + '</div>';
     }
     v.innerHTML = html; wire();
@@ -1482,8 +1483,8 @@
     var p = S.st.policy;
     return 'Hare Krishna ' + b.guest.split(' ')[0] + '! Your booking at Nikadi Guest House, Mayapur is CONFIRMED.\n\n' +
       'Booking: ' + b.id + '\nRoom' + (b.rooms.length > 1 ? 's' : '') + ': ' + b.rooms.join(', ') + '\nCheck-in: ' + dLong(b.checkin) + ', from 11:00 AM\nCheck-out: ' + dLong(b.checkout) + ', by 9:00 AM\n' +
-      'Guests: ' + b.guests + '\nTotal: ' + nkInr(b.total) + '\nAdvance received: ' + nkInr(b.advancePaid) + '\nBalance at check-in: ' + nkInr(Math.max(0, b.total - b.advancePaid)) + '\n\n' +
-      'Cancellation policy: ' + p.text + '\n\n' +
+      'Guests: ' + b.guests + (b.comp ? '\nYou are our guest: no charge for the room.\n\n' : '\nTotal: ' + nkInr(b.total) + '\nAdvance received: ' + nkInr(b.advancePaid) + '\nBalance at check-in: ' + nkInr(Math.max(0, b.total - b.advancePaid)) + '\n\n' +
+      'Cancellation policy: ' + p.text + '\n\n') +
       'Reception is on the first floor: enter at the left corner of the building, by the picture of Sri Chaitanya Mahaprabhu, and take the stairs up. We are opposite ISKCON Gate No. 4.\n\nNikadi Guest House · +91 75011 01137';
   }
   function drawBooking(body, b) {
@@ -1492,31 +1493,32 @@
     var h = '<div class="hrow"><div><p class="kicker"><span class="st-pill s-' + BSTAT[b.status] + '">' + esc(b.status) + '</span> · ' + esc(b.id) + '</p><h2 style="font-size:1.9rem">' + esc(b.guest) + '</h2></div></div>' +
       '<dl class="facts"><div><dt>Check-in</dt><dd>' + esc(dLong(b.checkin)) + '</dd></div><div><dt>Check-out</dt><dd>' + esc(dLong(b.checkout)) + '</dd></div>' +
       '<div><dt>Guests · nights</dt><dd>' + b.guests + ' · ' + b.nights + '</dd></div><div><dt>Rooms</dt><dd>' + (b.rooms.length ? 'Room ' + b.rooms.join(', ') : b.roomsNeeded + ' needed · ' + esc(b.roomType)) + '</dd></div>' +
-      '<div><dt>Phone</dt><dd>' + (b.phone ? '<a href="tel:+91' + esc(b.phone) + '">' + esc(b.phone) + '</a>' : '—') + '</dd></div><div><dt>Source</dt><dd>' + esc(b.source) + (b.email ? '<small class="muted"> · ' + esc(b.email) + '</small>' : '') + '</dd></div></dl>' +
+      '<div><dt>Phone</dt><dd>' + (b.phone ? '<a href="tel:' + esc(nkPhoneTel(b.phone)) + '">' + esc(nkPhoneShow(b.phone)) + '</a>' : '—') + '</dd></div><div><dt>Source</dt><dd>' + esc(b.source) + (b.email ? '<small class="muted"> · ' + esc(b.email) + '</small>' : '') + '</dd></div></dl>' +
       (b.notes ? '<div class="note"><b>Notes</b>' + esc(b.notes) + '</div>' : '') +
+      (b.comp ? '<div class="note comp-note"><b>Free stay · ' + esc(b.comp) + '</b>' + (b.compRef ? esc(b.compRef) : 'No charge') + ' · no advance, nothing to pay</div><div hidden>' : '') +
       '<div class="bill"><h3>Money</h3>' +
       '<div class="bl sum"><span class="t">' + b.nights + (b.nights > 1 ? ' nights' : ' night') + ' × ' + Math.max(b.rooms.length, b.roomsNeeded) + (Math.max(b.rooms.length, b.roomsNeeded) > 1 ? ' rooms' : ' room') + ' × ' + inr(b.rate) + '</span><span class="d">Rate per room per night</span><span class="a">' + inr(b.total) + '</span></div>' +
       '<div class="bl' + (open && mgr() ? ' tap' : '') + '" id="k-adv"><span class="t">' + (b.advanceSet ? 'Advance agreed' : 'Advance needed (50%)') + '</span><span class="d">' + (open && mgr() ? 'Tap to change the advance for this guest' : '') + '</span><span class="a">' + inr(b.advanceDue) + '</span></div>' +
       b.payments.map(function (p) { return '<div class="bl tap ' + (p.amount < 0 ? 'refund' : 'paid') + '" data-pay="' + esc(p.id) + '"><span class="t">' + (p.amount < 0 ? 'Refunded · ' : 'Received · ') + esc(p.method) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + '</span><span class="a">' + (p.amount < 0 ? '+ ' + inr(-p.amount) : '− ' + inr(p.amount)) + '</span></div>'; }).join('') +
       (b.status === 'Pending' ? '<div class="bl due"><span class="t">Not confirmed yet</span><span class="a">' + inr(b.advanceDue) + ' to receive</span></div>'
-        : b.status === 'Confirmed' ? '<div class="bl due"><span class="t">Balance at check-in</span><span class="a">' + inr(bal) + '</span></div>' : '') + '</div>' +
+        : b.status === 'Confirmed' ? '<div class="bl due"><span class="t">Balance at check-in</span><span class="a">' + inr(bal) + '</span></div>' : '') + '</div>' + (b.comp ? '</div>' : '') +
       (b.closeNote ? '<div class="note"><b>' + esc(b.status) + (b.closedBy ? ' · ' + esc(b.closedBy) : '') + '</b>' + esc(b.closeNote) + '</div>' : '') +
       (b.confirmedBy ? '<p class="small">Confirmed by ' + esc(b.confirmedBy) + ' · ' + esc(tShort(b.confirmedAt)) + '. Created ' + esc(tShort(b.created)) + ' by ' + esc(b.createdBy) + '.</p>' : '<p class="small">Created ' + esc(tShort(b.created)) + ' by ' + esc(b.createdBy) + '.</p>');
-    if (b.status === 'Pending') h += '<div class="btns"><button class="btn btn-gold wide big-cta" id="k-conf" type="button">Money received: confirm</button><button class="btn btn-quiet" id="k-edit" type="button">Edit</button><button class="btn btn-danger" id="k-cancel" type="button">Cancel booking</button></div>';
+    if (b.status === 'Pending') h += '<div class="btns"><button class="btn btn-gold wide big-cta" id="k-conf" type="button">' + (b.comp ? 'Reserve rooms: confirm' : 'Money received: confirm') + '</button><button class="btn btn-quiet" id="k-edit" type="button">Edit</button><button class="btn btn-danger" id="k-cancel" type="button">Cancel booking</button></div>';
     if (b.status === 'Confirmed') {
       h += '<div class="btns">' + (b.checkin <= t ? '<button class="btn btn-gold wide big-cta" id="k-in" type="button">Guest arrived: check in</button>' : '') +
-        '<a class="btn btn-line" id="k-wa" target="_blank" rel="noopener" href="' + (b.phone ? 'https://wa.me/91' + esc(b.phone) + '?text=' + encodeURIComponent(waText(b)) : '#') + '">Send WhatsApp confirmation</a>' +
-        '<button class="btn btn-quiet" id="k-pay" type="button">Add payment</button><button class="btn btn-quiet" id="k-edit" type="button">Edit dates or rooms</button>' +
+        '<a class="btn btn-line" id="k-wa" target="_blank" rel="noopener" href="' + (b.phone ? 'https://wa.me/' + esc(nkPhoneTel(b.phone).slice(1)) + '?text=' + encodeURIComponent(waText(b)) : '#') + '">Send WhatsApp confirmation</a>' +
+        (b.comp ? '' : '<button class="btn btn-quiet" id="k-pay" type="button">Add payment</button>') + '<button class="btn btn-quiet" id="k-edit" type="button">Edit dates or rooms</button>' +
         (b.advancePaid - b.refunded > 0 ? '<button class="btn btn-quiet" id="k-ref" type="button">Refund part of advance</button>' : '') +
         '<button class="btn btn-danger" id="k-cancel" type="button">Cancel booking</button>' + (b.checkin <= t ? '<button class="btn btn-danger" id="k-ns" type="button">Guest did not come</button>' : '') + '</div>';
     }
     if ((b.status === 'Cancelled' || b.status === 'No-show') && b.advancePaid - b.refunded > 0) h += '<div class="btns"><button class="btn btn-quiet" id="k-ref" type="button">Refund money (' + inr(b.advancePaid - b.refunded) + ' kept)</button></div>';
     if (b.payments.length) h += '<p class="small">Tap a payment to correct a mistake.' + (rcp() ? ' Changes go to the manager for approval.' : '') + '</p>';
-    if (open) h += '<div class="policy"><b>Cancellation policy</b>' + esc(S.st.policy.text) + '</div>';
+    if (open && !b.comp) h += '<div class="policy"><b>Cancellation policy</b>' + esc(S.st.policy.text) + '</div>';
     body.innerHTML = h;
     var q = function (sel) { return $(sel, body); };
     if (q('#k-conf')) q('#k-conf').onclick = function () { openConfirm(b, body); };
-    if (open && mgr()) q('#k-adv').onclick = function () { openAdvance(b, body); };
+    if (open && mgr() && !b.comp) q('#k-adv').onclick = function () { openAdvance(b, body); };
     if (q('#k-edit')) q('#k-edit').onclick = function () { openBookingForm(b, body); };
     if (q('#k-cancel')) q('#k-cancel').onclick = function () { openCancel(b, body); };
     if (q('#k-pay')) q('#k-pay').onclick = function () { openBookingPay(b, body); };
@@ -1541,21 +1543,26 @@
     var body = openSheet(isNew ? 'New booking' : 'Edit booking');
     var t = S.st.today, cin = pre.checkin || t, cout = pre.checkout || addDays(cin, 1);
     var types = ['Any', 'Deluxe Double (King)', 'Deluxe Twin', 'Large Twin'];
-    body.innerHTML = (isNew ? '<p class="small">Saved as <b>Pending</b>. It goes on the calendar only after you record the advance and confirm.</p>' : '') +
+    body.innerHTML = (isNew ? '<p class="small">Saved as <b>Pending</b>. It goes on the calendar only after you confirm it (paying guests: after the advance is recorded; free stays: just pick the rooms).</p>' : '') +
       '<div class="grid2">' + field('Guest name', '<input class="input" id="b-guest" maxlength="80" value="' + esc(pre.guest || '') + '">', true) +
-      field('Phone', '<div class="phonewrap"><span class="cc">+91</span><input class="input" id="b-phone" inputmode="numeric" maxlength="14" value="' + esc(pre.phone || '') + '"></div>', true) + '</div>' +
+      field('Phone', nkPhoneHtml('b-phone', pre.phone || ''), true) + '</div>' +
       field('Email', '<input class="input" id="b-email" type="email" maxlength="80" value="' + esc(pre.email || '') + '">') +
       '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="b-in" value="' + esc(cin) + '">', true) + field('Check-out', '<input class="input" type="date" id="b-out" value="' + esc(cout) + '">', true) + '</div>' +
       '<div class="grid2">' + field('Guests', '<input class="input" id="b-guests" inputmode="numeric" value="' + (pre.guests || 2) + '">', true) +
       (pre.status === 'Confirmed' ? '<div></div>' : field('Rooms needed', '<input class="input" id="b-rooms" inputmode="numeric" value="' + (pre.roomsNeeded || 1) + '">')) + '</div>' +
       '<p class="small" id="b-hint"></p>' +
       (pre.status === 'Confirmed' ? '<div class="field"><span>Room numbers</span><div class="pick" id="b-pick"></div></div>' : field('Room preference', '<select class="input" id="b-type">' + types.map(function (x) { return '<option' + (x === (pre.roomType || 'Any') ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select>')) +
-      field('Rate per room per night (₹)', '<input class="input" id="b-rate" inputmode="numeric" value="' + (pre.rate || (pre.roomPick && roomOf(pre.roomPick) ? roomOf(pre.roomPick).rate : 5000)) + '">', true) +
+      '<div class="field"><span>Stay</span>' + seg('bstype', ['Paying guest', 'Free stay'], pre.comp ? 'Free stay' : 'Paying guest') + '</div>' +
+      '<div id="b-freew"' + (pre.comp ? '' : ' hidden') + '><div class="field"><span>Whose guest <i>*</i></span>' + seg('bcomp', S.st.compHosts || [], pre.comp || '') + '</div>' +
+      field('Reference', '<input class="input" id="b-cref" maxlength="120" value="' + esc(pre.compRef || '') + '" placeholder="e.g. Sent by Prahlad for the festival, temple guest…">') +
+      '<p class="small">No charge and no advance: confirming just reserves the room in their name. At check-in it becomes a free stay; water, kits and other items are still counted from stock.</p></div>' +
+      '<div id="b-paidw"' + (pre.comp ? ' hidden' : '') + '>' + field('Rate per room per night (₹)', '<input class="input" id="b-rate" inputmode="numeric" value="' + (pre.rate || (pre.roomPick && roomOf(pre.roomPick) ? roomOf(pre.roomPick).rate : 5000)) + '">', true) + '</div>' +
       (isNew ? '<div class="field"><span>Booked by</span>' + seg('src', ['Phone', 'WhatsApp', 'Walk-in', 'Website', 'Other'], 'Phone') + '</div>' : '') +
       field('Notes', '<textarea class="input" id="b-notes" rows="2" maxlength="400" placeholder="Arrival time, requests, negotiation…">' + esc(pre.notes || '') + '</textarea>') +
       (rcp() && pre.status === 'Confirmed' ? '<p class="small">Changing the rate of a confirmed booking needs a manager\'s approval.</p>' + field('Reason for a rate change', '<input class="input" id="b-why" maxlength="200">') : '') +
       '<div class="calc" id="b-calc"></div><p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">' + (isNew ? 'Save booking (pending)' : 'Save changes') + '</button>';
-    wireSegs(body);
+    var bFree = function () { return segVal(body, 'bstype') === 'Free stay'; };
+    wireSegs(body, function () { $('#b-freew', body).hidden = !bFree(); $('#b-paidw', body).hidden = bFree(); calc(); });
     var picked = (pre.rooms || []).slice();
     if (isNew && pre.roomPick) { var rp = roomOf(pre.roomPick); if (rp) { var sel = $('#b-type', body); sel.value = rp.type === 'Deluxe Double' ? 'Deluxe Double (King)' : rp.type; } }
     function calc() {
@@ -1563,7 +1570,7 @@
       var rn = $('#b-rooms', body) ? Math.max(Number($('#b-rooms', body).value.replace(/\D/g, '')) || 1, Math.ceil(g / 3)) : picked.length || 1;
       var rate = Number($('#b-rate', body).value.replace(/\D/g, '')) || 0, tot = n * rn * rate;
       $('#b-hint', body).textContent = g > 3 ? g + ' guests need at least ' + Math.ceil(g / 3) + ' rooms (maximum 3 per room).' : '';
-      $('#b-calc', body).innerHTML = n > 0 ? n + (n > 1 ? ' nights' : ' night') + ' × ' + rn + (rn > 1 ? ' rooms' : ' room') + ' × ' + inr(rate) + ' = <b>' + inr(tot) + '</b><br>Advance to confirm (50%): <b>' + inr(Math.ceil(tot / 2)) + '</b>' : 'Check-out must be after check-in';
+      $('#b-calc', body).innerHTML = n > 0 && bFree() ? n + (n > 1 ? ' nights' : ' night') + ' × ' + rn + (rn > 1 ? ' rooms' : ' room') + ' · <b>free stay</b>, no advance' : n > 0 ? n + (n > 1 ? ' nights' : ' night') + ' × ' + rn + (rn > 1 ? ' rooms' : ' room') + ' × ' + inr(rate) + ' = <b>' + inr(tot) + '</b><br>Advance to confirm (50%): <b>' + inr(Math.ceil(tot / 2)) + '</b>' : 'Check-out must be after check-in';
     }
     function drawPick() {
       var pk = $('#b-pick', body); if (!pk) return;
@@ -1580,8 +1587,11 @@
     ['#b-in', '#b-out'].forEach(function (x) { $(x, body).addEventListener('change', drawPick); });
     calc(); drawPick();
     $('#go', body).onclick = function () {
-      var d = { guest: $('#b-guest', body).value, phone: $('#b-phone', body).value, email: $('#b-email', body).value, checkin: $('#b-in', body).value, checkout: $('#b-out', body).value,
-        guests: $('#b-guests', body).value.replace(/\D/g, ''), rate: $('#b-rate', body).value.replace(/\D/g, ''), notes: $('#b-notes', body).value };
+      var d = { guest: $('#b-guest', body).value, phone: nkPhoneVal('b-phone', body), email: $('#b-email', body).value, checkin: $('#b-in', body).value, checkout: $('#b-out', body).value,
+        guests: $('#b-guests', body).value.replace(/\D/g, ''), rate: $('#b-rate', body).value.replace(/\D/g, ''), notes: $('#b-notes', body).value,
+        comp: bFree() ? segVal(body, 'bcomp') : '', compRef: bFree() ? $('#b-cref', body).value : '' };
+      if (bFree() && !d.comp) { $('#err', body).textContent = 'Pick whose guest this is.'; vibrate(); return; }
+      if (bFree()) delete d.rate;
       if ($('#b-rooms', body)) d.roomsNeeded = $('#b-rooms', body).value.replace(/\D/g, '');
       if ($('#b-type', body)) d.roomType = $('#b-type', body).value;
       if (pre.status === 'Confirmed') d.rooms = picked;
@@ -1616,13 +1626,14 @@
     var want = b.roomsNeeded, pref = String(b.roomType || 'Any').toLowerCase();
     body.innerHTML = '<div class="note"><b>' + esc(b.guest) + ' · ' + esc(dShort(b.checkin)) + ' to ' + esc(dShort(b.checkout)) + '</b>' + b.guests + ' guests · ' + want + (want > 1 ? ' rooms' : ' room') + ' · ' + esc(b.roomType) + '</div>' +
       '<div class="field"><span class="label">1 · Choose ' + want + (want > 1 ? ' rooms' : ' room') + ' (free on these dates)</span><div class="pick" id="c-pick"><span class="small">Checking free rooms…</span></div></div>' +
+      (b.comp ? '<div class="note comp-note"><b>Free stay · ' + esc(b.comp) + '</b>' + (b.compRef ? esc(b.compRef) : 'No charge') + ' · no advance needed</div><div hidden>' : '') +
       field('Rate per room per night (₹)', '<input class="input" id="c-rate" inputmode="numeric" value="' + b.rate + '">') +
       '<div class="calc" id="c-calc"></div>' +
       '<p class="label">2 · Money received</p>' +
       field('Amount received (₹)', '<input class="input" id="c-amt" inputmode="numeric" value="' + b.advanceDue + '">', true) +
       '<div class="field"><span>Received by</span>' + seg('method', S.st.methods, 'UPI') + '</div>' + refField('c-ref') +
-      '<div class="policy"><b>Cancellation policy</b>' + esc(S.st.policy.text) + '</div>' +
-      '<p class="err" id="err" role="alert"></p><div id="c-warn"></div><button class="btn btn-gold big-cta" id="go" type="button">Money received: confirm booking</button>' +
+      '<div class="policy"><b>Cancellation policy</b>' + esc(S.st.policy.text) + '</div>' + (b.comp ? '</div>' : '') +
+      '<p class="err" id="err" role="alert"></p><div id="c-warn"></div><button class="btn btn-gold big-cta" id="go" type="button">' + (b.comp ? 'Reserve the rooms: confirm' : 'Money received: confirm booking') + '</button>' +
       '<p class="small">Saved with your name (' + esc(S.me.name) + ') and the time. The rooms are then blocked on the calendar.</p>';
     wireSegs(body);
     var picked = [];
@@ -1641,13 +1652,13 @@
     });
     $('#go', body).onclick = function () {
       var btn = this, amt = Number($('#c-amt', body).value.replace(/\D/g, '')) || 0, need = Math.ceil(total() / 2);
-      if (amt > 0 && amt < need && !btn.dataset.sure) {
+      if (!b.comp && amt > 0 && amt < need && !btn.dataset.sure) {
         btn.dataset.sure = 1;
         $('#c-warn', body).innerHTML = '<div class="conf">' + inr(amt) + ' is less than the 50% advance (' + inr(need) + '). Tap the button again to confirm: the advance for this booking will be set to ' + inr(amt) + '.</div>';
         return;
       }
-      submit(btn, $('#err', body), 'deskBookingConfirm', { id: b.id, rooms: picked, rate: $('#c-rate', body).value.replace(/\D/g, ''), amount: $('#c-amt', body).value.replace(/\D/g, ''), method: segVal(body, 'method'), ref: $('#c-ref', body).value },
-        function (r) { vibrate(); toast('Confirmed · room ' + r.booking.rooms.join(', ') + ' blocked'); X.cal = null; X.bookings = null; closeSheet(); drawBooking(parentBody, r.booking); refresh(); });
+      submit(btn, $('#err', body), 'deskBookingConfirm', { id: b.id, rooms: picked, rate: b.comp ? '' : $('#c-rate', body).value.replace(/\D/g, ''), amount: $('#c-amt', body).value.replace(/\D/g, ''), method: segVal(body, 'method'), ref: $('#c-ref', body).value },
+        function (r) { vibrate(); toast((b.comp ? 'Reserved for ' + b.guest : 'Confirmed') + ' · room ' + r.booking.rooms.join(', ') + ' blocked'); X.cal = null; X.bookings = null; closeSheet(); drawBooking(parentBody, r.booking); refresh(); });
     };
   }
 
@@ -2007,7 +2018,7 @@
       }, function (e) { var er = $('#ed-room', body); if (er) er.textContent = errText(e); });
     }
     function draw(b, msg) {
-      var d = billData(b), c = NikadiBill.compute(d), ph = String(b.phone || '').replace(/\D/g, '').slice(-10), st = billStatus(b);
+      var d = billData(b), c = NikadiBill.compute(d), ph = nkPhoneOk(b.phone), st = billStatus(b);
       body.innerHTML = '<div class="note"><b>' + esc(d.guest.company || d.guest.name) + '</b>Room ' + esc(d.room.no) + ' · ' + esc(dShort(d.checkin)) + ' – ' + esc(dShort(d.checkout)) + ' · Tax invoice ' + esc(b.no) + '</div>' +
         '<div class="bill"><div class="bl"><span class="t">Total (incl. GST)</span><span class="a">' + inr(c.total) + '</span></div>' +
         '<div class="bl paid"><span class="t">Paid</span><span class="a">' + inr(c.paid - c.refunded) + '</span></div>' +
@@ -2059,7 +2070,7 @@
           return api('deskBillWhatsApp', { id: b.stay, pdf: r.base64() });
         }).then(function (res) {
           busy(x, false); x.textContent = 'Sent on WhatsApp ✓';
-          note('The PDF bill was sent to +91 ' + res.sentTo + ' from the guest house WhatsApp number. It also shows in the WhatsApp Business app.');
+          note('The PDF bill was sent to ' + nkPhoneShow(res.sentTo) + ' from the guest house WhatsApp number. It also shows in the WhatsApp Business app.');
         }, function (e) {
           busy(x, false);
           var why = (e && e.message) || e;
@@ -2071,7 +2082,7 @@
             if (ok === true) note(pre + 'Shared from this phone. If WhatsApp did not add the message, paste it: it is copied.');
             else if (ok === false) {
               NikadiBillPdf.download(pdf);
-              window.open('https://wa.me/91' + ph + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+              window.open('https://wa.me/' + nkPhoneTel(ph).slice(1) + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
               note(pre + 'WhatsApp is open with the message and a link to the bill. The PDF is also downloaded if you want to attach it (📎).');
             }
           });
@@ -2439,7 +2450,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 48</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 49</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

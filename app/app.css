@@ -63,6 +63,8 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 .phonewrap{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:3px;background:var(--band)}
 .phonewrap:focus-within{border-color:var(--gold)}
 .phonewrap .cc{padding:0 12px;display:flex;align-items:center;color:var(--muted);border-right:1px solid var(--line);font-variant-numeric:tabular-nums}
+.phonewrap input.cc{width:4.6em;flex:none;border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink,inherit);font:inherit;text-align:center;padding:0 6px;outline:none}
+.phonewrap .input{min-width:0;flex:1}
 .phonewrap .input{border:0;background:transparent;letter-spacing:.06em;font-variant-numeric:tabular-nums}
 .otp{letter-spacing:.6em;text-align:center;font-size:1.5rem!important;font-variant-numeric:tabular-nums;padding-left:.6em!important}
 .err{color:var(--warn);font-size:.88rem;min-height:1.3em}
