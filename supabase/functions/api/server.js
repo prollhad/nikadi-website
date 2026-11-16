@@ -110,7 +110,7 @@ var NK_TEST_FAKE = { // test copy: nothing reaches guests, and the real Drive re
   nkMail_: function () { return true; }, deskSendBill_: function () { return true; }, deskTrash_: function () { return true; },
   deskArchive_: function (a) { return a[1] || {}; }, deskStayFolder_: function (a) { return a[1] || 'test-folder'; },
   deskSavePhoto_: function () { return 'test-' + RealDate.now().toString(36) + RealMath.random().toString(36).slice(2, 7); },
-  deskOwnBillFile_: function () { return 'test-ownbill'; }
+  deskOwnBillFile_: function () { return 'test-ownbill'; }, deskLaundryFile_: function () { return 'test-laundry'; }
 };
 async function nkBridgeCall(fn, argsJson) {
   if (nkTestMode() && NK_TEST_FAKE[fn]) return NK_TEST_FAKE[fn](JSON.parse(argsJson));

@@ -689,3 +689,17 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .ed-n{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}.ed-n .input{width:84px;flex:0 0 84px}
 .ed-free{display:flex;align-items:center;gap:6px;font-size:.9rem;cursor:pointer}.ed-free input{width:18px;height:18px}
 .ed-each{color:var(--muted)}
+/* laundry */
+.warn-t{color:var(--amber);font-weight:500}
+.tbl small{display:block;font-size:.72rem}
+.tbl tr.tap{cursor:pointer}.tbl tr.tap:hover td{background:rgba(255,255,255,.03)}
+.tbl.lin td:first-child{min-width:9rem}
+.lcount{display:grid;gap:6px;margin:8px 0}
+.lc-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:8px 10px 8px 14px}
+.lc-row>span:first-child{min-width:0}.lc-row small{display:block;color:var(--muted);font-size:.74rem}
+.lc-q{display:flex;align-items:center;gap:6px;flex:none}
+.lc-q button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--band);color:var(--ink);font-size:1.2rem;cursor:pointer}
+.lc-q .input{width:4.2em;text-align:center;padding:8px 4px;-moz-appearance:textfield}
+.lc-q .input::-webkit-outer-spin-button,.lc-q .input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.hkc-lin{display:grid;gap:6px;margin-top:8px;width:100%}
+.hkc-row.opt{flex-wrap:wrap}

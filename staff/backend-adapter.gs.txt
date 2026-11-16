@@ -203,7 +203,7 @@ function deskHandle_(req) {
     waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
     changeLog: typeof nkChangeLog_ === 'function' && typeof CTX !== 'undefined' && CTX ? nkChangeLog_ : null,
-    sendBill: deskSendBill_, ownBillFile: deskOwnBillFile_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
+    sendBill: deskSendBill_, ownBillFile: deskOwnBillFile_, laundryFile: deskLaundryFile_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
   if (name.charAt(0) === '_' || !api.hasOwnProperty(name)) throw new Error('unknown_action');
   var out = api[name](clean);
   if (typeof DESK_NO_LOCK_ !== 'undefined' && DESK_NO_LOCK_) return out; // read-only call without the lock: leave the bill timer to locked calls
@@ -255,7 +255,7 @@ function deskBackupNow() {
 function deskTimerCore_() {
   return deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
-    archive: deskArchive_, stayFolder: deskStayFolder_, trashFile: deskTrash_ });
+    archive: deskArchive_, stayFolder: deskStayFolder_, trashFile: deskTrash_, laundryFile: deskLaundryFile_ });
 }
 
 /* ---------------- WhatsApp (Meta WhatsApp Cloud API) ----------------
@@ -387,6 +387,13 @@ function deskOwnBillFile_(b64, name, ym) {
   var root = deskCachedFolder_('ARCH_OWNBILLS', function () { return deskChild_(deskArchiveRoot_(), 'Owner bills'); });
   var m = +String(ym).slice(5, 7), folder = deskChild_(root, String(ym).slice(0, 4) + '-' + String(ym).slice(5, 7) + ' ' + (DESK_MONTHS[m - 1] || ''));
   return folder.createFile(Utilities.newBlob(Utilities.base64Decode(b64), 'application/pdf', name)).getId();
+}
+/** One laundry list as a PDF in Drive "Nikadi Guest House Records/Laundry/<yyyy-mm Month>" (the old copy is replaced). */
+function deskLaundryFile_(html, name, ym, oldId) {
+  var root = deskCachedFolder_('ARCH_LAUNDRY', function () { return deskChild_(deskArchiveRoot_(), 'Laundry'); });
+  var m = +String(ym).slice(5, 7), folder = deskChild_(root, String(ym).slice(0, 4) + '-' + String(ym).slice(5, 7) + ' ' + (DESK_MONTHS[m - 1] || ''));
+  deskTrash_(oldId);
+  return folder.createFile(Utilities.newBlob(html, 'text/html', 'laundry.html').getAs('application/pdf').setName(name)).getId();
 }
 /** Run once from the editor to file every stay now (otherwise the 15-minute timer does 8 stays at a time). */
 function archiveAllStays() {

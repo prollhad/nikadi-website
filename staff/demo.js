@@ -1,10 +1,10 @@
 /* Nikadi Staff — demo mode (open /staff/?demo=1).
    Runs the real staff logic (logic.js) on sample data kept only on this phone.
-   Demo PINs: 1111 Owner · 2222 Reception (Manager) · 3333 Housekeeping (Staff) */
+   Demo PINs: 1111 Owner · 2222 Reception (Manager) · 3333 Housekeeping (Staff) · 7777 Laundry */
 (function (root) {
   var DEMO_PHOTOS = {}; // demo: bill photos only kept until the page reloads
   DEMO_PHOTOS['demo-proof'] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='360' height='640'><rect width='360' height='640' fill='#f4f6fb'/><rect width='360' height='110' fill='#5f259f'/><text x='180' y='70' font-family='Arial' font-size='22' fill='#fff' text-anchor='middle'>Payment successful</text><circle cx='180' cy='200' r='46' fill='#22a45d'/><path d='M158 200l15 15 30-30' stroke='#fff' stroke-width='8' fill='none'/><text x='180' y='300' font-family='Arial' font-size='40' font-weight='bold' fill='#111' text-anchor='middle'>₹7,500</text><text x='180' y='340' font-family='Arial' font-size='16' fill='#555' text-anchor='middle'>Paid to Nikadi Projects Pvt Ltd</text><text x='180' y='380' font-family='Arial' font-size='14' fill='#777' text-anchor='middle'>UPI ref 431298776512</text><text x='180' y='600' font-family='Arial' font-size='12' fill='#999' text-anchor='middle'>Demo screenshot</text></svg>");
-  var KEY = 'nikadi-staff-demo-v14';
+  var KEY = 'nikadi-staff-demo-v15';
 
   function memoryDb(data) {
     return {
@@ -30,6 +30,7 @@
     var data = { tables: {}, kv: {} }, db = memoryDb(data);
     Object.keys(DESK_DEFAULTS).forEach(function (t) { DESK_DEFAULTS[t].forEach(function (o) { db.add(t, JSON.parse(JSON.stringify(o))); }); });
     db.add('staff', { name: 'Housekeeping', pin: '3333', role: 'Staff', active: 'Yes' });
+    db.add('staff', { name: 'Laundry', pin: '7777', role: 'Laundry', active: 'Yes' });
     db.add('staff', { name: 'Bablu', pin: '4444', role: 'Staff', active: 'Yes' });
     db.add('staff', { name: 'Manager', pin: '5555', role: 'Manager', active: 'Yes' });
     db.add('staff', { name: 'Reception 2', pin: '6666', role: 'Receptionist', active: 'Yes' });
@@ -102,6 +103,18 @@
           db.add('payments', { id: 'PH' + yy + mo + k, at: cout + ' 08:40', stay: sid, room: 1, amount: total + extras, method: methods[Math.floor(rnd() * methods.length)], note: '', by: 'Reception', booking: '', ref: '', voided: '' });
         }
       }
+    })();
+    (function () { // linen: prices, counts and one list at the laundry
+      var lc = { 'Bedsheet (double)': [40, 60, 22, 4], 'Bedsheet (single)': [25, 12, 6, 0], 'Pillow cover': [20, 90, 44, 8], 'Pillow': [0, 24, 22, 0], 'Bed cover': [60, 16, 11, 0], 'Duvet': [150, 8, 11, 0],
+        'Duvet cover': [50, 30, 11, 4], 'Single duvet': [100, 4, 2, 0], 'Mattress': [0, 2, 11, 0], 'Extra mattress': [0, 3, 2, 0], 'Towel': [15, 70, 22, 6], 'Hand towel': [10, 30, 11, 0], 'Bath mat': [10, 20, 11, 3] };
+      Object.keys(lc).forEach(function (k) {
+        var v = lc[k]; api.linenSave({ token: owner, original: k, item: k, price: v[0], low: Math.round(v[1] / 4) });
+        api.linenMove({ token: owner, item: k, mode: 'count', place: 'store', qty: v[1] }); api.linenMove({ token: owner, item: k, mode: 'count', place: 'rooms', qty: v[2] });
+        if (v[3]) api.linenMove({ token: owner, item: k, mode: 'count', place: 'dirty', qty: v[3] });
+      });
+      var lt = api.login({ pin: '7777' }).token;
+      var l1 = api.laundryList({ token: lt, items: { 'Bedsheet (double)': 4, 'Pillow cover': 8, 'Duvet cover': 4, 'Towel': 6, 'Bath mat': 3 }, note: 'Morning pick-up' }).item;
+      api.laundryGive({ token: owner, id: l1.id, items: { 'Bedsheet (double)': 4, 'Pillow cover': 8, 'Duvet cover': 4, 'Towel': 6, 'Bath mat': 3 } });
     })();
     data.tables.sessions = [];
     data.tables.attendance = []; // seeding logs in as reception; don't show that as attendance

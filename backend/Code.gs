@@ -1366,7 +1366,7 @@ function nkPair_(req) {
   var j = {}; try { j = JSON.parse(r.getContentText()); } catch (e) {}
   return json_({ ok: !!j.ok });
 }
-var NK_BRIDGE_FNS = { nkSetLive_: 1, nkImport_: 1, deskSavePhoto_: 1, deskGetPhoto_: 1, deskStayFolder_: 1, deskTrash_: 1, deskOwnBillFile_: 1, deskSendBill_: 1, deskArchive_: 1, waSaveMedia_: 1, nkMail_: 1, nkExport_: 1 };
+var NK_BRIDGE_FNS = { nkSetLive_: 1, nkImport_: 1, deskSavePhoto_: 1, deskGetPhoto_: 1, deskStayFolder_: 1, deskTrash_: 1, deskOwnBillFile_: 1, deskLaundryFile_: 1, deskSendBill_: 1, deskArchive_: 1, waSaveMedia_: 1, nkMail_: 1, nkExport_: 1 };
 function nkBridgeRun_(req) {
   if (!req.key || req.key !== PropertiesService.getScriptProperties().getProperty('NK_BRIDGE_KEY')) return json_({ ok: false, error: 'forbidden' });
   if (!NK_BRIDGE_FNS[req.fn]) return json_({ ok: false, error: 'not_allowed' });
@@ -1419,7 +1419,8 @@ function nkImport_(data) {
   Object.keys(data.desk || {}).forEach(function (t) {
     var def = DESK_SCHEMA[t]; if (!def) return;
     var sh = ss.getSheetByName(def.sheet);
-    if (!sh) { sh = ss.insertSheet(def.sheet); sh.appendRow(def.cols.map(function (c) { return c[1]; })); }
+    if (!sh) sh = ss.insertSheet(def.sheet);
+    sh.getRange(1, 1, 1, def.cols.length).setValues([def.cols.map(function (c) { return c[1]; })]); // headings (new columns too)
     var rows = (data.desk[t] || []).map(function (o) { return def.cols.map(function (c) { var v = o[c[0]]; return v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : v; }); });
     var last = sh.getLastRow();
     if (last > 1) sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), def.cols.length)).clearContent();

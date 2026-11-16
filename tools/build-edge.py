@@ -10,7 +10,7 @@ def mod(name):
     return s
 code = (root / 'backend/Code.gs').read_text()
 staff = (root / 'backend/Staff.gs').read_text()
-OVERRIDE = ['deskDb_', 'deskSavePhoto_', 'deskGetPhoto_', 'deskStayFolder_', 'deskTrash_', 'deskOwnBillFile_', 'deskSendBill_', 'deskArchive_', 'waSaveMedia_']
+OVERRIDE = ['deskDb_', 'deskSavePhoto_', 'deskGetPhoto_', 'deskStayFolder_', 'deskTrash_', 'deskOwnBillFile_', 'deskLaundryFile_', 'deskSendBill_', 'deskArchive_', 'waSaveMedia_']
 gas = code + '\n' + staff
 for f in OVERRIDE:
     n = len(re.findall(r'\bfunction ' + f + r'\(', gas))
@@ -24,6 +24,7 @@ function deskGetPhoto_(fileId) { return nkBridge_('deskGetPhoto_', [fileId]); }
 function deskStayFolder_(rec, oldId) { return nkBridge_('deskStayFolder_', [rec, oldId]); }
 function deskTrash_(id) { if (id) nkBridge_('deskTrash_', [id]); }
 function deskOwnBillFile_(b64, name, ym) { return nkBridge_('deskOwnBillFile_', [b64, name, ym]); }
+function deskLaundryFile_(html, name, ym, oldId) { return nkBridge_('deskLaundryFile_', [html, name, ym, oldId]); }
 function deskSendBill_(d, to, pdf) { return nkBridge_('deskSendBill_', [d, to, pdf]); }
 function deskArchive_(rec, was) { return nkBridge_('deskArchive_', [rec, was]); }
 function waSaveMedia_(media, type, phone, name) { return nkBridge_('waSaveMedia_', [media, type, phone, name]); }
