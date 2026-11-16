@@ -886,7 +886,7 @@ function deskCore(db, hooks) {
       if (s.status !== 'In house') fail('not_in_house');
       var to = room(req.room); if (to.status !== 'Ready') fail(to.status === 'Occupied' ? 'room_occupied' : 'room_not_clean');
       var from = room(s.room);
-      db.set('rooms', from, { status: 'Needs cleaning', stay: '', updated: stamp(), by: me.name });
+      db.set('rooms', from, { status: req.fromReady ? 'Ready' : 'Needs cleaning', stay: '', updated: stamp(), by: me.name }); // "back to ready": the old room was not used
       db.set('rooms', to, { status: 'Occupied', stay: s.id, updated: stamp(), by: me.name });
       p.room = to.room;
       p.notes = text((p.notes != null ? p.notes : s.notes) + ' · Moved from room ' + from.room + ' on ' + today(), 300);

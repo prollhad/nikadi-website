@@ -1059,6 +1059,7 @@
       (!s.comp && rcp() ? '<p class="small">Changing the rate needs a manager\'s approval. Write why below.</p>' + field('Reason for a rate change', '<input class="input" id="f-why" maxlength="200">') : '') +
       '<div class="calc" id="calc"></div>' +
       field('Move to another room', '<select class="input" id="f-room"><option value="">Stay in room ' + s.room + '</option>' + free.map(function (r) { return '<option value="' + r.room + '">Room ' + r.room + ' · ' + esc(r.type) + '</option>'; }).join('') + '</select>') +
+      '<div class="field" id="f-fromw" hidden><span>Room ' + s.room + ' after the move</span>' + seg('fromst', ['Needs cleaning', 'Back to ready'], 'Needs cleaning') + '<small class="small">Back to ready: the guest did not use it, nothing changes there.</small></div>' +
       field('Notes', '<textarea class="input" id="f-notes" rows="2" maxlength="300">' + esc(s.notes || '') + '</textarea>') +
       '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">Save changes</button>';
     function calc() {
@@ -1069,14 +1070,16 @@
     $('#x1', body).onclick = function () { $('#f-out', body).value = addDays($('#f-out', body).value, 1); calc(); };
     $('#x2', body).onclick = function () { $('#f-out', body).value = addDays($('#f-out', body).value, 2); calc(); };
     wireSteppers(body, function () { compDraw(body, Number($('#f-guests', body).textContent)); }); calc(); compDraw(body, s.guests, s.companions || []);
+    wireSegs(body);
+    $('#f-room', body).addEventListener('change', function () { $('#f-fromw', body).hidden = !this.value; });
     $('#go', body).onclick = function () {
       var d = { id: s.id, companions: compVal(body), guest: $('#f-guest', body).value, phone: nkPhoneVal('f-phone', body), guests: Number($('#f-guests', body).textContent),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''), rateNote: $('#f-rnote', body).value, notes: $('#f-notes', body).value };
       if (s.comp) { delete d.rate; delete d.rateNote; d.compRef = $('#f-cref', body).value; }
       if ($('#f-why', body)) d.reason = $('#f-why', body).value;
-      if ($('#f-room', body).value) d.room = Number($('#f-room', body).value);
+      if ($('#f-room', body).value) { d.room = Number($('#f-room', body).value); d.fromReady = segVal(body, 'fromst') === 'Back to ready'; }
       submit(this, $('#err', body), 'deskUpdateStay', d, function (res) {
-        toast(d.room ? 'Moved to room ' + d.room + '. Room ' + s.room + ' needs cleaning.' : 'Stay updated');
+        toast(d.room ? 'Moved to room ' + d.room + '. Room ' + s.room + (d.fromReady ? ' is ready again.' : ' needs cleaning.') : 'Stay updated');
         if (d.room) { after(2); return; }
         closeSheet(); drawStay(parentBody, res.stay);
       });
@@ -2687,7 +2690,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 53</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 54</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
