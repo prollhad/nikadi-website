@@ -428,7 +428,7 @@
     if (r.status === 'Needs cleaning') {
       body.innerHTML = '<div class="note"><b>Needs cleaning</b>' + esc(r.by ? 'Marked by ' + r.by + ' · ' + tShort(r.updated) : 'Clean this room before the next guest.') + '</div>' +
         '<button class="btn btn-ok big-cta" id="cl" type="button">Open cleaning checklist</button><p class="small">Tick every line of the checklist. Then the room turns green and can be given to a guest.</p>' +
-        (mgr() ? '<button class="btn btn-line" id="br" type="button">Back to ready (room was not used)</button><p class="small">For a room nobody used, e.g. a guest moved out of it straight away. No cleaning checklist; it is noted in the housekeeping log.</p>' : '');
+        (mgr() && S.st.backToReady ? '<button class="btn btn-line" id="br" type="button">Back to ready (room was not used)</button><p class="small">For a room nobody used, e.g. a guest moved out of it straight away. No cleaning checklist; it is noted in the housekeeping log.</p>' : '');
       if ($('#br', body)) $('#br', body).onclick = function () {
         var b = this; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Tap again: Room ' + r.room + ' back to ready'; return; }
         busy(b, true);
@@ -2696,7 +2696,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 55</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 56</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

@@ -791,6 +791,7 @@ function deskCore(db, hooks) {
     me.canApprove = canApprove(me);
     var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, compHosts: DESK_COMP_HOSTS, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
       approvals: canApprove(me) ? reqs.filter(function (r) { return r.status === 'Pending'; }).length : 0,
+      backToReady: true,
       laundryNew: mgr ? db.all('laundry').filter(function (x) { return x.status === 'Waiting for approval' || x.status === 'Return to check'; }).length : 0,
       myRequests: me.role === 'Receptionist' ? reqs.filter(function (r) { return r.status === 'Pending' && r.by === me.name; }).length : 0,
       stocklog: db.all('stocklog').slice(-15).reverse(),
