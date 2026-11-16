@@ -1915,39 +1915,53 @@
           api('deskUpdateStay', { id: st.id, rate: $('#e-rate', er).value.replace(/\D/g, ''), rateNote: $('#e-note', er).value.trim(), checkout: $('#e-out', er).value, guests: Number($('#e-g', er).textContent) })
             .then(function () { return refresh(b, 'Room changes saved. Bill, sales and member points are updated.'); }, function (e) { busy(x, false); $('#e-rerr', er).textContent = errText(e); });
         };
-        /* items */
+        /* items: quantity, free or paid, and the total the guest actually paid */
         ei.className = '';
-        var sell = S.st.items.filter(function (i) { return i.sell; });
+        var all = S.st.items.filter(function (i) { return i.active !== false; });
+        function money2(v) { return Math.round(Number(String(v).replace(/[^\d.]/g, '')) || 0); }
         ei.innerHTML = (st.charges.length ? '<div class="list">' + st.charges.map(function (ch, k) {
-            return '<div class="bl ed-row" data-c="' + k + '"><span class="t"><b>' + esc(ch.item) + '</b><small>' + esc(dShort(ch.at)) + (ch.free ? ' · free' : '') + '</small></span>' +
-              '<span class="ed-ctl"><input class="input sm" data-q inputmode="numeric" value="' + esc(ch.qty) + '" aria-label="Quantity"><span class="x">×</span><input class="input sm" data-p inputmode="numeric" value="' + esc(ch.price) + '" aria-label="Price"' + (ch.free ? ' disabled' : '') + '>' +
-              '<button class="btn btn-quiet sm" type="button" data-save>Save</button><button class="btn btn-quiet sm danger" type="button" data-del>Remove</button></span></div>';
+            return '<div class="bl ed-row" data-c="' + k + '"><span class="t"><b>' + esc(ch.item) + '</b><small>' + esc(dShort(ch.at)) + (ch.free ? ' · free' : ' · ' + inr(ch.total)) + '</small></span>' +
+              '<span class="ed-ctl"><label class="ed-n">Qty<input class="input sm" data-q inputmode="numeric" value="' + esc(ch.qty) + '"></label>' +
+              '<label class="ed-free"><input type="checkbox" data-f' + (ch.free ? ' checked' : '') + '> Free</label>' +
+              '<label class="ed-n">Total paid ₹<input class="input sm" data-t inputmode="numeric" value="' + esc(ch.free ? '' : ch.total) + '"' + (ch.free ? ' disabled' : '') + '></label>' +
+              '<button class="btn btn-quiet sm" type="button" data-save>Save</button><button class="btn btn-quiet sm danger" type="button" data-del>Remove</button></span>' +
+              '<small class="ed-each" data-e></small></div>';
           }).join('') + '</div>' : '<p class="small">No items on this bill.</p>') +
           '<div class="sec-h"><h3>Add an item</h3></div>' +
-          '<div class="ed-add"><select class="input" id="e-it">' + sell.map(function (i) { return '<option value="' + esc(i.item) + '" data-price="' + esc(i.price) + '">' + esc(i.item) + ' · ' + inr(i.price) + '</option>'; }).join('') + '</select>' +
-          '<input class="input sm" id="e-iq" inputmode="numeric" value="1" aria-label="Quantity"><input class="input sm" id="e-ip" inputmode="numeric" placeholder="Price" aria-label="Price (blank = usual)">' +
+          '<div class="ed-add"><select class="input" id="e-it">' + all.map(function (i) { return '<option value="' + esc(i.item) + '" data-price="' + esc(i.price) + '" data-sell="' + (i.sell === false ? '0' : '1') + '">' + esc(i.item) + (i.sell === false ? ' · free item' : ' · ' + inr(i.price)) + '</option>'; }).join('') + '</select>' +
+          '<label class="ed-n">Qty<input class="input sm" id="e-iq" inputmode="numeric" value="1"></label>' +
+          '<label class="ed-free"><input type="checkbox" id="e-if"> Free</label>' +
+          '<label class="ed-n">Total paid ₹<input class="input sm" id="e-it2" inputmode="numeric" placeholder="usual"></label>' +
           '<button class="btn btn-gold sm" type="button" id="e-iadd">Add</button></div>' +
-          '<p class="err" id="e-ierr" role="alert"></p><p class="small">Adding, changing or removing items also corrects the stock.</p>';
+          '<p class="err" id="e-ierr" role="alert"></p><p class="small">Tick <b>Free</b> if it was given free, or write the <b>total the guest paid</b> for all of them (e.g. 2 water bottles for ₹30). Adding, changing or removing items also corrects the stock.</p>';
         function ierr(e) { $('#e-ierr', ei).textContent = errText(e); }
         $$('[data-c]', ei).forEach(function (row) {
-          var ch = st.charges[+row.dataset.c];
+          var ch = st.charges[+row.dataset.c], q = $('[data-q]', row), f = $('[data-f]', row), t = $('[data-t]', row), e = $('[data-e]', row);
+          function each() { var n = Math.max(1, money2(q.value)); t.disabled = f.checked; e.textContent = f.checked ? 'Free · not on the bill total' : t.value ? '= ' + inr(Math.round(money2(t.value) / n * 100) / 100) + ' each' : ''; }
+          q.oninput = function () { if (!f.checked && ch.price && !t.dataset.typed) t.value = Math.round(ch.price * Math.max(1, money2(q.value))); each(); };
+          t.oninput = function () { t.dataset.typed = '1'; each(); };
+          f.onchange = function () { if (!f.checked && !t.value) t.value = Math.round((ch.price || (S.st.items.filter(function (i) { return i.item === ch.item; })[0] || {}).price || 0) * Math.max(1, money2(q.value))); each(); };
+          each();
           $('[data-save]', row).onclick = function () {
             var x = this; busy(x, true);
-            api('deskEditCharge', { id: ch.id, qty: Number($('[data-q]', row).value), price: ch.free ? 0 : $('[data-p]', row).value.replace(/\D/g, '') || '0', free: ch.free, reason: 'Bill corrected after check-out' })
-              .then(function () { return refresh(b, ch.item + ' changed. Stock and bill updated.'); }, function (e) { busy(x, false); ierr(e); });
+            api('deskEditCharge', { id: ch.id, qty: Math.max(1, money2(q.value)), free: f.checked, price: 0, total: f.checked ? '' : String(money2(t.value)), reason: 'Bill corrected after check-out' })
+              .then(function () { return refresh(b, ch.item + ' changed. Stock and bill updated.'); }, function (e2) { busy(x, false); ierr(e2); });
           };
           $('[data-del]', row).onclick = function () {
             var x = this;
             if (x.dataset.sure !== '1') { x.dataset.sure = '1'; x.textContent = 'Sure?'; return; }
             busy(x, true);
             api('deskEditCharge', { id: ch.id, remove: true, reason: 'Removed from bill after check-out' })
-              .then(function () { return refresh(b, ch.item + ' removed. Stock and bill updated.'); }, function (e) { busy(x, false); ierr(e); });
+              .then(function () { return refresh(b, ch.item + ' removed. Stock and bill updated.'); }, function (e2) { busy(x, false); ierr(e2); });
           };
         });
+        var sel = $('#e-it', ei), af = $('#e-if', ei), at = $('#e-it2', ei);
+        function addState() { var o = sel.options[sel.selectedIndex]; if (o && o.dataset.sell === '0') { af.checked = true; af.disabled = true; } else af.disabled = false; at.disabled = af.checked; }
+        sel.onchange = addState; af.onchange = addState; addState();
         $('#e-iadd', ei).onclick = function () {
-          var x = this, pr = $('#e-ip', ei).value.replace(/\D/g, ''); busy(x, true);
-          api('deskCharge', { id: st.id, item: $('#e-it', ei).value, qty: Number($('#e-iq', ei).value), price: pr === '' ? undefined : pr })
-            .then(function () { return refresh(b, 'Item added. Stock and bill updated.'); }, function (e) { busy(x, false); ierr(e); });
+          var x = this; busy(x, true);
+          api('deskCharge', { id: st.id, item: sel.value, qty: Math.max(1, money2($('#e-iq', ei).value)), free: af.checked, total: af.checked || !at.value.trim() ? undefined : String(money2(at.value)) })
+            .then(function () { return refresh(b, 'Item added. Stock and bill updated.'); }, function (e2) { busy(x, false); ierr(e2); });
         };
         /* payments */
         ep.className = '';
@@ -2425,7 +2439,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 47</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 48</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

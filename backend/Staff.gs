@@ -877,15 +877,18 @@ function deskCore(db, hooks) {
       s = stay(r.stay);
     }
     var it = item(req.item);
-    if (!sellable(it)) fail('no_item');
-    var qty = Math.round(Number(req.qty || 1)); if (!(qty >= 1 && qty <= 50)) fail('bad_qty');
     var free = !!req.free || !!s.comp;
-    var price = Number(it.price || 0);
+    if (!sellable(it) && !free) fail('no_item'); // free-only items (morning kit…) can still be given free
+    var qty = Math.round(Number(req.qty || 1)); if (!(qty >= 1 && qty <= 50)) fail('bad_qty');
+    var price = Number(it.price || 0), tot = null;
     if (mgr && req.price != null && req.price !== '') { price = money(req.price); if (isNaN(price)) fail('invalid_amount'); }
+    if (mgr && req.total != null && req.total !== '' && !free) { // what the guest actually paid for all of them (e.g. ₹30 for 2 bottles)
+      tot = money(req.total); if (isNaN(tot)) fail('invalid_amount'); price = Math.round(tot / qty * 100) / 100;
+    }
     var note = text(req.note, 120);
     if (mgr && price !== Number(it.price) && !free) note = text((note ? note + ' · ' : '') + 'Price changed from ₹' + it.price, 160);
     var c = db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: r.room, item: it.item, qty: qty, price: free ? 0 : price,
-      total: free ? 0 : price * qty, free: free ? 'Yes' : 'No', note: note, by: me.name, removed: '' });
+      total: free ? 0 : tot != null ? tot : price * qty, free: free ? 'Yes' : 'No', note: note, by: me.name, removed: '' });
     moveStock(it, -qty, free ? 'Free to room' : (req.id ? 'Added to bill after check-out' : 'Charged to room'), r.room, me.name);
     recompute(s);
     afterChange(s, me, s.roomTotal);
@@ -906,7 +909,7 @@ function deskCore(db, hooks) {
       if ((req.method === 'UPI' || req.method === 'Bank transfer') && !text(req.ref, 40)) fail('ref_required');
     }
     var g = gate(me, 'editCharge', req, 'Room ' + c.room + ' · ' + c.item + ' × ' + c.qty + ' (₹' + c.total + '): ' +
-      (req.remove ? 'remove from the bill' + (back > 0 ? ' and refund ₹' + back + ' by ' + req.method : '') : 'change to ' + req.qty + ' × ₹' + (req.free ? 0 : req.price) + (req.free ? ' (free)' : '')));
+      (req.remove ? 'remove from the bill' + (back > 0 ? ' and refund ₹' + back + ' by ' + req.method : '') : 'change to ' + req.qty + (req.free ? ' (free)' : req.total != null && req.total !== '' ? ' for ₹' + req.total + ' in total' : ' × ₹' + req.price)));
     if (g) return g;
     if (req.remove) {
       db.set('charges', c, { removed: 'Removed by ' + who(me, req) + ' ' + stamp() + (req.reason ? ' · ' + text(req.reason, 120) : '') });
@@ -915,10 +918,11 @@ function deskCore(db, hooks) {
         by: who(me, req), booking: s.booking || '', ref: text(req.ref, 40), voided: '' });
     } else {
       var qty = Math.round(Number(req.qty)); if (!(qty >= 1 && qty <= 50)) fail('bad_qty');
-      var free = !!req.free;
+      var free = !!req.free, tot2 = null;
       var price = free ? 0 : money(req.price); if (isNaN(price)) fail('invalid_amount');
+      if (!free && req.total != null && req.total !== '') { tot2 = money(req.total); if (isNaN(tot2)) fail('invalid_amount'); price = Math.round(tot2 / qty * 100) / 100; }
       if (it && qty !== Number(c.qty)) moveStock(it, Number(c.qty) - qty, 'Charge corrected', c.room, me.name);
-      db.set('charges', c, { qty: qty, price: price, total: price * qty, free: free ? 'Yes' : 'No',
+      db.set('charges', c, { qty: qty, price: price, total: free ? 0 : tot2 != null ? tot2 : price * qty, free: free ? 'Yes' : 'No',
         note: text((c.note ? c.note + ' · ' : '') + 'Edited by ' + who(me, req) + (req.reason ? ': ' + text(req.reason, 80) : ''), 200) });
     }
     recompute(s);

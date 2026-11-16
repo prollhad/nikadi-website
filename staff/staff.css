@@ -686,3 +686,6 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .cl-row .a{display:grid;justify-items:end;gap:2px}.cl-who{font-size:.8rem;color:var(--gold-hi,#e0be7a)}.cl-row time{font-size:.75rem;color:var(--muted)}
 .guide summary{cursor:pointer;list-style:none}.guide summary h2{display:inline}.guide summary::after{content:" ▾";color:var(--muted)}
 .bar .who .iconbtn+.iconbtn{margin-left:6px}
+.ed-n{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}.ed-n .input{width:84px;flex:0 0 84px}
+.ed-free{display:flex;align-items:center;gap:6px;font-size:.9rem;cursor:pointer}.ed-free input{width:18px;height:18px}
+.ed-each{color:var(--muted)}
