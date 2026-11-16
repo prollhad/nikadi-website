@@ -1244,12 +1244,12 @@
         '<small>' + esc(tShort(x.outAt || x.at)) + ' · ' + esc(x.outBy ? 'given by ' + x.outBy : 'listed by ' + x.by) + ' · ' + lSum(x.items) + ' pieces' + (lSum(x.back) ? ' · ' + lSum(x.back) + ' back' : '') + (lSum(x.short) && x.outAt && lSum(x.back) ? ' · <b class="warn-t">' + lSum(x.short) + ' still out</b>' : '') + '</small>' +
         '<small>' + esc(lText(x.items)) + '</small></span><span class="a">' + (act ? '<span class="pill gold">' + act + '</span>' : x.total != null && lSum(x.back) ? inr(x.total) + (x.paid ? '<small>paid</small>' : '') : '') + '</span></button>';
     }
-    var cols = [['store', 'Clean in store'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
-    var table = '<div class="tbl-wrap"><table class="tbl lin"><thead><tr><th>Item</th>' + cols.map(function (c) { return '<th class="r">' + c[1] + '</th>'; }).join('') + '<th class="r">Total</th>' + (d.linen[0] && d.linen[0].price != null ? '<th class="r">Laundry ₹ / piece</th>' : '') + '</tr></thead><tbody>' +
+    var cols = lr ? [['laundry', 'With you now']] : [['store', 'Clean in store'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
+    var table = '<div class="tbl-wrap"><table class="tbl lin"><thead><tr><th>Item</th>' + cols.map(function (c) { return '<th class="r">' + c[1] + '</th>'; }).join('') + (lr ? '' : '<th class="r">Total</th>') + (d.linen[0] && d.linen[0].price != null ? '<th class="r">Laundry ₹ / piece</th>' : '') + '</tr></thead><tbody>' +
       d.linen.map(function (i) {
         var low = i.low && i.store < i.low;
         return '<tr' + (d.can.setup || fd ? ' class="tap" data-li="' + esc(i.item) + '"' : '') + '><td><b>' + esc(i.item) + '</b>' + (low ? '<small class="warn-t">clean ones running low</small>' : '') + '</td>' +
-          cols.map(function (c) { return '<td class="r">' + (i[c[0]] || '<span class="muted">0</span>') + '</td>'; }).join('') + '<td class="r"><b>' + i.total + '</b></td>' + (i.price != null ? '<td class="r">' + (i.price ? inr(i.price) : '<span class="muted">set</span>') + '</td>' : '') + '</tr>';
+          cols.map(function (c) { return '<td class="r">' + (i[c[0]] || '<span class="muted">0</span>') + '</td>'; }).join('') + (lr ? '' : '<td class="r"><b>' + i.total + '</b></td>') + (i.price != null ? '<td class="r">' + (i.price ? inr(i.price) : '<span class="muted">' + (lr ? '—' : 'set') + '</span>') + '</td>' : '') + '</tr>';
       }).join('') + '</tbody></table></div>';
     var bill = d.bill ? '<div class="kpis"><div class="kpi"><span>Laundry bill · ' + esc(monthName(d.month)) + '</span><b>' + inr(d.bill.total) + '</b><small>' + d.bill.lists + ' lists · ' + d.bill.pieces + ' pieces given</small></div>' +
       '<div class="kpi cash"><span>Not paid yet</span><b>' + inr(d.bill.unpaid) + '</b><small>' + (d.can.pay && d.bill.unpaid ? '<button class="linkbtn" type="button" id="lpay">Mark the laundry bill paid →</button>' : 'all lists so far') + '</small></div></div>' : '';
@@ -1257,8 +1257,8 @@
       (todo.length ? '<div class="panel attn"><div class="sec-h"><h2>' + (fd ? 'To check' : 'Your lists') + '</h2></div><div class="list">' + todo.map(card).join('') + '</div></div>' : '') +
       (lr ? '<p class="small">Make a list of what you take. Reception counts it and approves before you take it. When you bring things back, open the list and tap <b>Bring back</b>: reception counts again and approves.</p>' : '') +
       bill +
-      '<div class="sec-h"><h2>Linen count</h2>' + (d.can.setup ? '<button class="linkbtn" type="button" id="lnew">+ New linen item</button>' : '') + '</div>' + table +
-      '<p class="small">Fresh linen goes from the store into a room when housekeeping ticks <b>Put fresh</b>; the used ones go to “Used, to wash”. They go to the laundry when a list is approved, and back to the store when the return is checked.' + (d.can.setup ? ' Tap an item to set its laundry price, add new ones bought, remove torn / lost ones, or correct a count.' : '') + '</p>' +
+      '<div class="sec-h"><h2>' + (lr ? 'Items and price per piece' : 'Linen count') + '</h2>' + (d.can.setup ? '<button class="linkbtn" type="button" id="lnew">+ New linen item</button>' : '') + '</div>' + table +
+      (lr ? '' : '<p class="small">Fresh linen goes from the store into a room when housekeeping ticks <b>Put fresh</b>; the used ones go to “Used, to wash”. They go to the laundry when a list is approved, and back to the store when the return is checked.' + (d.can.setup ? ' Tap an item to set its laundry price, add new ones bought, remove torn / lost ones, or correct a count.' : '') + '</p>') +
       '<div class="sec-h"><h2>Laundry lists</h2><input class="input sm" type="month" id="lm" value="' + esc(d.month) + '" style="max-width:11rem"></div>' +
       '<div class="list">' + (d.list.length ? d.list.map(card).join('') : '<div class="bl"><span class="d">No laundry lists this month yet.</span></div>') + '</div>' +
       (d.log.length ? '<div class="sec-h"><h2>Recent linen movements</h2></div><div class="list">' + d.log.map(function (l) {
@@ -2504,10 +2504,14 @@
       ['Every day', 'Today: arrivals, money in, balance due. Sales: month and year. Attendance: who was at work, live PC status, change a wrong exit time.'],
       ['Checking', 'Change log: every change with who did it and the before / after. Approvals: money changes from reception.'],
       ['Settings', 'Team and PINs, item prices and stock warnings, the policy text. My own bills: under Bills (only you see them).'],
-      ['Safety', 'Every night the data is copied into the Google Sheet and every Sunday a backup copy goes to Drive (Nikadi Guest House Records → Backups). Problems are emailed to the guest house Gmail.']]]
+      ['Safety', 'Every night the data is copied into the Google Sheet and every Sunday a backup copy goes to Drive (Nikadi Guest House Records → Backups). Problems are emailed to the guest house Gmail.']]],
+    ['Laundry', [
+      ['Taking things', '+ Laundry list: write how many of each item you take. Reception counts and approves; then you can take them.'],
+      ['Bringing back', 'Open the list → Bring back: write what you brought. Reception counts and approves. Anything not brought yet shows as "still out".'],
+      ['Your bill', 'Pieces brought back × the price per piece. You see the month total and what is not paid yet.']]]
   ];
   function viewHelp(v) {
-    var role = S.me.role, order = role === 'Owner' ? [3, 2, 1, 0] : role === 'Staff' ? [1, 0] : [2, 1, 0];
+    var role = S.me.role, order = role === 'Laundry' ? [GUIDE.length - 1] : role === 'Owner' ? [3, 2, 1, 0] : role === 'Staff' ? [1, 0] : [2, 1, 0];
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(role) + '</p><h1>Help</h1></div><p class="small">A short guide. Ask the owner if anything is not clear.</p>' +
       order.map(function (i, n) {
         var g = GUIDE[i];
@@ -2633,7 +2637,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 50</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 51</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

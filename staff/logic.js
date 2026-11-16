@@ -1703,6 +1703,7 @@ function deskCore(db, hooks) {
     var o = { item: it.item, store: Number(it.store || 0), rooms: Number(it.rooms || 0), dirty: Number(it.dirty || 0), laundry: Number(it.laundry || 0), low: Number(it.low || 0), active: yes(it.active) };
     o.total = o.store + o.rooms + o.dirty + o.laundry;
     if (me.role !== 'Staff') o.price = Number(it.price || 0);
+    if (me.role === 'Laundry') return { item: o.item, laundry: o.laundry, price: o.price, active: o.active }; // the laundry sees only what is with them, never the guest house's own counts
     return o;
   }
   function jget(v, d) { try { var x = JSON.parse(v || ''); return x == null ? d : x; } catch (e) { return d; } }
