@@ -15,7 +15,7 @@
     hk_checklist: 'Tick every line of the checklist first.',
     changelog_unavailable: 'The change log starts when the app moves to the new fast server.',
     comp_host: 'Pick whose guest this is.',
-    comp_no_money: 'This is a free stay. No money is taken.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
+    comp_no_money: 'This is a free stay. No money is taken.', laundry_paid: 'This list is already paid, so it cannot be deleted. Change the counts instead.', laundry_empty: 'Write how many of at least one item.', laundry_approved: 'This was already approved. A manager can change it.', laundry_return_open: 'There is already a return waiting to be checked.', laundry_not_out: 'This list has not been given to the laundry yet.', laundry_no_return: 'Nothing to check.', nothing_to_pay: 'Nothing to pay.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
     bill_no_required: 'Write the invoice number.',
     old_record: 'This record is more than a few months old and is kept in the archive Sheet. It can be viewed but not changed.',
     drive_unavailable: 'Google Drive is not connected here.',
@@ -391,7 +391,12 @@
 
   /* ---------- Housekeeping checklist: every line ticked (or an option picked) before Done / Room ready ---------- */
   function openHkCheck(room, kind, send) {
-    var list = (S.st && S.st.hk && S.st.hk[kind]) || [], body = openSheet((kind === 'out' ? 'Clean after check-out' : 'Housekeeping') + ' · Room ' + room, kind === 'out' ? 'dirty' : '');
+    var ro = roomOf(room) || {}, twin = /twin|single/i.test(String(ro.type || '') + ' ' + String(ro.beds || ''));
+    var list = ((S.st && S.st.hk && S.st.hk[kind]) || []).map(function (l) { // twin rooms: 2 single beds, so single sheets and covers
+      if (!l[3] || !twin) return l;
+      var d = {}; Object.keys(l[3]).forEach(function (k) { if (/\(king size\)/.test(k)) d[k.replace('(king size)', '(single)')] = l[3][k] * 2; else d[k] = l[3][k]; });
+      return [l[0], l[1], l[2], d];
+    }), body = openSheet((kind === 'out' ? 'Clean after check-out' : 'Housekeeping') + ' · Room ' + room, kind === 'out' ? 'dirty' : '');
     var got = {};
     body.innerHTML = '<p class="small">' + (kind === 'out' ? 'Everything fresh for the next guest. Tick each line when it is done.' : 'Guest is staying on. Tick each line, and pick what you changed.') + '</p>' +
       '<div class="hkc">' + list.map(function (l) {
@@ -1246,18 +1251,19 @@
     }
     var cols = lr ? [['laundry', 'With you now']] : [['store', 'Clean in store'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
     var table = '<div class="tbl-wrap"><table class="tbl lin"><thead><tr><th>Item</th>' + cols.map(function (c) { return '<th class="r">' + c[1] + '</th>'; }).join('') + (lr ? '' : '<th class="r">Total</th>') + (d.linen[0] && d.linen[0].price != null ? '<th class="r">Laundry ₹ / piece</th>' : '') + '</tr></thead><tbody>' +
-      d.linen.map(function (i) {
-        var low = i.low && i.store < i.low;
-        return '<tr' + (d.can.setup || fd ? ' class="tap" data-li="' + esc(i.item) + '"' : '') + '><td><b>' + esc(i.item) + '</b>' + (low ? '<small class="warn-t">clean ones running low</small>' : '') + '</td>' +
+      d.linen.map(function (i, n) {
+        var low = i.low && i.store < i.low, gh = n === 0 || d.linen[n - 1].group !== i.group ? '<tr class="grp"><td colspan="' + (cols.length + 3) + '">' + esc(i.group || 'Other') + '</td></tr>' : '';
+        return gh + '<tr' + (d.can.setup || fd ? ' class="tap" data-li="' + esc(i.item) + '"' : '') + '><td><b>' + esc(i.item) + '</b>' + (low ? '<small class="warn-t">clean ones running low</small>' : '') + '</td>' +
           cols.map(function (c) { return '<td class="r">' + (i[c[0]] || '<span class="muted">0</span>') + '</td>'; }).join('') + (lr ? '' : '<td class="r"><b>' + i.total + '</b></td>') + (i.price != null ? '<td class="r">' + (i.price ? inr(i.price) : '<span class="muted">' + (lr ? '—' : 'set') + '</span>') + '</td>' : '') + '</tr>';
-      }).join('') + '</tbody></table></div>';
+      }).join('') + '</tbody></table></div>' +
+      (d.removed && d.removed.length ? '<p class="small">Removed items: ' + d.removed.map(function (i) { return '<button class="linkbtn" type="button" data-lr="' + esc(i.item) + '">' + esc(i.item) + '</button>'; }).join(' · ') + '</p>' : '');
     var bill = d.bill ? '<div class="kpis"><div class="kpi"><span>Laundry bill · ' + esc(monthName(d.month)) + '</span><b>' + inr(d.bill.total) + '</b><small>' + d.bill.lists + ' lists · ' + d.bill.pieces + ' pieces given</small></div>' +
       '<div class="kpi cash"><span>Not paid yet</span><b>' + inr(d.bill.unpaid) + '</b><small>' + (d.can.pay && d.bill.unpaid ? '<button class="linkbtn" type="button" id="lpay">Mark the laundry bill paid →</button>' : 'all lists so far') + '</small></div></div>' : '';
     v.innerHTML = head +
       (todo.length ? '<div class="panel attn"><div class="sec-h"><h2>' + (fd ? 'To check' : 'Your lists') + '</h2></div><div class="list">' + todo.map(card).join('') + '</div></div>' : '') +
       (lr ? '<p class="small">Make a list of what you take. Reception counts it and approves before you take it. When you bring things back, open the list and tap <b>Bring back</b>: reception counts again and approves.</p>' : '') +
       bill +
-      '<div class="sec-h"><h2>' + (lr ? 'Items and price per piece' : 'Linen count') + '</h2>' + (d.can.setup ? '<button class="linkbtn" type="button" id="lnew">+ New linen item</button>' : '') + '</div>' + table +
+      '<div class="sec-h"><h2>' + (lr ? 'Items and price per piece' : 'Linen count') + '</h2>' + (d.can.setup ? '<button class="linkbtn" type="button" id="lnew">+ New item</button>' : '') + '</div>' + table +
       (lr ? '' : '<p class="small">Fresh linen goes from the store into a room when housekeeping ticks <b>Put fresh</b>; the used ones go to “Used, to wash”. They go to the laundry when a list is approved, and back to the store when the return is checked.' + (d.can.setup ? ' Tap an item to set its laundry price, add new ones bought, remove torn / lost ones, or correct a count.' : '') + '</p>') +
       '<div class="sec-h"><h2>Laundry lists</h2><input class="input sm" type="month" id="lm" value="' + esc(d.month) + '" style="max-width:11rem"></div>' +
       '<div class="list">' + (d.list.length ? d.list.map(card).join('') : '<div class="bl"><span class="d">No laundry lists this month yet.</span></div>') + '</div>' +
@@ -1270,7 +1276,9 @@
     $('#lm', v).onchange = function () { LAU.month = this.value; LAU.data = null; render(); };
     $$('[data-l]', v).forEach(function (b) { b.onclick = function () { var x = d.list.filter(function (y) { return y.id === b.dataset.l; })[0]; if (x) openLaundry(x); }; });
     $$('[data-li]', v).forEach(function (b) { b.onclick = function () { openLinenItem(d.linen.filter(function (i) { return i.item === b.dataset.li; })[0]); }; });
+    $$('[data-lr]', v).forEach(function (b) { b.onclick = function () { openLinenItem(d.removed.filter(function (i) { return i.item === b.dataset.lr; })[0]); }; });
   }
+  function linenDone(msg) { toast(msg); LAU.data = null; closeAllSheetsQuiet(); refresh(); if (S.tab === 'laundry') render(); }
   function laundryDone(msg) { toast(msg); LAU.data = null; closeAllSheetsQuiet(); go('laundry'); refresh(); }
   /* one laundry list */
   function openLaundry(x) {
@@ -1301,6 +1309,7 @@
     if (open && fd) btns.push('<button class="btn btn-gold big-cta" type="button" id="lr">Count and receive</button>');
     if (open && (fd || open.by === me)) btns.push('<button class="btn btn-danger" type="button" id="lw">' + (fd ? 'Turn down this return' : 'Take back this return') + '</button>');
     if (x.outAt && fd) btns.push('<button class="btn btn-quiet" type="button" id="lx">' + (rcp() ? 'Ask to change what was given' : 'Change what was given') + '</button>');
+    if (x.outAt && fd && !x.paid) btns.push('<button class="btn btn-danger" type="button" id="ld">' + (rcp() ? 'Ask to delete this list' : 'Delete this list') + '</button>');
     body.innerHTML = h + (btns.length ? '<div class="btns">' + btns.join('') + '</div>' : '') + (x.outAt && rcp() ? '<p class="small">After approval only a manager can change a laundry list. Your change goes to them for approval.</p>' : '') + '<p class="err" id="err" role="alert"></p>';
     var q = function (s) { return $(s, body); };
     if (q('#lg')) q('#lg').onclick = function () { openLaundryCount(x, 'give'); };
@@ -1310,6 +1319,12 @@
     if (q('#lx')) q('#lx').onclick = function () { openLaundryCount(x, 'edit', 'out'); };
     $$('[data-er]', body).forEach(function (b) { b.onclick = function () { openLaundryCount(x, 'edit', Number(b.dataset.er)); }; });
     function yesAgain(btn, label, fn) { if (!btn.dataset.sure) { btn.dataset.sure = 1; btn.textContent = label; return; } busy(btn, true); fn(); }
+    if (q('#ld')) q('#ld').onclick = function () {
+      var b2 = openSheet('Delete laundry ' + x.id);
+      b2.innerHTML = '<p class="small">The whole list is removed and the linen counts go back to how they were before it.' + (rcp() ? ' A manager approves it.' : '') + '</p>' + field('Why', '<input class="input" id="dwhy" maxlength="200">', true) +
+        '<p class="err" id="err" role="alert"></p><button class="btn btn-danger big-cta" type="button" id="go">' + (rcp() ? 'Send for approval' : 'Delete the list') + '</button>';
+      $('#go', b2).onclick = function () { submit(this, $('#err', b2), 'deskLaundryDelete', { id: x.id, reason: $('#dwhy', b2).value }, function (r) { laundryDone(r && r.requested ? 'Sent to the manager for approval' : 'List deleted'); }); };
+    };
     if (q('#lc')) q('#lc').onclick = function () { var b = this; yesAgain(b, 'Tap again to cancel the list', function () { api('deskLaundryCancel', { id: x.id }).then(function () { laundryDone('List cancelled'); }, function (e) { busy(b, false); q('#err').textContent = errText(e); }); }); };
     if (q('#lw')) q('#lw').onclick = function () { var b = this; yesAgain(b, 'Tap again to remove this return', function () { api('deskLaundryCancel', { id: x.id }).then(function () { laundryDone('Return removed'); }, function (e) { busy(b, false); q('#err').textContent = errText(e); }); }); };
   }
@@ -1320,16 +1335,17 @@
     var body = openSheet(title);
     var start = mode === 'list' ? (x ? x.items : {}) : mode === 'give' ? x.items : mode === 'return' ? x.short : mode === 'receive' ? open.items : part === 'out' ? x.items : x.returns[part].got;
     var ref = mode === 'give' ? x.items : mode === 'receive' ? open.items : mode === 'return' ? x.short : null, refName = mode === 'return' ? 'still out' : mode === 'edit' ? 'now' : 'on their list';
-    var items = d.linen.map(function (i) { return i.item; });
-    Object.keys(start || {}).forEach(function (k) { if (items.indexOf(k) < 0) items.push(k); });
+    var items = d.linen.map(function (i) { return i.item; }), grpOf = {};
+    d.linen.forEach(function (i) { grpOf[i.item] = i.group || 'Other'; });
+    Object.keys(start || {}).forEach(function (k) { if (items.indexOf(k) < 0) { items.push(k); grpOf[k] = 'Other'; } });
     var intro = { list: d.can.approve ? 'Count the used bedding and towels going to the laundry.' : 'Write how many of each you are taking. Reception counts and approves before you take them.',
       give: 'Count the pile in front of you. Change a number if it is different from the list, then approve: the laundry can take it.',
       'return': 'Write how many of each you brought back clean. Reception counts and approves.',
       receive: 'Count what came back. Change a number if it is different, then approve: it goes back to the clean store.',
       edit: rcp() ? 'Write the right numbers and why. A manager approves the change.' : 'Write the right numbers. The linen count and the bill are corrected, and the change is noted.' }[mode];
-    body.innerHTML = '<p class="small">' + intro + '</p><div class="lcount">' + items.map(function (k) {
-        var v = start && start[k] ? start[k] : '', r = ref && ref[k] ? ref[k] : 0;
-        return '<label class="lc-row"><span>' + esc(k) + (ref ? '<small>' + (r ? r + ' ' + refName : '&nbsp;') + '</small>' : '') + '</span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="500" data-k="' + esc(k) + '" value="' + v + '" placeholder="0"><button type="button" data-d="1" aria-label="More">+</button></span></label>';
+    body.innerHTML = '<p class="small">' + intro + '</p><div class="lcount">' + items.map(function (k, n) {
+        var v = start && start[k] ? start[k] : '', r = ref && ref[k] ? ref[k] : 0, gh = n === 0 || grpOf[items[n - 1]] !== grpOf[k] ? '<p class="lc-grp">' + esc(grpOf[k]) + '</p>' : '';
+        return gh + '<label class="lc-row"><span>' + esc(k) + (ref ? '<small>' + (r ? r + ' ' + refName : '&nbsp;') + '</small>' : '') + '</span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="500" data-k="' + esc(k) + '" value="' + v + '" placeholder="0"><button type="button" data-d="1" aria-label="More">+</button></span></label>';
       }).join('') + '</div>' +
       '<div class="calc" id="lsum"></div>' +
       (mode === 'list' || mode === 'return' ? field('Note', '<input class="input" id="lnote" maxlength="200" placeholder="Optional">') : '') +
@@ -1363,26 +1379,33 @@
   }
   /* linen item: price, warning level, bought / thrown away / counted */
   function openLinenItem(it) {
-    var d = LAU.data, setup = d.can.setup, body = openSheet(it ? it.item : 'New linen item');
+    var setup = S.me.role === 'Owner' || S.me.role === 'Manager', body = openSheet(it ? it.item : 'New room item'), groups = (S.st && S.st.linenGroups) || (LAU.data && LAU.data.groups) || ['Other'];
     var places = [['store', 'Clean in store'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
     body.innerHTML = (it ? '<div class="calc">' + places.map(function (p) { return p[1] + ' <b>' + it[p[0]] + '</b>'; }).join(' · ') + ' · total <b>' + it.total + '</b></div>' : '') +
-      (setup ? '<div class="panel"><div class="sec-h"><h2>Item</h2></div>' + field('Name', '<input class="input" id="li-n" maxlength="40" value="' + esc(it ? it.item : '') + '">', true) +
+      (setup ? '<div class="panel"><div class="sec-h"><h2>Item</h2></div>' + field('Name (with the size, e.g. “Bedsheet (king size)”)', '<input class="input" id="li-n" maxlength="40" value="' + esc(it ? it.item : '') + '">', true) +
+        field('Folder', '<select class="input" id="li-g">' + groups.map(function (g) { return '<option' + (g === (it ? it.group || 'Other' : groups[0]) ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select>') +
         '<div class="grid2">' + field('Laundry price per piece (₹)', '<input class="input" id="li-p" inputmode="numeric" value="' + (it ? it.price || 0 : '') + '">', true) + field('Warn when clean ones are below', '<input class="input" id="li-l" inputmode="numeric" value="' + (it ? it.low || '' : '') + '">') + '</div>' +
-        (it ? '<label class="toggle"><span>In use</span><input type="checkbox" id="li-a"' + (it.active ? ' checked' : '') + '></label>' : '') +
-        '<p class="err" id="err1" role="alert"></p><button class="btn btn-line" type="button" id="li-s">Save item</button></div>' : '') +
+        '<p class="err" id="err1" role="alert"></p><div class="btns"><button class="btn btn-line" type="button" id="li-s">' + (it ? 'Save item' : 'Add item') + '</button>' +
+        (it ? '<button class="btn ' + (it.active === false ? 'btn-gold' : 'btn-danger') + '" type="button" id="li-x">' + (it.active === false ? 'Put back in the list' : 'Remove from the list') + '</button>' : '') + '</div>' +
+        (it && it.active !== false ? '<p class="small">Removing hides it everywhere (stock, laundry, counting). Its history stays, and you can put it back later.</p>' : '') + '</div>' : '') +
       (it ? '<div class="panel"><div class="sec-h"><h2>Count</h2></div><div class="field"><span>What</span>' + seg('lm', setup ? ['Bought new', 'Torn / lost', 'Correct a count'] : ['Bought new'], 'Bought new') + '</div>' +
         '<div class="field" id="li-pw" hidden><span>Where</span>' + seg('lp', places.map(function (p) { return p[1]; }), 'Clean in store') + '</div>' +
         field('How many', '<input class="input" id="li-q" inputmode="numeric">', true) + field('Note', '<input class="input" id="li-note" maxlength="100" placeholder="Optional">') +
         '<p class="err" id="err2" role="alert"></p><button class="btn btn-gold" type="button" id="li-m">Save count</button></div>' : '');
     wireSegs(body, function () { var m = segVal(body, 'lm'); if ($('#li-pw', body)) $('#li-pw', body).hidden = m === 'Bought new'; var lab = $('#li-q', body) && $('#li-q', body).closest('.field').querySelector('span'); if (lab) lab.textContent = m === 'Correct a count' ? 'Real number there now' : 'How many'; });
     if ($('#li-s', body)) $('#li-s', body).onclick = function () {
-      submit(this, $('#err1', body), 'deskLinenSave', { original: it ? it.item : '', item: $('#li-n', body).value, price: $('#li-p', body).value.replace(/\D/g, '') || 0, low: $('#li-l', body).value.replace(/\D/g, ''), active: it ? $('#li-a', body).checked : true },
-        function () { laundryDone('Saved'); });
+      submit(this, $('#err1', body), 'deskLinenSave', { original: it ? it.item : '', item: $('#li-n', body).value, price: $('#li-p', body).value.replace(/\D/g, '') || 0, low: $('#li-l', body).value.replace(/\D/g, ''), group: $('#li-g', body).value, active: it ? it.active !== false : true },
+        function () { linenDone(it ? 'Saved' : 'Added'); });
+    };
+    if ($('#li-x', body)) $('#li-x', body).onclick = function () {
+      var b = this, on = it.active === false;
+      if (!on && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Tap again to remove ' + it.item; return; }
+      submit(b, $('#err1', body), 'deskLinenSave', { original: it.item, item: it.item, price: it.price || 0, low: it.low || 0, group: it.group, active: on }, function () { linenDone(on ? it.item + ' is back in the list' : it.item + ' removed'); });
     };
     if ($('#li-m', body)) $('#li-m', body).onclick = function () {
       var m = segVal(body, 'lm'), pl = places.filter(function (p) { return p[1] === segVal(body, 'lp'); })[0];
       submit(this, $('#err2', body), 'deskLinenMove', { item: it.item, mode: m === 'Bought new' ? 'new' : m === 'Torn / lost' ? 'out' : 'count', place: pl ? pl[0] : 'store', qty: $('#li-q', body).value.replace(/\D/g, ''), note: $('#li-note', body).value },
-        function () { laundryDone('Linen count saved'); });
+        function () { linenDone('Count saved'); });
     };
   }
   function openLaundryPay() {
@@ -1395,9 +1418,35 @@
     $('#go', body).onclick = function () { submit(this, $('#err', body), 'deskLaundryPaid', { method: segVal(body, 'method'), ref: $('#lp-ref', body).value, note: $('#lp-n', body).value }, function (r) { laundryDone(inr(r.paid) + ' marked paid'); }); };
   }
 
+  var STK = { view: 'supplies' };
+  /* Stock → "Room items" folder: mattresses, pillows, bedsheets, duvets, towels… by size, where each piece is now */
+  function viewRoomItems(v) {
+    var L = S.st.linen || [], setup = S.me.role === 'Owner' || S.me.role === 'Manager', groups = [];
+    L.forEach(function (i) { if (groups.indexOf(i.group) < 0) groups.push(i.group); });
+    var html = '<p class="small">Everything that belongs in the rooms, counted where it is now: clean in the store, in the rooms, used (waiting for the laundry) and at the laundry.' + (mgr() ? ' Tap an item to add new ones bought' + (setup ? ', remove torn / lost ones or correct a count' : '') + '.' : '') + '</p>' +
+      groups.map(function (g) {
+        var its = L.filter(function (i) { return i.group === g; }), tot = its.reduce(function (a, i) { return a + i.total; }, 0), clean = its.reduce(function (a, i) { return a + i.store; }, 0);
+        return '<details class="panel folder" open><summary><span class="fold-ic" aria-hidden="true">' + ICON.stock + '</span><h2>' + esc(g) + '</h2><span class="small">' + tot + ' in all · ' + clean + ' clean in store</span></summary>' +
+          '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Item</th><th class="r">Clean</th><th class="r">Rooms</th><th class="r">To wash</th><th class="r">Laundry</th><th class="r">Total</th></tr></thead><tbody>' +
+          its.map(function (i) { var low = i.low && i.store < i.low;
+            return '<tr' + (mgr() ? ' class="tap" data-ri="' + esc(i.item) + '"' : '') + '><td><b>' + esc(i.item) + '</b>' + (low ? '<small class="warn-t">clean ones running low (warn below ' + i.low + ')</small>' : '') + '</td><td class="r">' + i.store + '</td><td class="r">' + i.rooms + '</td><td class="r">' + i.dirty + '</td><td class="r">' + i.laundry + '</td><td class="r"><b>' + i.total + '</b></td></tr>'; }).join('') +
+          '</tbody></table></div></details>';
+      }).join('') + (setup ? '<button class="btn btn-line" type="button" id="ri-new">+ Add a room item</button>' : '');
+    v.insertAdjacentHTML('beforeend', html);
+    $$('[data-ri]', v).forEach(function (b) { b.onclick = function () { openLinenItem(L.filter(function (i) { return i.item === b.dataset.ri; })[0]); }; });
+    if ($('#ri-new', v)) $('#ri-new', v).onclick = function () { openLinenItem(null); };
+  }
   function viewStock(v) {
     var tracked = S.st.items.filter(function (i) { return i.track; });
-    v.innerHTML = '<div class="hrow"><div><p class="kicker">Storage</p><h1 style="font-size:2rem">Stock</h1></div><button class="refresh" id="rf" type="button">Refresh</button></div>' +
+    var tabsH = '<div class="seg narrow" id="stv"><button type="button" data-v="supplies" aria-pressed="' + (STK.view === 'supplies') + '">Supplies</button><button type="button" data-v="room" aria-pressed="' + (STK.view === 'room') + '">Room items (bedding &amp; towels)</button></div>';
+    if (STK.view === 'room') {
+      v.innerHTML = '<div class="hrow"><div><p class="kicker">Storage</p><h1 style="font-size:2rem">Stock</h1></div><button class="refresh" id="rf" type="button">Refresh</button></div>' + tabsH;
+      viewRoomItems(v);
+      $('#rf', v).onclick = function () { refresh(this); };
+      $('#stv', v).onclick = function (e) { var b = e.target.closest('button'); if (b) { STK.view = b.dataset.v; render(); } };
+      return;
+    }
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Storage</p><h1 style="font-size:2rem">Stock</h1></div><button class="refresh" id="rf" type="button">Refresh</button></div>' + tabsH +
       (S.st.toBuy.length ? '<div class="buy"><div class="sec-h"><h2>To buy</h2><span class="small">' + S.st.toBuy.length + (S.st.toBuy.length > 1 ? ' items are' : ' item is') + ' running low</span></div>' +
         '<div class="list">' + S.st.toBuy.map(function (b) {
           return '<div class="bl"><span class="t">' + esc(b.item) + '</span><span class="d">' + b.stock + ' left · warn below ' + b.low + '</span><span class="a">Buy about ' + b.buy + '</span></div>';
@@ -1418,6 +1467,7 @@
       }).join('') : '<div class="bl"><span class="d">Nothing yet</span></div>') + '</div>' +
       '<p class="small">Items added to a room are taken from stock automatically.</p>';
     $('#rf', v).onclick = function () { refresh(this); };
+    $('#stv', v).onclick = function (e) { var b = e.target.closest('button'); if (b) { STK.view = b.dataset.v; render(); } };
     $$('[data-mode]', v).forEach(function (b) { b.onclick = function () { openStock(b.dataset.item, b.dataset.mode); }; });
   }
 
@@ -2637,7 +2687,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 51</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 52</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

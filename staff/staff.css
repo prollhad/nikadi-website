@@ -703,3 +703,10 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .lc-q .input::-webkit-outer-spin-button,.lc-q .input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .hkc-lin{display:grid;gap:6px;margin-top:8px;width:100%}
 .hkc-row.opt{flex-wrap:wrap}
+.tbl tr.grp td{background:var(--band);color:var(--gold,#c9a35a);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;padding:8px 14px;cursor:default}
+.lc-grp{margin:10px 0 0;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.folder{padding:0;overflow:hidden}.folder>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;cursor:pointer;list-style:none}
+.folder>summary::-webkit-details-marker{display:none}.folder>summary h2{margin:0;font-size:1.25rem}.folder>summary .small{margin-left:auto}
+.folder .fold-ic svg{width:20px;height:20px;display:block;color:var(--muted)}.folder .tbl-wrap{border:0;border-top:1px solid var(--line)}
+.folder .tbl th,.folder .tbl td{padding:10px 8px;letter-spacing:.06em}.folder .tbl th:first-child,.folder .tbl td:first-child{padding-left:14px;min-width:8.5rem}
+@media (max-width:520px){.folder .tbl{font-size:.84rem}.folder .tbl th{font-size:.58rem}}
