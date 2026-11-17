@@ -27,15 +27,15 @@
 <style>
 /* Layout: single committed dark look. Full-bleed photo hero with a booking bar, then alternating espresso and deeper-ink bands; brass gold reserved for prices, rules and actions */
 :root{
-  --bg:#14110f;
-  --band:#1b1714;
-  --panel:#221d19;
-  --ink:#efe7da;
-  --muted:#b3a796;
-  --line:#3a322b;
-  --gold:#c9a35a;
-  --gold-hi:#e0be7a;
-  --gold-ink:#1a1206;
+  --bg:#0a0f1f;
+  --band:#0e1630;
+  --panel:#141d3b;
+  --ink:#f4eedf;
+  --muted:#a9b0c6;
+  --line:#26315a;
+  --gold:#d4af37;
+  --gold-hi:#f2d272;
+  --gold-ink:#1a1405;
   --warn:#e07a62;
   --warn-bg:rgba(224,122,98,.08);
   --display:"Cormorant Garamond", "Times New Roman", Georgia, serif;
@@ -67,7 +67,7 @@ strong{font-weight:500}
 .btn svg{width:16px;height:16px;flex:none}
 
 /* header */
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:rgba(20,17,15,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:rgba(10,15,31,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
 .brand{text-decoration:none;display:grid;line-height:1}
 .brand-logo{display:block;height:50px;width:auto}.foot-logo{height:52px}
@@ -84,7 +84,7 @@ nav.main a:hover{color:var(--ink)}
 /* hero */
 /* hero: editorial split. Words and offer on the left, a framed portrait slideshow on the right (photos shown at full sharpness) */
 /* offer bar (date-driven, from pricing.js) */
-.offerbar{background:linear-gradient(90deg,#2a2017,#3a2b17 50%,#2a2017);border-bottom:1px solid rgba(201,163,90,.35);font-size:.82rem;color:var(--ink)}
+.offerbar{background:linear-gradient(90deg,#0f1733,#1d2b5c 50%,#0f1733);border-bottom:1px solid rgba(212,175,55,.35);font-size:.82rem;color:var(--ink)}
 .offerbar .wrap{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding-block:8px;text-align:center}
 @media (max-width:620px){.offerbar{font-size:.76rem}.offerbar .wrap{gap:8px;padding-block:7px}.offerbar .ob-star{display:none}}
 nav.main{gap:24px}.top .btn{white-space:nowrap}
@@ -94,13 +94,13 @@ nav.main{gap:24px}.top .btn{white-space:nowrap}
 .mem-chip{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:8px 14px 8px 10px;font:inherit;font-size:.8rem;cursor:pointer;white-space:nowrap;transition:border-color .2s,background .2s}
 .mem-chip:hover{border-color:var(--gold)}
 .mem-chip svg{width:18px;height:18px;color:var(--gold)}
-.mem-chip.on{border-color:rgba(201,163,90,.6);background:rgba(201,163,90,.08)}
+.mem-chip.on{border-color:rgba(212,175,55,.6);background:rgba(212,175,55,.08)}
 .mem-chip .tier{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);border-radius:999px;padding:2px 7px}
 @media (max-width:560px){.mem-chip #memChipTxt{display:none}.mem-chip{padding:8px}.mem-chip.on .tier{display:none}.top-acts .btn{padding:10px 14px;letter-spacing:.14em}}
 
 /* hero layout */
-.hero{position:relative;overflow:hidden;background:radial-gradient(1200px 600px at 85% 20%,rgba(201,163,90,.10),transparent 60%),radial-gradient(900px 500px at 0% 100%,rgba(201,163,90,.06),transparent 60%),var(--bg)}
-.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(201,163,90,.05) 1px,transparent 1px);background-size:100% 120px;mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent);-webkit-mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent);pointer-events:none}
+.hero{position:relative;overflow:hidden;background:radial-gradient(1200px 600px at 85% 20%,rgba(212,175,55,.10),transparent 60%),radial-gradient(900px 500px at 0% 100%,rgba(212,175,55,.06),transparent 60%),var(--bg)}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(212,175,55,.05) 1px,transparent 1px);background-size:100% 120px;mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent);-webkit-mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent);pointer-events:none}
 .hero-grid{position:relative;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:40px 64px;align-items:center;padding-block:56px 44px}
 .hero-grid .book,.hero-grid .book-sum{grid-column:1/-1}
 .hero-copy{min-width:0;display:grid;gap:0;align-content:center}
@@ -108,7 +108,7 @@ nav.main{gap:24px}.top .btn{white-space:nowrap}
 .hero h1 em{font-style:italic;color:var(--gold-hi)}
 .hero .lede{margin-top:22px;max-width:34em;font-size:1.06rem;color:var(--muted)}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
-.hero-cta .btn-line{color:var(--ink);border-color:rgba(239,231,218,.35)}
+.hero-cta .btn-line{color:var(--ink);border-color:rgba(244,238,223,.35)}
 .hero-cta .btn-line:hover{border-color:var(--gold);background:var(--gold);color:var(--gold-ink)}
 .hero-member{margin-top:16px;font-size:.9rem;color:var(--muted)}
 .hero-member span{color:var(--gold-hi)}
@@ -116,27 +116,27 @@ nav.main{gap:24px}.top .btn{white-space:nowrap}
 .linkish{background:none;border:0;padding:0;font:inherit;text-decoration:underline;cursor:pointer}
 /* the framed slideshow */
 .hero-media{position:relative;margin:0;justify-self:end;width:100%;max-width:520px}
-.hero-media::before{content:"";position:absolute;inset:-14px 14px 14px -14px;border:1px solid rgba(201,163,90,.55);pointer-events:none;z-index:0}
+.hero-media::before{content:"";position:absolute;inset:-14px 14px 14px -14px;border:1px solid rgba(212,175,55,.55);pointer-events:none;z-index:0}
 .hero .slides{position:relative;z-index:1;aspect-ratio:4/5;overflow:hidden;background:var(--panel);box-shadow:0 40px 80px -40px rgba(0,0,0,.9)}
 .hero .slides img{position:absolute;inset:0;width:100%;height:100%;max-width:100%;object-fit:cover;opacity:0;transition:opacity 1.6s ease;transform:scale(1.001)}
 .hero .slides img.on{opacity:1;animation:heroZoom 7s ease-out both}
 @keyframes heroZoom{from{transform:scale(1.07)}to{transform:scale(1.001)}}
 @media (prefers-reduced-motion: reduce){.hero .slides img.on{animation:none}}
-.hero .slides::after{content:"";position:absolute;inset:auto 0 0;height:38%;background:linear-gradient(180deg,transparent,rgba(12,10,9,.78));z-index:3;pointer-events:none}
+.hero .slides::after{content:"";position:absolute;inset:auto 0 0;height:38%;background:linear-gradient(180deg,transparent,rgba(6,10,22,.78));z-index:3;pointer-events:none}
 .hero-cap{position:absolute;z-index:4;left:22px;right:22px;bottom:18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;color:var(--ink)}
 .hero-cap b{display:block;font-family:var(--display);font-weight:500;font-size:1.35rem;line-height:1.15}
 .hero-cap small{display:block;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-hi);margin-bottom:4px}
 .hero-cap .count{font-size:.75rem;letter-spacing:.18em;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 .hero-cap .count b{display:inline;font-family:var(--body);font-size:.75rem;color:var(--ink)}
-.hero-prog{position:absolute;z-index:4;left:22px;right:22px;bottom:8px;height:1px;background:rgba(239,231,218,.18);overflow:hidden}
+.hero-prog{position:absolute;z-index:4;left:22px;right:22px;bottom:8px;height:1px;background:rgba(244,238,223,.18);overflow:hidden}
 .hero-prog i{display:block;height:100%;background:var(--gold-hi);transform-origin:left;animation:heroBar 6s linear both}
 @keyframes heroBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .hero-nav{position:absolute;z-index:5;top:50%;left:0;right:0;display:flex;justify-content:space-between;padding:0 10px;transform:translateY(-50%);pointer-events:none}
-.hero-nav button{pointer-events:auto;width:40px;height:40px;border-radius:50%;border:1px solid rgba(239,231,218,.35);background:rgba(20,17,15,.45);color:var(--ink);font-size:1.1rem;cursor:pointer;opacity:0;transition:opacity .3s,border-color .2s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hero-nav button{pointer-events:auto;width:40px;height:40px;border-radius:50%;border:1px solid rgba(244,238,223,.35);background:rgba(10,15,31,.45);color:var(--ink);font-size:1.1rem;cursor:pointer;opacity:0;transition:opacity .3s,border-color .2s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .hero-media:hover .hero-nav button,.hero-nav button:focus-visible{opacity:1}
 .hero-nav button:hover{border-color:var(--gold)}
 /* offer card (inside the left column) */
-.offer-card{position:relative;margin-top:30px;max-width:520px;border:1px solid rgba(201,163,90,.45);background:linear-gradient(135deg,rgba(201,163,90,.10),rgba(201,163,90,.02) 60%);padding:18px 20px;display:grid;gap:10px}
+.offer-card{position:relative;margin-top:30px;max-width:520px;border:1px solid rgba(212,175,55,.45);background:linear-gradient(135deg,rgba(212,175,55,.10),rgba(212,175,55,.02) 60%);padding:18px 20px;display:grid;gap:10px}
 .oc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .oc-tag{font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);padding:4px 9px}
 .oc-title{font-family:var(--display);font-size:1.3rem;line-height:1.1;color:var(--ink)}
@@ -161,12 +161,12 @@ nav.main{gap:24px}.top .btn{white-space:nowrap}
 /* member price display */
 .price .was{color:var(--muted);font-size:1.15rem;text-decoration:line-through;text-decoration-color:rgba(224,190,122,.7)}
 .price .deal{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);padding:4px 8px;border-radius:2px;align-self:center}
-.mrate.mine{border-style:solid;background:rgba(201,163,90,.08)}
+.mrate.mine{border-style:solid;background:rgba(212,175,55,.08)}
 .mrate b{color:var(--gold-hi);font-weight:500}
 .mrate s{color:var(--muted)}
 
 /* member sign-in dialog */
-.sdlg{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(10,8,7,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sdlg{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(5,8,18,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .sdlg[hidden]{display:none!important}
 .sdlg-card{width:min(420px,100%);background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--gold);padding:28px 24px 24px;display:grid;gap:16px;position:relative;max-height:calc(100vh - 32px);overflow:auto}
 .sdlg-card h2{font-size:1.9rem}
@@ -179,12 +179,12 @@ nav.main{gap:24px}.top .btn{white-space:nowrap}
 .sdlg .err{color:var(--warn);font-size:.88rem;min-height:1.2em}
 .sdlg .alt{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.86rem}
 .sdlg .alt a{color:var(--gold-hi);text-underline-offset:3px}
-.mcard-mini{display:grid;gap:4px;padding:16px;border:1px solid rgba(201,163,90,.45);background:linear-gradient(135deg,rgba(201,163,90,.14),rgba(201,163,90,.02))}
+.mcard-mini{display:grid;gap:4px;padding:16px;border:1px solid rgba(212,175,55,.45);background:linear-gradient(135deg,rgba(212,175,55,.14),rgba(212,175,55,.02))}
 .mcard-mini b{font-family:var(--display);font-size:1.5rem;font-weight:500}
 .mcard-mini span{font-size:.86rem;color:var(--muted)}
 .sdlg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-.payon{text-align:left;display:grid;gap:12px;padding:22px;border:1px solid rgba(201,163,90,.5);background:linear-gradient(160deg,rgba(201,163,90,.12),rgba(201,163,90,.02));margin-bottom:26px}
+.payon{text-align:left;display:grid;gap:12px;padding:22px;border:1px solid rgba(212,175,55,.5);background:linear-gradient(160deg,rgba(212,175,55,.12),rgba(212,175,55,.02));margin-bottom:26px}
 .payon h3{font-size:1.6rem}
 .po-sub,.po-hint{font-size:.88rem;color:var(--muted)}
 .po-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -196,7 +196,7 @@ nav.main{gap:24px}.top .btn{white-space:nowrap}
 .po-ok{color:var(--gold-hi)}
 @media (max-width:520px){.po-grid{grid-template-columns:1fr}}
 /* booking bar */
-.book{margin-top:8px;background:rgba(27,23,20,.94);border:1px solid var(--line);border-top:2px solid var(--gold);display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:0}
+.book{margin-top:8px;background:rgba(14,22,48,.94);border:1px solid var(--line);border-top:2px solid var(--gold);display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:0}
 .book .f{padding:14px 18px;border-right:1px solid var(--line);display:grid;gap:4px;min-width:0}
 .book label{font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
 .book input,.book select{background:transparent;border:0;color:var(--ink);font-family:var(--body);font-size:1rem;padding:2px 0;width:100%;min-width:0;color-scheme:dark}
@@ -256,7 +256,7 @@ section.alt{background:var(--band)}
 .gal img,.views img{width:100%;height:100%;max-width:100%;object-fit:cover;display:block;transition:transform .6s ease}
 .zoom{cursor:zoom-in}
 .zoom:hover img{transform:scale(1.03)}
-.gal figcaption,.views figcaption{position:absolute;left:0;right:0;bottom:0;padding:30px 14px 10px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;background:linear-gradient(transparent,rgba(20,17,15,.88));pointer-events:none}
+.gal figcaption,.views figcaption{position:absolute;left:0;right:0;bottom:0;padding:30px 14px 10px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;background:linear-gradient(transparent,rgba(10,15,31,.88));pointer-events:none}
 @media (max-width:720px){.gal{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}.gal figure{aspect-ratio:4/5}.gal figure:first-child{grid-column:1/-1;grid-row:auto;aspect-ratio:16/9}.gal figure:last-child:nth-child(even){grid-column:1/-1;aspect-ratio:4/3}}
 
 /* views */
@@ -278,17 +278,17 @@ section.alt{background:var(--band)}
 .addr strong{color:var(--gold-hi);font-weight:700}
 .findus figure{margin:0;position:relative;overflow:hidden;background:#000;aspect-ratio:9/16;max-height:680px;width:100%}
 .findus video{width:100%;height:100%;max-width:100%;object-fit:cover;display:block;background:#000}
-.findus .fu-video figcaption{position:absolute;left:0;right:0;top:0;padding:10px 14px 30px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;background:linear-gradient(rgba(20,17,15,.85),transparent);pointer-events:none}
+.findus .fu-video figcaption{position:absolute;left:0;right:0;top:0;padding:10px 14px 30px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;background:linear-gradient(rgba(10,15,31,.85),transparent);pointer-events:none}
 @media (max-width:860px){.findus{grid-template-columns:1fr;gap:28px}.findus figure{max-width:420px;justify-self:center}}
 
 /* lightbox */
 [hidden]{display:none!important}
-.lb{position:fixed;inset:0;z-index:40;background:rgba(10,8,7,.94);display:grid;grid-template-rows:auto 1fr auto;padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.lb{position:fixed;inset:0;z-index:40;background:rgba(5,8,18,.94);display:grid;grid-template-rows:auto 1fr auto;padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
 .lb-top{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.78rem;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
 .lb-stage{position:relative;display:grid;place-items:center;min-height:0;padding:10px 0}
 .lb-stage img{max-width:100%;max-height:100%;object-fit:contain;display:block;box-shadow:0 20px 60px rgba(0,0,0,.6)}
 .lb-cap{text-align:center;color:var(--ink);font-size:.95rem;min-height:1.5em}
-.lb button{background:rgba(27,23,20,.8);border:1px solid var(--line);color:var(--ink);width:46px;height:46px;border-radius:50%;cursor:pointer;font-size:1.3rem;line-height:1;display:grid;place-items:center}
+.lb button{background:rgba(14,22,48,.8);border:1px solid var(--line);color:var(--ink);width:46px;height:46px;border-radius:50%;cursor:pointer;font-size:1.3rem;line-height:1;display:grid;place-items:center}
 .lb button:hover{border-color:var(--gold);color:var(--gold-hi)}
 .lb .prev,.lb .next{position:absolute;top:50%;transform:translateY(-50%)}
 .lb .prev{left:0}.lb .next{right:0}
@@ -312,7 +312,7 @@ section.alt{background:var(--band)}
 .upi{background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--gold);padding:32px;display:grid;gap:20px;justify-items:center;text-align:center}
 .upi .qr{width:220px;height:220px;max-width:100%;background:#fff;padding:14px;display:grid;place-items:center}
 .upi .qr img,.upi .qr canvas{width:100%!important;height:auto!important;display:block}
-.upi .qr .wait{color:#3a322b;font-size:.85rem;line-height:1.4;padding:10px}
+.upi .qr .wait{color:#26315a;font-size:.85rem;line-height:1.4;padding:10px}
 .upi .id{font-family:var(--display);font-size:1.6rem;overflow-wrap:anywhere;user-select:all}
 .upi .apps{font-size:.8rem;color:var(--muted);letter-spacing:.06em}
 .upi .acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
@@ -439,7 +439,7 @@ footer .brand b{font-size:1.2rem}
 .done .btn{padding:11px 18px}
 
 /* membership */
-section.member{background:radial-gradient(120% 90% at 85% 20%,rgba(201,163,90,.12),transparent 60%),var(--panel);border-block:1px solid var(--line)}
+section.member{background:radial-gradient(120% 90% at 85% 20%,rgba(212,175,55,.12),transparent 60%),var(--panel);border-block:1px solid var(--line)}
 .mem-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
 @media (max-width:900px){.mem-grid{grid-template-columns:1fr;gap:40px}}
 .mem-copy{display:grid;gap:18px;min-width:0}
@@ -458,7 +458,7 @@ section.member{background:radial-gradient(120% 90% at 85% 20%,rgba(201,163,90,.1
 .tier summary::-webkit-details-marker{display:none}
 .t-chev{width:9px;height:9px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg) translateY(-3px);transition:transform .2s}
 .tier[open] .t-chev{transform:rotate(225deg) translate(-2px,-1px)}
-.tier[open]{border-color:rgba(201,163,90,.5)}
+.tier[open]{border-color:rgba(212,175,55,.5)}
 .t-body{padding:0 16px 14px 46px;display:grid;gap:8px;font-size:.9rem;color:var(--muted)}
 .t-body ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
 .t-body li{display:flex;gap:10px;align-items:baseline;color:var(--ink)}
@@ -472,23 +472,23 @@ section.member{background:radial-gradient(120% 90% at 85% 20%,rgba(201,163,90,.1
 .t-silver .t-dot{background:linear-gradient(135deg,#f4f5f7,#a3a9b2)}
 .t-gold .t-dot{background:linear-gradient(135deg,#f7e3a8,#b8904a)}
 .t-platinum .t-dot{background:linear-gradient(135deg,#eef2f6,#6f7d90)}
-.t-plus .t-dot{background:#0f0f12;box-shadow:0 0 0 2px #c9a35a}
-.t-plus{border-color:rgba(201,163,90,.5)!important;background:linear-gradient(90deg,rgba(201,163,90,.08),var(--bg))!important}
-.mrate{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;text-decoration:none;color:var(--ink);font-size:.86rem;border:1px dashed rgba(201,163,90,.55);border-radius:10px;padding:9px 12px;margin-top:-4px}
-.mrate:hover{border-style:solid;background:rgba(201,163,90,.07)}
+.t-plus .t-dot{background:#0f0f12;box-shadow:0 0 0 2px #d4af37}
+.t-plus{border-color:rgba(212,175,55,.5)!important;background:linear-gradient(90deg,rgba(212,175,55,.08),var(--bg))!important}
+.mrate{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;text-decoration:none;color:var(--ink);font-size:.86rem;border:1px dashed rgba(212,175,55,.55);border-radius:10px;padding:9px 12px;margin-top:-4px}
+.mrate:hover{border-style:solid;background:rgba(212,175,55,.07)}
 .mrate-tag{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-ink);background:var(--gold);border-radius:999px;padding:3px 8px}
 .hero-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
-.pill-link{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gold);border-radius:999px;padding:9px 16px;color:var(--ink);text-decoration:none;font-size:.86rem;background:rgba(20,17,15,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.pill-link{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gold);border-radius:999px;padding:9px 16px;color:var(--ink);text-decoration:none;font-size:.86rem;background:rgba(10,15,31,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .pill-link b{color:var(--gold-hi);font-weight:500}
 .pill-link.ghost{border-color:rgba(255,255,255,.25)}
-.pill-link:hover{background:rgba(201,163,90,.15)}
+.pill-link:hover{background:rgba(212,175,55,.15)}
 /* membership pop-up */
-.joinpop{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(10,8,7,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:jpfade .25s ease}
+.joinpop{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(5,8,18,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:jpfade .25s ease}
 .joinpop[hidden]{display:none}
 @keyframes jpfade{from{opacity:0}to{opacity:1}}
 @keyframes jpup{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
-.jp-card{position:relative;width:min(440px,100%);border:1px solid rgba(201,163,90,.5);border-radius:18px;background:linear-gradient(160deg,#241d17,#14110f 70%);box-shadow:0 30px 70px -20px rgba(0,0,0,.9);padding:30px 26px 22px;display:grid;gap:14px;animation:jpup .3s ease}
-.jp-x{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(20,17,15,.8);color:var(--ink);font-size:1.3rem;line-height:1;cursor:pointer;display:grid;place-items:center}
+.jp-card{position:relative;width:min(440px,100%);border:1px solid rgba(212,175,55,.5);border-radius:18px;background:linear-gradient(160deg,#141d3b,#0a0f1f 70%);box-shadow:0 30px 70px -20px rgba(0,0,0,.9);padding:30px 26px 22px;display:grid;gap:14px;animation:jpup .3s ease}
+.jp-x{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(10,15,31,.8);color:var(--ink);font-size:1.3rem;line-height:1;cursor:pointer;display:grid;place-items:center}
 .jp-x:hover{border-color:var(--gold);color:var(--gold-hi)}
 .jp-card h3{font-size:clamp(1.8rem,6vw,2.3rem);line-height:1.1;padding-right:30px}
 .jp-card h3 em{color:var(--gold-hi);font-style:normal}
@@ -499,8 +499,8 @@ section.member{background:radial-gradient(120% 90% at 85% 20%,rgba(201,163,90,.1
 .jp-later{background:none;border:0;color:var(--muted);font:inherit;font-size:.82rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;justify-self:center}
 @media (max-width:600px){.joinpop{place-items:end center;padding:0}.jp-card{border-radius:20px 20px 0 0;width:100%;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}@keyframes jpup{from{transform:translateY(100%)}to{transform:none}}}
 .mem-side{display:grid;gap:22px;justify-items:center;min-width:0}
-.mcard{width:100%;max-width:400px;aspect-ratio:1.586;border-radius:14px;padding:22px 24px;display:grid;grid-template-rows:auto 1fr auto;color:#1a1206;
-  background:linear-gradient(135deg,#e6c98b 0%,#c9a35a 38%,#a9823e 62%,#dcbc7a 100%);box-shadow:0 24px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.4);position:relative;overflow:hidden;transform:rotate(-3deg)}
+.mcard{width:100%;max-width:400px;aspect-ratio:1.586;border-radius:14px;padding:22px 24px;display:grid;grid-template-rows:auto 1fr auto;color:#1a1405;
+  background:linear-gradient(135deg,#e6c98b 0%,#d4af37 38%,#a9823e 62%,#dcbc7a 100%);box-shadow:0 24px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.4);position:relative;overflow:hidden;transform:rotate(-3deg)}
 .mcard::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.07) 0 2px,transparent 2px 9px);pointer-events:none}
 .mcard-top{display:flex;justify-content:space-between;align-items:center}
 .mcard-brand{font-family:var(--display);font-weight:600;font-size:1.5rem;letter-spacing:.14em}
@@ -518,7 +518,7 @@ section.member{background:radial-gradient(120% 90% at 85% 20%,rgba(201,163,90,.1
 .room-grid .room .ph{min-height:0;aspect-ratio:4/3;display:block;overflow:hidden;background:var(--bg);text-decoration:none}
 .room-grid .room .ph img{transition:transform .6s ease}
 .room-grid .room a.ph:hover img{transform:scale(1.03)}
-.ph-tag{position:absolute;left:14px;bottom:14px;z-index:1;background:rgba(20,17,15,.82);border:1px solid var(--line);color:var(--ink);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;padding:8px 12px}
+.ph-tag{position:absolute;left:14px;bottom:14px;z-index:1;background:rgba(10,15,31,.82);border:1px solid var(--line);color:var(--ink);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;padding:8px 12px}
 .ph.soon{display:grid!important;place-items:center;align-content:center;gap:10px;color:var(--muted);border-bottom:1px solid var(--line);background:repeating-linear-gradient(135deg,var(--bg) 0 14px,var(--band) 14px 28px)}
 .ph.soon svg{width:44px;height:44px;color:var(--gold)}
 .ph.soon span{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase}
@@ -533,10 +533,10 @@ section.member{background:radial-gradient(120% 90% at 85% 20%,rgba(201,163,90,.1
 .rd-main{position:relative;background:#0d0b0a;aspect-ratio:3/4;max-height:72vh;width:100%;display:grid;place-items:center;overflow:hidden;touch-action:pan-y}
 .rd-img{width:100%;height:100%;max-width:100%;object-fit:contain;display:block;transition:opacity .25s ease}
 .rd-img.fade{opacity:.25}
-.rd-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;background:rgba(20,17,15,.75);border:1px solid var(--line);color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer;display:grid;place-items:center}
+.rd-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;background:rgba(10,15,31,.75);border:1px solid var(--line);color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer;display:grid;place-items:center}
 .rd-nav:hover{border-color:var(--gold);color:var(--gold-hi)}
 .rd-nav.prev{left:10px}.rd-nav.next{right:10px}
-.rd-count{position:absolute;right:12px;bottom:12px;background:rgba(20,17,15,.8);padding:5px 10px;font-size:.75rem;letter-spacing:.12em;font-variant-numeric:tabular-nums}
+.rd-count{position:absolute;right:12px;bottom:12px;background:rgba(10,15,31,.8);padding:5px 10px;font-size:.75rem;letter-spacing:.12em;font-variant-numeric:tabular-nums}
 .rd-cap{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-height:1.4em}
 .rd-thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
 .rd-thumbs button{flex:0 0 auto;width:68px;height:90px;padding:0;border:2px solid transparent;background:var(--panel);cursor:pointer;scroll-snap-align:start;opacity:.65;transition:opacity .2s,border-color .2s}
@@ -585,7 +585,7 @@ nav.main{gap:22px}
 .g-score .gl{width:34px;height:34px;flex:none}
 .g-score b{font-family:var(--display);font-size:2.6rem;line-height:1;font-weight:600}
 .g-score .gs{display:grid;gap:2px;font-size:.8rem;color:var(--muted)}
-.stars{--p:100%;display:inline-block;font-size:1.05rem;letter-spacing:2px;line-height:1;background:linear-gradient(90deg,var(--gold-hi) var(--p),#4a4038 var(--p));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stars{--p:100%;display:inline-block;font-size:1.05rem;letter-spacing:2px;line-height:1;background:linear-gradient(90deg,var(--gold-hi) var(--p),#33405f var(--p));-webkit-background-clip:text;background-clip:text;color:transparent}
 .rev-track{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(290px,360px);gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:14px;scrollbar-width:thin;scrollbar-color:var(--line) transparent;overscroll-behavior-x:contain}
 .rev{scroll-snap-align:start;border:1px solid var(--line);background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .rev-who{display:flex;align-items:center;gap:12px}
@@ -612,7 +612,7 @@ nav.main{gap:22px}
 .gw .big{font-family:var(--display);font-size:2.9rem;line-height:1;font-weight:600}
 .gw .big small{font-size:1.1rem;color:var(--muted);margin-left:6px;font-family:var(--body);font-weight:300}
 .gw .sub{color:var(--muted);font-size:.86rem}
-.gw .pill{align-self:flex-start;font-size:.74rem;padding:5px 10px;border:1px solid rgba(201,163,90,.45);color:var(--gold-hi);letter-spacing:.04em}
+.gw .pill{align-self:flex-start;font-size:.74rem;padding:5px 10px;border:1px solid rgba(212,175,55,.45);color:var(--gold-hi);letter-spacing:.04em}
 .gw .pill.ok{border-color:rgba(120,190,130,.5);color:#9fd6a6}
 .gw .btn{padding:11px 16px;margin-top:auto}
 .fc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
@@ -631,7 +631,7 @@ nav.main{gap:22px}
 @media (max-width:1000px){.ex{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:560px){.ex{grid-template-columns:1fr}}
 .ex article{border:1px solid var(--line);background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:10px;transition:border-color .25s,transform .25s}
-.ex article:hover{border-color:rgba(201,163,90,.55);transform:translateY(-3px)}
+.ex article:hover{border-color:rgba(212,175,55,.55);transform:translateY(-3px)}
 .ex .ic{width:40px;height:40px;color:var(--gold)}
 .ex h3{font-size:1.5rem}
 .ex p{color:var(--muted);font-size:.92rem}
@@ -643,7 +643,7 @@ nav.main{gap:22px}
 @media (max-width:900px){.about{grid-template-columns:1fr;gap:32px}}
 .about figure{margin:0;position:relative;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line)}
 .about figure img{width:100%;height:100%;object-fit:cover}
-.about figure figcaption{position:absolute;left:0;right:0;bottom:0;padding:40px 18px 14px;background:linear-gradient(transparent,rgba(10,8,7,.85));font-size:.8rem;letter-spacing:.06em}
+.about figure figcaption{position:absolute;left:0;right:0;bottom:0;padding:40px 18px 14px;background:linear-gradient(transparent,rgba(5,8,18,.85));font-size:.8rem;letter-spacing:.06em}
 @media (max-width:900px){.about figure{aspect-ratio:16/11}}
 .about .tx{display:grid;gap:18px}
 .about .tx p{color:var(--muted)}
@@ -670,7 +670,7 @@ nav.main{gap:22px}
 .cgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;max-width:1040px;margin:0 auto}
 @media (max-width:900px){.cgrid{grid-template-columns:1fr}}
 .cgrid .card{padding:26px 20px}
-.qform{max-width:1040px;margin:24px auto 0;border:1px solid rgba(201,163,90,.45);background:linear-gradient(135deg,rgba(201,163,90,.08),rgba(201,163,90,.02) 60%);padding:26px;display:grid;gap:16px;text-align:left}
+.qform{max-width:1040px;margin:24px auto 0;border:1px solid rgba(212,175,55,.45);background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(212,175,55,.02) 60%);padding:26px;display:grid;gap:16px;text-align:left}
 .qform h3{font-size:1.7rem}
 .qf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 @media (max-width:760px){.qf{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -685,7 +685,7 @@ nav.main{gap:22px}
 /* phone dock + menu */
 .dock{display:none}
 @media (max-width:1060px){
-  .dock{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:16;background:rgba(20,17,15,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+  .dock{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:16;background:rgba(10,15,31,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
   .dock a,.dock button{display:grid;justify-items:center;gap:3px;padding:6px 2px;color:var(--muted);text-decoration:none;font:inherit;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;background:none;border:0;cursor:pointer;min-width:0}
   .dock svg{width:22px;height:22px;color:var(--ink)}
   .dock .bk{color:var(--gold-ink);background:var(--gold);border-radius:12px;margin:0 4px}
@@ -693,7 +693,7 @@ nav.main{gap:22px}
   .fab{display:none}
   body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
 }
-.menu{position:fixed;inset:0;z-index:70;background:rgba(10,8,7,.7);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:grid;align-items:end}
+.menu{position:fixed;inset:0;z-index:70;background:rgba(5,8,18,.7);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:grid;align-items:end}
 .menu-card{background:var(--band);border-top:1px solid var(--gold);padding:20px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-height:88vh;overflow-y:auto;animation:menuup .25s ease}
 @keyframes menuup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 .menu-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
@@ -701,7 +701,94 @@ nav.main{gap:22px}
 .menu-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .menu-grid a,.menu-grid button{display:grid;justify-items:center;gap:8px;padding:16px 6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-decoration:none;font:inherit;font-size:.78rem;text-align:center;cursor:pointer}
 .menu-grid svg{width:24px;height:24px;color:var(--gold)}
-.menu-grid .hot{border-color:rgba(201,163,90,.6)}
+.menu-grid .hot{border-color:rgba(212,175,55,.6)}
+
+/* ===== v4: midnight navy + gold, soft rounded corners everywhere ===== */
+:root{--r:22px;--r-sm:14px;--gold-grad:linear-gradient(135deg,#f6dc8a 0%,#d4af37 45%,#b48a24 100%)}
+body{background:radial-gradient(1200px 600px at 80% -10%,rgba(212,175,55,.08),transparent 60%),var(--bg)}
+.goldtx,.hero h1 em{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic}
+.btn{border-radius:999px}
+.btn-gold{background:var(--gold-grad);border-color:transparent;box-shadow:0 6px 22px rgba(212,175,55,.22)}
+.btn-gold:hover{background:linear-gradient(135deg,#fae7a6,#e2bf4c 45%,#c39a2e);color:var(--gold-ink)}
+.kicker{color:var(--gold-hi)}
+.rule::after,.contact .rule::before{background:var(--gold-grad);height:2px;border-radius:2px}
+/* round every panel, card, photo and field */
+.offer-card,.sdlg-card,.mcard-mini,.payon,.book,.room,.times,.fu-way,.amen,.upi,.rules>div,.cpol,.cpol-card,.policy-box,.card,.fcard,.sheet fieldset,.alert,.person,.rm,.terms,.done,.mem-facts,.tier,.jp-card,.mem-terms,.rd-facts,.rd-book,.g-score,.rev,.gw,.ex article,.about figure,.faq details,.qform,.menu-grid a,.menu-grid button,.mcard,.prog,.site,.more,.igc,.dz,.views figure,.v-main,.gal figure,.findus figure,.fu-video video,.hero-media,.hero-media .slides,.forms>*,.pay>*,.dist,.addr,.marks li,.rd-gal figure,.rd-gal img{border-radius:var(--r)}
+.sdlg input,.po-grid input,.sheet input:not([type=checkbox]):not([type=radio]),.sheet select,.sheet textarea,.qf input,.qf select,.qform textarea,.book input,.book select,.lb button,.hero-nav button,.menu-head button,.rev-nav .arr,.rd-nav,.jp-x,.mem-chip,.mcard-tier,.pill-link,.ph-tag,.team span,.gw .pill{border-radius:var(--r-sm)}
+.rev-nav .arr,.hero-nav button,.menu-head button,.jp-x,.sdlg-x{border-radius:50%}
+.gw .pill,.team span,.mcard-tier,.ph-tag,.pill-link{border-radius:999px}
+.room,.site,.gw,.rev,.card,.about figure,.views figure,.v-main,.gal figure,.hero-media,.dz{overflow:hidden}
+.book{overflow:hidden}
+.marks ul{gap:12px}.marks li{background:var(--panel);border:1px solid var(--line)!important}
+.menu-card{border-radius:28px 28px 0 0}
+.dock{border-radius:22px 22px 0 0}
+.dock .bk{background:var(--gold-grad)}
+.fab{background:var(--gold-grad)}
+.offerbar{background:linear-gradient(90deg,#0f1733,#1d2b5c 50%,#0f1733)}
+.room:hover,.site:hover,.gw-arati:hover{border-color:rgba(212,175,55,.6)}
+
+/* next arati gadget */
+.gad2{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+@media (max-width:760px){.gad2{grid-template-columns:1fr}}
+.gw-arati{text-decoration:none;color:inherit}
+
+/* temple programs */
+.tp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:22px;align-items:start}
+@media (max-width:900px){.tp{grid-template-columns:1fr}}
+.prog{border:1px solid var(--line);background:var(--panel);padding:22px;display:grid;gap:14px}
+.prog-now{background:var(--gold-grad);color:var(--gold-ink);border-radius:var(--r-sm);padding:16px 18px;display:grid;gap:2px}
+.prog-now .lbl{font-size:.68rem;letter-spacing:.24em;text-transform:uppercase;font-weight:500;opacity:.8}
+.prog-now b{font-family:var(--display);font-size:1.8rem;font-weight:600;line-height:1.1}
+.prog-now span{font-size:.88rem}
+.prog ol{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.prog li{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:baseline;padding:9px 12px;border-radius:12px}
+.prog li .tm{font-family:var(--display);font-size:1.25rem;font-weight:600;color:var(--gold-hi)}
+.prog li .tm small{font-family:var(--body);font-size:.7rem;color:var(--muted);font-weight:400}
+.prog li.done{opacity:.45}
+.prog li.next{background:rgba(212,175,55,.12);outline:1px solid rgba(212,175,55,.45)}
+.deity{display:grid;grid-template-columns:1.3fr 1fr;grid-template-rows:1fr 1fr;gap:12px;min-height:440px}
+.dz{margin:0;position:relative;border:1px solid var(--line);background:var(--panel)}
+.dz.big{grid-row:1/3}
+.dz img{width:100%;height:100%;object-fit:cover;display:block}
+.dz figcaption{position:absolute;left:12px;bottom:12px;background:rgba(10,15,31,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:6px 12px;border-radius:999px;font-size:.8rem}
+@media (max-width:560px){.deity{min-height:340px}}
+.cr{position:absolute;right:8px;top:8px;font-size:.6rem;color:rgba(255,255,255,.8);background:rgba(0,0,0,.45);padding:3px 8px;border-radius:999px;text-decoration:none;z-index:2;max-width:80%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.igs{margin-top:32px}
+.igs-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:14px}
+.igs-head a{color:var(--gold-hi);font-size:.86rem;text-underline-offset:3px}
+.igs-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(300px,360px);gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px}
+@media (max-width:620px){.igs-row{grid-auto-columns:88%}}
+.igc{scroll-snap-align:start;background:#fff;overflow:hidden;min-height:420px}
+.igc .instagram-media{margin:0!important;min-width:0!important;width:100%!important;border-radius:var(--r)!important}
+.igc blockquote{padding:20px;color:#333}
+
+/* site scene */
+.sites{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:1000px){.sites{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.sites{grid-template-columns:1fr}}
+.site{border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;transition:border-color .25s,transform .25s}
+.site:hover{transform:translateY(-3px)}
+.site figure{margin:0;position:relative;aspect-ratio:16/10;background:var(--band)}
+.site figure img{width:100%;height:100%;object-fit:cover;display:block}
+.site .si{padding:18px 20px 20px;display:flex;flex-direction:column;gap:8px;flex:1}
+.site h3{font-size:1.45rem}
+.site p{color:var(--muted);font-size:.92rem}
+.tt{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:6px}
+.tt>span{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted);background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3);padding:5px 11px;border-radius:999px;white-space:nowrap}
+.tt svg{width:16px;height:16px;color:var(--gold-hi)}
+.tt b{color:var(--ink);font-weight:500}
+.more-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
+@media (max-width:860px){.more-grid{grid-template-columns:1fr}}
+.more{border:1px solid var(--line);background:var(--panel);padding:22px}
+.more h3{font-size:1.5rem;margin-bottom:8px}
+.more ul{display:grid}
+.more li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.more li:first-child{border-top:0}
+.more li div{display:grid;min-width:0;flex:1 1 200px}
+.more li b{font-weight:500}
+.more li small{color:var(--muted);font-size:.8rem}
+.more .tt{margin:0;padding:0}
+.credits{margin-top:22px;font-size:.74rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -711,7 +798,7 @@ nav.main{gap:22px}
   <div class="wrap">
     <a class="brand" href="#home"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"></a>
     <nav class="main" aria-label="Sections">
-      <a href="#rooms">Rooms</a><a href="#reviews">Reviews</a><a href="#membership">Membership</a><a href="#explore">Explore</a><a href="#about">About</a><a href="#location">Location</a><a href="#contact">Contact</a>
+      <a href="#rooms">Rooms</a><a href="#reviews">Reviews</a><a href="#membership">Membership</a><a href="#temple">Temple</a><a href="#explore">Explore</a><a href="#about">About</a><a href="#location">Location</a><a href="#contact">Contact</a>
     </nav>
     <div class="top-acts">
       <button class="mem-chip" id="memChip" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg><span id="memChipTxt">Member sign in</span></button>
@@ -969,7 +1056,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       </div>
       <div class="gw rv" id="gwSun">
         <span class="lbl">Sunrise and sunset</span>
-        <div class="sunbar"><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><path d="M4 44 Q100 -30 196 44" fill="none" stroke="#3a322b" stroke-width="1.5" stroke-dasharray="3 4"/><circle id="gSunDot" cx="4" cy="44" r="6" fill="#e0be7a"/></svg></div>
+        <div class="sunbar"><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><path d="M4 44 Q100 -30 196 44" fill="none" stroke="#26315a" stroke-width="1.5" stroke-dasharray="3 4"/><circle id="gSunDot" cx="4" cy="44" r="6" fill="#f2d272"/></svg></div>
         <div class="sunrow"><span>Sunrise<b id="gRise">--:--</b></span><span style="text-align:right">Sunset<b id="gSet">--:--</b></span></div>
         <span class="sub" id="gSunSub">Mangala arati is before sunrise. Bring a shawl in winter.</span>
       </div>
@@ -981,7 +1068,8 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         <a class="btn btn-gold" href="#home" data-focus-book>Check my dates</a>
       </div>
     </div>
-    <div class="gad" style="margin-top:18px;grid-template-columns:minmax(0,1fr)">
+    <div class="gad gad2" style="margin-top:18px">
+      <a class="gw rv gw-arati" href="#temple"><span class="lbl">Next at the temple</span><span class="big" id="gArati" style="font-size:2.2rem">&nbsp;</span><span class="sub" id="gAratiIn">&nbsp;</span><span class="sub" style="color:var(--gold-hi)">See all temple timings ›</span></a>
       <div class="gw rv" style="flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 22px">
         <div style="display:grid;gap:4px;flex:1 1 260px;min-width:0"><span class="lbl">How far am I?</span><span class="sub" id="gFar">Tap the button and we show how far you are from Nikadi, and the way here.</span></div>
         <button class="btn btn-line" type="button" id="gFarBtn" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg> Find my distance</button>
@@ -1157,10 +1245,15 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           <li><span>Gita Bhavan</span><span class="t">5<small>min</small></span></li>
           <li><span>Gada Bhavan</span><span class="t">3<small>min</small></span></li>
           <li><span>Punjab National Bank</span><span class="t">1<small>min</small></span></li>
-          <li><span>Indian Overseas Bank</span><span class="t">5<small>min</small></span></li>
+          <li><span>Indian Overseas Bank</span><span class="t">1<small>min</small></span></li>
+          <li><span>SBI ATM</span><span class="t">1<small>min</small></span></li>
+          <li><span>Mobile and Xerox shop</span><span class="t">1<small>min</small></span></li>
+          <li><span>Namahatta Bhavan (prasadam)</span><span class="t">1<small>min</small></span></li>
+          <li><span>Restaurants for lunch</span><span class="t">4–5<small>min</small></span></li>
         </ul>
         <h3 style="margin-top:32px">By road</h3>
         <ul>
+          <li><span>Vrinda's Pizzeria</span><span class="t">6–8<small>min</small></span></li>
           <li><span>Kolkata Airport</span><span class="t">~3<small>hr</small></span></li>
           <li><span>Sealdah / Howrah Station</span><span class="t">~3.5<small>hr</small></span></li>
         </ul>
@@ -1186,31 +1279,82 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 </section>
 
 
-<section class="s alt" id="explore">
+
+<section class="s alt" id="temple">
   <div class="wrap">
     <div class="head rv">
-      <p class="kicker rule">Things to do</p>
-      <h2>So much to see in Sri Dham Mayapur</h2>
-      <p>Everything below is easy to reach from our door. E-rickshaws wait right outside, and our reception is happy to help you plan.</p>
+      <p class="kicker rule">ISKCON Temple programs</p>
+      <h2>The day at the Mayapur <em class="goldtx">temple</em></h2>
+      <p>Daily programs at Sri Mayapur Chandrodaya Mandir, an 8 minute walk from our door. Festival days can have special timings.</p>
     </div>
-    <div class="ex">
-      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v3M8 9a4 4 0 0 1 8 0M5 21V12h14v9M3 21h18M9 21v-5h6v5M7 12V9h10v3"/></svg><h3>Sri Mayapur Chandrodaya Mandir</h3><p>The main ISKCON temple, home of Sri Sri Radha Madhava, the Pancha Tattva and Sri Narasimhadeva. Go early for mangala arati and the morning darshan.</p><span class="how">On foot · 8 min</span></article>
-      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M6 20v-6a6 6 0 0 1 12 0v6M12 8V4M10 20v-3h4v3"/></svg><h3>Temple of the Vedic Planetarium</h3><p>The great domes you can see from our windows. One of the largest temples in the world, beautiful when it is lit up at night.</p><span class="how">On foot · from Gate No. 4</span></article>
-      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-4 0-8-3-9-7 3 0 6 1 9 4 3-3 6-4 9-4-1 4-5 7-9 7zM12 17c-2-2-3-5-2-9 1 1 2 2 2 3 0-1 1-2 2-3 1 4 0 7-2 9z"/></svg><h3>Srila Prabhupada&#x27;s Samadhi</h3><p>The Pushpa Samadhi Mandir of Srila Prabhupada, the founder of ISKCON, with its museum. A peaceful place in the evening.</p><span class="how">Short walk or e-rickshaw</span></article>
-      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h18a9 9 0 0 1-18 0zM8 7c0-1 1-2 1-3M12 7c0-1 1-2 1-3M16 7c0-1 1-2 1-3"/></svg><h3>Govinda&#x27;s</h3><p>Prasadam meals and snacks in the ISKCON campus. We are room only, so this is where most of our guests eat.</p><span class="how">On foot · 8 min</span></article>
-      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15h18l-3 4H6zM12 4v11M12 4l6 8h-6"/></svg><h3>The Ganga and the ghats</h3><p>Sit by the river where the Ganga meets the Jalangi, or take a boat across to Navadvip. Sunset on the river is unforgettable.</p><span class="how">E-rickshaw</span></article>
-      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a6 6 0 0 0 6-6c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-3-2 2-3 4-3 7a6 6 0 0 0 6 6z"/></svg><h3>Yogapitha</h3><p>The holy birthplace of Sri Chaitanya Mahaprabhu, a short ride from the guest house. Visit with Srivas Angan, where the first kirtans were held.</p><span class="how">E-rickshaw</span></article>
-      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8l-2-3M19 8l2-3M6 8h12v6a6 6 0 0 1-12 0zM10 13h.01M14 13h.01M10 17h4"/></svg><h3>Goshala</h3><p>Visit the cows cared for by the ISKCON Mayapur community, and feed them yourself.</p><span class="how">E-rickshaw</span></article>
-      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l7-7"/></svg><h3>Navadvip Mandala Parikrama</h3><p>Walk or ride to the nine islands of Navadvip with the pilgrims, especially in the weeks before Gaura Purnima.</p><span class="how">Ask us for help</span></article>
+    <div class="tp">
+      <div class="prog rv" id="prog">
+        <div class="prog-now" id="progNow"><span class="lbl">Next at the temple</span><b id="progNext">&nbsp;</b><span id="progIn">&nbsp;</span></div>
+        <ol>
+          <li data-t="04:30"><span class="tm">4:30 <small>AM</small></span><span class="nm">Mangal Arati</span></li>
+          <li data-t="07:00"><span class="tm">7:00 <small>AM</small></span><span class="nm">Darshan Arati</span></li>
+          <li data-t="08:00"><span class="tm">8:00 <small>AM</small></span><span class="nm">Bhagavatam Lecture</span></li>
+          <li data-t="08:30"><span class="tm">8:30 <small>AM</small></span><span class="nm">Dhupa Arati</span></li>
+          <li data-t="11:45"><span class="tm">11:45 <small>AM</small></span><span class="nm">Bhoga Offering</span></li>
+          <li data-t="12:00"><span class="tm">12:00 <small>PM</small></span><span class="nm">Bhoga Arati</span></li>
+          <li data-t="16:00"><span class="tm">4:00 <small>PM</small></span><span class="nm">Dhupa Arati</span></li>
+          <li data-t="18:00"><span class="tm">6:00 <small>PM</small></span><span class="nm">Sandhya Arati</span></li>
+          <li data-t="19:30"><span class="tm">7:30 <small>PM</small></span><span class="nm">Bhagavad Gita Lecture</span></li>
+          <li data-t="20:15"><span class="tm">8:15 <small>PM</small></span><span class="nm">Shayan Arati</span></li>
+        </ol>
+      </div>
+      <div class="deity rv">
+        <figure class="dz big"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Radhamadhava.JPG/960px-Radhamadhava.JPG" alt="Sri Sri Radha Madhava, the presiding deities of ISKCON Mayapur" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Radhamadhava.JPG" target="_blank" rel="noopener">Photo: Wikimedia Commons · public domain</a><figcaption>Sri Sri Radha Madhava</figcaption></figure>
+        <figure class="dz"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Narasimha_deity_at_ISKCON_Mayapur_03.jpg/960px-Narasimha_deity_at_ISKCON_Mayapur_03.jpg" alt="Sri Narasimhadeva at ISKCON Mayapur during arati" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Narasimha_deity_at_ISKCON_Mayapur_03.jpg" target="_blank" rel="noopener">Photo: Pinakpani · CC BY-SA 4.0</a><figcaption>Sri Narasimhadeva</figcaption></figure>
+        <figure class="dz"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg/960px-Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg" alt="The domes of the temple at ISKCON Mayapur" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Sri_Sri_Radha_Madhav_Temple_(also_Sri_Maya_Chandrodaya_Mandir,_Mayapur)_in_West_Bengal,_India.jpg" target="_blank" rel="noopener">Photo: Billjones94 · CC BY-SA 4.0</a><figcaption>The temple domes</figcaption></figure>
+      </div>
     </div>
-    <div class="ex-acts rv">
-      <a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna!%20Can%20you%20help%20me%20plan%20my%20visit%20in%20Mayapur%3F" target="_blank" rel="noopener">Ask us to plan your visit</a>
-      <a class="btn btn-line" href="#location">See distances from Nikadi</a>
+    <div class="igs rv" id="igs">
+      <div class="igs-head"><span class="kicker">Darshan from Mayapur</span><a href="https://www.instagram.com/sakhifestivals/" target="_blank" rel="noopener">Posts by @sakhifestivals on Instagram ›</a></div>
+      <div class="igs-row">
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DenvMqVID1-/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DenvMqVID1-/" target="_blank" rel="noopener">View this post by @sakhifestivals on Instagram</a></blockquote></div>
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DelCPy_BMQM/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/DelCPy_BMQM/" target="_blank" rel="noopener">View this post by @sakhifestivals on Instagram</a></blockquote></div>
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/Des45RkhFeC/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/Des45RkhFeC/" target="_blank" rel="noopener">View this post by @sakhifestivals on Instagram</a></blockquote></div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="s" id="rules">
+
+<section class="s" id="explore">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="kicker rule">Sridham Mayapur site scene</p>
+      <h2>Holy places near <em class="goldtx">Nikadi</em></h2>
+      <p>Times from our door. Totos (e-rickshaws) wait right outside the guest house, and our reception is happy to help you plan the day.</p>
+    </div>
+    <div class="sites">
+      <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg/960px-Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg" alt="Sri Mayapur Chandrodaya Mandir" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Sri_Sri_Radha_Madhav_Temple_(also_Sri_Maya_Chandrodaya_Mandir,_Mayapur)_in_West_Bengal,_India.jpg" target="_blank" rel="noopener">Photo: Billjones94 · CC BY-SA 4.0</a></figure><div class="si"><h3>Sri Mayapur Chandrodaya Mandir</h3><p>Sri Sri Radha Madhava, Sri Sri Pancha Tattva and Sri Sri Nrisimhadev with Prahlad Maharaj.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>8 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>4 min</b></span></span></div></article>
+      <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Samadhi_Mandir_of_Srila_Prabhupada_%28front%29%2C_Mayapur_07102013.jpg/960px-Samadhi_Mandir_of_Srila_Prabhupada_%28front%29%2C_Mayapur_07102013.jpg" alt="Srila Prabhupada Pushpa Samadhi Mandir" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Samadhi_Mandir_of_Srila_Prabhupada_(front),_Mayapur_07102013.jpg" target="_blank" rel="noopener">Photo: Joydeep · CC BY-SA 3.0</a></figure><div class="si"><h3>Srila Prabhupada Pushpa Samadhi Mandir</h3><p>The beautiful samadhi of the founder of ISKCON, with its museum and the market in front.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>6 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b></span></span></div></article>
+      <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Goshala_Entrance_-_ISKCON_Campus_-_Mayapur_-_Nadia_2017-08-15_1941.JPG/960px-Goshala_Entrance_-_ISKCON_Campus_-_Mayapur_-_Nadia_2017-08-15_1941.JPG" alt="ISKCON Goshala" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Goshala_Entrance_-_ISKCON_Campus_-_Mayapur_-_Nadia_2017-08-15_1941.JPG" target="_blank" rel="noopener">Photo: Biswarup Ganguly · CC BY 3.0</a></figure><div class="si"><h3>ISKCON Goshala</h3><p>Visit and feed the cows cared for by the ISKCON Mayapur community.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>19 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>8 min</b></span></span></div></article>
+      <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/The_estuary_of_Ganga_and_Jalangi_river_near_Mayapur%2C_Nadia_02.jpg/960px-The_estuary_of_Ganga_and_Jalangi_river_near_Mayapur%2C_Nadia_02.jpg" alt="Mother Ganga Ghat" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:The_estuary_of_Ganga_and_Jalangi_river_near_Mayapur,_Nadia_02.jpg" target="_blank" rel="noopener">Photo: Pinakpani · CC BY-SA 4.0</a></figure><div class="si"><h3>Mother Ganga Ghat</h3><p>Sit by the holy Ganga where she meets the Jalangi. Boats cross to Navadvip.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>7 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b></span></span></div></article>
+      <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Yogapith%2C_Mayapur.jpg/960px-Yogapith%2C_Mayapur.jpg" alt="Sri Chaitanya Mahaprabhu Birthplace" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Yogapith,_Mayapur.jpg" target="_blank" rel="noopener">Photo: Cinosaur · CC BY-SA 3.0</a></figure><div class="si"><h3>Sri Chaitanya Mahaprabhu Birthplace</h3><p>Yogapith, the holy birthplace of Sri Chaitanya Mahaprabhu.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>20 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>5 min</b></span></span></div></article>
+      <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Premise_of_Shree_Chaitanya_Math_at_Mayapur%2C_Nadia_district%2C_West_Bengal%2C_India_04.jpg/960px-Premise_of_Shree_Chaitanya_Math_at_Mayapur%2C_Nadia_district%2C_West_Bengal%2C_India_04.jpg" alt="Sri Chaitanya Math" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Premise_of_Shree_Chaitanya_Math_at_Mayapur,_Nadia_district,_West_Bengal,_India_04.jpg" target="_blank" rel="noopener">Photo: Amitabha Gupta · CC BY 4.0</a></figure><div class="si"><h3>Sri Chaitanya Math</h3><p>The temple founded by Srila Bhaktisiddhanta Saraswati Thakur.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>12 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>4 min</b></span></span></div></article>
+    </div>
+    <div class="more-grid">
+      <div class="more rv">
+        <h3>More holy places</h3>
+        <ul><li><div><b>Srivas Angan, Advaita Angan and Gadadhar Angan</b><small>Where Mahaprabhu held kirtan with His associates</small></div><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>23 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>6 min</b></span></span></li><li><div><b>ISKCON Gurukul</b><small>Visits on permission (terms and conditions apply)</small></div><span class="tt"><span>In the ISKCON campus</span></span></li><li><div><b>Chand Kazi Samadhi</b><small>The tomb of Chand Kazi, who met Sri Chaitanya Mahaprabhu</small></div><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>44 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>10 min</b></span></span></li><li><div><b>Ballal Sen Dhipi</b><small>An ancient mound linked to King Ballal Sen</small></div><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>48 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>12 min</b></span></span></li><li><div><b>Rajapur Jagannath Mandir</b><small>ISKCON Rajapur, the Jagannath temple</small></div><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>About 1 hr</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>15 min</b></span></span></li></ul>
+      </div>
+      <div class="more rv">
+        <h3>Prasadam and food</h3>
+        <ul><li><div><b>Govinda&#x27;s</b><small>ISKCON campus</small></div><span class="tt"><span><b>8 min walk</b></span></span></li><li><div><b>Gada Bhavan</b><small>ISKCON campus</small></div><span class="tt"><span><b>3 min walk</b></span></span></li><li><div><b>Gita Bhavan</b><small>ISKCON campus</small></div><span class="tt"><span><b>5 min walk</b></span></span></li><li><div><b>Namahatta Bhavan</b><small>Right opposite us</small></div><span class="tt"><span><b>1 min walk</b></span></span></li><li><div><b>Sulabh Bhojanalay</b><small>ISKCON campus</small></div><span class="tt"><span><b>Short walk</b></span></span></li><li><div><b>Pushpa Samadhi Market</b><small>Snacks and shops</small></div><span class="tt"><span><b>6 min walk</b></span></span></li><li><div><b>Restaurants for lunch</b><small>Outside the campus</small></div><span class="tt"><span><b>4–5 min walk</b></span></span></li><li><div><b>Vrinda&#x27;s Pizzeria</b><small>Pizza and more</small></div><span class="tt"><span><b>6–8 min drive</b></span></span></li></ul>
+      </div>
+    </div>
+    <div class="ex-acts rv">
+      <a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna!%20Can%20you%20help%20me%20plan%20my%20visit%20in%20Mayapur%3F" target="_blank" rel="noopener">Ask us to plan your visit</a>
+      <a class="btn btn-line" href="#temple">Temple program timings</a>
+    </div>
+    <p class="credits">Photos of holy places: Wikimedia Commons contributors (credited on each photo). Darshan posts: @sakhifestivals on Instagram.</p>
+  </div>
+</section>
+
+<section class="s alt" id="rules">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">House rules</p>
@@ -1227,7 +1371,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 </section>
 
 
-<section class="s alt" id="about">
+<section class="s" id="about">
   <div class="wrap about">
     <figure class="rv"><img src="img/facade-night.jpg" alt="Nikadi Guest House at night, opposite ISKCON Gate No. 4" loading="lazy"><figcaption>Nikadi Guest House, opposite ISKCON Gate No. 4</figcaption></figure>
     <div class="tx rv">
@@ -1247,7 +1391,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 </section>
 
 
-<section class="s" id="faq">
+<section class="s alt" id="faq">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Questions</p>
@@ -1267,7 +1411,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 </section>
 
 
-<section class="s alt contact" id="contact">
+<section class="s contact" id="contact">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Contact us</p>
@@ -1798,7 +1942,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <a href="#rooms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18V7M21 18v-5a3 3 0 0 0-3-3h-8v8M3 14h18M6.5 10.5a1.5 1.5 0 1 0 0-.01"/></svg><span>Rooms</span></a>
       <a href="#reviews"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/></svg><span>Reviews</span></a>
       <a href="#membership"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg><span>Membership</span></a>
-      <a href="#explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Things to do</span></a>
+      <a href="#explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Holy places</span></a>
       <a href="#gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>Gallery</span></a>
       <a href="#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Location</span></a>
       <a href="#booking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="1"/><path d="M3 10h18M7 15h4"/></svg><span>Pay advance</span></a>
@@ -1966,7 +2110,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     b.disabled=true;b.textContent='Opening secure payment…';
     Promise.all([loadRzp(),api('payOrder',{name:$('poName').value,phone:ph,amount:$('poAmt').value,note:$('poNote').value,room:$('rm')?$('rm').value:'',checkin:$('ci')?$('ci').value:'',checkout:$('co')?$('co').value:''})]).then(function(x){
       var o=x[1];
-      var rz=new Razorpay({key:o.keyId,order_id:o.order,amount:o.amount,currency:'INR',name:'Nikadi Guest House',description:'Booking advance',prefill:{name:o.name,contact:(String(o.phone).length===10?'+91':'+')+o.phone},theme:{color:'#c9a35a'},
+      var rz=new Razorpay({key:o.keyId,order_id:o.order,amount:o.amount,currency:'INR',name:'Nikadi Guest House',description:'Booking advance',prefill:{name:o.name,contact:(String(o.phone).length===10?'+91':'+')+o.phone},theme:{color:'#d4af37'},
         handler:function(r){b.textContent='Confirming…';api('payVerify',{order:r.razorpay_order_id,payment:r.razorpay_payment_id,signature:r.razorpay_signature}).then(function(v){
           f.querySelectorAll('.po-grid,#poGo,.po-hint').forEach(function(el){el.hidden=true;});$('poOk').hidden=false;
           $('poOk').textContent='Thank you! ₹'+Number(v.amount||$('poAmt').value).toLocaleString('en-IN')+' received (ref. '+v.ref+'). We will confirm your booking on WhatsApp shortly.';
@@ -2452,6 +2596,38 @@ var WA = "917501101137";
       if(f.m.value.trim())L.push(f.m.value.trim());
       window.open('https://wa.me/917501101137?text='+encodeURIComponent(L.join('\n')),'_blank','noopener');
     });
+  }
+})();
+
+</script>
+<script>
+/* ---- v4: temple program (live next arati) + Instagram darshan embeds ---- */
+(function(){
+  function $(id){return document.getElementById(id);}
+  var rows=[].slice.call(document.querySelectorAll('#prog li'));
+  var P=rows.map(function(li){var t=li.getAttribute('data-t').split(':');return {li:li,m:+t[0]*60+(+t[1]),name:li.querySelector('.nm').textContent,time:li.querySelector('.tm').textContent.replace(/\s+/g,' ').trim()};});
+  function dur(min){var h=Math.floor(min/60),m=min%60;return h?(h+' h'+(m?' '+m+' min':'')):m+' min';}
+  function upd(){
+    if(!P.length)return;
+    var d=new Date(Date.now()+330*60000),now=d.getUTCHours()*60+d.getUTCMinutes();
+    var cur=null,next=null;
+    P.forEach(function(p){if(p.m<=now&&now-p.m<25)cur=p;if(!next&&p.m>now)next=p;});
+    var tomorrow=!next;if(tomorrow)next=P[0];
+    var inMin=tomorrow?(24*60-now+next.m):next.m-now;
+    P.forEach(function(p){p.li.classList.toggle('done',!tomorrow&&p.m<=now&&p!==cur);p.li.classList.toggle('next',p===(cur||next));});
+    var head,sub;
+    if(cur){head=cur.name+' now';sub='Started at '+cur.time+' · next: '+next.name+' at '+next.time;}
+    else{head=next.name+' · '+next.time;sub=(tomorrow?'Tomorrow morning · in ':'In ')+dur(inMin);}
+    if($('progNext')){$('progNext').textContent=head;$('progIn').textContent=sub;$('progNow').querySelector('.lbl').textContent=cur?'Happening now at the temple':'Next at the temple';}
+    if($('gArati')){$('gArati').textContent=cur?cur.name:next.name;$('gAratiIn').textContent=cur?'Happening now · started '+cur.time:next.time+' · '+(tomorrow?'tomorrow, in ':'in ')+dur(inMin);}
+  }
+  upd();setInterval(upd,30000);
+
+  /* Instagram's own embed script, loaded only when the darshan row comes near the screen */
+  var box=$('igs');
+  if(box){
+    var go=function(){if(window.__igl)return;window.__igl=1;var sc=document.createElement('script');sc.async=true;sc.src='https://www.instagram.com/embed.js';sc.onload=function(){try{window.instgrm&&window.instgrm.Embeds.process();}catch(e){}};document.body.appendChild(sc);};
+    if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es.some(function(e){return e.isIntersecting;})){go();io.disconnect();}},{rootMargin:'600px 0px'});io.observe(box);}else go();
   }
 })();
 
