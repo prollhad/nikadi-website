@@ -53,7 +53,7 @@
   window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;var b=document.getElementById('installBox');if(b)b.hidden=false;});
   var standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
   var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-  var POLICY='To confirm a booking we need an advance of 50% of the total room price. Cancel 3 or more days before check-in and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are not refunded.';
+  var POLICY='To confirm a booking we need an advance of 50% of the total room price. Cancel 3 or more days before check-in and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b style="color:#ff9e9e">not refunded</b>.';
 
   function $(id){return document.getElementById(id);}
   function busy(btn,on){if(btn){btn.classList.toggle('busy',on);btn.disabled=on;}}
