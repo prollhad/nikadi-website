@@ -457,7 +457,7 @@
       '<div class="board">' + rooms.map(function (r) {
         var k = kind(r), s = r.stay;
         if (isDummy(r)) return '<button type="button" class="tile k-dummy" data-room="' + r.room + '" data-dummy="1" aria-label="Room ' + r.room + ', booked">' +
-          '<span class="n">' + r.room + '</span><span class="ty">' + esc(r.type) + '</span><span class="g">Booked<small>Reserved</small></span><span class="st"><span>Booked</span></span></button>';
+          '<span class="n">' + r.room + '</span><span class="ty">' + esc(r.type) + '</span><span class="g">' + esc(dummyGuest(r.room).name) + '<small>' + dummyGuest(r.room).sub + '</small></span><span class="st"><span>Booked</span></span></button>';
         var g = s ? esc(s.guest) + '<small>' + s.guests + (s.guests > 1 ? ' guests' : ' guest') + ' · till ' + esc(dShort(s.checkout)) + '</small>'
           : r.arriving && k === 'arr' ? esc(r.arriving.guest) + '<small>' + (r.arriving.comp ? 'Free stay · ' : '') + 'Booked · ' + (r.arriving.late ? 'was due earlier' : 'arrives today') + '</small>'
           : k === 'dirty' ? '<small>' + esc(r.by ? 'Since ' + tShort(r.updated) : 'Clean before next guest') + '</small>' : '<small>' + esc(r.beds) + '</small>';
@@ -477,6 +477,13 @@
     if ($('#dmy', v)) $('#dmy', v).onclick = function () { var D2 = S.st.dummy || {}; dummySave({ on: !D2.on }, D2.on ? 'Dummy bookings off' : 'Dummy bookings on'); };
   }
   /* Dummy bookings: free rooms shown as Booked (pink) on this screen only. Green switch = on. No details to fill. */
+  var DUMMY_NAMES = ['Ramesh Agarwal', 'Sunita Banerjee', 'Gopal Krishna Das', 'Anjali Sharma', 'Subhash Chatterjee', 'Radhika Iyer', 'Madhav Prasad', 'Priya Mukherjee', 'Vikram Malhotra', 'Lalita Devi', 'Arun Kumar Sen', 'Meera Joshi', 'Sanjay Gupta', 'Kavita Rao', 'Nitai Chandra Das', 'Deepa Nair'];
+  function dummyGuest(room) { // same name for the room all day, a different one tomorrow
+    var key = String(S.st.today) + '|' + room, h = 0;
+    for (var i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    var n = 1 + (h >> 4) % 3, out = addDays(S.st.today, 1 + (h >> 8) % 3);
+    return { name: DUMMY_NAMES[h % DUMMY_NAMES.length], sub: n + (n > 1 ? ' guests' : ' guest') + ' · till ' + esc(dShort(out)) };
+  }
   function dummySave(d) {
     var D = S.st.dummy || { on: false, rooms: [] };
     S.st.dummy = { on: d.on != null ? d.on : D.on, rooms: d.rooms || D.rooms }; render(); // show it at once
@@ -2910,7 +2917,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 70</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 71</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
