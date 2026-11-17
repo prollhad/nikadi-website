@@ -1351,17 +1351,7 @@ function waList_(to, body, button, rows, footer) {
 
 /** Run once from the editor: creates the four staff-app message templates in YCloud for Meta's approval (uses the saved API key). */
 function whatsappCreateTemplates() {
-  var waba = '2190141911588918', foot = { type: 'FOOTER', text: 'Nikadi Guest House · Mayapur' };
-  var site = { type: 'URL', text: 'Visit our website', url: NK_SITE };
-  var call = { type: 'PHONE_NUMBER', text: 'Call reception', phone_number: '+917501101137' };
-  var body = function (name, ex) { return { type: 'BODY', text: WA_TEXTS[name].replace(/\{(\d)\}/g, '{{$1}}'), example: { body_text: [ex] } }; };
-  var list = [
-    { name: 'nikadi_welcome', category: 'UTILITY', components: [body('nikadi_welcome', ['Radha', '3', '17 Nov 2026', '19 Nov 2026']), foot, { type: 'BUTTONS', buttons: [site, call] }] },
-    { name: 'nikadi_membership', category: 'MARKETING', components: [body('nikadi_membership', ['Radha']), foot, { type: 'BUTTONS', buttons: [{ type: 'URL', text: 'Join free now', url: NK_SITE + '/app/?join=1' }, site] }] },
-    { name: 'nikadi_booking_confirmed', category: 'UTILITY', components: [body('nikadi_booking_confirmed', ['Radha', 'BAOKCD14X', '1', '17 Nov 2026', '19 Nov 2026', '₹3,500']), foot, { type: 'BUTTONS', buttons: [site, call] }] },
-    { name: 'nikadi_bill', category: 'UTILITY', components: [{ type: 'HEADER', format: 'DOCUMENT', example: { header_url: [NK_SITE + '/bill/sample-bill.pdf'] } },
-      body('nikadi_bill', ['Mrs. Paul', 'NGH/26-27/0142', '₹7,000', 'paid in full']), foot] }
-  ];
+  var waba = '2190141911588918', list = whatsappTemplateList_();
   var out = list.map(function (t) {
     try { var j = ycCall_('whatsapp/templates', Object.assign({ wabaId: waba, language: 'en' }, t)); return t.name + ': ' + (j.status || 'sent'); }
     catch (e) { return t.name + ': ' + e.message; }
@@ -1369,7 +1359,31 @@ function whatsappCreateTemplates() {
   console.log(out.join('\n'));
   return out;
 }
+function whatsappTemplateList_() {
+  var foot = { type: 'FOOTER', text: 'Nikadi Guest House · Mayapur' };
+  var site = { type: 'URL', text: 'Visit our website', url: NK_SITE };
+  var call = { type: 'PHONE_NUMBER', text: 'Call reception', phone_number: '+917501101137' };
+  var body = function (name, ex) { return { type: 'BODY', text: WA_TEXTS[name].replace(/\{(\d)\}/g, '{{$1}}'), example: { body_text: [ex] } }; };
+  return [
+    { name: 'nikadi_welcome', category: 'UTILITY', components: [body('nikadi_welcome', ['Radha', '3', '17 Nov 2026', '19 Nov 2026']), foot, { type: 'BUTTONS', buttons: [site, call] }] },
+    { name: 'nikadi_membership', category: 'MARKETING', components: [body('nikadi_membership', ['Radha']), foot, { type: 'BUTTONS', buttons: [{ type: 'URL', text: 'Join free now', url: NK_SITE + '/app/?join=1' }, site] }] },
+    { name: 'nikadi_booking_confirmed', category: 'UTILITY', components: [body('nikadi_booking_confirmed', ['Radha', 'BAOKCD14X', '1', '17 Nov 2026', '19 Nov 2026', '₹3,500']), foot, { type: 'BUTTONS', buttons: [{ type: 'URL', text: 'Open in Google Maps', url: 'https://maps.google.com/?cid=4814848157732686064' }, call] }] },
+    { name: 'nikadi_bill', category: 'UTILITY', components: [{ type: 'HEADER', format: 'DOCUMENT', example: { header_url: [NK_SITE + '/bill/sample-bill.pdf'] } },
+      body('nikadi_bill', ['Mrs. Paul', 'NGH/26-27/0142', '₹7,000', 'paid in full']), foot, { type: 'BUTTONS', buttons: [{ type: 'URL', text: 'Write a Google review', url: 'https://g.page/r/CfDIGanjxtFCEAE/review' }] }] }
+  ];
+}
 
+/** Run once from the editor after changing WA_TEXTS: sends the new wording of the 4 templates to Meta (each goes back to review). */
+function whatsappUpdateTemplates() {
+  var waba = '2190141911588918', out = [];
+  var list = whatsappTemplateList_();
+  list.forEach(function (t) {
+    try { var j = ycCall_('whatsapp/templates/' + waba + '/' + t.name + '/en', { components: t.components }, 'patch'); out.push(t.name + ': ' + (j.status || 'sent')); }
+    catch (e) { out.push(t.name + ': ' + e.message); }
+  });
+  console.log(out.join('\n'));
+  return out;
+}
 /** Saves a guest's WhatsApp photo / PDF (payment screenshot) to Drive: "Nikadi WhatsApp Payments / yyyy-MM". Returns the file id. */
 function waSaveMedia_GAS_(media, type, phone, name) {
   var y = ycProps_(), url = media.link || media.url;
@@ -1685,16 +1699,16 @@ function waNotify_(subject, phone, body) {
    Inside the 24-hour window after the guest's last message, a plain message is sent (free, no template needed).
    Otherwise the approved template is used. */
 var WA_TEXTS = {
-  nikadi_welcome: 'Hare Krishna {1} 🙏 Welcome to Nikadi Guest House!\nYour room is {2}, from {3} to {4}. Check-out is by 9:00 AM.\nReception is on the first floor: enter at the left corner of the building and take the stairs up, near the Mahaprabhu photo.\nFor anything you need, just reply here or call +91 75011 01137.',
+  nikadi_welcome: 'Hare Krishna {1} 🙏 Welcome to Nikadi Guest House!\nYour room is {2}, from {3} to {4}. Check-out is by 9:00 AM.\nFor anything you need, just reply here or call +91 75011 01137.',
   nikadi_membership: 'Hare Krishna {1} 🙏 Thank you for choosing Nikadi Guest House.\nJoin the free Nikadi Membership and get 100 welcome points:\n⭐ Silver (on joining): 5% off every stay, 1 point per ₹100, birthday points\n⭐ Gold (15 nights in 2 years): 10% off, 1.5 points per ₹100, early check-in\n⭐ Platinum (40 nights in 2 years): 15% off, 2 points per ₹100, late check-out till 11 AM, free room upgrade, free dental kit\n⭐ Platinum Plus (100 nights, kept for 10 years): 20% off, 4 points per ₹100, late check-out till 12 noon, free extra mattress, festival booking priority\nJoin before you check out and this stay counts too. Tap the button below to join in one minute 👇',
-  nikadi_booking_confirmed: 'Hare Krishna {1} 🙏 Your booking {2} at Nikadi Guest House is confirmed: {3} room(s), {4} to {5}. Advance received: {6}.\nCheck-in from 11:00 AM, check-out by 9:00 AM. Cancel 3 or more days before check-in for a full refund; after that the advance is not refundable.\nReception: first floor, left corner of the building, near the Mahaprabhu photo. Questions: +91 75011 01137.',
+  nikadi_booking_confirmed: 'Hare Krishna {1} 🙏 Your booking {2} at Nikadi Guest House is confirmed: {3} room(s), {4} to {5}. Advance received: {6}.\nCheck-in from 11:00 AM, check-out by 9:00 AM. Cancel 3 or more days before check-in for a full refund; after that the advance is not refundable.\n📍 How to reach us: Bhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4, Mayapur. Reception is on the first floor: enter at the left corner of the building and take the stairs up, near the Mahaprabhu photo. Google Maps: https://maps.google.com/?cid=4814848157732686064\nQuestions: +91 75011 01137.',
   nikadi_bill: 'Dear {1}, thank you so much for staying with us at Nikadi Guest House. Your bill {2} is attached as a PDF. Total {3} (incl. GST), {4}.\nWe hope your time in Sri Dham Mayapur was peaceful and full of blessings, and we will be happy to welcome you again.\n⭐ Enjoyed your stay? A short Google review helps other devotees find us: https://g.page/r/CfDIGanjxtFCEAE/review'
 };
 /* Free-form version of each template's button (a WhatsApp message can carry one link button). */
 var WA_CTA = {
   nikadi_welcome: { text: 'Visit our website', url: NK_SITE },
   nikadi_membership: { text: 'Join free now', url: NK_SITE + '/app/?join=1' },
-  nikadi_booking_confirmed: { text: 'Visit our website', url: NK_SITE }
+  nikadi_booking_confirmed: { text: 'Open in Google Maps', url: 'https://maps.google.com/?cid=4814848157732686064' }
 };
 function ycUploadPdf_(pdf, fileName) { return ycUploadMedia_(pdf, 'application/pdf', fileName || 'bill.pdf'); }
 function ycUploadMedia_(b64, mime, fileName) {
