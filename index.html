@@ -153,7 +153,7 @@ nav.main{gap:24px}.top .btn{white-space:nowrap}
   .hero-media{order:-1;justify-self:stretch;width:auto;max-width:none;margin-left:calc(-1*max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1*max(16px,env(safe-area-inset-right,0px)))}
   .hero-copy .rule::after{display:none}
   .hero-media::before{display:none}
-  .hero .slides{aspect-ratio:auto;height:min(62vh,520px)}
+  .hero .slides{aspect-ratio:auto;height:min(62vh,520px);height:min(62svh,520px)}
   .hero-nav{display:none}
   .hero h1{margin-top:16px}
 }
@@ -789,6 +789,53 @@ body{background:radial-gradient(1200px 600px at 80% -10%,rgba(212,175,55,.08),tr
 .more li small{color:var(--muted);font-size:.8rem}
 .more .tt{margin:0;padding:0}
 .credits{margin-top:22px;font-size:.74rem;color:var(--muted)}
+
+/* ===== v5: smooth scrolling, Instagram rows, membership card deck, Meet Chandramukhi ===== */
+/* no blur behind sticky/fixed bars: blur repaints on every scroll frame and makes phones judder */
+header.top{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(10,15,31,.97)}
+.dock{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(10,15,31,.98)}
+body{background:var(--bg)}
+html{overflow-x:hidden}
+@media (max-width:1060px){.rv{transition-duration:.45s}.js .rv{transform:none}}
+/* fixed-size boxes for Instagram posts, so nothing jumps while they load */
+.igc{height:600px;min-height:0;contain:layout paint;background:#fff}
+.igc .instagram-media{max-width:none!important}
+.deity-ig{display:grid;min-width:0}
+.deity-ig .igc{height:640px}
+.igs-links{display:flex;flex-wrap:wrap;gap:14px}
+.igs-links a{color:var(--gold-hi);font-size:.86rem;text-underline-offset:3px}
+
+/* membership deck */
+.mdeck{position:relative;width:100%;max-width:400px;display:grid;gap:18px;justify-items:center}
+.mdeck .mcard{grid-area:1/1;transform:translateY(14px) scale(.94) rotate(-3deg);opacity:0;transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .45s ease;pointer-events:none}
+.mdeck .mcard.on{transform:none;opacity:1;pointer-events:auto}
+.mdeck .mcard.prev{opacity:.35;transform:translate(-18px,10px) scale(.92) rotate(-6deg)}
+.mcard-mid{align-self:center;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.mcard-off{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500}
+.mcard-name{font-family:var(--display);font-size:1.05rem;letter-spacing:.22em;opacity:1;font-weight:600}
+.mcard-bot{align-items:flex-end}
+.mc-silver{background:linear-gradient(135deg,#fbfcfd 0%,#c9ced6 40%,#9aa1ab 62%,#e9ecf0 100%)!important;color:#1d2230}
+.mc-gold{background:linear-gradient(135deg,#f6dc8a 0%,#d4af37 38%,#a9823e 62%,#f0d07a 100%)!important;color:#1a1405}
+.mc-platinum{background:linear-gradient(135deg,#f2f5f9 0%,#aeb9c8 40%,#6f7d90 64%,#dfe5ec 100%)!important;color:#141a26}
+.mc-plus{background:radial-gradient(120% 120% at 100% 0%,rgba(212,175,55,.35),transparent 55%),linear-gradient(135deg,#1b1b22 0%,#0b0b0f 60%,#23232b 100%)!important;color:#f2d272;box-shadow:0 24px 50px rgba(0,0,0,.6),inset 0 0 0 1px rgba(212,175,55,.6)!important}
+.mc-plus .mcard-tier{border-color:rgba(242,210,114,.6)}
+.mc-silver .mcard-tier,.mc-platinum .mcard-tier{border-color:rgba(20,26,38,.4)}
+.mdots{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+.mdots button{font:inherit;font-size:.74rem;letter-spacing:.06em;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.mdots button[aria-selected="true"]{background:var(--gold-grad);color:var(--gold-ink);border-color:transparent}
+
+/* Meet Chandramukhi */
+.meet{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.6fr);gap:40px;align-items:center}
+@media (max-width:960px){.meet{grid-template-columns:1fr;gap:28px}}
+.meet-tx{display:grid;gap:16px}
+.meet-tx h2{font-size:clamp(2.2rem,5vw,3.4rem)}
+.meet-tx p{color:var(--muted)}
+.ig-follow{display:flex;align-items:center;gap:14px;padding:12px 14px 12px 12px;border-radius:999px;text-decoration:none;color:var(--ink);background:var(--panel);border:1px solid rgba(212,175,55,.45);max-width:420px}
+.ig-follow svg{width:46px;height:46px;padding:10px;border-radius:50%;color:#fff;background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);flex:none}
+.ig-follow span{display:grid;line-height:1.3;min-width:0}
+.ig-follow small{color:var(--muted);font-size:.78rem}
+.ig-follow .go{margin-left:auto;background:var(--gold-grad);color:var(--gold-ink);padding:9px 18px;border-radius:999px;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;display:block}
+.meet-row{grid-auto-columns:minmax(280px,320px)}
 </style>
 </head>
 <body>
@@ -944,10 +991,12 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         </div>
       </div>
       <div class="mem-side">
-        <div class="mcard" aria-hidden="true">
-          <div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Platinum Plus</span></div>
-          <div class="mcard-pts"><b>100</b><span>points</span></div>
-          <div class="mcard-bot"><span>Your mobile number is your member ID</span><span>Sri Dham Mayapur</span></div>
+        <div class="mdeck" id="mdeck" aria-label="Sample membership cards for each level">
+          <div class="mcard mc-silver on" data-tier="0"><div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Silver</span></div><div class="mcard-mid"><div class="mcard-pts"><b>100</b><span>points</span></div><span class="mcard-off">5% off</span></div><div class="mcard-bot"><span class="mcard-name">CHANDRAMUKHI</span><span>Sample card · Sri Dham Mayapur</span></div></div>
+          <div class="mcard mc-gold" data-tier="1"><div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Gold</span></div><div class="mcard-mid"><div class="mcard-pts"><b>1,250</b><span>points</span></div><span class="mcard-off">10% off</span></div><div class="mcard-bot"><span class="mcard-name">CHANDRAMUKHI</span><span>Sample card · Sri Dham Mayapur</span></div></div>
+          <div class="mcard mc-platinum" data-tier="2"><div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Platinum</span></div><div class="mcard-mid"><div class="mcard-pts"><b>3,400</b><span>points</span></div><span class="mcard-off">15% off</span></div><div class="mcard-bot"><span class="mcard-name">CHANDRAMUKHI</span><span>Sample card · Sri Dham Mayapur</span></div></div>
+          <div class="mcard mc-plus" data-tier="3"><div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Platinum Plus</span></div><div class="mcard-mid"><div class="mcard-pts"><b>9,800</b><span>points</span></div><span class="mcard-off">20% off</span></div><div class="mcard-bot"><span class="mcard-name">CHANDRAMUKHI</span><span>Sample card · Sri Dham Mayapur</span></div></div>
+          <div class="mdots" role="tablist"><button type="button" role="tab" data-tier="0" aria-selected="true">Silver</button><button type="button" role="tab" data-tier="1">Gold</button><button type="button" role="tab" data-tier="2">Platinum</button><button type="button" role="tab" data-tier="3">Platinum Plus</button></div>
         </div>
         <details class="mem-terms">
           <summary>Membership terms</summary>
@@ -1303,25 +1352,45 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           <li data-t="20:15"><span class="tm">8:15 <small>PM</small></span><span class="nm">Shayan Arati</span></li>
         </ol>
       </div>
-      <div class="deity rv">
-        <figure class="dz big"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Radhamadhava.JPG/960px-Radhamadhava.JPG" alt="Sri Sri Radha Madhava, the presiding deities of ISKCON Mayapur" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Radhamadhava.JPG" target="_blank" rel="noopener">Photo: Wikimedia Commons · public domain</a><figcaption>Sri Sri Radha Madhava</figcaption></figure>
-        <figure class="dz"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Narasimha_deity_at_ISKCON_Mayapur_03.jpg/960px-Narasimha_deity_at_ISKCON_Mayapur_03.jpg" alt="Sri Narasimhadeva at ISKCON Mayapur during arati" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Narasimha_deity_at_ISKCON_Mayapur_03.jpg" target="_blank" rel="noopener">Photo: Pinakpani · CC BY-SA 4.0</a><figcaption>Sri Narasimhadeva</figcaption></figure>
-        <figure class="dz"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg/960px-Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg" alt="The domes of the temple at ISKCON Mayapur" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Sri_Sri_Radha_Madhav_Temple_(also_Sri_Maya_Chandrodaya_Mandir,_Mayapur)_in_West_Bengal,_India.jpg" target="_blank" rel="noopener">Photo: Billjones94 · CC BY-SA 4.0</a><figcaption>The temple domes</figcaption></figure>
+      <div class="deity-ig rv igc-big">
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DfyZSf2THxP/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/DfyZSf2THxP/" target="_blank" rel="noopener">View this post by @mayapur_tv on Instagram</a></blockquote></div>
       </div>
     </div>
     <div class="igs rv" id="igs">
-      <div class="igs-head"><span class="kicker">Darshan from Mayapur</span><a href="https://www.instagram.com/sakhifestivals/" target="_blank" rel="noopener">Posts by @sakhifestivals on Instagram ›</a></div>
+      <div class="igs-head"><span class="kicker">Today's darshan from Mayapur</span><span class="igs-links"><a href="https://www.instagram.com/mayapur_tv/" target="_blank" rel="noopener">Follow @mayapur_tv ›</a><a href="https://www.instagram.com/sakhifestivals/" target="_blank" rel="noopener">Follow @sakhifestivals ›</a></span></div>
       <div class="igs-row">
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DfyYAGEI88M/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/DfyYAGEI88M/" target="_blank" rel="noopener">View this post by @mayapur_tv on Instagram</a></blockquote></div>
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/Df1C4UtzYN8/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/Df1C4UtzYN8/" target="_blank" rel="noopener">View this post by @mayapur_tv on Instagram</a></blockquote></div>
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/Df13uKDzYK0/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/Df13uKDzYK0/" target="_blank" rel="noopener">View this post by @mayapur_tv on Instagram</a></blockquote></div>
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DenvMqVID1-/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DenvMqVID1-/" target="_blank" rel="noopener">View this post by @sakhifestivals on Instagram</a></blockquote></div>
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DelCPy_BMQM/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/DelCPy_BMQM/" target="_blank" rel="noopener">View this post by @sakhifestivals on Instagram</a></blockquote></div>
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/Des45RkhFeC/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/Des45RkhFeC/" target="_blank" rel="noopener">View this post by @sakhifestivals on Instagram</a></blockquote></div>
       </div>
+      <p class="credits">Darshan posts are shown from Instagram with thanks to Mayapur TV (@mayapur_tv) and Ashta Sakhi Festivals (@sakhifestivals). Tap a video to play it.</p>
     </div>
   </div>
 </section>
 
 
-<section class="s" id="explore">
+<section class="s" id="meet">
+  <div class="wrap">
+    <div class="meet">
+      <div class="meet-tx rv">
+        <p class="kicker rule">From Sri Dham Mayapur</p>
+        <h2>Meet <em class="goldtx">Chandramukhi</em></h2>
+        <p>Chandramukhi lives in Mayapur. A western devotee with a deep love for Indian culture, she shares sarees, festival looks and everyday life in the Dham with thousands of followers.</p>
+        <a class="ig-follow" href="https://www.instagram.com/chandraamukhi_/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg><span><b>@chandraamukhi_</b><small>Follow on Instagram</small></span><span class="go">Follow</span></a>
+      </div>
+      <div class="igs-row meet-row rv" id="meetIg">
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DfmiyJyGSTU/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DfmiyJyGSTU/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DfMmtjrBGvS/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/DfMmtjrBGvS/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
+        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DfZt7YbxPX8/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/DfZt7YbxPX8/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s alt" id="explore">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Sridham Mayapur site scene</p>
@@ -1354,7 +1423,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s alt" id="rules">
+<section class="s" id="rules">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">House rules</p>
@@ -1371,7 +1440,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 </section>
 
 
-<section class="s" id="about">
+<section class="s alt" id="about">
   <div class="wrap about">
     <figure class="rv"><img src="img/facade-night.jpg" alt="Nikadi Guest House at night, opposite ISKCON Gate No. 4" loading="lazy"><figcaption>Nikadi Guest House, opposite ISKCON Gate No. 4</figcaption></figure>
     <div class="tx rv">
@@ -1391,7 +1460,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 </section>
 
 
-<section class="s alt" id="faq">
+<section class="s" id="faq">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Questions</p>
@@ -1411,7 +1480,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 </section>
 
 
-<section class="s contact" id="contact">
+<section class="s alt contact" id="contact">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Contact us</p>
@@ -2628,6 +2697,33 @@ var WA = "917501101137";
   if(box){
     var go=function(){if(window.__igl)return;window.__igl=1;var sc=document.createElement('script');sc.async=true;sc.src='https://www.instagram.com/embed.js';sc.onload=function(){try{window.instgrm&&window.instgrm.Embeds.process();}catch(e){}};document.body.appendChild(sc);};
     if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es.some(function(e){return e.isIntersecting;})){go();io.disconnect();}},{rootMargin:'600px 0px'});io.observe(box);}else go();
+  }
+})();
+
+</script>
+<script>
+/* ---- v5: membership deck + Instagram loader for all rows ---- */
+(function(){
+  /* membership cards: Silver → Gold → Platinum → Platinum Plus */
+  var deck=document.getElementById('mdeck');
+  if(deck){
+    var cards=[].slice.call(deck.querySelectorAll('.mcard')),tabs=[].slice.call(deck.querySelectorAll('.mdots button')),cur=0,timer=null;
+    function show(n){
+      var prev=cur;cur=(n+cards.length)%cards.length;
+      cards.forEach(function(c,i){c.classList.toggle('on',i===cur);c.classList.toggle('prev',i===prev&&prev!==cur);});
+      tabs.forEach(function(t,i){t.setAttribute('aria-selected',i===cur?'true':'false');});
+    }
+    function auto(){clearInterval(timer);timer=setInterval(function(){if(!document.hidden)show(cur+1);},3800);}
+    tabs.forEach(function(t,i){t.addEventListener('click',function(){show(i);auto();});});
+    var tiers=document.querySelectorAll('.tiers .tier');
+    tiers.forEach(function(d,i){d.addEventListener('toggle',function(){if(d.open){show(i);auto();}});});
+    if('IntersectionObserver' in window){new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)auto();else clearInterval(timer);});}).observe(deck);}else auto();
+  }
+  /* Instagram's embed script: load once, when any post row comes near */
+  var rows=document.querySelectorAll('.instagram-media');
+  if(rows.length){
+    var go=function(){if(window.__igl){try{window.instgrm&&window.instgrm.Embeds.process();}catch(e){}return;}window.__igl=1;var sc=document.createElement('script');sc.async=true;sc.src='https://www.instagram.com/embed.js';sc.onload=function(){try{window.instgrm&&window.instgrm.Embeds.process();}catch(e){}};document.body.appendChild(sc);};
+    if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es.some(function(e){return e.isIntersecting;})){go();io.disconnect();}},{rootMargin:'900px 0px'});rows.forEach(function(r){io.observe(r);});}else go();
   }
 })();
 
