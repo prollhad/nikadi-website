@@ -5708,6 +5708,18 @@ function nkApplySafe(pay, res) {
   Object.keys(vers).forEach(function (t) { if (ok[t]) NK_BASE.versions[t] = vers[t]; else delete NK_BASE.tables[t]; }); // reload next time
 }
 
+/* send less data: for the screens the app re-checks every 30 s, answer "nothing changed" (a few bytes) when the
+   result is the same as what the app already has. The app sends the fingerprint of its copy as "since". */
+var NK_SAME = { deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1 };
+function nkHash(t) { var h = 2166136261; for (var i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return t.length.toString(36) + '.' + (h >>> 0).toString(36); }
+function nkSame(body, out) {
+  if (typeof out !== 'string' || out.slice(0, 10) !== '{"ok":true') return out;
+  var b; try { b = JSON.parse(body); } catch (e) { return out; }
+  if (!b || !NK_SAME[b.action]) return out;
+  var nowM = /"now":"([^"]*)"/.exec(out), h = nkHash(out.replace(/"now":"[^"]*"/, ''));
+  if (b.since && b.since === h) return JSON.stringify({ ok: true, same: 1, h: h, now: nowM ? nowM[1] : undefined });
+  return '{"ok":true,"h":"' + h + '",' + out.slice(10).replace(/^,/, '');
+}
 var NK_CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type, authorization, apikey, x-client-info', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS' };
 async function nkServe(req) {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: NK_CORS });
@@ -5717,6 +5729,7 @@ async function nkServe(req) {
     body = req.method === 'POST' ? await req.text() : '';
     var special = await nkSpecial(body, q);
     var out = special != null ? special : req.method === 'GET' && !q.yc ? JSON.stringify({ ok: true, service: 'nikadi' }) : await nkHandle(body, q);
+    if (special == null && req.method === 'POST') out = nkSame(body, out);
     return new Response(out, { headers: Object.assign({ 'Content-Type': 'application/json' }, NK_CORS) });
   } catch (e) {
     console.error(e);

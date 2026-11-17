@@ -54,14 +54,23 @@
     navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadSw && !swReloaded) { swReloaded = true; location.reload(); } }); } // show a new version straight away
   function errText(c) { c = c && c.message || c; return ERR[c] || (/pdf|canvas|html2canvas/i.test(String(c)) ? ERR.pdf_tools_failed : ERR.server_error); }
 
+  /* send less data: the server answers "same" when nothing changed since our last copy */
+  var SAME = {}, SAME_ACT = { deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1 };
   function api(action, data) {
     var body = Object.assign({ action: action, token: S.token }, data || {});
+    var ckey = SAME_ACT[action] ? action + JSON.stringify(data || {}) : '';
+    if (ckey) { if (SAME[ckey] && SAME[ckey].tok === S.token) body.since = SAME[ckey].h; else delete SAME[ckey]; }
     var p;
     if (demo) p = window.nikadiStaffDemo(action, body);
     else if (!NIKADI_API_URL) p = Promise.reject('not_setup');
     else p = fetch(NIKADI_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), redirect: 'follow' })
       .then(function (r) { return r.json(); }, function () { throw 'network'; })
       .then(function (j) { if (!j || !j.ok) throw (j && j.error) || 'server_error'; return j; });
+    if (!demo && ckey) p = p.then(function (j) {
+      if (j.same && SAME[ckey]) { var c = SAME[ckey].j; if (j.now) c.now = j.now; return c; } // nothing changed: keep our copy (same object)
+      if (j.same) return api(action, data); // lost our copy: ask again in full
+      if (j.h) SAME[ckey] = { h: j.h, j: j, tok: S.token }; return j;
+    });
     return p.catch(function (e) {
       e = typeof e === 'string' ? e : 'server_error';
       if ((e === 'not_logged_in' || e === 'session_expired') && action !== 'deskLogin') { logout(true); }
@@ -291,7 +300,8 @@
     if (S.loading) return Promise.resolve();
     S.loading = true; busy(btn, true);
     return api('deskState').then(function (st) {
-      S.st = st; S.me = st.me; nkStore(MK, JSON.stringify(st.me)); nav(); render();
+      if (st === S.st) { var u = $('.upd'); if (u && u.firstChild && u.firstChild.nodeType === 3) u.firstChild.nodeValue = 'Updated ' + (tShort(st.now).split(', ')[1] || ''); } // nothing changed: no redraw
+      else { S.st = st; S.me = st.me; nkStore(MK, JSON.stringify(st.me)); nav(); render(); }
       if ((S.tab === 'calendar' && !X.cal) || (S.tab === 'bookings' && !X.bookings)) loadExtra();
     }, function (e) {
       if (S.token) { var v = $('#view'); if (v && !S.st) v.innerHTML = '<div class="note"><b>Could not load</b>' + esc(errText(e)) + '</div>'; else toast(errText(e)); }
@@ -881,7 +891,7 @@
   /* ---------- WhatsApp: guest chats filed into 4 lists ---------- */
   var WA = { list: null, tab: 'new' };
   var WA_TABS = [['new', 'New enquiry'], ['paid', 'Advance paid'], ['in', 'Checked in'], ['member', 'Member']];
-  function waLoad() { return api('deskWaChats', {}).then(function (r) { WA.list = r.chats; if (S.tab === 'whatsapp' && !document.querySelector('.sheet')) render(); }, function (e) { toast(errText(e)); }); }
+  function waLoad() { return api('deskWaChats', {}).then(function (r) { if (WA.list === r.chats && WA.list) return; WA.list = r.chats; if (S.tab === 'whatsapp' && !document.querySelector('.sheet')) render(); }, function (e) { toast(errText(e)); }); }
   function waWhen(t) { if (!t) return ''; return String(t).slice(0, 10) === S.st.today ? String(t).slice(11, 16) : dShort(String(t).slice(0, 10)); }
   function viewWhatsApp(v) {
     if (!WA.list) { v.innerHTML = '<div><p class="kicker">Front desk</p><h1>WhatsApp</h1></div><div class="loading">Loading…</div>'; waLoad(); return; }
@@ -1912,9 +1922,9 @@
   function loadExtra() {
     if (S.tab === 'calendar') {
       if (!X.calFrom) X.calFrom = addDays(S.st ? S.st.today : new Date().toISOString().slice(0, 10), isDesk() ? -2 : 0);
-      return api('deskCalendar', { from: X.calFrom, days: calDays() }).then(function (c) { X.cal = c; if (S.tab === 'calendar') render(); }, function (e) { toast(errText(e)); });
+      return api('deskCalendar', { from: X.calFrom, days: calDays() }).then(function (c) { if (X.cal === c) return; X.cal = c; if (S.tab === 'calendar') render(); }, function (e) { toast(errText(e)); });
     }
-    if (S.tab === 'bookings') return api('deskBookings').then(function (r) { X.bookings = r; if (S.tab === 'bookings') render(); }, function (e) { toast(errText(e)); });
+    if (S.tab === 'bookings') return api('deskBookings').then(function (r) { if (X.bookings === r) return; X.bookings = r; if (S.tab === 'bookings') render(); }, function (e) { toast(errText(e)); });
     return Promise.resolve();
   }
   /* what holds room n on the night of `day` */
@@ -3026,7 +3036,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 78</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 79</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
