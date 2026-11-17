@@ -403,10 +403,10 @@
           return '<button type="button" role="tab" data-wk="' + t[0] + '" aria-selected="' + (WK.folder === t[0]) + '">📁 ' + t[1] + (cnt(t[0]) ? ' <b>' + cnt(t[0]) + '</b>' : '') + '</button>'; }).join('') + '</div>' +
         '<p class="small">Tap a message: WhatsApp opens on the guest house number with it written. Press send. Use <b>Edit</b> to change the words first.</p>' +
         (WK.folder === 'enq' ? genBox() + enqForm() : '') +
-        (WK.folder === 'out' && list.length > 1 ? '<div class="wk-all"><button class="btn btn-line sm" type="button" id="wk-alldone">Mark all ' + list.length + ' as done</button></div>' : '') +
+        ((WK.folder === 'out' || WK.folder === 'enq') && list.length > 1 ? '<div class="wk-all"><button class="btn btn-line sm" type="button" id="wk-alldone">Mark all ' + list.length + ' as done</button></div>' : '') +
         (WK.folder === 'enq' && list.length ? '<h3 class="wk-sec">Booking requests & cancellations · tap a name to see their messages</h3>' : '') +
         (list.length ? '<div class="wk-list">' + list.map(function (g, gi) {
-          var canDone = WK.folder === 'out'; // Done is only for Check-out, bill & review
+          var canDone = WK.folder === 'out' || WK.folder === 'enq'; // Done: Check-out folder and Enquiry folder (not Welcome)
           var fold = WK.folder === 'enq', open = !fold || WK.open === g.key; // Enquiry: tap a name to open that guest's messages
           var nm = fold ? '<button class="wk-name" type="button" data-open="' + gi + '" aria-expanded="' + open + '"><b>' + esc(g.name) + '</b><i>' + (open ? '▾' : '▸') + '</i></button>' : '<b>' + esc(g.name) + '</b>';
           return '<div class="wk-guest' + (g.todo ? ' todo' : '') + (fold ? ' fold' + (open ? ' open' : '') : '') + '"><div class="wk-h"><div class="wk-hl">' + nm + '<small>' + esc(g.sub) + ' · ' + esc(nkPhoneShow(g.phone)) + '</small>' + (g.booking ? '<button class="linkbtn" type="button" data-bk="' + esc(g.booking) + '">Open booking →</button>' : '') + '</div>' +
@@ -3026,7 +3026,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 77</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 78</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

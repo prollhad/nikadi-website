@@ -2669,7 +2669,7 @@ function deskCore(db, hooks) {
         { kind: 'cancelagain', label: 'Book again another time', text: sal + ', Hare Krishna! Whenever you plan your next visit to Sri Dham Mayapur, message us here and we will give you our best rate. Nikadi Guest House, opposite ISKCON Gate No. 4 · +91 75011 01137' }
       ];
       msgs.forEach(function (m) { m.text = waSafe(m.text); m.sent = sent[b.id + '|' + m.kind] || ''; });
-      folders.enq.push({ key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Cancelled ' + dd(String(b.closedAt).slice(0, 10)) + ' · booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout), msgs: msgs, booking: b.id, cancelled: true,
+      folders.enq.push({ done: sent[b.id + '|doneenq'] || '', key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Cancelled ' + dd(String(b.closedAt).slice(0, 10)) + ' · booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout), msgs: msgs, booking: b.id, cancelled: true,
         todo: !msgs.some(function (m) { return m.sent; }) && !light });
     });
     folders.enq.reverse();
@@ -2688,7 +2688,8 @@ function deskCore(db, hooks) {
       }
     });
     folders.out.reverse();
-    folders.out = folders.out.filter(function (g) { return !g.done; }); // Check-out guests marked Done leave the list
+    folders.out = folders.out.filter(function (g) { return !g.done; }); // guests marked Done leave the list
+    folders.enq = folders.enq.filter(function (g) { return !g.done; });
     if (!light) folders.gen = genMsgs();
     return folders;
   }
