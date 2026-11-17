@@ -15,7 +15,7 @@
     hk_checklist: 'Tick every line of the checklist first.',
     changelog_unavailable: 'The change log starts when the app moves to the new fast server.',
     comp_host: 'Pick whose guest this is.',
-    comp_no_money: 'This is a free stay. No money is taken.', laundry_paid: 'This list is already paid, so it cannot be deleted. Change the counts instead.', laundry_empty: 'Write how many of at least one item.', laundry_approved: 'This was already approved. A manager can change it.', laundry_return_open: 'There is already a return waiting to be checked.', laundry_not_out: 'This list has not been given to the laundry yet.', laundry_no_return: 'Nothing to check.', nothing_to_pay: 'Nothing to pay.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
+    comp_no_money: 'This is a free stay. No money is taken.', linen_not_empty: 'This item still has pieces counted (in store, rooms or laundry). Set its counts to 0 first, or untick “In use” to hide it.', laundry_paid: 'This list is already paid, so it cannot be deleted. Change the counts instead.', laundry_empty: 'Write how many of at least one item.', laundry_approved: 'This was already approved. A manager can change it.', laundry_return_open: 'There is already a return waiting to be checked.', laundry_not_out: 'This list has not been given to the laundry yet.', laundry_no_return: 'Nothing to check.', nothing_to_pay: 'Nothing to pay.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
     bill_no_required: 'Write the invoice number.',
     old_record: 'This record is more than a few months old and is kept in the archive Sheet. It can be viewed but not changed.',
     drive_unavailable: 'Google Drive is not connected here.',
@@ -1272,7 +1272,7 @@
       (todo.length ? '<div class="panel attn"><div class="sec-h"><h2>' + (fd ? 'To check' : 'Your lists') + '</h2></div><div class="list">' + todo.map(card).join('') + '</div></div>' : '') +
       (lr ? '<p class="small">Make a list of what you take. Reception counts it and approves before you take it. When you bring things back, open the list and tap <b>Bring back</b>: reception counts again and approves.</p>' : '') +
       bill +
-      '<div class="sec-h"><h2>' + (lr ? 'Items and price per piece' : 'Linen count') + '</h2>' + (d.can.setup ? '<button class="linkbtn" type="button" id="lnew">+ New item</button>' : '') + '</div>' + table +
+      '<div class="sec-h"><h2>' + (lr ? 'Items and price per piece' : 'Linen count') + '</h2>' + (d.can.setup ? '<button class="linkbtn" type="button" id="lnew">Edit the item list</button>' : '') + '</div>' + table +
       (lr ? '' : '<p class="small">Fresh linen goes from the store into a room when housekeeping ticks <b>Put fresh</b>; the used ones go to “Used, to wash”. They go to the laundry when a list is approved, and back to the store when the return is checked.' + (d.can.setup ? ' Tap an item to set its laundry price, add new ones bought, remove torn / lost ones, or correct a count.' : '') + '</p>') +
       '<div class="sec-h"><h2>Laundry lists</h2><input class="input sm" type="month" id="lm" value="' + esc(d.month) + '" style="max-width:11rem"></div>' +
       '<div class="list">' + (d.list.length ? d.list.map(card).join('') : '<div class="bl"><span class="d">No laundry lists this month yet.</span></div>') + '</div>' +
@@ -1280,12 +1280,48 @@
         return '<div class="bl"><span class="t">' + l.qty + ' × ' + esc(l.item) + '</span><span class="d">' + esc(l.from) + ' → ' + esc(l.to) + ' · ' + esc(l.reason) + (l.room ? ' · Room ' + esc(l.room) : '') + ' · ' + esc(l.by) + ' · ' + esc(tShort(l.at)) + '</span></div>'; }).join('') + '</div>' : '');
     $('#rf', v).onclick = function () { var b = this; busy(b, true); loadLaundry().then(function () { busy(b, false); }); };
     if ($('#nl', v)) $('#nl', v).onclick = function () { openLaundryCount(null, 'list'); };
-    if ($('#lnew', v)) $('#lnew', v).onclick = function () { openLinenItem(null); };
+    if ($('#lnew', v)) $('#lnew', v).onclick = function () { openLinenList(); };
     if ($('#lpay', v)) $('#lpay', v).onclick = function () { openLaundryPay(); };
     $('#lm', v).onchange = function () { LAU.month = this.value; LAU.data = null; render(); };
     $$('[data-l]', v).forEach(function (b) { b.onclick = function () { var x = d.list.filter(function (y) { return y.id === b.dataset.l; })[0]; if (x) openLaundry(x); }; });
     $$('[data-li]', v).forEach(function (b) { b.onclick = function () { openLinenItem(d.linen.filter(function (i) { return i.item === b.dataset.li; })[0]); }; });
     $$('[data-lr]', v).forEach(function (b) { b.onclick = function () { openLinenItem(d.removed.filter(function (i) { return i.item === b.dataset.lr; })[0]); }; });
+  }
+  /* the whole room-item list on one screen (Owner / Manager): rename, folder, laundry, price, remove, delete, add */
+  function openLinenList() {
+    var body = openSheet('Room item list');
+    body.innerHTML = '<div class="loading">Loading…</div>';
+    api('deskLinenEditList', {}).then(function (r) {
+      var groups = r.groups, rows = r.items.map(function (i) { return { original: i.item, item: i.item, group: i.group, wash: i.wash !== false, price: i.price || 0, low: i.low || 0, active: i.active !== false, total: i.total || 0, del: false }; });
+      function sel(v) { return '<select class="input sm" data-f="group">' + groups.map(function (g) { return '<option' + (g === v ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select>'; }
+      function draw() {
+        var vis = rows.filter(function (x) { return !x.del; });
+        body.innerHTML = '<p class="small">Change any name, folder, laundry price or warning level. <b>Laundry</b> ticked = it shows in laundry lists. Untick <b>In use</b> to hide an item but keep its history; <b>Delete</b> is only for items with none in stock.</p>' +
+          '<div class="tbl-wrap"><table class="tbl ledit"><thead><tr><th>Item</th><th>Folder</th><th>Laundry</th><th>₹ / piece</th><th>Warn below</th><th>In use</th><th></th></tr></thead><tbody>' +
+          vis.map(function (x) { var i = rows.indexOf(x);
+            return '<tr data-i="' + i + '"' + (x.active ? '' : ' class="off"') + '><td><input class="input sm" data-f="item" maxlength="40" value="' + esc(x.item) + '" placeholder="Item name"></td><td>' + sel(x.group) + '</td>' +
+              '<td class="c"><input type="checkbox" data-f="wash"' + (x.wash ? ' checked' : '') + '></td><td><input class="input sm num" data-f="price" inputmode="numeric" value="' + (x.price || '') + '" placeholder="0"></td>' +
+              '<td><input class="input sm num" data-f="low" inputmode="numeric" value="' + (x.low || '') + '" placeholder="0"></td><td class="c"><input type="checkbox" data-f="active"' + (x.active ? ' checked' : '') + '></td>' +
+              '<td>' + (!x.total ? '<button class="linkbtn danger" type="button" data-del="' + i + '">Delete</button>' : '<small class="muted">' + x.total + ' pcs</small>') + '</td></tr>'; }).join('') +
+          '</tbody></table></div><button class="btn btn-line" type="button" id="ladd">+ Add an item</button>' +
+          '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" type="button" id="go">Save the list</button>';
+        $$('tr[data-i]', body).forEach(function (tr) {
+          var x = rows[Number(tr.dataset.i)];
+          $$('[data-f]', tr).forEach(function (el) { el.addEventListener(el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input', function () {
+            var f = el.dataset.f; x[f] = el.type === 'checkbox' ? el.checked : f === 'price' || f === 'low' ? el.value.replace(/\D/g, '') : el.value;
+            if (f === 'active') tr.classList.toggle('off', !el.checked);
+          }); });
+        });
+        $$('[data-del]', body).forEach(function (b) { b.onclick = function () { var x = rows[Number(b.dataset.del)]; if (!x.original) rows.splice(rows.indexOf(x), 1); else x.del = true; draw(); }; });
+        $('#ladd', body).onclick = function () { rows.push({ original: '', item: '', group: groups[groups.length - 1], wash: true, price: 0, low: 0, active: true, total: 0, del: false }); draw(); var ins = $$('input[data-f="item"]', body); ins[ins.length - 1].focus(); };
+        $('#go', body).onclick = function () {
+          var items = rows.map(function (x) { return x.del ? { original: x.original, active: 'Deleted' } : { original: x.original, item: String(x.item).trim(), group: x.group, wash: x.wash, price: x.price || 0, low: x.low || 0, active: x.active }; })
+            .filter(function (x) { return x.original || x.item; });
+          submit(this, $('#err', body), 'deskLinenEditList', { items: items }, function () { linenDone('Item list saved'); });
+        };
+      }
+      draw();
+    }, function (e) { body.innerHTML = '<p class="err">' + esc(errText(e)) + '</p>'; });
   }
   function linenDone(msg) { toast(msg); LAU.data = null; closeAllSheetsQuiet(); refresh(); if (S.tab === 'laundry') render(); }
   function laundryDone(msg) { toast(msg); LAU.data = null; closeAllSheetsQuiet(); go('laundry'); refresh(); }
@@ -1392,6 +1428,7 @@
     var places = [['store', 'Clean in store'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
     body.innerHTML = (it ? '<div class="calc">' + places.map(function (p) { return p[1] + ' <b>' + it[p[0]] + '</b>'; }).join(' · ') + ' · total <b>' + it.total + '</b></div>' : '') +
       (setup ? '<div class="panel"><div class="sec-h"><h2>Item</h2></div>' + field('Name (with the size, e.g. “Bedsheet (king size)”)', '<input class="input" id="li-n" maxlength="40" value="' + esc(it ? it.item : '') + '">', true) +
+        '<label class="toggle"><span>Goes to the laundry <small class="small">(shown in laundry lists)</small></span><input type="checkbox" id="li-w"' + (!it || it.wash !== false ? ' checked' : '') + '></label>' +
         field('Folder', '<select class="input" id="li-g">' + groups.map(function (g) { return '<option' + (g === (it ? it.group || 'Other' : groups[0]) ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select>') +
         '<div class="grid2">' + field('Laundry price per piece (₹)', '<input class="input" id="li-p" inputmode="numeric" value="' + (it ? it.price || 0 : '') + '">', true) + field('Warn when clean ones are below', '<input class="input" id="li-l" inputmode="numeric" value="' + (it ? it.low || '' : '') + '">') + '</div>' +
         '<p class="err" id="err1" role="alert"></p><div class="btns"><button class="btn btn-line" type="button" id="li-s">' + (it ? 'Save item' : 'Add item') + '</button>' +
@@ -1403,13 +1440,13 @@
         '<p class="err" id="err2" role="alert"></p><button class="btn btn-gold" type="button" id="li-m">Save count</button></div>' : '');
     wireSegs(body, function () { var m = segVal(body, 'lm'); if ($('#li-pw', body)) $('#li-pw', body).hidden = m === 'Bought new'; var lab = $('#li-q', body) && $('#li-q', body).closest('.field').querySelector('span'); if (lab) lab.textContent = m === 'Correct a count' ? 'Real number there now' : 'How many'; });
     if ($('#li-s', body)) $('#li-s', body).onclick = function () {
-      submit(this, $('#err1', body), 'deskLinenSave', { original: it ? it.item : '', item: $('#li-n', body).value, price: $('#li-p', body).value.replace(/\D/g, '') || 0, low: $('#li-l', body).value.replace(/\D/g, ''), group: $('#li-g', body).value, active: it ? it.active !== false : true },
+      submit(this, $('#err1', body), 'deskLinenSave', { original: it ? it.item : '', item: $('#li-n', body).value, price: $('#li-p', body).value.replace(/\D/g, '') || 0, low: $('#li-l', body).value.replace(/\D/g, ''), group: $('#li-g', body).value, wash: $('#li-w', body).checked, active: it ? it.active !== false : true },
         function () { linenDone(it ? 'Saved' : 'Added'); });
     };
     if ($('#li-x', body)) $('#li-x', body).onclick = function () {
       var b = this, on = it.active === false;
       if (!on && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Tap again to remove ' + it.item; return; }
-      submit(b, $('#err1', body), 'deskLinenSave', { original: it.item, item: it.item, price: it.price || 0, low: it.low || 0, group: it.group, active: on }, function () { linenDone(on ? it.item + ' is back in the list' : it.item + ' removed'); });
+      submit(b, $('#err1', body), 'deskLinenSave', { original: it.item, item: it.item, price: it.price || 0, low: it.low || 0, group: it.group, wash: it.wash !== false, active: on }, function () { linenDone(on ? it.item + ' is back in the list' : it.item + ' removed'); });
     };
     if ($('#li-m', body)) $('#li-m', body).onclick = function () {
       var m = segVal(body, 'lm'), pl = places.filter(function (p) { return p[1] === segVal(body, 'lp'); })[0];
@@ -1428,7 +1465,7 @@
   }
 
   var STK = { view: 'supplies' };
-  /* Stock → "Room items" folder: mattresses, pillows, bedsheets, duvets, towels… by size, where each piece is now */
+  /* Stock → "Room items" folder: mattresses, pillows, bedsheets, blankets, towels… by size, where each piece is now */
   function viewRoomItems(v) {
     var L = S.st.linen || [], setup = S.me.role === 'Owner' || S.me.role === 'Manager', groups = [];
     L.forEach(function (i) { if (groups.indexOf(i.group) < 0) groups.push(i.group); });
@@ -1440,10 +1477,10 @@
           its.map(function (i) { var low = i.low && i.store < i.low;
             return '<tr' + (mgr() ? ' class="tap" data-ri="' + esc(i.item) + '"' : '') + '><td><b>' + esc(i.item) + '</b>' + (low ? '<small class="warn-t">clean ones running low (warn below ' + i.low + ')</small>' : '') + '</td><td class="r">' + i.store + '</td><td class="r">' + i.rooms + '</td><td class="r">' + i.dirty + '</td><td class="r">' + i.laundry + '</td><td class="r"><b>' + i.total + '</b></td></tr>'; }).join('') +
           '</tbody></table></div></details>';
-      }).join('') + (setup ? '<button class="btn btn-line" type="button" id="ri-new">+ Add a room item</button>' : '');
+      }).join('') + (setup ? '<button class="btn btn-line" type="button" id="ri-new">Edit the item list (add, rename, delete)</button>' : '');
     v.insertAdjacentHTML('beforeend', html);
     $$('[data-ri]', v).forEach(function (b) { b.onclick = function () { openLinenItem(L.filter(function (i) { return i.item === b.dataset.ri; })[0]); }; });
-    if ($('#ri-new', v)) $('#ri-new', v).onclick = function () { openLinenItem(null); };
+    if ($('#ri-new', v)) $('#ri-new', v).onclick = function () { openLinenList(); };
   }
   function viewStock(v) {
     var tracked = S.st.items.filter(function (i) { return i.track; });
@@ -2696,7 +2733,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 56</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 57</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

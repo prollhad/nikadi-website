@@ -710,3 +710,7 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .folder .fold-ic svg{width:20px;height:20px;display:block;color:var(--muted)}.folder .tbl-wrap{border:0;border-top:1px solid var(--line)}
 .folder .tbl th,.folder .tbl td{padding:10px 8px;letter-spacing:.06em}.folder .tbl th:first-child,.folder .tbl td:first-child{padding-left:14px;min-width:8.5rem}
 @media (max-width:520px){.folder .tbl{font-size:.84rem}.folder .tbl th{font-size:.58rem}}
+.ledit td{padding:6px 6px;vertical-align:middle}.ledit td.c{text-align:center}.ledit .input.sm{padding:8px 8px;min-width:0}
+.ledit td:first-child .input{min-width:11rem}.ledit .num{width:4.6rem}.ledit select.input{min-width:9rem}.ledit tr.off td{opacity:.5}
+.linkbtn.danger{color:var(--red,#d9534f)}
+.ledit select.input.sm{min-width:10.5rem}.ledit td:first-child .input.sm{min-width:12rem}

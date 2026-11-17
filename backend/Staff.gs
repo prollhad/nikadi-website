@@ -23,18 +23,23 @@ var DESK_DAILY_FREE = { 'Water bottle': 2 };
 var DESK_HK_FRESH = 'Put fresh', DESK_HK_KEPT = 'Kept the used ones (tidied)';
 var DESK_HK_STAY = [['water', '2 free water bottles given'], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['dental', 'Dental kit', ['Not needed', '1 given', '2 given', '3 given']],
   ['bathroom', 'Bathroom cleaned'], ['binRoom', 'Dustbin in the room checked'], ['binToilet', 'Dustbin in the toilet checked'], ['floor', 'Floor cleaned'],
-  ['bedding', 'Bedsheet, pillow covers, duvet cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Duvet cover (king size)': 1 }]];
+  ['bedding', 'Bedsheet, pillow covers, blanket cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Blanket cover (king size)': 1 }]];
 var DESK_HK_OUT = [['water', '2 fresh water bottles in the room'], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['kit', 'Used dental kit / toiletries removed'], ['bathroom', 'Bathroom cleaned'],
   ['binRoom', 'Dustbin in the room emptied'], ['binToilet', 'Dustbin in the toilet emptied'], ['floor', 'Floor cleaned'],
-  ['bedding', 'Bedsheet, pillow covers, duvet cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Duvet cover (king size)': 1 }]];
+  ['bedding', 'Bedsheet, pillow covers, blanket cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Blanket cover (king size)': 1 }]];
 /* Linen (bedding and towels): counted in 4 places. [item, laundry price per piece ₹ (the owner sets the real prices in the app)] */
-var DESK_LINEN_GROUPS = ['Mattresses', 'Pillows', 'Bedsheets', 'Duvets & bed covers', 'Towels & bath mats', 'Other'];
-var DESK_LINEN = [['Mattress (king size)', 0, 'Mattresses'], ['Mattress (single)', 0, 'Mattresses'], ['Extra mattress (king size)', 0, 'Mattresses'], ['Extra mattress (single)', 0, 'Mattresses'],
-  ['Pillow', 0, 'Pillows'], ['Pillow cover', 0, 'Pillows'],
-  ['Bedsheet (king size)', 0, 'Bedsheets'], ['Bedsheet (single)', 0, 'Bedsheets'],
-  ['Duvet (king size)', 0, 'Duvets & bed covers'], ['Duvet (single)', 0, 'Duvets & bed covers'], ['Duvet cover (king size)', 0, 'Duvets & bed covers'], ['Duvet cover (single)', 0, 'Duvets & bed covers'], ['Bed cover', 0, 'Duvets & bed covers'],
-  ['Towel', 0, 'Towels & bath mats'], ['Hand towel', 0, 'Towels & bath mats'], ['Bath mat', 0, 'Towels & bath mats']];
-var DESK_LINEN_RENAME = { 'Bedsheet (double)': 'Bedsheet (king size)', 'Duvet': 'Duvet (king size)', 'Single duvet': 'Duvet (single)', 'Duvet cover': 'Duvet cover (king size)', 'Mattress': 'Mattress (king size)', 'Extra mattress': 'Extra mattress (single)' };
+var DESK_LINEN_GROUPS = ['Mattresses', 'Pillows', 'Bedsheets', 'Blankets & bed covers', 'Towels & bath mats', 'Other'];
+/* [item, laundry price ₹, folder, goes to the laundry (shown in laundry lists)] */
+var DESK_LINEN = [['Mattress (king size)', 0, 'Mattresses', 0], ['Mattress (single)', 0, 'Mattresses', 0], ['Extra mattress (king size)', 0, 'Mattresses', 0], ['Extra mattress (single)', 0, 'Mattresses', 0],
+  ['Pillow', 0, 'Pillows', 1], ['Pillow cover', 0, 'Pillows', 1],
+  ['Bedsheet (king size)', 0, 'Bedsheets', 1], ['Bedsheet (single)', 0, 'Bedsheets', 1],
+  ['Blanket (king size)', 0, 'Blankets & bed covers', 0], ['Blanket (single)', 0, 'Blankets & bed covers', 0], ['Blanket cover (king size)', 0, 'Blankets & bed covers', 1], ['Blanket cover (single)', 0, 'Blankets & bed covers', 1],
+  ['Bed cover', 0, 'Blankets & bed covers', 1], ['Bed runner', 0, 'Blankets & bed covers', 1],
+  ['Towel', 0, 'Towels & bath mats', 1], ['Hand towel', 0, 'Towels & bath mats', 1], ['Bath mat', 0, 'Towels & bath mats', 1]];
+var DESK_LINEN_RENAME = { 'Bedsheet (double)': 'Bedsheet (king size)', 'Duvet': 'Blanket (king size)', 'Single duvet': 'Blanket (single)', 'Duvet cover': 'Blanket cover (king size)', 'Mattress': 'Mattress (king size)', 'Extra mattress': 'Extra mattress (single)',
+  'Duvet (king size)': 'Blanket (king size)', 'Duvet (single)': 'Blanket (single)', 'Duvet cover (king size)': 'Blanket cover (king size)', 'Duvet cover (single)': 'Blanket cover (single)' };
+var DESK_LINEN_GROUP_RENAME = { 'Duvets & bed covers': 'Blankets & bed covers' };
+var DESK_LINEN_VERSION = '2'; // bump to run linenAll's one-time update again (renames, new default items, laundry flags)
 var DESK_LINEN_PLACES = { store: 'Clean in store', rooms: 'In rooms', dirty: 'Used, waiting for laundry', laundry: 'At the laundry' };
 /* Free stays (no charge): whose guest they are. Items given are still counted and taken from stock, at ₹0. */
 var DESK_COMP_HOSTS = ['AGD Guest', "Prahlad's Guest", "Debarun's Guest"];
@@ -118,7 +123,7 @@ var DESK_SCHEMA = {
   wamsgs: { sheet: 'WhatsApp inbox', lazy: true, cols: [['at', 'Time', 't'], ['phone', 'Phone', 's'], ['dir', 'From'], ['text', 'Message'], ['file', 'Photo / file (Drive file ID)', 's'], ['type', 'Type', 's'], ['wamid', 'WhatsApp ID (system)', 's']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   linen: { sheet: 'Linen', cols: [['item', 'Item'], ['price', 'Laundry price per piece (₹)', 'n'], ['store', 'Clean in store', 'n'], ['rooms', 'In rooms', 'n'], ['dirty', 'Used, waiting for laundry', 'n'],
-    ['laundry', 'At the laundry', 'n'], ['low', 'Warn when clean below', 'n'], ['active', 'Active'], ['group', 'Group']] },
+    ['laundry', 'At the laundry', 'n'], ['low', 'Warn when clean below', 'n'], ['active', 'Active'], ['group', 'Group'], ['wash', 'Goes to the laundry']] },
   laundry: { sheet: 'Laundry', cols: [['id', 'Laundry ID'], ['at', 'Listed at', 't'], ['by', 'Listed by'], ['status', 'Status'], ['items', 'Given to laundry', 's'], ['outBy', 'Given out (approved) by'],
     ['outAt', 'Given out at', 't'], ['returns', 'Returns (system)', 's'], ['back', 'Received back', 's'], ['short', 'Still at laundry / missing', 's'], ['total', 'Bill (₹)', 'n'],
     ['prices', 'Prices used (system)', 's'], ['paid', 'Paid'], ['note', 'Note'], ['edited', 'Changes after approval'], ['drive', 'Drive record (file ID)', 's'], ['dkey', 'Drive record version (system)', 's']] },
@@ -1695,16 +1700,27 @@ function deskCore(db, hooks) {
      can change a list (reception sends a change request). Each laundry list is also saved in Google Drive, folder "Laundry". */
   function linenAll() {
     var a = db.all('linen');
-    if (!a.length || a.some(function (i) { return !i.group; })) { // first use, or the list from before the groups: sizes and groups
-      a.forEach(function (i) { var nn = DESK_LINEN_RENAME[i.item]; if (nn && !a.some(function (j) { return j.item === nn; })) db.set('linen', i, { item: nn }); });
+    if (!a.length || a.some(function (i) { return !i.group || !i.wash; }) || cfgGet('linenVersion') !== DESK_LINEN_VERSION) { // first use, or a newer default list: sizes, groups, names, laundry flags
+      var has = function (n) { return a.some(function (j) { return j.item === n; }); };
+      a.forEach(function (i) {
+        var nn = DESK_LINEN_RENAME[i.item]; if (nn && !has(nn)) db.set('linen', i, { item: nn });
+        if (DESK_LINEN_GROUP_RENAME[i.group]) db.set('linen', i, { group: DESK_LINEN_GROUP_RENAME[i.group] });
+      });
+      var fresh = cfgGet('linenVersion') !== DESK_LINEN_VERSION;
       DESK_LINEN.forEach(function (l) {
         var it = null; a.forEach(function (j) { if (j.item === l[0]) it = j; });
-        if (!it) db.add('linen', { item: l[0], price: l[1], store: 0, rooms: 0, dirty: 0, laundry: 0, low: 0, active: 'Yes', group: l[2] });
-        else if (!it.group) db.set('linen', it, { group: l[2] });
+        if (!it) { if (fresh || !a.length) db.add('linen', { item: l[0], price: l[1], store: 0, rooms: 0, dirty: 0, laundry: 0, low: 0, active: 'Yes', group: l[2], wash: l[3] ? 'Yes' : 'No' }); }
+        else {
+          var p = {}; if (!it.group) p.group = l[2];
+          if (!it.wash || fresh) p.wash = l[3] ? 'Yes' : 'No';
+          if (Object.keys(p).length) db.set('linen', it, p);
+        }
       });
-      db.all('linen').forEach(function (i) { if (!i.group) db.set('linen', i, { group: 'Other' }); });
+      db.all('linen').forEach(function (i) { var p = {}; if (!i.group) p.group = 'Other'; if (!i.wash) p.wash = 'Yes'; if (Object.keys(p).length) db.set('linen', i, p); });
+      if (fresh) cfgSet('linenVersion', DESK_LINEN_VERSION);
     }
-    return db.all('linen').slice().sort(function (x, y) { var gx = DESK_LINEN_GROUPS.indexOf(x.group), gy = DESK_LINEN_GROUPS.indexOf(y.group); return (gx < 0 ? 99 : gx) - (gy < 0 ? 99 : gy); });
+    var ord = function (n) { for (var k = 0; k < DESK_LINEN.length; k++) if (DESK_LINEN[k][0] === n) return k; return 999; };
+    return db.all('linen').slice().sort(function (x, y) { var gx = DESK_LINEN_GROUPS.indexOf(x.group), gy = DESK_LINEN_GROUPS.indexOf(y.group); return ((gx < 0 ? 99 : gx) - (gy < 0 ? 99 : gy)) || (ord(x.item) - ord(y.item)); });
   }
   function linenItem(name) { var a = linenAll(); for (var i = 0; i < a.length; i++) if (a[i].item === name) return a[i]; return null; }
   function linenCounts(o) { // {item: qty} → only real linen items, whole numbers 1…500
@@ -1724,10 +1740,10 @@ function deskCore(db, hooks) {
     db.add('linenlog', { at: stamp(), item: it.item, qty: qty, from: DESK_LINEN_PLACES[from] || from || 'New', to: DESK_LINEN_PLACES[to] || to || 'Removed', reason: text(reason, 120), room: roomNo || '', by: by });
   }
   function linenView(it, me) {
-    var o = { item: it.item, group: it.group || 'Other', store: Number(it.store || 0), rooms: Number(it.rooms || 0), dirty: Number(it.dirty || 0), laundry: Number(it.laundry || 0), low: Number(it.low || 0), active: yes(it.active) };
+    var o = { item: it.item, group: it.group || 'Other', wash: it.wash !== 'No', store: Number(it.store || 0), rooms: Number(it.rooms || 0), dirty: Number(it.dirty || 0), laundry: Number(it.laundry || 0), low: Number(it.low || 0), active: yes(it.active) };
     o.total = o.store + o.rooms + o.dirty + o.laundry;
     if (me.role !== 'Staff') o.price = Number(it.price || 0);
-    if (me.role === 'Laundry') return { item: o.item, group: o.group, laundry: o.laundry, price: o.price, active: o.active }; // the laundry sees only what is with them, never the guest house's own counts
+    if (me.role === 'Laundry') return { item: o.item, group: o.group, wash: o.wash, laundry: o.laundry, price: o.price, active: o.active }; // the laundry sees only what is with them, never the guest house's own counts
     return o;
   }
   function jget(v, d) { try { var x = JSON.parse(v || ''); return x == null ? d : x; } catch (e) { return d; } }
@@ -1761,8 +1777,8 @@ function deskCore(db, hooks) {
     var month = all.filter(function (x) { return x.status === 'Returned' && String(x.outAt || x.at).slice(0, 7) === m; });
     var list = open.concat(month.filter(function (x) { return open.indexOf(x) < 0; })).sort(function (a, b) { return a.at < b.at ? 1 : -1; });
     var inMonth = all.filter(function (x) { return String(x.outAt || x.at).slice(0, 7) === m; });
-    var out = { month: m, linen: linenAll().filter(function (i) { return yes(i.active); }).map(function (i) { return linenView(i, me); }), places: DESK_LINEN_PLACES, groups: DESK_LINEN_GROUPS,
-      removed: canApprove(me) ? linenAll().filter(function (i) { return !yes(i.active); }).map(function (i) { return linenView(i, me); }) : [],
+    var out = { month: m, linen: linenAll().filter(function (i) { return yes(i.active) && (i.wash !== 'No' || Number(i.laundry || 0) > 0 || Number(i.dirty || 0) > 0); }).map(function (i) { return linenView(i, me); }), places: DESK_LINEN_PLACES, groups: DESK_LINEN_GROUPS,
+      removed: canApprove(me) ? linenAll().filter(function (i) { return i.active === 'No'; }).map(function (i) { return linenView(i, me); }) : [],
       list: list.map(function (x) { return laundryView(x, me); }),
       log: isMgr(me) ? db.all('linenlog').slice(-30).reverse() : [] };
     if (me.role !== 'Staff') out.bill = { total: inMonth.reduce(function (a, x) { return a + Number(x.total || 0); }, 0),
@@ -1899,12 +1915,37 @@ function deskCore(db, hooks) {
     var price = money(req.price); if (isNaN(price)) fail('invalid_amount');
     var p = { item: name, price: price, low: Math.max(0, Math.round(Number(req.low) || 0)), active: req.active === false ? 'No' : 'Yes' };
     if (req.group != null) p.group = DESK_LINEN_GROUPS.indexOf(req.group) >= 0 ? req.group : 'Other'; else if (!old) p.group = 'Other';
+    if (req.wash != null) p.wash = req.wash === false ? 'No' : 'Yes'; else if (!old) p.wash = 'Yes';
     if (old && name !== old.item) { // renamed: open laundry lists follow the new name
       db.all('laundry').forEach(function (x) { if (x.status === 'Returned' || x.status === 'Cancelled') return; ['items', 'prices', 'short', 'back'].forEach(function (f) { var o = jget(x[f], null); if (o && o[old.item] != null) { o[name] = o[old.item]; delete o[old.item]; var q = {}; q[f] = JSON.stringify(o); db.set('laundry', x, q); } }); });
     }
     if (old) db.set('linen', old, p); else db.add('linen', Object.assign(p, { store: 0, rooms: 0, dirty: 0, laundry: 0 }));
     return {};
   };
+  /* the whole room-item list in one go (Manager / Owner): rename, folder, laundry yes/no, price, warning level, remove / delete, new items */
+  api.linenEditList = function (req) {
+    var me = auth(req); needApprover(me);
+    if (!req.items) return { items: linenAll().filter(function (i) { return i.active !== 'Deleted'; }).map(function (i) { var v = linenView(i, me); v.active = i.active !== 'No'; v.price = Number(i.price || 0); return v; }), groups: DESK_LINEN_GROUPS };
+    var list = Array.isArray(req.items) ? req.items : fail('bad_request'), seen = {};
+    list.forEach(function (x) { var n = text(x.item, 40); if (!n && x.active !== 'Deleted') fail('name_required'); if (n && x.active !== 'Deleted') { if (seen[n.toLowerCase()]) fail('name_taken'); seen[n.toLowerCase()] = 1; } });
+    list.forEach(function (x) {
+      var old = x.original ? linenItem(x.original) : null, name = text(x.item, 40);
+      if (x.active === 'Deleted') {
+        if (!old) return;
+        if (Number(old.store || 0) + Number(old.rooms || 0) + Number(old.dirty || 0) + Number(old.laundry || 0) > 0) fail('linen_not_empty');
+        db.set('linen', old, { active: 'Deleted' }); return;
+      }
+      var price = money(x.price); if (isNaN(price)) price = 0;
+      var p = { item: name, price: price, low: Math.max(0, Math.round(Number(x.low) || 0)), active: x.active === false ? 'No' : 'Yes',
+        group: DESK_LINEN_GROUPS.indexOf(x.group) >= 0 ? x.group : 'Other', wash: x.wash === false ? 'No' : 'Yes' };
+      if (old) { if (name !== old.item) linenRename(old.item, name); db.set('linen', old, p); }
+      else { var gone = linenItem(name); if (gone && gone.active === 'Deleted') db.set('linen', gone, p); else if (gone) fail('name_taken'); else db.add('linen', Object.assign(p, { store: 0, rooms: 0, dirty: 0, laundry: 0 })); }
+    });
+    return { saved: list.length };
+  };
+  function linenRename(from, to) { // open laundry lists follow the new name
+    db.all('laundry').forEach(function (x) { if (x.status === 'Returned' || x.status === 'Cancelled') return; ['items', 'prices', 'short', 'back'].forEach(function (f) { var o = jget(x[f], null); if (o && o[from] != null) { o[to] = o[from]; delete o[from]; var q = {}; q[f] = JSON.stringify(o); db.set('laundry', x, q); } }); });
+  }
   /* linen counts: bought new · thrown away / lost · counted (set the real number in one place) */
   api.linenMove = function (req) {
     var me = auth(req), it = linenItem(String(req.item || '')) || fail('no_item'), q = Math.round(Number(req.qty));

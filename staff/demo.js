@@ -4,7 +4,7 @@
 (function (root) {
   var DEMO_PHOTOS = {}; // demo: bill photos only kept until the page reloads
   DEMO_PHOTOS['demo-proof'] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='360' height='640'><rect width='360' height='640' fill='#f4f6fb'/><rect width='360' height='110' fill='#5f259f'/><text x='180' y='70' font-family='Arial' font-size='22' fill='#fff' text-anchor='middle'>Payment successful</text><circle cx='180' cy='200' r='46' fill='#22a45d'/><path d='M158 200l15 15 30-30' stroke='#fff' stroke-width='8' fill='none'/><text x='180' y='300' font-family='Arial' font-size='40' font-weight='bold' fill='#111' text-anchor='middle'>₹7,500</text><text x='180' y='340' font-family='Arial' font-size='16' fill='#555' text-anchor='middle'>Paid to Nikadi Projects Pvt Ltd</text><text x='180' y='380' font-family='Arial' font-size='14' fill='#777' text-anchor='middle'>UPI ref 431298776512</text><text x='180' y='600' font-family='Arial' font-size='12' fill='#999' text-anchor='middle'>Demo screenshot</text></svg>");
-  var KEY = 'nikadi-staff-demo-v16';
+  var KEY = 'nikadi-staff-demo-v17';
 
   function memoryDb(data) {
     return {
@@ -107,7 +107,7 @@
     (function () { // linen: prices, counts and one list at the laundry
       var lc = { 'Mattress (king size)': [0, 2, 5, 0], 'Mattress (single)': [0, 2, 12, 0], 'Extra mattress (king size)': [0, 1, 0, 0], 'Extra mattress (single)': [0, 4, 1, 0],
         'Pillow': [0, 24, 22, 0], 'Pillow cover': [20, 90, 44, 8], 'Bedsheet (king size)': [40, 30, 5, 4], 'Bedsheet (single)': [25, 40, 12, 0],
-        'Duvet (king size)': [150, 4, 5, 0], 'Duvet (single)': [100, 8, 12, 0], 'Duvet cover (king size)': [50, 14, 5, 4], 'Duvet cover (single)': [40, 24, 12, 0], 'Bed cover': [60, 16, 11, 0],
+        'Blanket (king size)': [150, 4, 5, 0], 'Blanket (single)': [100, 8, 12, 0], 'Blanket cover (king size)': [50, 14, 5, 4], 'Blanket cover (single)': [40, 24, 12, 0], 'Bed cover': [60, 16, 11, 0], 'Bed runner': [30, 10, 5, 0],
         'Towel': [15, 70, 22, 6], 'Hand towel': [10, 30, 11, 0], 'Bath mat': [10, 20, 11, 3] };
       Object.keys(lc).forEach(function (k) {
         var v = lc[k]; api.linenSave({ token: owner, original: k, item: k, price: v[0], low: Math.round(v[1] / 4) });
@@ -115,8 +115,8 @@
         if (v[3]) api.linenMove({ token: owner, item: k, mode: 'count', place: 'dirty', qty: v[3] });
       });
       var lt = api.login({ pin: '7777' }).token;
-      var l1 = api.laundryList({ token: lt, items: { 'Bedsheet (king size)': 4, 'Pillow cover': 8, 'Duvet cover (king size)': 4, 'Towel': 6, 'Bath mat': 3 }, note: 'Morning pick-up' }).item;
-      api.laundryGive({ token: owner, id: l1.id, items: { 'Bedsheet (king size)': 4, 'Pillow cover': 8, 'Duvet cover (king size)': 4, 'Towel': 6, 'Bath mat': 3 } });
+      var l1 = api.laundryList({ token: lt, items: { 'Bedsheet (king size)': 4, 'Pillow cover': 8, 'Blanket cover (king size)': 4, 'Towel': 6, 'Bath mat': 3 }, note: 'Morning pick-up' }).item;
+      api.laundryGive({ token: owner, id: l1.id, items: { 'Bedsheet (king size)': 4, 'Pillow cover': 8, 'Blanket cover (king size)': 4, 'Towel': 6, 'Bath mat': 3 } });
     })();
     data.tables.sessions = [];
     data.tables.attendance = []; // seeding logs in as reception; don't show that as attendance
