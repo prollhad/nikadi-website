@@ -735,3 +735,4 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .wk-ed{flex:none;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:.78rem;cursor:pointer}
 .wk-ta{width:100%;box-sizing:border-box;font:inherit;font-size:.9rem;line-height:1.45;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);resize:vertical}
 .wk-enq .grid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.wk-enq .grid2>*,.wk-enq input,.wk-enq select{min-width:0;max-width:100%}.wk-enq .phonewrap{min-width:0}
+.reg-facts{grid-template-columns:minmax(0,1fr)}.reg-facts dd{word-break:break-word}

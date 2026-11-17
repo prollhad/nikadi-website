@@ -1813,6 +1813,17 @@ var WA = "917501101137";
           roomType:g('a_room'),checkin:g('a_ci'),checkout:g('a_co'),waOk:!!(document.getElementById('a_wa')||{}).checked,notes:[g('a_city'),g('a_cit')?'Arrival '+g('a_cit'):'',extras,g('a_req')].filter(Boolean).join(' · ')};
         try{fetch(BOOKING_API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).catch(function(){});}catch(err){}
       }
+      if(BOOKING_API&&f.id==='fReg'){ // the registration card also goes straight to the staff app
+        var fields=[],people=[];
+        f.querySelectorAll('fieldset').forEach(function(s){
+          if(s.hidden)return;
+          if(s.classList.contains('people')){s.querySelectorAll('.person').forEach(function(pp){var v=[].map.call(pp.querySelectorAll('input'),function(e){return e.value.trim();});if(v.join(''))people.push((v[0]||'-')+' | Age: '+(v[1]||'-')+' | '+(v[2]||'-')+' | ID: '+(v[3]||'-'));});return;}
+          s.querySelectorAll('[data-l]').forEach(function(el){var v='';if(el.classList.contains('checks'))v=[].map.call(el.querySelectorAll('input:checked'),function(c){return c.value;}).join(', ');else if(el.type==='checkbox')v=el.checked?'Yes':'';else v=el.value.trim();if(v)fields.push([el.dataset.l,v]);});
+        });
+        var gv=function(sel){var el=f.querySelector(sel);return el?el.value.trim():'';};
+        var rb={action:'deskGuestRegister',name:gv('#r_name'),phone:gv('#r_mob'),email:gv('#r_email'),checkin:gv('#r_ci'),checkout:gv('[data-l="Check-out date"]'),fields:fields,people:people};
+        try{fetch(BOOKING_API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(rb)}).catch(function(){});}catch(err){}
+      }
       f.hidden=true;done.hidden=false;
       var sheet=f.closest('.sheet');if(sheet)sheet.scrollTop=0;
       var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();

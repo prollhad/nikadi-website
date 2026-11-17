@@ -138,3 +138,6 @@ console.log('enquiry', eq.ok, eq.phone, eq.msgs.map(m => m.kind).join('/'));
 console.log(eq.msgs.find(m => m.kind === 'rooms').text);
 console.log(eq.msgs.find(m => m.kind === 'advance').text.slice(0, 160));
 const k2 = await call('deskWaKit', { token: tok }); console.log('enq folder', k2.enq.length);
+const rg = await call('deskGuestRegister', { name: 'Gopal Das', phone: '9876500011', email: 'g@x.in', checkin: st4.today, checkout: st4.today, fields: [['Full name', 'Gopal Das'], ['Address', 'Kolkata'], ['ID type', 'Aadhaar']], people: ['Radha | Age: 30 | wife | ID: -'] });
+const rl = await call('deskRegistrations', { token: tok });
+console.log('reg', rg.ok, rl.ok, rl.list.length, rl.list[0].fields.length, rl.list[0].status, (await call('deskState', { token: tok })).regNew);

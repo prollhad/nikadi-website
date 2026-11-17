@@ -219,6 +219,7 @@
 
   /* ---------- shell: side menu on computers, tabs at the bottom on phones ---------- */
   var ICON = {
+    regs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5h6v2.5H9zM8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg>',
     help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.1-2.4 3.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
     changelog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16M4 10h10M4 15h12M4 20h8"/><circle cx="19" cy="17" r="3"/><path d="M19 15.6V17l1 .8"/></svg>',
     whatsapp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 20.5l1.3-4A8.5 8.5 0 1 1 8 19.6z"/><path d="M9 8.6c.2-.6.6-.7.9-.7h.5c.2 0 .4.1.5.4l.7 1.6c.1.2 0 .5-.1.6l-.5.6c.6 1.2 1.6 2.2 2.8 2.8l.6-.5c.2-.2.4-.2.6-.1l1.6.7c.3.1.4.3.4.5v.5c0 .3-.1.7-.7.9-.9.4-2.6.4-4.7-1.4-2-1.8-2.7-3.6-2.6-4.8z"/></svg>',
@@ -240,18 +241,18 @@
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { help: 'Help', changelog: 'Change log', today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies', whatsapp: 'WhatsApp', laundry: 'Laundry' };
+  var NAMES = { regs: 'Registrations', help: 'Help', changelog: 'Change log', today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies', whatsapp: 'WhatsApp', laundry: 'Laundry' };
   function navFor(desk) {
     if (S.me && S.me.role === 'Laundry') return ['laundry'];
     if (!mgr()) return desk ? ['rooms', 'housekeeping', 'add', 'stock', 'laundry', 'calendar'] : ['rooms', 'housekeeping', 'add', 'stock', 'calendar'];
-    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'whatsapp', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock', 'laundry'].concat(owner() ? ['reports', 'attendance', 'changelog', 'settings'] : []);
+    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'whatsapp', 'regs', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock', 'laundry'].concat(owner() ? ['reports', 'attendance', 'changelog', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
   function badge(t) {
     if (!S.st) return '';
     var n = t === 'bookings' ? S.st.pending : t === 'stock' ? (S.st.toBuy || []).length : t === 'today' ? (S.st.arrivals || []).length
-      : t === 'approvals' ? (S.st.approvals || S.st.myRequests || 0) : t === 'whatsapp' ? (S.st.waNew || 0) : t === 'laundry' ? (S.st.laundryNew || 0) : t === 'more' ? (S.st.approvals || S.st.myRequests || 0) + (S.st.waNew || 0) + (S.st.laundryNew || 0) : 0;
+      : t === 'approvals' ? (S.st.approvals || S.st.myRequests || 0) : t === 'whatsapp' ? (S.st.waNew || 0) : t === 'laundry' ? (S.st.laundryNew || 0) : t === 'regs' ? (S.st.regNew || 0) : t === 'more' ? (S.st.approvals || S.st.myRequests || 0) + (S.st.waNew || 0) + (S.st.laundryNew || 0) + (S.st.regNew || 0) : 0;
     return n ? '<em class="badge">' + n + '</em>' : '';
   }
   function nav() {
@@ -262,7 +263,7 @@
   }
   function go(tab) {
     closeAllSheetsQuiet();
-    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; if (tab === 'expenses') EXP.data = null; if (tab === 'commission') COM.data = null; if (tab === 'idcopy') { IDC.stay = null; IDC.list = null; } if (tab === 'whatsapp') WA.list = null; if (tab === 'changelog') CL.rows = null; if (tab === 'laundry') LAU.data = null; nav(); render(); window.scrollTo(0, 0);
+    S.tab = tab; if (tab === 'approvals') REQ = null; if (tab === 'reports') REP.data = null; if (tab === 'bills') BILLS.list = null; if (tab === 'attendance') ATT.data = null; if (tab === 'housekeeping') HK.data = null; if (tab === 'expenses') EXP.data = null; if (tab === 'commission') COM.data = null; if (tab === 'idcopy') { IDC.stay = null; IDC.list = null; } if (tab === 'whatsapp') WA.list = null; if (tab === 'regs') REGS.list = null; if (tab === 'changelog') CL.rows = null; if (tab === 'laundry') LAU.data = null; nav(); render(); window.scrollTo(0, 0);
     if (tab === 'calendar' || tab === 'bookings') loadExtra();
   }
 
@@ -283,7 +284,7 @@
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission', 'idcopy', 'whatsapp', 'help', 'changelog', 'laundry'].indexOf(S.tab) < 0) S.tab = S.me.role === 'Laundry' ? 'laundry' : 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission', 'idcopy', 'whatsapp', 'regs', 'help', 'changelog', 'laundry'].indexOf(S.tab) < 0) S.tab = S.me.role === 'Laundry' ? 'laundry' : 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -298,8 +299,33 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog, laundry: viewLaundry }[S.tab] || (S.me.role === 'Laundry' ? viewLaundry : viewRooms))(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, regs: viewRegs, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog, laundry: viewLaundry }[S.tab] || (S.me.role === 'Laundry' ? viewLaundry : viewRooms))(v);
     waBanner(v);
+  }
+  /* ---------- Guest registration cards (filled on the website) ---------- */
+  var REGS = { list: null };
+  function viewRegs(v) {
+    if (!mgr()) { S.tab = 'rooms'; return render(); }
+    if (!REGS.list) { v.innerHTML = '<div><p class="kicker">From the website</p><h1>Registration cards</h1></div><div class="loading">Loading…</div>'; api('deskRegistrations', {}).then(function (r) { REGS.list = r.list; if (S.tab === 'regs') render(); }, function (e) { v.innerHTML = '<p class="note">' + esc(errText(e)) + '</p>'; }); return; }
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Guest registration forms from the website</p><h1>Registration cards</h1></div><button class="refresh" id="rgrf" type="button">Refresh</button></div>' +
+      '<p class="small">Send guests the form from Ready messages (“Registration form”). What they fill arrives here; they send their ID photo on WhatsApp.</p>' +
+      (REGS.list.length ? '<div class="list">' + REGS.list.map(function (r, i) {
+        return '<button type="button" class="bl bl-btn' + (r.status === 'New' ? ' unread' : '') + '" data-rg="' + i + '"><span class="t">' + esc(r.name) + (r.status === 'New' ? ' <span class="pill gold">New</span>' : '') + '</span>' +
+          '<span class="d">' + esc(nkPhoneShow(r.phone)) + (r.checkin ? ' · ' + esc(dShort(r.checkin)) + (r.checkout ? ' to ' + esc(dShort(r.checkout)) : '') : '') + (r.booking ? ' · booking ' + esc(r.booking) : '') + '</span><span class="a">' + esc(dShort(r.at.slice(0, 10))) + '</span></button>';
+      }).join('') + '</div>' : '<p class="note">No registration cards yet.</p>');
+    $('#rgrf', v).onclick = function () { REGS.list = null; render(); };
+    $$('[data-rg]', v).forEach(function (b) { b.onclick = function () { openReg(REGS.list[+b.dataset.rg]); }; });
+  }
+  function openReg(r) {
+    var body = openSheet('Registration · ' + r.name);
+    body.innerHTML = '<p class="small">Received ' + esc(r.at) + (r.seenBy ? ' · checked by ' + esc(r.seenBy) : '') + '</p>' +
+      '<dl class="facts reg-facts">' + r.fields.map(function (f) { return '<div><dt>' + esc(f[0]) + '</dt><dd>' + esc(f[1]) + '</dd></div>'; }).join('') + '</dl>' +
+      (r.people.length ? '<h3>Other guests</h3><ol class="small">' + r.people.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol>' : '') +
+      '<div class="acts">' + (r.booking ? '<button class="btn btn-line" type="button" id="rg-bk">Open booking ' + esc(r.booking) + '</button>' : '') +
+      '<a class="btn btn-line" target="_blank" rel="noopener" href="https://wa.me/' + esc(nkPhoneTel(r.phone).slice(1)) + '">Open WhatsApp chat</a>' +
+      (r.status === 'New' ? '<button class="btn btn-gold" type="button" id="rg-ok">Mark as checked</button>' : '') + '</div>';
+    var bk = $('#rg-bk', body); if (bk) bk.onclick = function () { openBooking(r.booking); };
+    var ok = $('#rg-ok', body); if (ok) ok.onclick = function () { busy(ok, true); api('deskRegistrations', { seen: r.id }).then(function (x) { REGS.list = x.list; S.st.regNew = Math.max(0, (S.st.regNew || 1) - 1); closeSheet(); nav(); render(); }, function (e) { busy(ok, false); toast(errText(e)); }); };
   }
   /* ---------- Ready WhatsApp messages (front desk) ----------
      Two folders. Every guest has 4-5 messages already written with their name: tap one, WhatsApp opens with it ready, press send.
@@ -2720,6 +2746,7 @@
       ['Payments', 'Room → Take payment (cash / UPI / card / bank). For UPI or bank write the transaction number.'],
       ['Check-out', 'Room → Check out: nights, bill details (email, company, GSTIN) → the bill is made. It goes to the guest by email and WhatsApp 12 hours later, or press "Send PDF on WhatsApp" now.'],
       ['Bookings', 'Bookings → new / pending / confirmed. Confirm only after the advance is paid; on the day the booking shows on the room in gold.'],
+      ['Registration cards', 'Send the guest the “Registration form” message. When they fill it on the website, the card appears in More → Registration cards (gold “New”), linked to their booking. They send their ID photo on WhatsApp. Open it, check it, and tap Mark as checked.'],
       ['Ready WhatsApp messages', 'WhatsApp → Ready messages (or the gold bar). Folder 1 “Welcome & check-in”: booking confirmed, how to reach us, welcome, anything you need, membership. Folder 2 “Check-out, bill & review”: check-out reminder, bill + review, bill only, thank you + Google review, come again. Tap a message: WhatsApp opens with it written, press send. Edit changes the words first. A tick shows who sent it and when.'],
       ['WhatsApp', 'WhatsApp → lists: New enquiry, Advance paid (check the screenshot, then Confirm booking), Checked in, Member. Reply from the app inside 24 hours of the guest\'s last message.'],
       ['Expenses & commission', 'More → Expenses (with bill photo) and Commission (drivers / brokers with phone number).'],
@@ -2857,11 +2884,11 @@
 
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
-    var list = [['whatsapp', 'WhatsApp', 'Guest chats: new enquiries, advance paid, checked in, members'], ['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['idcopy', 'ID copies', 'Guest ID / passport copies for each room, print on A4'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
+    var list = [['whatsapp', 'WhatsApp', 'Guest chats: new enquiries, advance paid, checked in, members'], ['regs', 'Registration cards', 'Guest registration forms filled on the website'], ['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['idcopy', 'ID copies', 'Guest ID / passport copies for each room, print on A4'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 64</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 65</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

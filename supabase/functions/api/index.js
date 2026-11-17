@@ -1987,6 +1987,7 @@ var DESK_SCHEMA = {
     ['label', 'What'], ['file', 'Photo (Drive file ID)', 's'], ['by', 'Saved by'], ['removed', 'Removed'], ['folder', 'In stay folder (system)', 's']] },
   archive: { sheet: 'Drive records (system)', lazy: true, hidden: true, cols: [['stay', 'Stay ID'], ['cin', 'Check-in (filed under)', 's'], ['folder', 'Stay folder (Drive ID)', 's'], ['details', 'Stay details file', 's'],
     ['key', 'Details version (system)', 's'], ['bill', 'Bill file', 's'], ['billAt', 'Bill PDF saved', 's'], ['notes', 'Night notes (system)', 's'], ['dirty', 'To update', 's'], ['at', 'Last saved', 't'], ['error', 'Last error']] },
+  regs: { sheet: 'Guest registrations', lazy: true, cols: [['id', 'ID'], ['at', 'Received', 't'], ['name', 'Guest'], ['phone', 'Phone', 's'], ['email', 'Email'], ['checkin', 'Check-in', 'd'], ['checkout', 'Check-out', 'd'], ['booking', 'Booking'], ['status', 'Status'], ['seenBy', 'Seen by'], ['data', 'Card (all fields)', 's']] },
   wa: { sheet: 'WhatsApp messages', lazy: true, cols: [['id', 'ID'], ['at', 'Made', 't'], ['sendAt', 'Send at', 't'], ['to', 'To', 's'], ['name', 'Guest'], ['kind', 'Message'], ['ref', 'Stay / booking'], ['status', 'Status'], ['info', 'Details']] },
   wachats: { sheet: 'WhatsApp chats', lazy: true, cols: [['phone', 'Phone', 's'], ['name', 'Name on WhatsApp'], ['first', 'First message', 't'], ['last', 'Last message', 't'],
     ['lastText', 'Last message text'], ['unread', 'Unread', 'n'], ['important', 'Important (why)'], ['proof', 'Payment screenshot (Drive file ID)', 's'], ['proofType', 'Screenshot type', 's'], ['proofAt', 'Screenshot at', 't'],
@@ -2483,19 +2484,20 @@ function deskCore(db, hooks) {
   var DESK_WA_REVIEW = 'https://g.page/r/CfDIGanjxtFCEAE/review', DESK_WA_MAPS = 'https://maps.google.com/?cid=4814848157732686064';
   function waKitMsgs(folder, o) {
     var n = o.first, out = [];
-    function asd(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
+    function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
     if (folder === 'in') {
-      if (o.booking) asd('booking', 'Booking confirmed', waHandText('booking', [n, o.booking.id, String(o.rooms), sd(o.checkin), sd(o.checkout), rupees(o.advance)]));
-      asd('directions', 'How to reach us', 'Hare Krishna ' + n + ' 🙏 We are opposite ISKCON Gate No. 4, Mayapur. Reception is on the 1st floor (left corner of the building). Map: ' + DESK_WA_MAPS);
-      if (o.room) asd('welcome', 'Welcome', waHandText('welcome', [n, String(o.room), sd(o.checkin), sd(o.checkout)]));
-      if (o.room) asd('care', 'Anything you need?', 'Hare Krishna ' + n + ' 🙏 Hope you are comfortable in room ' + o.room + '. Need towels, water or a car? Just reply here.');
-      if (!o.member) asd('membership', 'Membership invite', waHandText('membership', [n]));
+      if (o.booking) add('booking', 'Booking confirmed', waHandText('booking', [n, o.booking.id, String(o.rooms), sd(o.checkin), sd(o.checkout), rupees(o.advance)]));
+      if (o.booking) add('reg', 'Registration form', 'Hare Krishna ' + n + ' 🙏 Please fill our guest registration form before arrival: ' + DESK_WA_SITE + '/#guest-registration');
+      add('directions', 'How to reach us', 'Hare Krishna ' + n + ' 🙏 We are opposite ISKCON Gate No. 4, Mayapur. Reception is on the 1st floor (left corner of the building). Map: ' + DESK_WA_MAPS);
+      if (o.room) add('welcome', 'Welcome', waHandText('welcome', [n, String(o.room), sd(o.checkin), sd(o.checkout)]));
+      if (o.room) add('care', 'Anything you need?', 'Hare Krishna ' + n + ' 🙏 Hope you are comfortable in room ' + o.room + '. Need towels, water or a car? Just reply here.');
+      if (!o.member) add('membership', 'Membership invite', waHandText('membership', [n]));
     } else {
-      if (o.leaving) asd('checkout', 'Check-out reminder', 'Hare Krishna ' + n + ' 🙏 Check-out is by 9 AM on ' + sd(o.checkout) + '. Need a late check-out? Reply and we will check.');
-      if (o.bill) asd('bill', 'Bill + review', waHandText('bill', o.bill.params, o.bill.link));
-      if (o.bill) asd('billonly', 'Bill only', 'Dear ' + n + ', your bill ' + o.bill.params[1] + ' (' + o.bill.params[2] + '): ' + o.bill.link + ' 🙏');
-      asd('review', 'Thank you + Google review', 'Hare Krishna ' + n + ' 🙏 Thank you for staying with us! A short Google review helps other devotees find us: ' + DESK_WA_REVIEW);
-      asd('again', o.member ? 'Come again (member)' : 'Come again + membership', 'Hare Krishna ' + n + ' 🙏 Hope you reached home safely. Message us here for the best rate next time.' + (o.member ? '' : ' Free membership, 5–20% off: ' + DESK_WA_SITE + '/app/?join=1'));
+      if (o.leaving) add('checkout', 'Check-out reminder', 'Hare Krishna ' + n + ' 🙏 Check-out is by 9 AM on ' + sd(o.checkout) + '. Need a late check-out? Reply and we will check.');
+      if (o.bill) add('bill', 'Bill + review', waHandText('bill', o.bill.params, o.bill.link));
+      if (o.bill) add('billonly', 'Bill only', 'Dear ' + n + ', your bill ' + o.bill.params[1] + ' (' + o.bill.params[2] + '): ' + o.bill.link + ' 🙏');
+      add('review', 'Thank you + Google review', 'Hare Krishna ' + n + ' 🙏 Thank you for staying with us! A short Google review helps other devotees find us: ' + DESK_WA_REVIEW);
+      add('again', o.member ? 'Come again (member)' : 'Come again + membership', 'Hare Krishna ' + n + ' 🙏 Hope you reached home safely. Message us here for the best rate next time.' + (o.member ? '' : ' Free membership, 5–20% off: ' + DESK_WA_SITE + '/app/?join=1'));
     }
     return out;
   }
@@ -2506,8 +2508,8 @@ function deskCore(db, hooks) {
   function quoteOf(type, ci, co, rooms) { var tot = 0, d = ci; for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { tot += deskRateOn(type, d); d = addDays(d, 1); } return tot * Math.max(1, rooms || 1); }
   function enqMsgs(o) {
     var n = o.first ? ' ' + o.first : '', out = [];
-    function asd(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
-    asd('hello', 'Hello + ask dates', 'Hare Krishna' + n + ' 🙏 Thank you for contacting Nikadi Guest House. Please send your check-in date, nights and number of guests. Photos: ' + DESK_WA_SITE + '/#rooms');
+    function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
+    add('hello', 'Hello + ask dates', 'Hare Krishna' + n + ' 🙏 Thank you for contacting Nikadi Guest House. Please send your check-in date, nights and number of guests. Photos: ' + DESK_WA_SITE + '/#rooms');
     if (o.ci && o.co) {
       var nights = nightsBetween(o.ci, o.co), rooms = Math.max(1, o.rooms || 1), when = sd(o.ci) + ' to ' + sd(o.co) + (rooms > 1 ? ', ' + rooms + ' rooms' : '');
       var av = api.availability({ _internal: true, checkin: o.ci, checkout: o.co }), lines = [], best = null, want = roomTypeKey(o.type);
@@ -2517,15 +2519,16 @@ function deskCore(db, hooks) {
         lines.push('• ' + DESK_TYPE_INFO[k][0] + ': ' + rupees(Math.round(tot / nights / rooms)) + '/night (' + rupees(tot) + ' total)');
         if (!best || k === want) best = { type: k, total: tot };
       });
-      if (lines.length) asd('rooms', 'Free rooms & price', 'Hare Krishna' + n + ' 🙏 Free for ' + when + ':\n' + lines.join('\n') + '\nAC, Wi-Fi, incl. GST. Shall we hold a room?');
-      else asd('full', 'Sorry, we are full', 'Hare Krishna' + n + ' 🙏 Sorry, we are full for ' + when + '. Can your dates change a little?');
+      if (lines.length) add('rooms', 'Free rooms & price', 'Hare Krishna' + n + ' 🙏 Free for ' + when + ':\n' + lines.join('\n') + '\nAC, Wi-Fi, incl. GST. Shall we hold a room?');
+      else add('full', 'Sorry, we are full', 'Hare Krishna' + n + ' 🙏 Sorry, we are full for ' + when + '. Can your dates change a little?');
       if (best) {
         var adv = Math.round(best.total / 2);
-        asd('advance', 'Ask for 50% advance', 'Hare Krishna' + n + ' 🙏 Please pay the 50% advance of ' + rupees(adv) + ' to hold your ' + DESK_TYPE_INFO[best.type][0] + ' (' + when + '). UPI: ' + DESK_UPI + ' · QR: ' + DESK_PAY_LINK + '\nSend the screenshot here and we will confirm.');
-        asd('paid', 'Advance received', 'Hare Krishna' + n + ' 🙏 Advance of ' + rupees(adv) + ' received, thank you! Your confirmation follows shortly.');
+        add('advance', 'Ask for 50% advance', 'Hare Krishna' + n + ' 🙏 Please pay the 50% advance of ' + rupees(adv) + ' to hold your ' + DESK_TYPE_INFO[best.type][0] + ' (' + when + '). UPI: ' + DESK_UPI + ' · QR: ' + DESK_PAY_LINK + '\nSend the screenshot here and we will confirm.');
+        add('paid', 'Advance received', 'Hare Krishna' + n + ' 🙏 Advance of ' + rupees(adv) + ' received, thank you! Your confirmation follows shortly.');
       }
     }
-    asd('policy', 'Check-in & cancellation', 'Check-in 11 AM, check-out 9 AM. Photo ID for every guest. Full refund of the advance if you cancel 3+ days before check-in.');
+    add('reg', 'Registration form', 'Hare Krishna' + n + ' 🙏 Please fill our guest registration form before arrival, check-in then takes a minute: ' + DESK_WA_SITE + '/#guest-registration');
+    add('policy', 'Check-in & cancellation', 'Check-in 11 AM, check-out 9 AM. Photo ID for every guest. Full refund of the advance if you cancel 3+ days before check-in.');
     return out;
   }
   function waKitList(light) {
@@ -2837,6 +2840,7 @@ function deskCore(db, hooks) {
       linen: linenAll().filter(function (i) { return yes(i.active); }).map(function (i) { return linenView(i, me); }), linenGroups: DESK_LINEN_GROUPS,
       toBuy: items.filter(function (i) { return i.track && Number(i.stock) < Number(i.low); }).map(function (i) { return { item: i.item, stock: i.stock, low: i.low, buy: Math.max(1, Number(i.low) * 2 - Number(i.stock)) }; }),
       pending: bks.filter(function (b) { return b.status === 'Pending'; }).length,
+      regNew: mgr ? db.all('regs').filter(function (r) { return r.status === 'New'; }).length : 0,
       waNew: mgr ? db.all('wachats').filter(function (c) { return Number(c.unread) > 0 || c.important; }).length : 0,
       arrivals: bks.filter(function (b) { return b.status === 'Confirmed' && b.checkin <= t; }).map(function (b) { return bookingView(b, me); }) };
     if (mgr) {
@@ -4301,6 +4305,29 @@ function deskCore(db, hooks) {
     return { id: b.id };
   };
 
+  /* Public: the website's Guest Registration Card arrives here (no login) and shows in the staff app → Registrations */
+  api.guestRegister = function (req) {
+    var n = Number(db.kvGet('web_regs') || 0);
+    if (n >= 40) fail('too_many_requests');
+    db.kvSet('web_regs', String(n + 1), 3600);
+    var name = text(req.name, 80); if (!name) fail('guest_required');
+    var ph = phoneOk(req.phone || ''); if (!ph) fail('phone_required');
+    var ci = isYmd(req.checkin) ? req.checkin : '', co = isYmd(req.checkout) ? req.checkout : '';
+    var fields = Array.isArray(req.fields) ? req.fields.slice(0, 80).map(function (f) { return [text(f && f[0], 60), text(f && f[1], 300)]; }).filter(function (f) { return f[0] && f[1]; }) : [];
+    var people = Array.isArray(req.people) ? req.people.slice(0, 8).map(function (x) { return text(x, 200); }).filter(Boolean) : [];
+    var bk = db.all('bookings').filter(function (b) { return (b.status === 'Pending' || b.status === 'Confirmed') && waPhone(b.phone) === waPhone(ph) && (!ci || b.checkin === ci || overlaps(b.checkin, b.checkout, ci, co || addDays(ci, 1))); })[0];
+    var r = db.add('regs', { id: id('G'), at: stamp(), name: name, phone: ph, email: text(req.email, 80), checkin: ci, checkout: co, booking: bk ? bk.id : '', status: 'New', seenBy: '', data: JSON.stringify({ fields: fields, people: people }) });
+    return { id: r.id, booking: r.booking };
+  };
+  function regView(r) { var d = {}; try { d = JSON.parse(r.data || '{}'); } catch (e) {} return { id: r.id, at: r.at, name: r.name, phone: r.phone, email: r.email, checkin: r.checkin, checkout: r.checkout, booking: r.booking, status: r.status, seenBy: r.seenBy, fields: d.fields || [], people: d.people || [] }; }
+  /* Front desk: registration cards (newest first); mark one as checked */
+  api.registrations = function (req) {
+    var me = auth(req); needMgr(me);
+    if (req.seen) { var r = find('regs', 'id', req.seen) || fail('not_found'); db.set('regs', r, { status: 'Checked', seenBy: me.name + ' · ' + stamp() }); }
+    var list = db.all('regs').slice().reverse().slice(0, 60);
+    if (req.phone) list = list.filter(function (r) { return waPhone(r.phone) === waPhone(req.phone); });
+    return { list: list.map(regView) };
+  };
   api.bookings = function (req) {
     var me = auth(req), t = today();
     var all = db.all('bookings').slice().reverse();
