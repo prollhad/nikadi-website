@@ -59,6 +59,10 @@ async function nkDo(p, memo) {
       memo[p.key] = await nkFetch(p.req);
     } else if (p.kind === 'bridge') {
       memo[p.key] = await nkBridgePhoto(p.fn, p.args);
+    } else if (p.kind === 'claim' && !NK_SB_KEY) { memo[p.key] = true;
+    } else if (p.kind === 'claim') { // one-time claim: only the first request that asks gets true (stops double WhatsApp sends)
+      var cr = await nkStore('POST', 'claims/' + nkSafeId(p.k), new TextEncoder().encode(String(RealDate.now())), 'text/plain', true), ctext = cr.ok ? '' : await cr.text();
+      memo[p.key] = cr.ok ? true : (cr.status === 409 || /duplicate|already exists/i.test(ctext)) ? false : true; // storage trouble: behave as before
     } else if (p.kind === 'changelog') {
       memo[p.key] = await nkRpc('nk_changelog', { lim: p.lim, before_id: p.before || null, who_f: p.who || null });
     }
@@ -84,9 +88,9 @@ async function nkFetch(q) {
   return out;
 }
 /* ID copies and payment screenshots: kept in fast storage after the first time they come from Google Drive */
-async function nkStore(method, path, body, type) {
+async function nkStore(method, path, body, type, once) {
   var h = { apikey: NK_SB_KEY, Authorization: 'Bearer ' + NK_SB_KEY };
-  if (type) { h['Content-Type'] = type; h['x-upsert'] = 'true'; }
+  if (type) { h['Content-Type'] = type; if (!once) h['x-upsert'] = 'true'; }
   return fetch(NK_SB + '/storage/v1/object/files/' + path, { method: method, headers: h, body: body });
 }
 function nkSafeId(id) { return String(id || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 120); }

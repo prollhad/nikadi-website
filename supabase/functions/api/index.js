@@ -1499,6 +1499,7 @@ function waInbound_(msg) {
   var phone = waKey_('+' + String(msg.from || '').replace(/\D/g, '')); // YCloud gives the full international number
   var cache = CacheService.getScriptCache();
   if (msg.wamid && cache.get('ycw_' + msg.wamid)) return;
+  if (msg.wamid && typeof nkClaim_ === 'function' && !nkClaim_('in-' + msg.wamid)) return; // same message delivered twice at once: answer only once
   if (msg.wamid) cache.put('ycw_' + msg.wamid, '1', 21600);
   cache.put('ycwin_' + phone, String(Date.now()), 21600); // customer-service window is open: free-form messages allowed
 
@@ -2457,6 +2458,7 @@ function deskCore(db, hooks) {
     if (waOptedOut(m.to)) { db.set('wa', m, { status: 'Not sent', info: 'Guest said STOP' }); return; }
     var cnt = waSentToday(m.to);
     if (cnt.all >= DESK_WA_DAY_MAX || cnt.mine >= 2) { db.set('wa', m, { status: 'Not sent', info: 'Daily safety limit' }); return; }
+    if (hooks.claim && !hooks.claim('wa-' + m.id)) return; // another run is already sending this one: never send twice
     try {
       var id1 = hooks.waSend(DESK_WA[m.kind], m.to, waParams(m), null, null);
       db.set('wa', m, { status: 'Sent', info: stamp() + (id1 ? ' · ' + String(id1).slice(-12) : '') });
@@ -2488,6 +2490,7 @@ function deskCore(db, hooks) {
         if (!waAutoOn()) { if (plusHours(row.sendAt, 72) < now) db.set('bills', row, { wa: 'Not sent (automatic WhatsApp paused)' }); }
         else if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
         else if (waSentToday(row.phone).all >= DESK_WA_DAY_MAX || waSentToday(row.phone).mine >= 2) { /* safety limit: try again tomorrow */ }
+        else if (hooks.claim && !hooks.claim('billwa-' + row.id + '-' + String(row.sendAt).replace(/\D/g, ''))) { /* another run is sending it */ }
         else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('WhatsApp bill not sent: ' + row.no, row.guest + ' · ' + row.phone + '\n' + String(e && e.message || e)); } }
       }
       if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting' && (billArchived(row) || plusHours(row.pdf, 72) < now)) { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
@@ -4943,7 +4946,7 @@ function deskHandle_(req) {
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     onCheckoutUndo: typeof memberCheckoutUndo_ === 'function' ? memberCheckoutUndo_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
-    waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
+    waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_, claim: typeof nkClaim_ === 'function' ? nkClaim_ : null,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
     changeLog: typeof nkChangeLog_ === 'function' && typeof CTX !== 'undefined' && CTX ? nkChangeLog_ : null,
     sendBill: deskSendBill_, ownBillFile: deskOwnBillFile_, laundryFile: deskLaundryFile_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
@@ -4997,7 +5000,7 @@ function deskBackupNow() {
   return url;
 }
 function deskTimerCore_() {
-  return deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null,
+  return deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_, claim: typeof nkClaim_ === 'function' ? nkClaim_ : null, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     archive: deskArchive_, stayFolder: deskStayFolder_, trashFile: deskTrash_, laundryFile: deskLaundryFile_ });
 }
@@ -5193,6 +5196,7 @@ function deskLaundryFile_(html, name, ym, oldId) { return nkBridge_('deskLaundry
 function deskSendBill_(d, to, pdf) { return nkBridge_('deskSendBill_', [d, to, pdf]); }
 function deskArchive_(rec, was) { return nkBridge_('deskArchive_', [rec, was]); }
 function waSaveMedia_(media, type, phone, name) { return nkBridge_('waSaveMedia_', [media, type, phone, name]); }
+function nkClaim_(k) { return nkWait_({ key: 'claim|' + k, kind: 'claim', k: String(k) }) !== false; }
 function nkChangeLog_(o) { return nkWait_({ key: 'cl|' + JSON.stringify(o), kind: 'changelog', lim: o.lim, before: o.before, who: o.who }); }
 
 /* ===== Nikadi server: runs the staff app, website membership and WhatsApp bot on the database =====
@@ -5256,6 +5260,10 @@ async function nkDo(p, memo) {
       memo[p.key] = await nkFetch(p.req);
     } else if (p.kind === 'bridge') {
       memo[p.key] = await nkBridgePhoto(p.fn, p.args);
+    } else if (p.kind === 'claim' && !NK_SB_KEY) { memo[p.key] = true;
+    } else if (p.kind === 'claim') { // one-time claim: only the first request that asks gets true (stops double WhatsApp sends)
+      var cr = await nkStore('POST', 'claims/' + nkSafeId(p.k), new TextEncoder().encode(String(RealDate.now())), 'text/plain', true), ctext = cr.ok ? '' : await cr.text();
+      memo[p.key] = cr.ok ? true : (cr.status === 409 || /duplicate|already exists/i.test(ctext)) ? false : true; // storage trouble: behave as before
     } else if (p.kind === 'changelog') {
       memo[p.key] = await nkRpc('nk_changelog', { lim: p.lim, before_id: p.before || null, who_f: p.who || null });
     }
@@ -5281,9 +5289,9 @@ async function nkFetch(q) {
   return out;
 }
 /* ID copies and payment screenshots: kept in fast storage after the first time they come from Google Drive */
-async function nkStore(method, path, body, type) {
+async function nkStore(method, path, body, type, once) {
   var h = { apikey: NK_SB_KEY, Authorization: 'Bearer ' + NK_SB_KEY };
-  if (type) { h['Content-Type'] = type; h['x-upsert'] = 'true'; }
+  if (type) { h['Content-Type'] = type; if (!once) h['x-upsert'] = 'true'; }
   return fetch(NK_SB + '/storage/v1/object/files/' + path, { method: method, headers: h, body: body });
 }
 function nkSafeId(id) { return String(id || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 120); }

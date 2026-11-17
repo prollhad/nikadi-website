@@ -587,6 +587,7 @@ function deskCore(db, hooks) {
     if (waOptedOut(m.to)) { db.set('wa', m, { status: 'Not sent', info: 'Guest said STOP' }); return; }
     var cnt = waSentToday(m.to);
     if (cnt.all >= DESK_WA_DAY_MAX || cnt.mine >= 2) { db.set('wa', m, { status: 'Not sent', info: 'Daily safety limit' }); return; }
+    if (hooks.claim && !hooks.claim('wa-' + m.id)) return; // another run is already sending this one: never send twice
     try {
       var id1 = hooks.waSend(DESK_WA[m.kind], m.to, waParams(m), null, null);
       db.set('wa', m, { status: 'Sent', info: stamp() + (id1 ? ' · ' + String(id1).slice(-12) : '') });
@@ -618,6 +619,7 @@ function deskCore(db, hooks) {
         if (!waAutoOn()) { if (plusHours(row.sendAt, 72) < now) db.set('bills', row, { wa: 'Not sent (automatic WhatsApp paused)' }); }
         else if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
         else if (waSentToday(row.phone).all >= DESK_WA_DAY_MAX || waSentToday(row.phone).mine >= 2) { /* safety limit: try again tomorrow */ }
+        else if (hooks.claim && !hooks.claim('billwa-' + row.id + '-' + String(row.sendAt).replace(/\D/g, ''))) { /* another run is sending it */ }
         else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('WhatsApp bill not sent: ' + row.no, row.guest + ' · ' + row.phone + '\n' + String(e && e.message || e)); } }
       }
       if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting' && (billArchived(row) || plusHours(row.pdf, 72) < now)) { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
@@ -3073,7 +3075,7 @@ function deskHandle_(req) {
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     onCheckoutUndo: typeof memberCheckoutUndo_ === 'function' ? memberCheckoutUndo_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
-    waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_,
+    waReady: deskWaReady_, waInfo: deskWaInfo_, waSave: deskWaSave_, waSend: deskWaSend_, claim: typeof nkClaim_ === 'function' ? nkClaim_ : null,
     savePhoto: deskSavePhoto_, getPhoto: deskGetPhoto_, stayFolder: deskStayFolder_, trashFile: deskTrash_,
     changeLog: typeof nkChangeLog_ === 'function' && typeof CTX !== 'undefined' && CTX ? nkChangeLog_ : null,
     sendBill: deskSendBill_, ownBillFile: deskOwnBillFile_, laundryFile: deskLaundryFile_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null, waReply: typeof waStaffReply_ === 'function' && typeof ycReady_ === 'function' && ycReady_() ? waStaffReply_ : null });
@@ -3127,7 +3129,7 @@ function deskBackupNow() {
   return url;
 }
 function deskTimerCore_() {
-  return deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null,
+  return deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_, claim: typeof nkClaim_ === 'function' ? nkClaim_ : null, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     archive: deskArchive_, stayFolder: deskStayFolder_, trashFile: deskTrash_, laundryFile: deskLaundryFile_ });
 }

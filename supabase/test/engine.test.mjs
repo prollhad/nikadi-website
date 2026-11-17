@@ -32,6 +32,7 @@ globalThis.fetch = async (url, init) => {
   const body = init && typeof init.body === 'string' ? JSON.parse(init.body) : null;
   if (body && body.action === 'nkBridge') { calls.bridge.push(body.fn); const res = body.fn === 'deskGetPhoto_' ? 'data:image/jpeg;base64,AAA' : body.fn === 'deskSavePhoto_' ? 'DRIVEFILE1' : body.fn === 'deskStayFolder_' ? 'FOLDER1' : true;
     return new Response(JSON.stringify({ ok: true, result: res }), { headers: { 'content-type': 'application/json' } }); }
+  if (String(url).includes('/storage/v1/object/files/claims/')) { const k = String(url).split('/claims/')[1]; calls.claims = calls.claims || {}; if (calls.claims[k]) return new Response('{"statusCode":"409","error":"Duplicate","message":"The resource already exists"}', { status: 400 }); calls.claims[k] = 1; return new Response('{}'); }
   calls.fetch.push(url);
   return new Response(JSON.stringify({ id: 'wamid.TEST' }), { headers: { 'content-type': 'application/json' } });
 };
@@ -97,3 +98,22 @@ const wh = await M.nkServe(new Request('https://test.local/functions/v1/api?yc=h
 console.log('webhook', JSON.stringify(wh), 'ycloud calls', calls.fetch.length - before, calls.fetch.slice(before).map(u => String(u).replace('https://api.ycloud.com/v2/', '')).join(','));
 const chats = await call('deskWaChats', { token: tok });
 console.log('chats', chats.ok, chats.error || JSON.stringify(chats).slice(0, 160));
+
+// same inbound message delivered twice at the same moment, assistant ON: only one reply
+DB.records.push({ rid: DB.next++, tbl: 'config', data: { key: 'waBot', value: 'on' } }); DB.versions.config = (DB.versions.config || 0) + 1;
+const ev2 = { id: 'ev2', type: 'whatsapp.inbound_message.received', whatsappInboundMessage: { id: 'm2', wamid: 'wamid.DUP1', from: '+919812345679', customerProfile: { name: 'Bina' }, type: 'text', text: { body: 'Hi' } } };
+delete DB.kv['p:NK_TEST_MODE'];
+const b2 = calls.fetch.length;
+await Promise.all([1, 2].map(() => M.nkServe(new Request('https://test.local/functions/v1/api?yc=hook1', { method: 'POST', body: JSON.stringify(ev2) })).then(r => r.json())));
+console.log('double webhook → ycloud sends', calls.fetch.length - b2, '(want 1 set of replies, not 2)', calls.fetch.slice(b2).map(u => String(u).replace('https://api.ycloud.com/v2/', '')).join(','));
+console.log('claims', Object.keys(calls.claims || {}).join(','));
+DB.kv['p:NK_TEST_MODE'] = '1';
+// a waiting welcome message, two timer runs at the same moment, automatic messages ON: sent once
+delete DB.kv['p:NK_TEST_MODE'];
+DB.records.push({ rid: DB.next++, tbl: 'config', data: { key: 'waAuto', value: 'on' } }); DB.versions.config++;
+const nowS = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
+DB.records.push({ rid: DB.next++, tbl: 'wa', data: { id: 'W-dup', at: nowS, sendAt: nowS, to: '9812345670', name: 'Chandan', kind: 'welcome', ref: ci.stay.id, status: 'Waiting', info: '' } }); DB.versions.wa = (DB.versions.wa || 0) + 1;
+const b3 = calls.fetch.length;
+const r3 = await Promise.all([1, 2].map(() => call('nkCron', { key: 'k1', force: true, opts: { archive: false } })));
+console.log('double timer → ycloud sends', calls.fetch.length - b3, '(want 1)', JSON.stringify(r3.map(r => r.out && r.out.due && r.out.due.sent)), JSON.stringify(DB.records.find(r => r.data.id === 'W-dup').data));
+DB.kv['p:NK_TEST_MODE'] = '1';

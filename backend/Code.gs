@@ -1119,6 +1119,7 @@ function waInbound_(msg) {
   var phone = waKey_('+' + String(msg.from || '').replace(/\D/g, '')); // YCloud gives the full international number
   var cache = CacheService.getScriptCache();
   if (msg.wamid && cache.get('ycw_' + msg.wamid)) return;
+  if (msg.wamid && typeof nkClaim_ === 'function' && !nkClaim_('in-' + msg.wamid)) return; // same message delivered twice at once: answer only once
   if (msg.wamid) cache.put('ycw_' + msg.wamid, '1', 21600);
   cache.put('ycwin_' + phone, String(Date.now()), 21600); // customer-service window is open: free-form messages allowed
 
