@@ -363,7 +363,7 @@
             (!open ? '' : g.msgs.map(function (m, mi) {
               var k = g.key + '|' + m.kind, txt = WK.edit[k] != null ? WK.edit[k] : m.text;
               return '<div class="wk-msg' + (m.sent ? ' sent' : '') + '"><a class="wk-send" target="_blank" rel="noopener" data-g="' + gi + '" data-m="' + mi + '" href="' + esc(waHref(g.phone, txt)) + '">' +
-                '<span class="wk-l">' + esc(m.label) + (WK.edit[k] != null ? ' <em>edited</em>' : '') + '</span><span class="wk-s">' + (m.sent ? '✓ Sent ' + esc(m.sent) : 'Tap to send') + '</span></a>' +
+                '<span class="wk-l">' + esc(m.label) + (WK.edit[k] != null ? ' <em>edited</em>' : '') + '</span><span class="wk-p">' + esc(txt) + '</span><span class="wk-s">' + (m.sent ? '✓ Sent ' + esc(m.sent) : 'Tap to send') + '</span></a>' +
                 '<button class="wk-ed" type="button" data-eg="' + gi + '" data-em="' + mi + '">Edit</button></div>';
             }).join('')) + '</div>';
         }).join('') + '</div>' : WK.folder === 'enq' ? '<p class="small">Pending booking requests (website, phone, WhatsApp) also show here, with their prices and advance.</p>' : '<p class="note">' + (WK.folder === 'in' ? 'No arriving bookings or guests in house with a WhatsApp number.' : 'No one leaving today or checked out in the last 3 days.') + '</p>');
@@ -401,7 +401,7 @@
         var g = list[+a.dataset.g], m = g.msgs[+a.dataset.m], k = g.key + '|' + m.kind;
         api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: WK.edit[k] != null }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out') + cnt('enq'); draw(); }, function () {});
       }; });
-      $$('.wk-ed', body).forEach(function (b) { b.onclick = function () {
+      $$('.wk-ed[data-eg]', body).forEach(function (b) { b.onclick = function () {
         var g = list[+b.dataset.eg], m = g.msgs[+b.dataset.em], k = g.key + '|' + m.kind;
         var box = openSheet('Edit · ' + m.label);
         box.innerHTML = '<p class="small">To ' + esc(g.name) + ' · ' + esc(nkPhoneShow(g.phone)) + '</p><textarea id="wk-t" class="wk-ta" rows="12">' + esc(WK.edit[k] != null ? WK.edit[k] : m.text) + '</textarea>' +
@@ -422,7 +422,7 @@
       return '<details class="wk-guest wk-gen"' + (WK.genOpen !== false ? ' open' : '') + '><summary class="wk-h"><div class="wk-hl"><b>Quick replies for anyone</b><small>No name needed · type the phone in New enquiry below to send to that number, or choose the chat in WhatsApp</small></div></summary>' +
         gen.map(function (m, mi) {
           var ph = WK.q && WK.q.phone, href = ph ? waHref(ph, m.text) : 'https://wa.me/?text=' + encodeURIComponent(m.text);
-          return '<div class="wk-msg"><a class="wk-send" target="_blank" rel="noopener" href="' + esc(href) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-s">' + (ph ? 'Tap to send to ' + esc(nkPhoneShow(ph)) : 'Tap to send · choose the chat') + '</span></a>' +
+          return '<div class="wk-msg"><a class="wk-send" target="_blank" rel="noopener" href="' + esc(href) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-p">' + esc(m.text) + '</span><span class="wk-s">' + (ph ? 'Tap to send to ' + esc(nkPhoneShow(ph)) : 'Tap to send · choose the chat') + '</span></a>' +
             '<button class="wk-ed" type="button" data-ge="' + mi + '">Edit</button></div>';
         }).join('') + '</details>';
     }
@@ -438,7 +438,7 @@
     }
     function enqOut(r) {
       return r.msgs.map(function (m, mi) {
-        return '<div class="wk-msg"><a class="wk-send q-send" target="_blank" rel="noopener" data-qm="' + mi + '" href="' + esc(r.phone ? waHref(r.phone, m.text) : 'https://wa.me/?text=' + encodeURIComponent(m.text)) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-s">' + (r.phone ? 'Tap to send to ' + esc(nkPhoneShow(r.phone)) : 'Tap to send · choose the chat in WhatsApp') + '</span></a>' +
+        return '<div class="wk-msg"><a class="wk-send q-send" target="_blank" rel="noopener" data-qm="' + mi + '" href="' + esc(r.phone ? waHref(r.phone, m.text) : 'https://wa.me/?text=' + encodeURIComponent(m.text)) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-p">' + esc(m.text) + '</span><span class="wk-s">' + (r.phone ? 'Tap to send to ' + esc(nkPhoneShow(r.phone)) : 'Tap to send · choose the chat in WhatsApp') + '</span></a>' +
           '<button class="wk-ed" type="button" data-qe="' + mi + '">Edit</button></div>';
       }).join('');
     }
@@ -2972,7 +2972,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 74</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 75</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
