@@ -538,8 +538,17 @@ function deskCore(db, hooks) {
   function first(n) { return String(n || '').trim().split(/\s+/)[0] || 'Guest'; }
   function dd(ymd) { var p = String(ymd || '').slice(0, 10).split('-'); return p.length < 3 ? '' : +p[2] + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+p[1] - 1] + ' ' + p[0]; }
   function rupees(n) { return '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN'); }
+  /* the guest gets a chat in the WhatsApp screen as soon as we write to them (check-in, booking, bill), even if they never wrote first */
+  function waEnsureChat(phone, name) {
+    var ph = waPhone(phone); if (!ph || ph.length < 8) return null;
+    var c = find('wachats', 'phone', ph);
+    if (!c) c = db.add('wachats', { phone: ph, name: text(name, 60), first: stamp(), last: stamp(), lastIn: '', lastText: '', unread: 0, important: '', proof: '', proofType: '', proofAt: '', readBy: '', readAt: '' });
+    else if (!c.name && name) db.set('wachats', c, { name: text(name, 60) });
+    return c;
+  }
   function waQueue(kind, phone, name, ref, at) {
     if (!phone || String(phone).length < 8) return;
+    waEnsureChat(phone, name);
     if (db.all('wa').some(function (m) { return m.kind === kind && m.ref === ref && m.status !== 'Failed'; })) return; // once per stay / booking
     db.add('wa', { id: id('W'), at: stamp(), sendAt: at || stamp(), to: String(phone), name: name, kind: kind, ref: ref, status: 'Waiting', info: '' });
   }
@@ -573,6 +582,7 @@ function deskCore(db, hooks) {
     var d = JSON.parse(row.data), B = typeof NikadiBill !== 'undefined' ? NikadiBill : null, c = B ? B.compute(d) : null;
     var total = c ? c.total : Number(row.total || 0), due = c ? c.due : 0;
     var params = [B ? B.greetName(d.guest) : first(d.guest.name), d.no, rupees(total), Math.abs(due) < 0.5 ? 'paid in full' : due > 0 ? 'balance due ' + rupees(due) : 'refund due ' + rupees(-due)];
+    waEnsureChat(row.phone, d.guest && d.guest.name);
     var mid = hooks.waSend(DESK_WA.bill, String(row.phone), params, pdf, 'Nikadi-Bill-' + String(d.no).replace(/[^A-Za-z0-9-]+/g, '-') + '.pdf', DESK_BILL_URL + row.id);
     db.set('bills', row, { wa: 'Sent ' + stamp() });
     return mid;
@@ -2094,7 +2104,7 @@ function deskCore(db, hooks) {
   /* internal: a message we sent (assistant / automatic) — keeps the conversation complete */
   api.waOut = function (req) {
     if (!req._internal) fail('unknown_action');
-    var c = find('wachats', 'phone', waPhone(req.phone)); if (!c) return {};
+    var c = find('wachats', 'phone', waPhone(req.phone)) || waEnsureChat(req.phone, req.name); if (!c) return {};
     db.add('wamsgs', { at: stamp(), phone: c.phone, dir: text(req.dir, 40) || 'Assistant', text: text(req.text, 500), file: '', type: 'out', wamid: '' });
     db.set('wachats', c, { last: stamp(), lastText: '↩ ' + text(req.text, 120) });
     return {};
@@ -3025,7 +3035,8 @@ function deskHandle_(req) {
   if (typeof DESK_NO_LOCK_ !== 'undefined' && DESK_NO_LOCK_) return out; // read-only call without the lock: leave the bill timer to locked calls
   try { // send bills that are due (at most every 10 minutes), so emails go out even without the timer
     var c = CacheService.getScriptCache();
-    if (!c.get('desk_due_check')) { c.put('desk_due_check', '1', 120); api._sendDue({ waOnly: true }); } // only quick WhatsApp messages here; bills go by the 15-minute timer
+    var now1 = /^(checkIn|bookingConfirm|bookingCheckIn)$/.test(name); // check-in / booking confirmed: the WhatsApp welcome goes out right away
+    if (now1 || !c.get('desk_due_check')) { c.put('desk_due_check', '1', 120); api._sendDue({ waOnly: true }); } // only quick WhatsApp messages here; bills go by the 15-minute timer
   } catch (e) {}
   return out;
 }

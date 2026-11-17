@@ -938,10 +938,16 @@ function ycSend_(to, msg, noLog) {
   if (_waOutbox) _waOutbox.push(body); else j = ycCall_('whatsapp/messages/sendDirectly', body);
   if (!noLog && d.length >= 8) { // keep the conversation complete in the staff app
     var t = msg.text ? msg.text.body : msg.interactive ? msg.interactive.body && msg.interactive.body.text : msg.document ? '📄 ' + (msg.document.caption || msg.document.filename || 'File') :
-      msg.image ? '📷 ' + (msg.image.caption || 'Photo') : msg.location ? '📍 Location pin' : msg.template ? '[' + msg.template.name + ']' : '';
+      msg.image ? '📷 ' + (msg.image.caption || 'Photo') : msg.location ? '📍 Location pin' : msg.template ? waTemplateText_(msg.template) : '';
     try { waCore_().waOut({ _internal: true, phone: d, dir: msg.template || msg.document ? 'Automatic message' : 'Assistant', text: String(t || '').slice(0, 500) }); } catch (e) {}
   }
   return j.wamid || j.id || '';
+}
+/* the words of a template message as the guest sees them (for the staff app's chat view) */
+function waTemplateText_(tp) {
+  var body = (tp.components || []).filter(function (c) { return c.type === 'body'; })[0], ps = body ? body.parameters.map(function (p) { return p.text; }) : [];
+  var t = WA_TEXTS[tp.name] ? WA_TEXTS[tp.name].replace(/\{(\d)\}/g, function (_, i) { return ps[i - 1] != null ? ps[i - 1] : ''; }) : '[' + tp.name + ']';
+  return ((tp.components || []).some(function (c) { return c.type === 'header'; }) ? '📄 Bill PDF · ' : '') + t;
 }
 var _waCoreInst = null;
 function waCore_() { return _waCoreInst || (_waCoreInst = deskCore(deskDb_(), { memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null })); }
