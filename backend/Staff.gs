@@ -672,6 +672,23 @@ function deskCore(db, hooks) {
     add('policy', 'Check-in & cancellation', n + ', Hare Krishna! Check-in from 11:00 AM, check-out by 9:00 AM. Please bring a photo ID for every guest.\nA 50% advance holds the room; the balance is paid at check-in.\nCancellation: cancel 3 or more days before check-in for a full refund of the advance; after that the advance is not refundable.\nFull details: ' + DESK_WA_SITE + '/#cancellation');
     return out;
   }
+  /* Pending booking: the full "advance pending" message with rooms, dates, total and the advance to pay */
+  function advPendingText(b, sal) {
+    var nights = nightsBetween(b.checkin, b.checkout), rooms = Math.max(1, Number(b.roomsNeeded || 1)), list = roomList(b.rooms);
+    var type = roomTypeKey(b.roomType) || (list.length ? roomTypeKey((find('rooms', 'room', Number(list[0])) || {}).type) : '') || 'Deluxe Double';
+    var total = Number(b.total) > 0 ? Number(b.total) : Number(b.rate) > 0 ? Number(b.rate) * nights * rooms : quoteOf(type, b.checkin, b.checkout, rooms);
+    var due = Math.max(0, (Number(b.advanceDue) > 0 ? Number(b.advanceDue) : Math.ceil(total / 2)) - Number(b.advancePaid || 0));
+    return sal + ', Hare Krishna! Thank you for choosing Nikadi Guest House. Your booking details:\n' +
+      'Booking no.: ' + b.id + '\n' +
+      (list.length ? 'Room' + (list.length > 1 ? 's' : '') + ': ' + list.join(', ') + ' (' + DESK_TYPE_INFO[type][0] + ')' : 'Room: ' + rooms + ' × ' + DESK_TYPE_INFO[type][0]) + '\n' +
+      'Check-in: ' + dd(b.checkin) + ', from 11:00 AM\nCheck-out: ' + dd(b.checkout) + ', by 9:00 AM\n' +
+      'Guests: ' + (b.guests || 2) + ' · ' + nights + ' night' + (nights > 1 ? 's' : '') + '\n' +
+      'Total: ' + rupees(total) + (Number(b.advancePaid) > 0 ? '\nAdvance already received: ' + rupees(b.advancePaid) : '') + '\n\n' +
+      'To confirm your booking, please pay the advance of ' + rupees(due) + '. The balance is paid at check-in.\n' +
+      'UPI ID: ' + DESK_UPI + ' (Nikadi Guest House)\nQR code: ' + DESK_PAY_LINK + '\n' +
+      'Please send the payment screenshot in this chat. Your room is held for you once the advance is received.\n' +
+      'Cancellation: 3 or more days before check-in, full refund of the advance.';
+  }
   function waKitList(light) {
     var mem = function (ph) { return light ? false : !!memberOf(ph); };
     var t = today(), sent = {}, folders = { in: [], out: [] };
@@ -691,6 +708,7 @@ function deskCore(db, hooks) {
     db.all('bookings').forEach(function (b) {
       if (b.status !== 'Pending' || !b.phone || waOptedOut(b.phone) || b.checkout < t) return;
       var msgs = light ? [{ kind: 'advance' }] : enqMsgs({ first: salute(b.guest), ci: b.checkin, co: b.checkout, rooms: Number(b.roomsNeeded || 1), type: b.roomType }).filter(function (m) { return m.kind !== 'hello'; });
+      if (!light) msgs.unshift({ kind: 'advpending', label: 'Advance pending: confirm booking', text: advPendingText(b, salute(b.guest)) });
       msgs.forEach(function (m) { if (m.text) m.text = waSafe(m.text); m.sent = sent[b.id + '|' + m.kind] || ''; });
       folders.enq.push({ key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Pending booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' · ' + (b.source || ''), msgs: msgs, booking: b.id,
         todo: !msgs.some(function (m) { return m.sent; }) });

@@ -1933,7 +1933,7 @@
         : b.status === 'Confirmed' ? '<div class="bl due"><span class="t">Balance at check-in</span><span class="a">' + inr(bal) + '</span></div>' : '') + '</div>' + (b.comp ? '</div>' : '') +
       (b.closeNote ? '<div class="note"><b>' + esc(b.status) + (b.closedBy ? ' · ' + esc(b.closedBy) : '') + '</b>' + esc(b.closeNote) + '</div>' : '') +
       (b.confirmedBy ? '<p class="small">Confirmed by ' + esc(b.confirmedBy) + ' · ' + esc(tShort(b.confirmedAt)) + '. Created ' + esc(tShort(b.created)) + ' by ' + esc(b.createdBy) + '.</p>' : '<p class="small">Created ' + esc(tShort(b.created)) + ' by ' + esc(b.createdBy) + '.</p>');
-    if (b.status === 'Pending') h += '<div class="btns"><button class="btn btn-gold wide big-cta" id="k-conf" type="button">' + (b.comp ? 'Reserve rooms: confirm' : 'Money received: confirm') + '</button><button class="btn btn-quiet" id="k-edit" type="button">Edit</button><button class="btn btn-danger" id="k-cancel" type="button">Cancel booking</button></div>';
+    if (b.status === 'Pending') h += '<div class="btns"><button class="btn btn-gold wide big-cta" id="k-conf" type="button">' + (b.comp ? 'Reserve rooms: confirm' : 'Money received: confirm') + '</button>' + (!b.comp && b.phone ? '<button class="btn btn-line" id="k-wadv" type="button">WhatsApp: ask for the advance</button>' : '') + '<button class="btn btn-quiet" id="k-edit" type="button">Edit</button><button class="btn btn-danger" id="k-cancel" type="button">Cancel booking</button></div>';
     if (b.status === 'Confirmed') {
       h += '<div class="btns">' + (b.checkin <= t ? '<button class="btn btn-gold wide big-cta" id="k-in" type="button">Guest arrived: check in</button>' : '') +
         '<a class="btn btn-line" id="k-wa" target="_blank" rel="noopener" href="' + (b.phone ? 'https://wa.me/' + esc(nkPhoneTel(b.phone).slice(1)) + '?text=' + encodeURIComponent(waText(b)) : '#') + '">Send WhatsApp confirmation</a>' +
@@ -1947,6 +1947,7 @@
     body.innerHTML = h;
     var q = function (sel) { return $(sel, body); };
     if (q('#k-conf')) q('#k-conf').onclick = function () { openConfirm(b, body); };
+    if (q('#k-wadv')) q('#k-wadv').onclick = function () { openWaSend('enq'); };
     if (open && mgr() && !b.comp) q('#k-adv').onclick = function () { openAdvance(b, body); };
     if (q('#k-edit')) q('#k-edit').onclick = function () { openBookingForm(b, body); };
     if (q('#k-cancel')) q('#k-cancel').onclick = function () { openCancel(b, body); };
@@ -2889,7 +2890,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 68</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 69</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
