@@ -117,3 +117,14 @@ const b3 = calls.fetch.length;
 const r3 = await Promise.all([1, 2].map(() => call('nkCron', { key: 'k1', force: true, opts: { archive: false } })));
 console.log('double timer → ycloud sends', calls.fetch.length - b3, '(want 1)', JSON.stringify(r3.map(r => r.out && r.out.due && r.out.due.sent)), JSON.stringify(DB.records.find(r => r.data.id === 'W-dup').data));
 DB.kv['p:NK_TEST_MODE'] = '1';
+// automatic sending off: messages wait for the owner / a manager to send by hand
+DB.records.filter(r => r.tbl === 'config' && r.data.key === 'waAuto').forEach(r => r.data.value = 'off'); DB.versions.config++;
+const st3 = await call('deskState', { token: tok });
+const ci3 = await call('deskCheckIn', { token: tok, room: 5, guest: 'Hand Send', phone: '9876500011', guests: 1, checkin: st3.today, checkout: st3.today.slice(0, 8) + String(+st3.today.slice(8) + 1).padStart(2, '0'), rate: 3000, advance: 0, method: 'Cash', waOk: 'Yes', waOffers: 'Yes' });
+const ts = await call('deskWaToSend', { token: tok });
+console.log('to send', ci3.ok || ci3.error, ts.ok, (ts.list || []).map(m => m.kind + ':' + m.phone).join(','), 'state count', (await call('deskState', { token: tok })).waToSend);
+console.log('text', JSON.stringify((ts.list || [])[0] && ts.list[0].text).slice(0, 120));
+const hd = await call('deskWaHandDone', { token: tok, id: ts.list[0].id, type: ts.list[0].type });
+console.log('after done', hd.ok, hd.list.length);
+const rec = await call('deskLogin', { pin: '2222' });
+console.log('manager login role', rec.me && rec.me.role);

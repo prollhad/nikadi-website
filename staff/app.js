@@ -15,7 +15,7 @@
     hk_checklist: 'Tick every line of the checklist first.',
     changelog_unavailable: 'The change log starts when the app moves to the new fast server.',
     comp_host: 'Pick whose guest this is.',
-    comp_no_money: 'This is a free stay. No money is taken.', wa_no_consent: 'The guest has not agreed to WhatsApp messages. Ask them first.', wa_paused: 'WhatsApp sending is paused while Meta reviews the account. Send it from the phone later.', wa_opted_out: 'This guest replied STOP, so we cannot send WhatsApp messages to them.', linen_not_empty: 'This item still has pieces counted (in store, rooms or laundry). Set its counts to 0 first, or untick “In use” to hide it.', laundry_paid: 'This list is already paid, so it cannot be deleted. Change the counts instead.', laundry_empty: 'Write how many of at least one item.', laundry_approved: 'This was already approved. A manager can change it.', laundry_return_open: 'There is already a return waiting to be checked.', laundry_not_out: 'This list has not been given to the laundry yet.', laundry_no_return: 'Nothing to check.', nothing_to_pay: 'Nothing to pay.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
+    comp_no_money: 'This is a free stay. No money is taken.', wa_no_consent: 'The guest has not agreed to WhatsApp messages. Ask them first.', wa_paused: 'Automatic WhatsApp is off. Use “WhatsApp to send” (owner / manager) to send it by hand.', wa_opted_out: 'This guest replied STOP, so we cannot send WhatsApp messages to them.', linen_not_empty: 'This item still has pieces counted (in store, rooms or laundry). Set its counts to 0 first, or untick “In use” to hide it.', laundry_paid: 'This list is already paid, so it cannot be deleted. Change the counts instead.', laundry_empty: 'Write how many of at least one item.', laundry_approved: 'This was already approved. A manager can change it.', laundry_return_open: 'There is already a return waiting to be checked.', laundry_not_out: 'This list has not been given to the laundry yet.', laundry_no_return: 'Nothing to check.', nothing_to_pay: 'Nothing to pay.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
     bill_no_required: 'Write the invoice number.',
     old_record: 'This record is more than a few months old and is kept in the archive Sheet. It can be viewed but not changed.',
     drive_unavailable: 'Google Drive is not connected here.',
@@ -299,6 +299,46 @@
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
     ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog, laundry: viewLaundry }[S.tab] || (S.me.role === 'Laundry' ? viewLaundry : viewRooms))(v);
+    waBanner(v);
+  }
+  /* ---------- WhatsApp to send by hand (owner / manager) ----------
+     While automatic sending is off, the welcome, membership, booking and bill messages wait here.
+     One tap opens WhatsApp on this phone or computer with the message ready; the person just presses send. */
+  var WA_KIND = { welcome: 'Welcome', membership: 'Membership invite', booking: 'Booking confirmed', bill: 'Bill + review link' };
+  function waBanner(v) {
+    var n = S.st && S.st.waToSend;
+    if (!n || !approver() || ['today', 'rooms', 'whatsapp', 'bookings'].indexOf(S.tab) < 0 || $('#wa-send-bar', v)) return;
+    var bar = document.createElement('button');
+    bar.type = 'button'; bar.id = 'wa-send-bar'; bar.className = 'wa-send-bar';
+    bar.innerHTML = '<b>' + n + ' WhatsApp message' + (n > 1 ? 's' : '') + ' to send</b><span>Welcome, booking and bill messages · tap to send</span><i>→</i>';
+    bar.onclick = openWaSend;
+    v.insertBefore(bar, v.firstChild);
+  }
+  function openWaSend() {
+    var body = openSheet('WhatsApp to send');
+    body.innerHTML = '<div class="loading">Loading…</div>';
+    function draw(list) {
+      S.st.waToSend = list.length;
+      if (!list.length) { body.innerHTML = '<p class="note">All done. Nothing waiting to be sent.</p>'; var b0 = $('#wa-send-bar'); if (b0) b0.remove(); return; }
+      body.innerHTML = '<p class="small">Tap <b>Open WhatsApp</b>: WhatsApp opens on the guest house number with the message written. Check it and press send. It is marked as sent here.</p>' +
+        '<div class="wa-send">' + list.map(function (m, i) {
+          var href = 'https://wa.me/' + nkPhoneTel(m.phone).slice(1) + '?text=' + encodeURIComponent(m.text);
+          return '<div class="wa-send-row" data-i="' + i + '"><span class="t"><b>' + esc(m.name || nkPhoneShow(m.phone)) + '</b> · ' + esc(WA_KIND[m.kind] || m.kind) + '</span>' +
+            '<span class="d">' + esc(nkPhoneShow(m.phone)) + (m.ref && m.type === 'bill' ? ' · ' + esc(m.ref) : '') + '</span>' +
+            '<details class="wa-prev"><summary>See message</summary><pre>' + esc(m.text) + '</pre></details>' +
+            '<span class="acts"><a class="btn btn-gold" target="_blank" rel="noopener" data-open="' + i + '" href="' + esc(href) + '">Open WhatsApp</a>' +
+            '<button class="btn btn-quiet" type="button" data-skip="' + i + '">Don\'t send</button></span></div>';
+        }).join('') + '</div>';
+      $$('[data-open]', body).forEach(function (a) { a.onclick = function () { done(list[+a.dataset.open], false); }; }); // the link opens WhatsApp; we mark it sent
+      $$('[data-skip]', body).forEach(function (b) { b.onclick = function () {
+        if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Sure? Tap again'; return; }
+        done(list[+b.dataset.skip], true);
+      }; });
+    }
+    function done(m, skip) {
+      api('deskWaHandDone', { id: m.id, type: m.type, skip: skip }).then(function (r) { toast(skip ? 'Not sent' : 'Marked as sent'); draw(r.list); }, function (e) { toast(errText(e)); });
+    }
+    api('deskWaToSend', {}).then(function (r) { draw(r.list); }, function (e) { body.innerHTML = '<p class="note">' + esc(errText(e)) + '</p>'; });
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -2379,7 +2419,7 @@
           busy(x, false);
           var why = (e && e.message) || e;
           if (why === 'wa_no_consent') { x.dataset.agreed = '1'; x.textContent = 'Guest agreed to WhatsApp? Tap again to send'; note('This guest was not asked about WhatsApp messages at check-in. Ask them; if they agree, tap the button again.'); return; }
-          if (why !== 'wa_not_connected' && why !== 'wa_template_pending' && why !== 'wa_send_failed') { toast(errText(e)); return; }
+          if (['wa_not_connected', 'wa_template_pending', 'wa_send_failed', 'wa_paused'].indexOf(why) < 0) { toast(errText(e)); return; }
           // fallback: share from this phone (the message carries the online bill link too)
           try { if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {}); } catch (e2) {}
           NikadiBillPdf.share(pdf, text).then(function (ok) {
@@ -2619,6 +2659,7 @@
       ['Payments', 'Room → Take payment (cash / UPI / card / bank). For UPI or bank write the transaction number.'],
       ['Check-out', 'Room → Check out: nights, bill details (email, company, GSTIN) → the bill is made. It goes to the guest by email and WhatsApp 12 hours later, or press "Send PDF on WhatsApp" now.'],
       ['Bookings', 'Bookings → new / pending / confirmed. Confirm only after the advance is paid; on the day the booking shows on the room in gold.'],
+      ['WhatsApp to send', 'Owner and managers: when the gold bar “WhatsApp messages to send” shows, tap it. Each welcome, booking confirmation, bill and membership invite has an Open WhatsApp button: WhatsApp opens on the guest house number with the message ready, press send. Messages wait 3 days.'],
       ['WhatsApp', 'WhatsApp → lists: New enquiry, Advance paid (check the screenshot, then Confirm booking), Checked in, Member. Reply from the app inside 24 hours of the guest\'s last message.'],
       ['Expenses & commission', 'More → Expenses (with bill photo) and Commission (drivers / brokers with phone number).'],
       ['Needs approval', 'Changing a rate, refunds and payment corrections go to the manager / owner: write the reason and wait for "Approved".']]],
@@ -2759,7 +2800,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 60</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 61</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
