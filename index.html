@@ -310,9 +310,9 @@ section.alt{background:var(--band)}
 .steps h3{font-size:1.45rem;margin-bottom:4px}
 .steps p{color:var(--muted);font-size:.95rem}
 .upi{background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--gold);padding:32px;display:grid;gap:20px;justify-items:center;text-align:center}
-.upi .qr{width:220px;height:220px;max-width:100%;background:#fff;padding:14px;display:grid;place-items:center}
-.upi .qr img,.upi .qr canvas{width:100%!important;height:auto!important;display:block}
-.upi .qr .wait{color:#26315a;font-size:.85rem;line-height:1.4;padding:10px}
+.upi .upi-qr{width:240px;aspect-ratio:1/1;height:auto;max-width:100%;background:#fff;padding:16px;display:grid;place-items:center;border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px rgba(212,175,55,.5),0 14px 34px rgba(0,0,0,.4)}
+.upi .upi-qr img,.upi .upi-qr canvas{width:100%!important;height:auto!important;display:block}
+.upi .upi-qr .wait{color:#26315a;font-size:.85rem;line-height:1.4;padding:10px}
 .upi .id{font-family:var(--display);font-size:1.6rem;overflow-wrap:anywhere;user-select:all}
 .upi .apps{font-size:.8rem;color:var(--muted);letter-spacing:.06em}
 .upi .acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
@@ -1790,7 +1790,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           <p class="po-ok" id="poOk" hidden></p>
         </form>
         <p class="kicker">Pay by UPI</p>
-        <div class="qr" id="qr"><p class="wait">UPI QR code coming soon. Please message us on WhatsApp for payment details.</p></div>
+        <div class="upi-qr" id="qr"><p class="wait">UPI QR code coming soon. Please message us on WhatsApp for payment details.</p></div>
         <div class="id" id="upiId">Nikadi Guest House</div>
         <p class="apps">Google Pay · PhonePe · Paytm · BHIM · any UPI app</p>
         <div class="acts" id="upiActs" hidden>
