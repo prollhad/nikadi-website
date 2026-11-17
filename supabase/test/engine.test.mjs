@@ -144,3 +144,6 @@ console.log('reg', rg.ok, rl.ok, rl.list.length, rl.list[0].fields.length, rl.li
 const bk = await call('deskBookingRequest', { guest: 'Mr Anil Kumar Saha', phone: '9800011122', guests: 2, roomsNeeded: 1, roomType: 'Deluxe Double', checkin: st4.today.slice(0, 8) + '28', checkout: st4.today.slice(0, 8) + '30', waOk: true });
 const k3 = await call('deskWaKit', { token: tok });
 console.log('advpending', bk.ok, k3.enq.length, '\n' + (k3.enq[0] && k3.enq[0].msgs[0].text));
+const dm1 = await call('deskDummy', { token: tok, on: true });
+const dm2 = await call('deskDummy', { token: tok, rooms: [1, 5, 6, 99] });
+console.log('dummy', JSON.stringify(dm1), JSON.stringify(dm2), JSON.stringify((await call('deskState', { token: tok })).dummy));

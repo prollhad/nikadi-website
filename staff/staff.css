@@ -736,3 +736,12 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .wk-ta{width:100%;box-sizing:border-box;font:inherit;font-size:.9rem;line-height:1.45;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);resize:vertical}
 .wk-enq .grid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.wk-enq .grid2>*,.wk-enq input,.wk-enq select{min-width:0;max-width:100%}.wk-enq .phonewrap{min-width:0}
 .reg-facts{grid-template-columns:minmax(0,1fr)}.reg-facts dd{word-break:break-word}
+
+/* Dummy bookings */
+.counts:has(.dummy-t){grid-template-columns:repeat(4,minmax(0,1fr)) auto}
+.dummy-t{display:grid;justify-items:center;align-content:center;gap:3px;padding:6px 8px;min-width:52px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font:inherit;cursor:pointer;border-radius:10px}
+.dummy-t i{width:22px;height:12px;border-radius:99px;background:#555;position:relative}.dummy-t i::after{content:"";position:absolute;top:2px;left:2px;width:8px;height:8px;border-radius:50%;background:#ccc;transition:left .15s}
+.dummy-t span{font-size:.62rem;letter-spacing:.06em;text-transform:uppercase}.dummy-t small{font-size:.6rem}
+.dummy-t.on{border-color:var(--green);color:var(--green)}.dummy-t.on i{background:var(--green)}.dummy-t.on i::after{left:12px;background:#fff}
+.k-dummy{--k:#e46fa9}.dummy-hint{margin:6px 0 0;color:#e46fa9}
+.counts:has(.dummy-t){gap:6px}.counts:has(.dummy-t) .count{padding-left:8px;padding-right:6px}.counts:has(.dummy-t) .count span{font-size:.56rem;letter-spacing:.03em}

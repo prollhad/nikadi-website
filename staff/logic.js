@@ -993,6 +993,7 @@ function deskCore(db, hooks) {
       linen: linenAll().filter(function (i) { return yes(i.active); }).map(function (i) { return linenView(i, me); }), linenGroups: DESK_LINEN_GROUPS,
       toBuy: items.filter(function (i) { return i.track && Number(i.stock) < Number(i.low); }).map(function (i) { return { item: i.item, stock: i.stock, low: i.low, buy: Math.max(1, Number(i.low) * 2 - Number(i.stock)) }; }),
       pending: bks.filter(function (b) { return b.status === 'Pending'; }).length,
+      dummy: dummyGet(),
       regNew: mgr ? db.all('regs').filter(function (r) { return r.status === 'New'; }).length : 0,
       waNew: mgr ? db.all('wachats').filter(function (c) { return Number(c.unread) > 0 || c.important; }).length : 0,
       arrivals: bks.filter(function (b) { return b.status === 'Confirmed' && b.checkin <= t; }).map(function (b) { return bookingView(b, me); }) };
@@ -2474,6 +2475,16 @@ function deskCore(db, hooks) {
     return { id: r.id, booking: r.booking };
   };
   function regView(r) { var d = {}; try { d = JSON.parse(r.data || '{}'); } catch (e) {} return { id: r.id, at: r.at, name: r.name, phone: r.phone, email: r.email, checkin: r.checkin, checkout: r.checkout, booking: r.booking, status: r.status, seenBy: r.seenBy, fields: d.fields || [], people: d.people || [] }; }
+  /* "Dummy bookings": some free rooms are shown as Booked on the Rooms screen (display only: availability, website and prices are not changed) */
+  function dummyGet() { var d = {}; try { d = JSON.parse(cfgGet('dummy') || '{}'); } catch (e) {} return { on: !!d.on, rooms: Array.isArray(d.rooms) ? d.rooms : [1, 5, 6] }; }
+  api.dummy = function (req) {
+    var me = auth(req); needMgr(me);
+    var d = dummyGet();
+    if (req.on != null) d.on = !!req.on;
+    if (Array.isArray(req.rooms)) { var all = db.all('rooms').map(function (r) { return Number(r.room); }); d.rooms = req.rooms.map(Number).filter(function (n, i, a) { return all.indexOf(n) >= 0 && a.indexOf(n) === i; }).sort(function (a, b) { return a - b; }); }
+    cfgSet('dummy', JSON.stringify({ on: d.on, rooms: d.rooms, by: me.name, at: stamp() }));
+    return dummyGet();
+  };
   /* Front desk: registration cards (newest first); mark one as checked */
   api.registrations = function (req) {
     var me = auth(req); needMgr(me);

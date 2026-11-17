@@ -445,15 +445,19 @@
 
   /* ---------- Rooms tab ---------- */
   function viewRooms(v) {
-    var rooms = S.st.rooms, c = { ready: 0, occ: 0, out: 0, dirty: 0, arr: 0 };
-    rooms.forEach(function (r) { c[kind(r)]++; });
+    var rooms = S.st.rooms, c = { ready: 0, occ: 0, out: 0, dirty: 0, arr: 0, dummy: 0 }, D = S.st.dummy || { on: false, rooms: [] };
+    var isDummy = function (r) { return D.on && D.rooms.indexOf(Number(r.room)) >= 0 && kind(r) === 'ready'; };
+    rooms.forEach(function (r) { c[isDummy(r) ? 'dummy' : kind(r)]++; });
     v.innerHTML = '<div class="hrow"><div><p class="kicker">' + esc(dShort(S.st.today)) + ' · ' + rooms.length + ' rooms</p><h1>Rooms</h1></div>' +
       '<div class="upd">Updated ' + esc(tShort(S.st.now).split(', ')[1] || '') + '<button class="refresh" id="rf" type="button">Refresh</button>' +
       (mgr() ? '<button class="refresh gold" id="addi" type="button">+ Add item</button>' : '') + '</div></div>' +
-      '<div class="counts"><div class="count c-ready"><b>' + (c.ready + c.arr) + '</b><span>Ready</span></div><div class="count c-occ"><b>' + (c.occ + c.out) + '</b><span>Occupied</span></div>' +
-      '<div class="count c-out"><b>' + c.out + '</b><span>Leave today</span></div><div class="count c-dirty"><b>' + c.dirty + '</b><span>To clean</span></div></div>' +
+      '<div class="counts"><div class="count c-ready"><b>' + (c.ready + c.arr) + '</b><span>Ready</span></div><div class="count c-occ"><b>' + (c.occ + c.out + c.dummy) + '</b><span>Occupied</span></div>' +
+      '<div class="count c-out"><b>' + c.out + '</b><span>Leave today</span></div><div class="count c-dirty"><b>' + c.dirty + '</b><span>To clean</span></div>' +
+      (mgr() ? '<button type="button" class="dummy-t' + (D.on ? ' on' : '') + '" id="dmy" aria-pressed="' + D.on + '"><i></i><span>Dummy</span><small>' + (D.on ? 'on' : 'off') + '</small></button>' : '') + '</div>' +
       '<div class="board">' + rooms.map(function (r) {
         var k = kind(r), s = r.stay;
+        if (isDummy(r)) return '<button type="button" class="tile k-dummy" data-room="' + r.room + '" data-dummy="1" aria-label="Room ' + r.room + ', booked">' +
+          '<span class="n">' + r.room + '</span><span class="ty">' + esc(r.type) + '</span><span class="g">Booked<small>Reserved</small></span><span class="st"><span>Booked</span></span></button>';
         var g = s ? esc(s.guest) + '<small>' + s.guests + (s.guests > 1 ? ' guests' : ' guest') + ' · till ' + esc(dShort(s.checkout)) + '</small>'
           : r.arriving && k === 'arr' ? esc(r.arriving.guest) + '<small>' + (r.arriving.comp ? 'Free stay · ' : '') + 'Booked · ' + (r.arriving.late ? 'was due earlier' : 'arrives today') + '</small>'
           : k === 'dirty' ? '<small>' + esc(r.by ? 'Since ' + tShort(r.updated) : 'Clean before next guest') + '</small>' : '<small>' + esc(r.beds) + '</small>';
@@ -465,7 +469,22 @@
       '<div class="legend"><span class="k-ready"><i></i>Ready for guests</span><span class="k-arr"><i></i>Booked, arriving today</span><span class="k-occ"><i></i>Guest staying</span><span class="k-out"><i></i>Leaves today</span><span class="k-dirty"><i></i>Needs cleaning</span></div>';
     $('#rf').onclick = function () { refresh(this); };
     if ($('#addi')) $('#addi').onclick = function () { openAdd(null); };
-    $$('.tile', v).forEach(function (t) { t.onclick = function () { openRoom(Number(t.dataset.room)); }; });
+    $$('.tile', v).forEach(function (t) { t.onclick = function () {
+      var n = Number(t.dataset.room), r = rooms.filter(function (x) { return x.room === n; })[0];
+      if (mgr() && D.on && r && kind(r) === 'ready') return dummyToggle(n); // dummy mode: tap a free room = booked / free again
+      openRoom(n);
+    }; });
+    if ($('#dmy', v)) $('#dmy', v).onclick = function () { var D2 = S.st.dummy || {}; dummySave({ on: !D2.on }, D2.on ? 'Dummy bookings off' : 'Dummy bookings on'); };
+  }
+  /* Dummy bookings: free rooms shown as Booked (pink) on this screen only. Green switch = on. No details to fill. */
+  function dummySave(d) {
+    var D = S.st.dummy || { on: false, rooms: [] };
+    S.st.dummy = { on: d.on != null ? d.on : D.on, rooms: d.rooms || D.rooms }; render(); // show it at once
+    return api('deskDummy', d).then(function (r) { S.st.dummy = r; render(); }, function (e) { S.st.dummy = D; render(); toast(errText(e)); });
+  }
+  function dummyToggle(n) {
+    var D = S.st.dummy || { rooms: [] };
+    dummySave({ rooms: D.rooms.indexOf(n) >= 0 ? D.rooms.filter(function (x) { return x !== n; }) : D.rooms.concat([n]) });
   }
 
   /* ---------- sheets (panels) ----------
@@ -2749,6 +2768,7 @@
       ['Check-out', 'Room → Check out: nights, bill details (email, company, GSTIN) → the bill is made. It goes to the guest by email and WhatsApp 12 hours later, or press "Send PDF on WhatsApp" now.'],
       ['Bookings', 'Bookings → new / pending / confirmed. Confirm only after the advance is paid; on the day the booking shows on the room in gold.'],
       ['Registration cards', 'Send the guest the “Registration form” message. When they fill it on the website, the card appears in More → Registration cards (gold “New”), linked to their booking. They send their ID photo on WhatsApp. Open it, check it, and tap Mark as checked.'],
+      ['Dummy bookings', 'Rooms screen → the small Dummy switch next to To clean (front desk only). Green = on: tap any free room and it shows as Booked in pink; tap it again to free it. No details to fill. Only the screen changes; real bookings, the website and prices are not affected. Turn the switch off to show the real rooms again.'],
       ['Ready WhatsApp messages', 'WhatsApp → Ready messages (or the gold bar). Folder 1 “Welcome & check-in”: booking confirmed, how to reach us, welcome, anything you need, membership. Folder 2 “Check-out, bill & review”: check-out reminder, bill + review, bill only, thank you + Google review, come again. Tap a message: WhatsApp opens with it written, press send. Edit changes the words first. A tick shows who sent it and when.'],
       ['WhatsApp', 'WhatsApp → lists: New enquiry, Advance paid (check the screenshot, then Confirm booking), Checked in, Member. Reply from the app inside 24 hours of the guest\'s last message.'],
       ['Expenses & commission', 'More → Expenses (with bill photo) and Commission (drivers / brokers with phone number).'],
@@ -2890,7 +2910,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 69</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 70</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
