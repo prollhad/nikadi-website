@@ -387,7 +387,7 @@
       var q = WK.q || {}, t = S.st.today;
       return '<div class="wk-guest wk-enq"><div class="wk-h"><b>New enquiry</b><small>Type what the guest asked; the messages are written for you</small></div>' +
         '<div class="grid2">' + field('Phone', nkPhoneHtml('q-ph', q.phone || '')) + field('Name', '<input class="input" id="q-nm" maxlength="60" value="' + esc(q.name || '') + '">') + '</div>' +
-        '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="q-in" value="' + esc(q.checkin || t) + '">') + field('Nights', '<input class="input" id="q-n" inputmode="numeric" value="' + esc(q.nights || 1) + '">') + '</div>' +
+        '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="q-in" value="' + esc(q.checkin || t) + '">') + field('Check-out', '<input class="input" type="date" id="q-out-d" value="' + esc(q.checkout || addDays(q.checkin || t, 1)) + '">') + '</div>' +
         '<div class="grid2">' + field('Guests', '<input class="input" id="q-g" inputmode="numeric" value="' + esc(q.guests || 2) + '">') + field('Rooms', '<input class="input" id="q-r" inputmode="numeric" value="' + esc(q.rooms || 1) + '">') + '</div>' +
         field('Room type', '<select class="input" id="q-t">' + ['Any', 'Deluxe Double', 'Deluxe Twin', 'Large Twin'].map(function (x) { return '<option' + (x === (q.type || 'Any') ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select>') +
         '<p class="err" id="q-err"></p><div class="acts"><button class="btn btn-gold" type="button" id="q-go">Write the messages</button><button class="btn btn-quiet" type="button" id="q-bk">Save as booking (pending)</button></div>' +
@@ -400,7 +400,7 @@
       }).join('');
     }
     function readEnq() {
-      return { phone: nkPhoneVal('q-ph', body), name: $('#q-nm', body).value.trim(), checkin: $('#q-in', body).value, nights: Number($('#q-n', body).value) || 1, guests: Number($('#q-g', body).value) || 2, rooms: Number($('#q-r', body).value) || 1, type: $('#q-t', body).value };
+      return { phone: nkPhoneVal('q-ph', body), name: $('#q-nm', body).value.trim(), checkin: $('#q-in', body).value, checkout: $('#q-out-d', body).value, guests: Number($('#q-g', body).value) || 2, rooms: Number($('#q-r', body).value) || 1, type: $('#q-t', body).value };
     }
     function wireEnq() {
       function wireOut() {
@@ -413,15 +413,16 @@
         }; });
       }
       wireOut();
+      $('#q-in', body).onchange = function () { var o = $('#q-out-d', body); if (!o.value || o.value <= this.value) o.value = addDays(this.value, 1); };
       $('#q-go', body).onclick = function () {
         var x = this, q = WK.q = readEnq(); busy(x, true); $('#q-err', body).textContent = '';
-        api('deskWaEnquiry', { phone: q.phone, name: q.name, checkin: q.checkin, nights: q.nights, rooms: q.rooms, type: q.type === 'Any' ? '' : q.type }).then(function (r) {
+        api('deskWaEnquiry', { phone: q.phone, name: q.name, checkin: q.checkin, checkout: q.checkout, rooms: q.rooms, type: q.type === 'Any' ? '' : q.type }).then(function (r) {
           busy(x, false); WK.qres = r; $('#q-out', body).innerHTML = enqOut(r); wireOut();
         }, function (e) { busy(x, false); $('#q-err', body).textContent = errText(e); });
       };
       $('#q-bk', body).onclick = function () {
         var q = WK.q = readEnq();
-        openBookingForm({ guest: q.name, phone: q.phone, checkin: q.checkin, checkout: addDays(q.checkin, q.nights), guests: q.guests, roomsNeeded: q.rooms, roomType: q.type === 'Deluxe Double' ? 'Deluxe Double (King)' : q.type === 'Any' ? '' : q.type });
+        openBookingForm({ guest: q.name, phone: q.phone, checkin: q.checkin, checkout: q.checkout, guests: q.guests, roomsNeeded: q.rooms, roomType: q.type === 'Deluxe Double' ? 'Deluxe Double (King)' : q.type === 'Any' ? '' : q.type });
       };
     }
     api('deskWaKit', {}).then(function (r) { WK.data = r; draw(); }, function (e) { body.innerHTML = '<p class="note">' + esc(errText(e)) + '</p>'; });
@@ -2888,7 +2889,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 65</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 66</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

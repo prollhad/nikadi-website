@@ -133,7 +133,7 @@ console.log('kit', kit.ok, 'in', kit.in.length, kit.in.map(g => g.name + ':' + g
 const ks = await call('deskWaKitSent', { token: tok, ref: kit.in[0].key, kind: 'welcome', phone: kit.in[0].phone, name: kit.in[0].name });
 console.log('kit sent', ks.ok, ks.in[0].msgs.find(m => m.kind === 'welcome').sent);
 const st4 = await call('deskState', { token: tok });
-const eq = await call('deskWaEnquiry', { token: tok, phone: '9812300000', name: 'Gopal Das', checkin: st4.today, nights: 2, rooms: 1, type: 'Deluxe Twin' });
+const eq = await call('deskWaEnquiry', { token: tok, phone: '9812300000', name: 'Gopal Das', checkin: st4.today, checkout: '', nights: 2, rooms: 1, type: 'Deluxe Twin' });
 console.log('enquiry', eq.ok, eq.phone, eq.msgs.map(m => m.kind).join('/'));
 console.log(eq.msgs.find(m => m.kind === 'rooms').text);
 console.log(eq.msgs.find(m => m.kind === 'advance').text.slice(0, 160));
