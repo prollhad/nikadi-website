@@ -750,3 +750,4 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .wk-donebox{flex:none;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;max-width:60%}.wk-ask{font-size:.74rem;color:var(--muted);flex-basis:100%;text-align:right}
 .wk-all{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;margin-top:6px}
 .wk-gen summary{cursor:pointer;list-style:none}.wk-gen summary::-webkit-details-marker{display:none}.wk-gen summary b::after{content:' ▾';color:var(--muted);font-weight:400}.wk-gen:not([open]) summary b::after{content:' ▸'}.wk-gen{margin-bottom:12px}
+.wk-sec{font-size:.9rem;margin:18px 0 0;color:var(--ink)}.wk-name{display:flex;align-items:center;gap:8px;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;text-align:left}.wk-name b{font-size:1.02rem}.wk-name i{font-style:normal;color:var(--gold-hi,#e0be7a)}.wk-guest.fold:not(.open){gap:0}
