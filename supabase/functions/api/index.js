@@ -1311,7 +1311,11 @@ function ycCall_(path, body, method) {
 }
 /** One message to one number (msg is the WhatsApp message body without from/to: {type:'text', text:{body}} etc.). */
 var _waOutbox = null; // while a WhatsApp webhook is being handled, messages wait here and go out after the lock is released
+/* Quiet mode (script property NK_WA_QUIET = 1): NOTHING is sent from the guest house number through the API —
+   no assistant replies, no templates, no bills. Incoming messages are still saved in the staff app. Used while Meta reviews the account. */
+function waQuiet_() { try { return PropertiesService.getScriptProperties().getProperty('NK_WA_QUIET') === '1'; } catch (e) { return false; } }
 function ycSend_(to, msg, noLog) {
+  if (waQuiet_()) throw new Error('wa_paused');
   var y = ycProps_(), d = waKey_(to);
   var num = phoneIntl_(d); // overseas numbers keep their country code
   var body = Object.assign({ from: y.from, to: num }, msg), j = {};
@@ -1515,7 +1519,7 @@ function waInbound_(msg) {
         text: text || (msg.type === 'interactive' ? '' : msg.type !== 'text' ? '[' + msg.type + ']' : ''), file: fileId, type: media ? msg.type : msg.type === 'interactive' ? 'button' : msg.type,
         mime: media ? media.mime_type || '' : '', wamid: msg.wamid || '', attention: human || (!choice && st.step === 'done') });
     } catch (e) { console.error(e); }
-    if (media && logged && logged.proof && !human) {
+    if (media && logged && logged.proof && !human && !waQuiet_()) {
       var bk = logged.booking;
       waButtons_(phone, '🙏 Thank you' + (st.name ? ' ' + st.name : '') + '! We have received your ' + (msg.type === 'image' ? 'photo' : 'file') + (bk ? ' for booking *' + bk.id + '*' : '') + '.\n\n' +
         (bk ? 'Reception will check the payment and confirm your room here shortly.' : 'Our reception will look at it and reply here shortly.'), [['m_talk', '📞 Talk to us'], ['menu', 'Main menu']]);
@@ -1524,6 +1528,7 @@ function waInbound_(msg) {
     }
   }
 
+  if (waQuiet_()) { waSave_(phone, st); return; } // quiet mode: the message is saved for reception, no automatic reply
   /* STOP / START: the guest decides whether we may send automatic messages (WhatsApp rules) */
   if (/^(stop|unsubscribe|stop messages|stop all)$/.test(low)) {
     try { waCore_().waOptOut({ _internal: true, phone: phone, name: st.full || '', out: true }); } catch (e) { console.error(e); }
