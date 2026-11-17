@@ -861,6 +861,15 @@ html{overflow-x:hidden}
 .ig-follow .go{margin-left:auto;background:var(--gold-grad);color:var(--gold-ink);padding:9px 18px;border-radius:999px;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;display:block}
 .meet-row{grid-auto-columns:minmax(280px,360px);justify-content:start}
 .meet-row{align-items:start}
+.mvid{position:relative;margin:0;height:600px;border-radius:var(--r);overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(212,175,55,.45),0 20px 44px rgba(0,0,0,.5)}
+.mvid video{width:100%;height:100%;object-fit:cover;display:block}
+.mvid figcaption{position:absolute;inset:auto 0 0 0;padding:44px 16px 16px;background:linear-gradient(transparent,rgba(0,0,0,.75));pointer-events:none}
+.mvid figcaption a{pointer-events:auto;display:grid;color:#fff;text-decoration:none;line-height:1.25;max-width:60%}
+.mvid figcaption b{font-family:var(--display);font-weight:600;letter-spacing:.06em}
+.mvid figcaption small{color:var(--gold-hi);font-size:.8rem}
+.mvid-snd{position:absolute;right:14px;bottom:16px;display:flex;align-items:center;gap:8px;padding:9px 14px 9px 11px;border-radius:999px;border:1px solid rgba(212,175,55,.6);background:rgba(10,15,31,.82);color:var(--gold-hi);font:inherit;font-size:.78rem;letter-spacing:.06em;cursor:pointer}
+.mvid-snd svg{width:20px;height:20px}.mvid-snd .on{display:none}.mvid-snd[aria-pressed="true"] .on{display:inline}.mvid-snd[aria-pressed="true"] .off{display:none}
+
 .meet-solo{grid-template-columns:1fr;max-width:640px}
 .deity-ig{display:grid;gap:16px;align-content:start}
 .dz.tovp{aspect-ratio:16/10}
@@ -1491,7 +1500,11 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <div class="igs-row meet-row rv" id="meetIg">
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DfmiyJyGSTU/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DfmiyJyGSTU/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DeStY5gGT1T/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DeStY5gGT1T/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
-        <div class="igc igc-vid"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DeBUgj2swBt/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/reel/DeBUgj2swBt/" target="_blank" rel="noopener">Watch 'Get to know me' by @chandraamukhi_ on Instagram</a></blockquote></div>
+        <figure class="mvid" id="mvid">
+          <video id="mvidV" src="img/meet/chandramukhi-get-to-know-me.mp4" poster="img/meet/chandramukhi-get-to-know-me.jpg" muted loop playsinline preload="metadata" aria-label="Get to know me, a video by Chandramukhi"></video>
+          <figcaption><a href="https://www.instagram.com/reel/DeBUgj2swBt/" target="_blank" rel="noopener"><b>Get to know me</b><small>@chandraamukhi_</small></a></figcaption>
+          <button class="mvid-snd" id="mvidS" type="button" aria-pressed="false" aria-label="Turn sound on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="on" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path class="off" d="M17 9l5 6M22 9l-5 6"/></svg><span>Sound on</span></button>
+        </figure>
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DT9ZDRhkufm/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DT9ZDRhkufm/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DH_OdjQzSGU/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DH_OdjQzSGU/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
       </div>
@@ -3261,6 +3274,15 @@ try{f.elements.dt.min=new Date(Date.now()+330*60000).toISOString().slice(0,10);}
 f.addEventListener('submit',function(e){e.preventDefault();var x=f.elements,L=['Hare Krishna! Travel booking request for Nikadi × Gourdham Travels','Name: '+x.nm.value.trim(),'Book: '+x.w.value];
 if(x.fr.value.trim())L.push('From: '+x.fr.value.trim());if(x.to.value.trim())L.push('To: '+x.to.value.trim());if(x.dt.value)L.push('Date: '+x.dt.value);L.push('Travellers: '+x.px.value);if(x.m.value.trim())L.push(x.m.value.trim());
 window.open('https://wa.me/919933864574?text='+encodeURIComponent(L.join('\n')),'_blank','noopener');});})();
+</script>
+<script>
+(function(){var v=document.getElementById('mvidV'),b=document.getElementById('mvidS');if(!v||!b)return;
+v.muted=true;
+function play(){var p=v.play();if(p&&p.catch)p.catch(function(){});}
+if('IntersectionObserver' in window){new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&e.intersectionRatio>.35)play();else v.pause();});},{threshold:[0,.35,.6]}).observe(v);}else play();
+document.addEventListener('visibilitychange',function(){if(document.hidden)v.pause();});
+b.addEventListener('click',function(){var on=v.muted;v.muted=!on;if(on){v.volume=1;play();}b.setAttribute('aria-pressed',on?'true':'false');b.setAttribute('aria-label',on?'Turn sound off':'Turn sound on');b.querySelector('span').textContent=on?'Sound off':'Sound on';});
+})();
 </script>
 </body>
 </html>
