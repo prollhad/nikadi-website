@@ -23,7 +23,7 @@
 <meta property="og:url" content="https://www.nikadiguesthouse.com/">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@300;400;500;600;700&display=swap">
 <style>
 /* Layout: single committed dark look. Full-bleed photo hero with a booking bar, then alternating espresso and deeper-ink bands; brass gold reserved for prices, rules and actions */
 :root{
@@ -38,14 +38,14 @@
   --gold-ink:#1a1405;
   --warn:#e07a62;
   --warn-bg:rgba(224,122,98,.08);
-  --display:"Cormorant Garamond", "Times New Roman", Georgia, serif;
-  --body:"Jost", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --display:"Playfair Display", Georgia, "Times New Roman", serif;
+  --body:"Manrope", "Helvetica Neue", Arial, system-ui, sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none!important}}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-weight:300;font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-weight:400;font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:20;background:var(--bg)}
 .wrap{max-width:1140px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 h1,h2,h3{font-family:var(--display);font-weight:500;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:.005em}
@@ -915,7 +915,52 @@ html{overflow-x:hidden}
 </div>
 
 
-<section class="s" id="reviews">
+<section class="s" id="now">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="kicker rule">Mayapur right now</p>
+      <h2>Plan your day in the Dham</h2>
+      <p>Live time, weather and sun for Sri Dham Mayapur, tonight's room price, and how far you are from us.</p>
+    </div>
+    <div class="gad">
+      <div class="gw rv" id="gwClock">
+        <span class="lbl">Time in Mayapur</span>
+        <span class="big" id="gClock">--:--</span>
+        <span class="sub" id="gDate">&nbsp;</span>
+        <span class="pill" id="gDesk">Check-in from 11:00 AM · check-out by 9:00 AM</span>
+      </div>
+      <div class="gw rv" id="gwWx">
+        <span class="lbl">Weather</span>
+        <span class="big" id="gTemp">--°<small id="gCond">Loading</small></span>
+        <span class="sub" id="gWxSub">&nbsp;</span>
+        <div class="fc" id="gFc"></div>
+      </div>
+      <div class="gw rv" id="gwSun">
+        <span class="lbl">Sunrise and sunset</span>
+        <div class="sunbar"><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><path d="M4 44 Q100 -30 196 44" fill="none" stroke="#26315a" stroke-width="1.5" stroke-dasharray="3 4"/><circle id="gSunDot" cx="4" cy="44" r="6" fill="#f2d272"/></svg></div>
+        <div class="sunrow"><span>Sunrise<b id="gRise">--:--</b></span><span style="text-align:right">Sunset<b id="gSet">--:--</b></span></div>
+        <span class="sub" id="gSunSub">Mangala arati is before sunrise. Bring a shawl in winter.</span>
+      </div>
+      <div class="gw rv" id="gwPrice">
+        <span class="lbl" id="gPrLbl">Tonight's price</span>
+        <div class="pr-row"><span>Deluxe Double</span><span><s id="gPrDs"></s><b id="gPrD">--</b></span></div>
+        <div class="pr-row"><span>Deluxe Twin</span><span><s id="gPrTs"></s><b id="gPrT">--</b></span></div>
+        <span class="sub">Per room, per night. Members save 5–20% more.</span>
+        <a class="btn btn-gold" href="#home" data-focus-book>Check my dates</a>
+      </div>
+    </div>
+    <div class="gad gad2" style="margin-top:18px">
+      <a class="gw rv gw-arati" href="#temple"><span class="lbl">Next at the temple</span><span class="big" id="gArati" style="font-size:2.2rem">&nbsp;</span><span class="sub" id="gAratiIn">&nbsp;</span><span class="sub" style="color:var(--gold-hi)">See all temple timings ›</span></a>
+      <div class="gw rv" style="flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 22px">
+        <div style="display:grid;gap:4px;flex:1 1 260px;min-width:0"><span class="lbl">How far am I?</span><span class="sub" id="gFar">Tap the button and we show how far you are from Nikadi, and the way here.</span></div>
+        <button class="btn btn-line" type="button" id="gFarBtn" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg> Find my distance</button>
+        <a class="btn btn-gold" href="https://www.google.com/maps/dir/?api=1&destination=Nikadi+Guest+House,+Mayapur,+West+Bengal" target="_blank" rel="noopener" style="margin:0">Directions to Nikadi</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s alt" id="reviews">
   <div class="wrap">
     <div class="rev-top">
       <div class="head rv">
@@ -958,7 +1003,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s alt member" id="membership">
+<section class="s member" id="membership">
   <div class="wrap">
     <div class="mem-grid rv">
       <div class="mem-copy">
@@ -1025,7 +1070,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 </section>
 
 
-<section class="s" id="views">
+<section class="s alt" id="views">
   <div class="wrap">
     <div class="views">
       <figure class="v-main zoom"><img src="img/view-temple.jpg" alt="The domes of the Temple of the Vedic Planetarium lit up at night, seen from Nikadi Guest House" loading="lazy"><figcaption>Temple of the Vedic Planetarium, seen from Nikadi</figcaption></figure>
@@ -1044,7 +1089,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s alt" id="rooms">
+<section class="s" id="rooms">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Accommodation</p>
@@ -1089,50 +1134,6 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s" id="now">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="kicker rule">Mayapur right now</p>
-      <h2>Plan your day in the Dham</h2>
-      <p>Live time, weather and sun for Sri Dham Mayapur, tonight's room price, and how far you are from us.</p>
-    </div>
-    <div class="gad">
-      <div class="gw rv" id="gwClock">
-        <span class="lbl">Time in Mayapur</span>
-        <span class="big" id="gClock">--:--</span>
-        <span class="sub" id="gDate">&nbsp;</span>
-        <span class="pill" id="gDesk">Check-in from 11:00 AM · check-out by 9:00 AM</span>
-      </div>
-      <div class="gw rv" id="gwWx">
-        <span class="lbl">Weather</span>
-        <span class="big" id="gTemp">--°<small id="gCond">Loading</small></span>
-        <span class="sub" id="gWxSub">&nbsp;</span>
-        <div class="fc" id="gFc"></div>
-      </div>
-      <div class="gw rv" id="gwSun">
-        <span class="lbl">Sunrise and sunset</span>
-        <div class="sunbar"><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><path d="M4 44 Q100 -30 196 44" fill="none" stroke="#26315a" stroke-width="1.5" stroke-dasharray="3 4"/><circle id="gSunDot" cx="4" cy="44" r="6" fill="#f2d272"/></svg></div>
-        <div class="sunrow"><span>Sunrise<b id="gRise">--:--</b></span><span style="text-align:right">Sunset<b id="gSet">--:--</b></span></div>
-        <span class="sub" id="gSunSub">Mangala arati is before sunrise. Bring a shawl in winter.</span>
-      </div>
-      <div class="gw rv" id="gwPrice">
-        <span class="lbl" id="gPrLbl">Tonight's price</span>
-        <div class="pr-row"><span>Deluxe Double</span><span><s id="gPrDs"></s><b id="gPrD">--</b></span></div>
-        <div class="pr-row"><span>Deluxe Twin</span><span><s id="gPrTs"></s><b id="gPrT">--</b></span></div>
-        <span class="sub">Per room, per night. Members save 5–20% more.</span>
-        <a class="btn btn-gold" href="#home" data-focus-book>Check my dates</a>
-      </div>
-    </div>
-    <div class="gad gad2" style="margin-top:18px">
-      <a class="gw rv gw-arati" href="#temple"><span class="lbl">Next at the temple</span><span class="big" id="gArati" style="font-size:2.2rem">&nbsp;</span><span class="sub" id="gAratiIn">&nbsp;</span><span class="sub" style="color:var(--gold-hi)">See all temple timings ›</span></a>
-      <div class="gw rv" style="flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 22px">
-        <div style="display:grid;gap:4px;flex:1 1 260px;min-width:0"><span class="lbl">How far am I?</span><span class="sub" id="gFar">Tap the button and we show how far you are from Nikadi, and the way here.</span></div>
-        <button class="btn btn-line" type="button" id="gFarBtn" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg> Find my distance</button>
-        <a class="btn btn-gold" href="https://www.google.com/maps/dir/?api=1&destination=Nikadi+Guest+House,+Mayapur,+West+Bengal" target="_blank" rel="noopener" style="margin:0">Directions to Nikadi</a>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section class="s alt" id="gallery">
   <div class="wrap">
@@ -1142,7 +1143,6 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <p>Tap any photo to see it larger. See every room photo under <a href="#room-deluxe-double" style="color:var(--gold-hi)">Deluxe Double</a> and <a href="#room-deluxe-twin" style="color:var(--gold-hi)">Deluxe Twin</a>.</p>
     </div>
     <div class="gal">
-      <figure class="zoom"><img src="img/facade-front.jpg" alt="Front of Nikadi Guest House at night with the lit sign" loading="lazy"><figcaption>Nikadi Guest House at night</figcaption></figure>
       <figure class="zoom"><img src="img/hotel-reception.jpg" alt="Reception desk with wood-panelled wall, clock and devotional pictures" loading="lazy"><figcaption>Reception</figcaption></figure>
       <figure class="zoom"><img src="img/stairs.jpg" alt="Marble staircase with a framed picture of Sri Chaitanya Mahaprabhu" loading="lazy"><figcaption>Stairs to first-floor reception</figcaption></figure>
       <figure class="zoom"><img src="img/mahaprabhu.jpg" alt="Framed picture of Sri Chaitanya Mahaprabhu at the entrance" loading="lazy" style="object-position:50% 40%"><figcaption>Entrance at the left corner · stairs up to reception</figcaption></figure>
@@ -1359,7 +1359,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         </ol>
       </div>
       <div class="deity-ig rv">
-        <figure class="dz tovp"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg/960px-Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg" alt="The domes of the temple at ISKCON Mayapur" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Sri_Sri_Radha_Madhav_Temple_(also_Sri_Maya_Chandrodaya_Mandir,_Mayapur)_in_West_Bengal,_India.jpg" target="_blank" rel="noopener">Photo: Billjones94 · CC BY-SA 4.0</a><figcaption>Sri Dham Mayapur</figcaption></figure>
+        <figure class="dz tovp"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Chandrodaya_temple_at_ISKCON%2C_Mayapur_in_Nadia_District%2C_West_Bengal%2C_India_04.jpg/1280px-Chandrodaya_temple_at_ISKCON%2C_Mayapur_in_Nadia_District%2C_West_Bengal%2C_India_04.jpg" alt="The domes of the temple at ISKCON Mayapur" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Chandrodaya_temple_at_ISKCON,_Mayapur_in_Nadia_District,_West_Bengal,_India_04.jpg" target="_blank" rel="noopener">Photo: Amitabha Gupta · CC BY 4.0</a><figcaption>Sri Dham Mayapur</figcaption></figure>
         <div class="ig-list">
           <p class="kicker">Daily darshan on Instagram</p>
           <a class="ig-follow" href="https://www.instagram.com/mayapur_tv/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg><span><b>@mayapur_tv</b><small>Mayapur TV · daily darshan of the deities</small></span><span class="go">Follow</span></a>
@@ -1372,7 +1372,6 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <div class="igs-head"><span class="kicker">Darshan photos from Mayapur</span></div>
       <div class="igs-row">
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DenvMqVID1-/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DenvMqVID1-/" target="_blank" rel="noopener">View this post by @sakhifestivals on Instagram</a></blockquote></div>
-        <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/Df2IaNrBH8l/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/Df2IaNrBH8l/" target="_blank" rel="noopener">View this post by @mayapur_tv on Instagram</a></blockquote></div>
       </div>
     </div>
   </div>
@@ -1403,7 +1402,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <p>Times from our door. Totos (e-rickshaws) wait right outside the guest house, and our reception is happy to help you plan the day.</p>
     </div>
     <div class="sites">
-      <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg/960px-Sri_Sri_Radha_Madhav_Temple_%28also_Sri_Maya_Chandrodaya_Mandir%2C_Mayapur%29_in_West_Bengal%2C_India.jpg" alt="Sri Mayapur Chandrodaya Mandir" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Sri_Sri_Radha_Madhav_Temple_(also_Sri_Maya_Chandrodaya_Mandir,_Mayapur)_in_West_Bengal,_India.jpg" target="_blank" rel="noopener">Photo: Billjones94 · CC BY-SA 4.0</a></figure><div class="si"><h3>Sri Mayapur Chandrodaya Mandir</h3><p>Sri Sri Radha Madhava, Sri Sri Pancha Tattva and Sri Sri Nrisimhadev with Prahlad Maharaj.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>8 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>4 min</b></span></span></div></article>
+      <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Chandrodaya_temple_at_ISKCON%2C_Mayapur_in_Nadia_District%2C_West_Bengal%2C_India_04.jpg/1280px-Chandrodaya_temple_at_ISKCON%2C_Mayapur_in_Nadia_District%2C_West_Bengal%2C_India_04.jpg" alt="Sri Mayapur Chandrodaya Mandir" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Chandrodaya_temple_at_ISKCON,_Mayapur_in_Nadia_District,_West_Bengal,_India_04.jpg" target="_blank" rel="noopener">Photo: Amitabha Gupta · CC BY 4.0</a></figure><div class="si"><h3>Sri Mayapur Chandrodaya Mandir</h3><p>Sri Sri Radha Madhava, Sri Sri Pancha Tattva and Sri Sri Nrisimhadev with Prahlad Maharaj.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>8 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>4 min</b></span></span></div></article>
       <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Samadhi_Mandir_of_Srila_Prabhupada_%28front%29%2C_Mayapur_07102013.jpg/960px-Samadhi_Mandir_of_Srila_Prabhupada_%28front%29%2C_Mayapur_07102013.jpg" alt="Srila Prabhupada Pushpa Samadhi Mandir" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Samadhi_Mandir_of_Srila_Prabhupada_(front),_Mayapur_07102013.jpg" target="_blank" rel="noopener">Photo: Joydeep · CC BY-SA 3.0</a></figure><div class="si"><h3>Srila Prabhupada Pushpa Samadhi Mandir</h3><p>The beautiful samadhi of the founder of ISKCON, with its museum and the market in front.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>6 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b></span></span></div></article>
       <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Goshala_Entrance_-_ISKCON_Campus_-_Mayapur_-_Nadia_2017-08-15_1941.JPG/960px-Goshala_Entrance_-_ISKCON_Campus_-_Mayapur_-_Nadia_2017-08-15_1941.JPG" alt="ISKCON Goshala" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:Goshala_Entrance_-_ISKCON_Campus_-_Mayapur_-_Nadia_2017-08-15_1941.JPG" target="_blank" rel="noopener">Photo: Biswarup Ganguly · CC BY 3.0</a></figure><div class="si"><h3>ISKCON Goshala</h3><p>Visit and feed the cows cared for by the ISKCON Mayapur community. <a class="ig-mini" href="https://www.instagram.com/srimayapurgoshala/" target="_blank" rel="noopener">See the cows on Instagram ›</a></p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>19 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>8 min</b></span></span></div></article>
       <article class="site rv"><figure><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/The_estuary_of_Ganga_and_Jalangi_river_near_Mayapur%2C_Nadia_02.jpg/960px-The_estuary_of_Ganga_and_Jalangi_river_near_Mayapur%2C_Nadia_02.jpg" alt="Mother Ganga Ghat" loading="lazy"><a class="cr" href="https://commons.wikimedia.org/wiki/File:The_estuary_of_Ganga_and_Jalangi_river_near_Mayapur,_Nadia_02.jpg" target="_blank" rel="noopener">Photo: Pinakpani · CC BY-SA 4.0</a></figure><div class="si"><h3>Mother Ganga Ghat</h3><p>Sit by the holy Ganga where she meets the Jalangi. Boats cross to Navadvip.</p><span class="tt"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>7 min</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b></span></span></div></article>
@@ -2437,7 +2436,6 @@ var WA = "917501101137";
   var box=document.getElementById('heroSlides'); if(!box) return;
   var S=[
     ['double-14','Deluxe Double','King bed and warm cove lighting'],
-    ['facade-night','Nikadi by night','Opposite ISKCON Gate No. 4'],
     ['double-02','Deluxe Double','190 sq ft of calm, with a sofa corner'],
     ['twin-03','Deluxe Twin','Two single beds, morning light'],
     ['facade-day','Nikadi Guest House','On Bhaktisiddhanta Saraswati Marg'],
