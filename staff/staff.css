@@ -745,3 +745,7 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .dummy-t.on{border-color:var(--green);color:var(--green)}.dummy-t.on i{background:var(--green)}.dummy-t.on i::after{left:12px;background:#fff}
 .k-dummy{--k:#e46fa9}.dummy-hint{margin:6px 0 0;color:#e46fa9}
 .counts:has(.dummy-t){gap:6px}.counts:has(.dummy-t) .count{padding-left:8px;padding-right:6px}.counts:has(.dummy-t) .count span{font-size:.56rem;letter-spacing:.03em}
+
+.wk-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.wk-hl{display:grid;gap:2px;min-width:0}
+.wk-donebox{flex:none;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;max-width:60%}.wk-ask{font-size:.74rem;color:var(--muted);flex-basis:100%;text-align:right}
+.wk-all{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;margin-top:6px}

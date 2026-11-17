@@ -690,7 +690,8 @@ function deskCore(db, hooks) {
     function ok(phone, waOk) { return phone && waOk !== 'No' && !waOptedOut(phone); }
     function push(folder, key, o) {
       var msgs = waKitMsgs(folder, o).map(function (m) { m.text = waSafe(m.text); m.sent = sent[key + '|' + m.kind] || ''; return m; });
-      folders[folder].push({ key: key, name: o.name, phone: waPhone(o.phone), room: o.room || '', sub: o.sub, msgs: msgs, todo: msgs.some(function (m) { return !m.sent && (m.kind === 'welcome' || m.kind === 'bill' || m.kind === 'booking'); }) });
+      var done = sent[key + '|done' + folder] || '';
+      folders[folder].push({ key: key, name: o.name, phone: waPhone(o.phone), room: o.room || '', sub: o.sub, msgs: msgs, done: done, todo: !done && msgs.some(function (m) { return !m.sent && (m.kind === 'welcome' || m.kind === 'bill' || m.kind === 'booking'); }) });
     }
     db.all('bookings').forEach(function (b) {
       if (b.status !== 'Confirmed' || !ok(b.phone, b.waOk) || b.checkin > addDays(t, 3) || b.checkout < t) return;
@@ -704,8 +705,9 @@ function deskCore(db, hooks) {
       var msgs = light ? [{ kind: 'advance' }] : enqMsgs({ first: salute(b.guest), ci: b.checkin, co: b.checkout, rooms: Number(b.roomsNeeded || 1), type: b.roomType }).filter(function (m) { return m.kind !== 'hello'; });
       if (!light) msgs.unshift({ kind: 'advpending', label: 'Advance pending: confirm booking', text: advPendingText(b, salute(b.guest)) });
       msgs.forEach(function (m) { if (m.text) m.text = waSafe(m.text); m.sent = sent[b.id + '|' + m.kind] || ''; });
-      folders.enq.push({ key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Pending booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' · ' + (b.source || ''), msgs: msgs, booking: b.id,
-        todo: !msgs.some(function (m) { return m.sent; }) });
+      var done = sent[b.id + '|doneenq'] || '';
+      folders.enq.push({ key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Pending booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' · ' + (b.source || ''), msgs: msgs, booking: b.id, done: done,
+        todo: !done && !msgs.some(function (m) { return m.sent; }) });
     });
     folders.enq.reverse();
     db.all('stays').forEach(function (s) {
@@ -723,6 +725,7 @@ function deskCore(db, hooks) {
       }
     });
     folders.out.reverse();
+    folders.out = folders.out.filter(function (g) { return !g.done; }); // Check-out guests marked Done leave the list
     return folders;
   }
   function waKitCount() { var f = waKitList(true); return ['in', 'out', 'enq'].reduce(function (n, k) { return n + f[k].filter(function (g) { return g.todo; }).length; }, 0); }
@@ -2313,6 +2316,18 @@ function deskCore(db, hooks) {
     if (co && (dayNum(co) <= dayNum(ci) || dayNum(co) - dayNum(ci) > 60)) fail('bad_dates');
     var ph = req.phone ? phoneOk(req.phone) : '';
     return { phone: ph, msgs: enqMsgs({ first: req.name ? salute(req.name) : '', ci: co ? ci : '', co: co, rooms: Number(req.rooms) || 1, type: req.type }).map(function (m) { m.text = waSafe(m.text); return m; }) };
+  };
+  /* "Done" on a guest (or a whole folder): the guest no longer counts as waiting, even if only some messages were sent. Undo brings them back. */
+  api.waKitDone = function (req) {
+    var me = auth(req); needMgr(me);
+    var folder = { in: 'in', out: 'out', enq: 'enq' }[req.folder] || fail('bad_request');
+    var refs = (Array.isArray(req.refs) ? req.refs : [req.ref]).map(function (r) { return String(r || '').slice(0, 40); }).filter(Boolean).slice(0, 100);
+    if (!refs.length) fail('bad_request');
+    refs.forEach(function (ref) {
+      if (req.undo) db.all('wa').forEach(function (m) { if (m.ref === ref && m.kind === 'hand:done' + folder && m.status === 'Sent') db.set('wa', m, { status: 'Undone', info: m.info + ' · undone by ' + me.name }); });
+      else db.add('wa', { id: id('W'), at: stamp(), sendAt: stamp(), to: '', name: '', kind: 'hand:done' + folder, ref: ref, status: 'Sent', info: stamp().slice(11, 16) + ' · ' + me.name });
+    });
+    return waKitList();
   };
   api.waKitSent = function (req) {
     var me = auth(req); needMgr(me);

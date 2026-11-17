@@ -352,17 +352,41 @@
           return '<button type="button" role="tab" data-wk="' + t[0] + '" aria-selected="' + (WK.folder === t[0]) + '">📁 ' + t[1] + (cnt(t[0]) ? ' <b>' + cnt(t[0]) + '</b>' : '') + '</button>'; }).join('') + '</div>' +
         '<p class="small">Tap a message: WhatsApp opens on the guest house number with it written. Press send. Use <b>Edit</b> to change the words first.</p>' +
         (WK.folder === 'enq' ? enqForm() : '') +
+        (WK.folder === 'out' && list.length > 1 ? '<div class="wk-all"><button class="btn btn-line sm" type="button" id="wk-alldone">Mark all ' + list.length + ' as done</button></div>' : '') +
         (list.length ? '<div class="wk-list">' + list.map(function (g, gi) {
-          return '<div class="wk-guest' + (g.todo ? ' todo' : '') + '"><div class="wk-h"><b>' + esc(g.name) + '</b><small>' + esc(g.sub) + ' · ' + esc(nkPhoneShow(g.phone)) + '</small>' + (g.booking ? '<button class="linkbtn" type="button" data-bk="' + esc(g.booking) + '">Open booking →</button>' : '') + '</div>' +
-            g.msgs.map(function (m, mi) {
+          var canDone = WK.folder === 'out'; // Done is only for Check-out, bill & review
+          return '<div class="wk-guest' + (g.todo ? ' todo' : '') + '"><div class="wk-h"><div class="wk-hl"><b>' + esc(g.name) + '</b><small>' + esc(g.sub) + ' · ' + esc(nkPhoneShow(g.phone)) + '</small>' + (g.booking ? '<button class="linkbtn" type="button" data-bk="' + esc(g.booking) + '">Open booking →</button>' : '') + '</div>' +
+            (canDone ? '<span class="wk-donebox" data-dbox="' + gi + '"><button class="btn btn-gold sm wk-done" type="button" data-done="' + gi + '">Done</button></span>' : '') + '</div>' +
+            (g.msgs.map(function (m, mi) {
               var k = g.key + '|' + m.kind, txt = WK.edit[k] != null ? WK.edit[k] : m.text;
               return '<div class="wk-msg' + (m.sent ? ' sent' : '') + '"><a class="wk-send" target="_blank" rel="noopener" data-g="' + gi + '" data-m="' + mi + '" href="' + esc(waHref(g.phone, txt)) + '">' +
                 '<span class="wk-l">' + esc(m.label) + (WK.edit[k] != null ? ' <em>edited</em>' : '') + '</span><span class="wk-s">' + (m.sent ? '✓ Sent ' + esc(m.sent) : 'Tap to send') + '</span></a>' +
                 '<button class="wk-ed" type="button" data-eg="' + gi + '" data-em="' + mi + '">Edit</button></div>';
-            }).join('') + '</div>';
+            }).join('')) + '</div>';
         }).join('') + '</div>' : WK.folder === 'enq' ? '<p class="small">Pending booking requests (website, phone, WhatsApp) also show here, with their prices and advance.</p>' : '<p class="note">' + (WK.folder === 'in' ? 'No arriving bookings or guests in house with a WhatsApp number.' : 'No one leaving today or checked out in the last 3 days.') + '</p>');
       $$('[data-wk]', body).forEach(function (b) { b.onclick = function () { WK.folder = b.dataset.wk; draw(); }; });
       $$('[data-bk]', body).forEach(function (b) { b.onclick = function () { openBooking(b.dataset.bk); }; });
+      function markDone(refs, undo, btn) {
+        if (btn) busy(btn, true);
+        api('deskWaKitDone', { folder: WK.folder, refs: refs, undo: !!undo }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out') + cnt('enq'); draw(); var bar = $('#wa-send-bar'); if (bar && !S.st.waToSend) bar.remove(); }, function (e) { if (btn) busy(btn, false); toast(errText(e)); });
+      }
+      function ask(box, label, onYes) { // Done → "Confirm / Cancel" before the guest leaves the list
+        var keep = box.innerHTML;
+        box.innerHTML = '<span class="wk-ask">' + esc(label) + '</span><button class="btn btn-gold sm" type="button" data-yes>Confirm</button><button class="btn btn-quiet sm" type="button" data-no>Cancel</button>';
+        $('[data-yes]', box).onclick = function () { onYes(this); };
+        $('[data-no]', box).onclick = function () { box.innerHTML = keep; wireDone(); };
+      }
+      function wireDone() {
+        $$('[data-done]', body).forEach(function (b) { b.onclick = function () {
+          var g = list[+b.dataset.done];
+          ask(b.parentNode, 'Remove ' + g.name + ' from the list?', function (y) { markDone([g.key], false, y); });
+        }; });
+        if ($('#wk-alldone', body)) $('#wk-alldone', body).onclick = function () {
+          var keys = list.map(function (g) { return g.key; });
+          ask(this.parentNode, 'Remove all ' + keys.length + ' from the list?', function (y) { markDone(keys, false, y); });
+        };
+      }
+      wireDone();
       if (WK.folder === 'enq') wireEnq();
       $$('.wk-send', body).forEach(function (a) { a.onclick = function () {
         var g = list[+a.dataset.g], m = g.msgs[+a.dataset.m], k = g.key + '|' + m.kind;
@@ -2775,6 +2799,7 @@
       ['Check-out', 'Room → Check out: nights, bill details (email, company, GSTIN) → the bill is made. It goes to the guest by email and WhatsApp 12 hours later, or press "Send PDF on WhatsApp" now.'],
       ['Bookings', 'Bookings → new / pending / confirmed. Confirm only after the advance is paid; on the day the booking shows on the room in gold.'],
       ['Registration cards', 'Send the guest the “Registration form” message. When they fill it on the website, the card appears in More → Registration cards (gold “New”), linked to their booking. They send their ID photo on WhatsApp. Open it, check it, and tap Mark as checked.'],
+      ['Done (check-out folder)', 'In Ready messages → Check-out, bill & review, each guest has a Done button. Send the messages you want, tap Done, then Confirm: the guest leaves the list and the waiting number goes down. Cancel keeps them. Mark all as done clears the whole folder (also with Confirm).'],
       ['Dummy bookings', 'Rooms screen → the small Dummy switch next to To clean (front desk only). Green = on: tap any free room and it shows as Booked in pink; tap it again to free it. No details to fill. Only the screen changes; real bookings, the website and prices are not affected. Turn the switch off to show the real rooms again.'],
       ['Ready WhatsApp messages', 'WhatsApp → Ready messages (or the gold bar). Folder 1 “Welcome & check-in”: booking confirmed, how to reach us, welcome, anything you need, membership. Folder 2 “Check-out, bill & review”: check-out reminder, bill + review, bill only, thank you + Google review, come again. Tap a message: WhatsApp opens with it written, press send. Edit changes the words first. A tick shows who sent it and when.'],
       ['WhatsApp', 'WhatsApp → lists: New enquiry, Advance paid (check the screenshot, then Confirm booking), Checked in, Member. Reply from the app inside 24 hours of the guest\'s last message.'],
@@ -2917,7 +2942,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 71</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 72</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

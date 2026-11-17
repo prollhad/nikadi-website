@@ -147,3 +147,7 @@ console.log('advpending', bk.ok, k3.enq.length, '\n' + (k3.enq[0] && k3.enq[0].m
 const dm1 = await call('deskDummy', { token: tok, on: true });
 const dm2 = await call('deskDummy', { token: tok, rooms: [1, 5, 6, 99] });
 console.log('dummy', JSON.stringify(dm1), JSON.stringify(dm2), JSON.stringify((await call('deskState', { token: tok })).dummy));
+const k5 = await call('deskWaKit', { token: tok }); const og = k5.out[0];
+const c1 = (await call('deskState', { token: tok })).waToSend;
+const dn = await call('deskWaKitDone', { token: tok, folder: 'out', refs: [og.key] });
+console.log('done', dn.ok, 'still listed', !!dn.out.find(g => g.key === og.key), 'count', c1, '->', (await call('deskState', { token: tok })).waToSend);
