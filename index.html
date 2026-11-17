@@ -3317,7 +3317,7 @@ window.addEventListener('resize',mark);mark();
 <script>
 /* phones: Instagram's frames swallow sideways swipes, so a clear layer on top lets the row scroll; a tap still opens the post */
 (function(){var row=document.getElementById('meetIg');if(!row)return;
-row.querySelectorAll('.igc').forEach(function(c){var a=c.querySelector('blockquote a');if(!a)return;var t=document.createElement('a');t.className='igc-tap';t.href=a.href;t.target='_blank';t.rel='noopener';t.setAttribute('aria-label','Open this post on Instagram');c.appendChild(t);});
+row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-instgrm-permalink]'),f=c.querySelector('iframe'),h=q?q.getAttribute('data-instgrm-permalink'):f?f.src.replace(/embed.*$/,''):'';if(!h)return;var t=document.createElement('a');t.className='igc-tap';t.href=h.split('?')[0];t.target='_blank';t.rel='noopener';t.setAttribute('aria-label','Open this post on Instagram');c.appendChild(t);});
 })();
 </script>
 </body>
