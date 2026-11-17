@@ -276,3 +276,35 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 .mcard.tier-platinum .mc-name{font-size:.78rem}
 .mcard.tier-platinum .mc-ptsr b{font-size:1.45rem}
 .mcard.tier-platinum .mc-ptsr small{display:none}
+
+/* ===== full-screen login home + card preview for every level ===== */
+.pv{display:grid;gap:14px}
+.pv-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:10px 16px}
+.pv-name{display:grid;gap:6px;flex:1 1 220px;max-width:320px}
+.pv-name span{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.pv-name .input{padding:11px 14px;font-size:.98rem}
+.pv-grid{display:grid;grid-auto-flow:column;grid-auto-columns:86%;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin-inline:-20px;padding-inline:20px;scrollbar-width:thin}
+.pv-card{margin:0;display:grid;gap:10px;scroll-snap-align:center;min-width:0}
+.pv-card .mcard{width:100%;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}
+.pv-card:hover .mcard{transform:translateY(-4px) rotate(-.6deg);box-shadow:0 34px 60px -26px rgba(0,0,0,.9)}
+.pv-card figcaption{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pv-card figcaption .lt-dot{width:14px;height:14px}
+.pv-card figcaption b{font-weight:500;letter-spacing:.04em}
+.pv-card figcaption small{color:var(--muted);font-size:.8rem;margin-left:auto}
+.home-grid,.hg-intro,.hg-side,.hg-levels{display:grid;gap:22px;min-width:0}
+@media (min-width:900px){
+  body.wide .shell{max-width:none;border-inline:0}
+  body.wide .bar{padding-inline:max(32px,4vw)}
+  body.wide main.pad{padding-inline:max(32px,4vw);padding-block:40px 34px;gap:40px}
+  body.wide #view>.fade{gap:40px!important;max-width:1680px;margin-inline:auto;width:100%}
+  body.wide .home-grid{grid-template-columns:minmax(0,1.75fr) minmax(340px,.85fr);gap:48px;align-items:start}
+  body.wide .hg-side{position:sticky;top:96px}
+  body.wide .title{font-size:clamp(2.8rem,4vw,4.4rem)}
+  body.wide .sub{font-size:1.08rem;max-width:56ch}
+  body.wide .pv-grid{grid-auto-flow:row;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;margin-inline:0;padding-inline:0;gap:26px 24px}
+  body.wide .mcard.art .mc-name{font-size:clamp(.82rem,1.05vw,1.08rem)}
+  body.wide .ladder{grid-template-columns:repeat(4,minmax(0,1fr))}
+  body.wide .links{max-width:520px}
+}
+@media (min-width:1500px){body.wide .home-grid{grid-template-columns:minmax(0,1.9fr) minmax(380px,.8fr)}body.wide .pv-grid{gap:34px 30px}}
+@media (max-width:899px){.home-grid{display:flex;flex-direction:column}.hg-intro{display:contents}.hg-side{order:1}.hg-intro .pv{order:2}}

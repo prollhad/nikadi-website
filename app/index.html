@@ -58,7 +58,7 @@
   function $(id){return document.getElementById(id);}
   function busy(btn,on){if(btn){btn.classList.toggle('busy',on);btn.disabled=on;}}
   function toast(t){var d=document.createElement('div');d.className='toast fade';d.textContent=t;document.body.appendChild(d);setTimeout(function(){d.remove();},2600);}
-  function show(html){view.innerHTML='<div class="fade" style="display:grid;gap:22px">'+html+'</div>';window.scrollTo(0,0);}
+  function show(html){document.body.classList.remove('wide');view.innerHTML='<div class="fade" style="display:grid;gap:22px">'+html+'</div>';window.scrollTo(0,0);}
   function setTop(label,fn){topBtn.hidden=!label;topBtn.textContent=label||'';topBtn.onclick=fn||null;}
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function dS(ymd){if(!ymd)return '';var p=String(ymd).slice(0,10).split('-');return (+p[2])+' '+MON[+p[1]-1]+' '+p[0];}
@@ -152,23 +152,47 @@
   function wirePw(){document.querySelectorAll('.pwshow').forEach(function(b){b.onclick=function(){var i=$(b.dataset.for);var on=i.type==='password';i.type=on?'text':'password';b.textContent=on?'Hide':'Show';};});}
   function signedIn(r,msg){S.token=r.token;nkStore('nk_token',r.token);S.member=r.member;S.history=r.history||[];S.stays=r.stays||{stays:[],bookings:[]};dash('card');if(msg)toast(msg);}
 
+  /* ---------- card preview: every level with the visitor's name ---------- */
+  var PV_PTS={silver:100,gold:1250,platinum:3400,plus:9800};
+  function pvCards(name){
+    return tiers().map(function(t){
+      var m={firstName:name,name:name,tier:t.name,tierKey:t.key,points:PV_PTS[t.key]||0,masked:'98•••••210',plusUntil:'Dec 2027'};
+      return '<figure class="pv-card"><div class="pv-in">'+cardHTML(m)+'</div><figcaption class="tier-'+t.key+'"><span class="lt-dot"></span><b>'+nkEsc(t.name)+'</b><small>'+t.discount+'% off · '+earnTxt(t.earn)+' / ₹100</small></figcaption></figure>';
+    }).join('');
+  }
+  function previewHTML(){
+    return '<section class="pv" aria-label="Preview your membership card"><div class="pv-head"><p class="kicker">Your card at every level</p>'+
+      '<label class="pv-name"><span>Type your name</span><input class="input" id="pvName" maxlength="24" autocomplete="name" placeholder="Chandramukhi" value=""></label></div>'+
+      '<div class="pv-grid" id="pvGrid">'+pvCards('Chandramukhi')+'</div><p class="small">Sample cards. Your real card shows your own points and number.</p></section>';
+  }
+  function wirePreview(){
+    var i=$('pvName'),g=$('pvGrid');if(!i||!g)return;var tm;
+    i.oninput=function(){clearTimeout(tm);tm=setTimeout(function(){var v=i.value.trim().replace(/\s+/g,' ')||'Chandramukhi';g.querySelectorAll('.mc-name').forEach(function(n){n.textContent=v;});},60);};
+  }
   /* ---------- logged-out home ---------- */
   function home(){
     tabs.hidden=true;setTop('Join',function(){join();});
     var ready=!!NIKADI_API_URL||NIKADI.demo;
     show(
+      '<div class="home-grid">'+
+      '<div class="hg-intro">'+
       (ready?'':'<div class="note"><b>Launching soon</b>The Nikadi member app is being set up.</div>')+
       '<div style="display:grid;gap:8px"><p class="kicker">Nikadi Membership</p><h1 class="title">Stay more. Rise higher.</h1>'+
       '<p class="sub">Member rates on every booking, points on every stay, and four levels from Silver to Platinum Plus.</p></div>'+
+      previewHTML()+
+      '</div>'+
+      '<div class="hg-side">'+
       '<form class="panel" id="loginForm" novalidate><h2>Member login</h2>'+phoneField('lgPhone','Mobile number')+pwField('lgPw','Password')+
         '<p class="err" id="lgErr"></p><button class="btn btn-gold" id="lgBtn" type="submit">Log in</button>'+
         '<button class="linkbtn" type="button" id="forgot">Forgot password, or first time logging in?</button></form>'+
       '<div class="join-cta"><div><b>Not a member yet?</b><span>Join free and get '+S.cfg.welcome+' welcome points.</span></div><button class="btn btn-line" type="button" id="goJoin">Join free</button></div>'+
-      '<div style="display:grid;gap:12px"><div class="sec-row"><p class="kicker">Membership levels</p><button class="linkbtn" type="button" id="seeLevels">See all benefits</button></div>'+ladderHTML('')+'<p class="small">Tap a level to see its benefits.</p></div>'+
       installHTML()+
+      '</div></div>'+
+      '<div class="hg-levels"><div class="sec-row"><p class="kicker">Membership levels</p><button class="linkbtn" type="button" id="seeLevels">See all benefits</button></div>'+ladderHTML('')+'<p class="small">Tap a level to see its benefits.</p></div>'+
       '<div class="links"><a class="btn btn-quiet" href="../#home">Website</a><a class="btn btn-quiet" href="'+nkWa('Hare Krishna! I have a question about Nikadi Membership.')+'" target="_blank" rel="noopener">WhatsApp us</a></div>'+
       '<p class="foot">Nikadi Guest House · Opp. ISKCON Gate No. 4, Sri Dham Mayapur</p>'
     );
+    document.body.classList.add('wide');wirePreview();
     $('goJoin').onclick=function(){join();};wireInstall();wirePw();
     view.querySelectorAll('[data-rung]').forEach(function(r){r.onclick=function(){levelsScreen(r.dataset.rung);};});
     $('seeLevels').onclick=function(){levelsScreen('silver');};
