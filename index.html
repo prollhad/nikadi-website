@@ -866,6 +866,15 @@ html{overflow-x:hidden}
 .top .wrap{gap:20px}
 header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;font-size:.72rem;letter-spacing:.12em}
 @media (max-width:1240px){header.top nav.main{gap:13px;font-size:.66rem;letter-spacing:.08em}}
+
+/* full-screen layout: content uses the whole screen width on laptops and big monitors */
+.wrap{max-width:1840px;padding-left:max(clamp(16px,4vw,72px),env(safe-area-inset-left,0px));padding-right:max(clamp(16px,4vw,72px),env(safe-area-inset-right,0px))}
+@media (min-width:1061px){
+  .hero{min-height:calc(100svh - 120px);display:flex;align-items:center}
+  .hero>.wrap{width:100%}
+  .hero h1{font-size:clamp(3rem,4.6vw,5.2rem)}
+  .head{max-width:820px}
+}
 </style>
 </head>
 <body>
