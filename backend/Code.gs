@@ -1488,3 +1488,58 @@ function nkCronRun_(opts) {
   if (opts.old || (h >= 2 && h < 5)) try { out.old = core._archiveOld(opts.old ? { force: true } : null); } catch (e) { err('Night archive of old records failed', e); }
   return ContentService.createTextOutput(JSON.stringify({ ok: true, out: out }));
 }
+
+/* ===== "Photos of GH" in Google Drive: a copy of every photo on the website, sorted into folders =====
+   syncWebsitePhotos() reads the website's file list on GitHub and copies any photo that is not in Drive yet.
+   setupWebsitePhotos() runs it once and installs a timer (every 6 hours), so a photo added to the website
+   appears in Drive by itself. Thumbnails, logos and cropped hero copies are left out. */
+var PH_REPO = 'prollhad/nikadi-website';
+var PH_FOLDERS = ['Reception', 'Deluxe Double (king bed)', 'Deluxe Twin', 'Large Twin', 'Common spaces', 'Building & views', 'Other'];
+function phCategory_(path) {
+  var f = path.split('/').pop().toLowerCase();
+  if (/^img\/(brand|google|hero)\//.test(path) || /^img\/rooms\/t\//.test(path)) return '';
+  if (/^img\/rooms\/large/.test(path) || /large-twin|large/.test(f) && /^img\/rooms\//.test(path)) return 'Large Twin';
+  if (/^img\/rooms\/double/.test(path)) return 'Deluxe Double (king bed)';
+  if (/^img\/rooms\/twin/.test(path)) return 'Deluxe Twin';
+  if (/reception/.test(f)) return 'Reception';
+  if (/corridor|stair|landing|fire|first-aid|security|mahaprabhu|lobby|common|dining|terrace|roof/.test(f)) return 'Common spaces';
+  if (/facade|view|walkup|street|temple|building|outside|sign/.test(f)) return 'Building & views';
+  return 'Other';
+}
+function phName_(path) {
+  var f = path.split('/').pop(), ext = (f.match(/\.[a-z0-9]+$/i) || [''])[0].toLowerCase(), base = f.slice(0, f.length - ext.length);
+  var m = base.match(/^(double|twin|large(?:-twin)?)-(\d+)$/i);
+  if (m) return ({ double: 'Deluxe Double', twin: 'Deluxe Twin' }[m[1].toLowerCase()] || 'Large Twin') + ' ' + m[2] + ext;
+  return base.replace(/^hotel-/, '').replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }) + ext;
+}
+function phFolder_(name, parent) {
+  var it = parent ? parent.getFoldersByName(name) : DriveApp.getFoldersByName(name);
+  return it.hasNext() ? it.next() : (parent ? parent.createFolder(name) : DriveApp.createFolder(name));
+}
+function syncWebsitePhotos() {
+  var p = PropertiesService.getScriptProperties(), rootId = p.getProperty('PH_ROOT'), root = null;
+  try { root = rootId ? DriveApp.getFolderById(rootId) : null; if (root && root.isTrashed()) root = null; } catch (e) { root = null; }
+  if (!root) { root = phFolder_('Photos of GH'); p.setProperty('PH_ROOT', root.getId()); }
+  var folders = {};
+  PH_FOLDERS.forEach(function (n) { folders[n] = phFolder_(n, root); });
+  var tree = JSON.parse(UrlFetchApp.fetch('https://api.github.com/repos/' + PH_REPO + '/git/trees/main?recursive=1', { headers: { 'User-Agent': 'nikadi-photos' } }).getContentText());
+  var done = JSON.parse(p.getProperty('PH_DONE') || '{}'), added = [], t0 = Date.now();
+  tree.tree.forEach(function (x) {
+    if (x.type !== 'blob' || !/^img\/.+\.(jpe?g|png|webp|mp4)$/i.test(x.path) || done[x.path] === x.sha) return;
+    if (Date.now() - t0 > 240000) return; // stay inside the Apps Script time limit; the next run continues
+    var cat = phCategory_(x.path); if (!cat) return;
+    var name = phName_(x.path), folder = folders[cat];
+    var old = folder.getFilesByName(name); while (old.hasNext()) old.next().setTrashed(true); // a changed photo replaces the old copy
+    var blob = UrlFetchApp.fetch('https://raw.githubusercontent.com/' + PH_REPO + '/main/' + x.path).getBlob().setName(name);
+    folder.createFile(blob);
+    done[x.path] = x.sha; added.push(cat + ' / ' + name);
+  });
+  p.setProperty('PH_DONE', JSON.stringify(done));
+  Logger.log('Photos of GH: ' + added.length + ' added. ' + root.getUrl() + '\n' + added.join('\n'));
+  return { added: added.length, url: root.getUrl() };
+}
+function setupWebsitePhotos() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'syncWebsitePhotos') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('syncWebsitePhotos').timeBased().everyHours(6).create();
+  return syncWebsitePhotos();
+}
