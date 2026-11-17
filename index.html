@@ -352,6 +352,7 @@ section.alt{background:var(--band)}
 .cpol-when{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
 .cpol-card b{font-family:var(--display);font-size:1.35rem;font-weight:400}.cpol-card.ok b{color:var(--gold-hi)}
 .cpol-card small{color:var(--muted);font-size:.85rem}
+.cpol-card.no{border-color:rgba(255,138,138,.45);border-left:3px solid #ff8a8a;background:rgba(255,120,120,.08)}.cpol-card.no b{color:#ff9e9e}.cpol-card.no .cpol-when{color:#ffb3b3}.nref{color:#ff9e9e}
 .cpol-list{margin:0;display:grid;gap:14px}.cpol-list div{display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;border-top:1px solid var(--line);padding-top:14px}
 @media (max-width:640px){.cpol-list div{grid-template-columns:1fr;gap:4px}}
 .cpol-list dt{color:var(--ink);font-weight:500}.cpol-list dd{margin:0;color:var(--muted);line-height:1.6}
@@ -1838,7 +1839,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <div><h3>No intoxication</h3><p>No smoking, tobacco, gutka, pan or alcohol anywhere on the premises. ₹2,000 fine for any violation.</p></div>
       <div><h3>Timings</h3><p>Check-in from 11:00 AM. Check-out by 9:00 AM.</p></div>
       <div><h3>Room only</h3><p>Meals are not served. Govinda's is a 10 minute walk.</p></div>
-      <div class="wide"><h3>Advance and cancellation</h3><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b>not refunded</b>, and the advance cannot be moved to another date. <a href="#cancellation" style="color:var(--gold-hi)">Full policy</a></p></div>
+      <div class="wide"><h3>Advance and cancellation</h3><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b class="nref">not refunded</b>, and the advance cannot be moved to another date. <a href="#cancellation" style="color:var(--gold-hi)">Full policy</a></p></div>
     </div>
   </div>
 </section>
@@ -1871,7 +1872,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     <div class="faq rv">
       <details><summary>What are the check-in and check-out times?</summary><div class="a">Check-in is from 11:00 AM and check-out is by 9:00 AM. Gold members and above get early check-in from 9 AM when the room is available.</div></details>
       <details><summary>How do I confirm my booking?</summary><div class="a">Send your dates on WhatsApp or use the booking bar at the top. Once we confirm the room is available, pay a 50% advance by UPI, card or bank transfer. The balance is paid at check-in. <a href="#booking">See how to book and pay</a>.</div></details>
-      <details><summary>Can I cancel?</summary><div class="a">Yes. Cancel 3 or more days before check-in and we refund your full advance. Less than 3 days before, on the day of arrival or a no-show is not refunded. <a href="#cancellation">Read the full policy</a>.</div></details>
+      <details><summary>Can I cancel?</summary><div class="a">Yes. Cancel 3 or more days before check-in and we refund your full advance. <span class="nref">Less than 3 days before, on the day of arrival or a no-show is not refunded.</span> <a href="#cancellation">Read the full policy</a>.</div></details>
       <details><summary>Do you serve food?</summary><div class="a">We are room only, so meals are not served. Govinda's in the ISKCON campus is a 10 minute walk, and there are prasadam stalls right outside our door. Drinking water is provided.</div></details>
       <details><summary>How many guests can stay in a room?</summary><div class="a">Each Deluxe Double and Deluxe Twin room takes up to 3 guests. For groups and festival dates, message us and we will plan the rooms for you.</div></details>
       <details><summary>Is the guest house vegetarian?</summary><div class="a">Yes. Out of respect for Sri Dham Mayapur, no non-veg food, eggs, smoking, tobacco or alcohol are allowed on the premises. There is a ₹2,000 fine for any violation.</div></details>
@@ -2014,11 +2015,11 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           <span>Photo ID is mandatory at check-in for every guest.</span>
           <span><b>No smoking, tobacco, gutka, pan or alcohol on the premises. ₹2,000 fine for any violation.</b></span>
         </div>
-        <div class="policy-box" style="margin-bottom:16px"><p class="kicker">Advance and cancellation policy</p><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b>not refunded</b>, and the advance cannot be moved to another date.</p></div>
+        <div class="policy-box" style="margin-bottom:16px"><p class="kicker">Advance and cancellation policy</p><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b class="nref">not refunded</b>, and the advance cannot be moved to another date.</p></div>
         <div class="grid">
           <label class="agree full"><input type="checkbox" id="a_wa" data-l="WhatsApp updates"> Send me my booking confirmation and bill on WhatsApp (+91 75011 01137). Reply STOP any time to stop.</label>
           <label class="agree full"><input type="checkbox" id="a_agree" required data-l="Agreed to house rules"> I confirm these details are correct and I agree to the house rules of Nikadi Guest House.</label>
-          <label class="agree full"><input type="checkbox" id="a_cpol" required data-l="Agreed to cancellation policy"> I agree to the advance and cancellation policy: 50% advance; full refund only if cancelled 3 or more days before check-in; no refund after that or for a no-show.</label>
+          <label class="agree full"><input type="checkbox" id="a_cpol" required data-l="Agreed to cancellation policy"> I agree to the advance and cancellation policy: 50% advance; full refund only if cancelled 3 or more days before check-in; <span class="nref">no refund after that or for a no-show</span>.</label>
           <label class="fld"><span>Type your full name as signature <i>*</i></span><input id="a_sig" required data-l="Guest signature (typed)"></label>
         </div>
       </fieldset>
