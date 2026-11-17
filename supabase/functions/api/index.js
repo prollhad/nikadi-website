@@ -1313,9 +1313,11 @@ function ycCall_(path, body, method) {
 var _waOutbox = null; // while a WhatsApp webhook is being handled, messages wait here and go out after the lock is released
 /* Quiet mode (Settings → Automatic WhatsApp messages = Paused): NOTHING is sent from the guest house number through the API —
    no assistant replies, no templates, no bills. Incoming messages are still saved in the staff app. Used while Meta reviews the account. */
-function waQuiet_() { try { return !waCore_()._waOn(); } catch (e) { return String(e && e.message) === '__NK_WAIT__' ? (function () { throw e; })() : true; } } // the Settings switch "Automatic WhatsApp messages"
+function waFlags_() { try { return waCore_()._waOn(); } catch (e) { if (String(e && e.message) === '__NK_WAIT__') throw e; return { auto: false, bot: false }; } } // Settings → WhatsApp switches
+function waQuiet_() { return !waFlags_().bot; } // assistant replies off
 function ycSend_(to, msg, noLog) {
-  if (waQuiet_()) throw new Error('wa_paused');
+  var fl = waFlags_();
+  if (msg.template ? !fl.auto : !(fl.bot || fl.auto)) throw new Error('wa_paused'); // templates need "automatic messages" on; replies need the assistant or automatic messages on
   var y = ycProps_(), d = waKey_(to);
   var num = phoneIntl_(d); // overseas numbers keep their country code
   var body = Object.assign({ from: y.from, to: num }, msg), j = {};
@@ -1481,6 +1483,7 @@ var WA_MENU_ROWS = [
   ['m_talk', '📞 Talk to us', 'Call or chat with reception']
 ];
 function waMenu_(to, st, hello) {
+  st.menuAt = Date.now();
   var mem = st.member;
   var head = hello
     ? 'Hare Krishna' + (st.name ? ' ' + st.name : '') + ' 🙏 Welcome to *Nikadi Guest House*, steps away from the Mayapur ISKCON Temple.' +
@@ -1554,7 +1557,7 @@ function waInbound_(msg) {
       else if (/\b(member|points|card|discount)/.test(low)) choice = 'm_member';
     }
   }
-  if (choice === 'menu') { waMenu_(phone, st, true); waSave_(phone, st); return; }
+  if (choice === 'menu') { if (!(st.menuAt && Date.now() - st.menuAt < 2 * 60e3)) waMenu_(phone, st, true); waSave_(phone, st); return; } // no double welcome for 2 quick messages
   if (/^m_/.test(choice)) st.step = '';
   var today = todayIst_();
 
@@ -1704,6 +1707,10 @@ function waFallback_(phone, st, text) {
   if (st.step === 'done') { // after a request, anything typed is for reception
     waNotify_('WhatsApp message after booking ' + (st.booking || ''), phone, text);
     waButtons_(phone, 'Thank you, I have passed your message to reception. They will reply here shortly.', [['m_talk', '📞 Talk to us'], ['menu', 'Main menu']]); return;
+  }
+  if (st.menuAt && Date.now() - st.menuAt < 30 * 60e3) { // the menu went out less than 30 min ago: do not repeat it, reception will read this
+    try { waCore_().waMark({ _internal: true, phone: phone, unread: true }); } catch (e) {}
+    return;
   }
   waMenu_(phone, st, !st.greeted); st.greeted = true;
 }
@@ -2401,6 +2408,8 @@ function deskCore(db, hooks) {
   /* WhatsApp rules: we only start a conversation with guests who agreed (ticked at check-in / booking), never after they said STOP,
      and only while the owner has automatic messages switched on (Settings). */
   function waAutoOn() { return cfgGet('waAuto') === 'on'; }
+  function waBotOn() { return cfgGet('waBot') === 'on'; }
+  var DESK_WA_DAY_MAX = 40; // safety: at most this many messages we start (templates) per day, and 2 per guest per day
   function waOptedOut(phone) { var c = find('wachats', 'phone', waPhone(phone)); return !!(c && c.optout); }
   function consent(v) { return v === true || v === 'Yes' ? 'Yes' : 'No'; }
   function first(n) { return String(n || '').trim().split(/\s+/)[0] || 'Guest'; }
@@ -2438,8 +2447,16 @@ function deskCore(db, hooks) {
     }
     throw new Error('bad_kind');
   }
+  function waSentToday(phone) {
+    var t = today(), n = 0, mine = 0, ph = phone ? waPhone(phone) : '';
+    db.all('wa').forEach(function (x) { if (x.status === 'Sent' && String(x.info || '').slice(0, 10) === t) { n++; if (ph && waPhone(x.to) === ph) mine++; } });
+    db.all('bills').forEach(function (b) { if (/^Sent/.test(b.wa || '') && String(b.wa).slice(5, 15) === t) { n++; if (ph && waPhone(b.phone) === ph) mine++; } });
+    return { all: n, mine: mine };
+  }
   function waSendOne(m) {
     if (waOptedOut(m.to)) { db.set('wa', m, { status: 'Not sent', info: 'Guest said STOP' }); return; }
+    var cnt = waSentToday(m.to);
+    if (cnt.all >= DESK_WA_DAY_MAX || cnt.mine >= 2) { db.set('wa', m, { status: 'Not sent', info: 'Daily safety limit' }); return; }
     try {
       var id1 = hooks.waSend(DESK_WA[m.kind], m.to, waParams(m), null, null);
       db.set('wa', m, { status: 'Sent', info: stamp() + (id1 ? ' · ' + String(id1).slice(-12) : '') });
@@ -2470,6 +2487,7 @@ function deskCore(db, hooks) {
       if (row.wa === 'Waiting' && !/^Stopped/.test(row.status || '')) {
         if (!waAutoOn()) { if (plusHours(row.sendAt, 72) < now) db.set('bills', row, { wa: 'Not sent (automatic WhatsApp paused)' }); }
         else if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
+        else if (waSentToday(row.phone).all >= DESK_WA_DAY_MAX || waSentToday(row.phone).mine >= 2) { /* safety limit: try again tomorrow */ }
         else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('WhatsApp bill not sent: ' + row.no, row.guest + ' · ' + row.phone + '\n' + String(e && e.message || e)); } }
       }
       if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting' && (billArchived(row) || plusHours(row.pdf, 72) < now)) { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
@@ -3979,13 +3997,14 @@ function deskCore(db, hooks) {
     if (req.out) db.all('wa').forEach(function (m) { if (m.status === 'Waiting' && waPhone(m.to) === c.phone) db.set('wa', m, { status: 'Not sent', info: 'Guest said STOP' }); });
     return { ok: true };
   };
-  api._waOn = function () { return waAutoOn(); }
+  api._waOn = function () { return { auto: waAutoOn(), bot: waBotOn() }; }
   /* Owner / Manager: automatic WhatsApp messages on or paused (Settings) */
   api.waAuto = function (req) {
     var me = auth(req); needApprover(me);
     if (req.on != null) cfgSet('waAuto', req.on ? 'on' : 'off');
+    if (req.bot != null) cfgSet('waBot', req.bot ? 'on' : 'off');
     var waiting = db.all('wa').filter(function (m) { return m.status === 'Waiting'; }).length + db.all('bills').filter(function (b) { return b.wa === 'Waiting'; }).length;
-    return { on: waAutoOn(), waiting: waiting };
+    return { on: waAutoOn(), bot: waBotOn(), waiting: waiting, sentToday: waSentToday('').all, dayMax: DESK_WA_DAY_MAX };
   };
   /* internal: reception replied from the phone → the chat is seen */
   api.waSeen = function (req) {

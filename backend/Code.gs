@@ -933,9 +933,11 @@ function ycCall_(path, body, method) {
 var _waOutbox = null; // while a WhatsApp webhook is being handled, messages wait here and go out after the lock is released
 /* Quiet mode (Settings → Automatic WhatsApp messages = Paused): NOTHING is sent from the guest house number through the API —
    no assistant replies, no templates, no bills. Incoming messages are still saved in the staff app. Used while Meta reviews the account. */
-function waQuiet_() { try { return !waCore_()._waOn(); } catch (e) { return String(e && e.message) === '__NK_WAIT__' ? (function () { throw e; })() : true; } } // the Settings switch "Automatic WhatsApp messages"
+function waFlags_() { try { return waCore_()._waOn(); } catch (e) { if (String(e && e.message) === '__NK_WAIT__') throw e; return { auto: false, bot: false }; } } // Settings → WhatsApp switches
+function waQuiet_() { return !waFlags_().bot; } // assistant replies off
 function ycSend_(to, msg, noLog) {
-  if (waQuiet_()) throw new Error('wa_paused');
+  var fl = waFlags_();
+  if (msg.template ? !fl.auto : !(fl.bot || fl.auto)) throw new Error('wa_paused'); // templates need "automatic messages" on; replies need the assistant or automatic messages on
   var y = ycProps_(), d = waKey_(to);
   var num = phoneIntl_(d); // overseas numbers keep their country code
   var body = Object.assign({ from: y.from, to: num }, msg), j = {};
@@ -1101,6 +1103,7 @@ var WA_MENU_ROWS = [
   ['m_talk', '📞 Talk to us', 'Call or chat with reception']
 ];
 function waMenu_(to, st, hello) {
+  st.menuAt = Date.now();
   var mem = st.member;
   var head = hello
     ? 'Hare Krishna' + (st.name ? ' ' + st.name : '') + ' 🙏 Welcome to *Nikadi Guest House*, steps away from the Mayapur ISKCON Temple.' +
@@ -1174,7 +1177,7 @@ function waInbound_(msg) {
       else if (/\b(member|points|card|discount)/.test(low)) choice = 'm_member';
     }
   }
-  if (choice === 'menu') { waMenu_(phone, st, true); waSave_(phone, st); return; }
+  if (choice === 'menu') { if (!(st.menuAt && Date.now() - st.menuAt < 2 * 60e3)) waMenu_(phone, st, true); waSave_(phone, st); return; } // no double welcome for 2 quick messages
   if (/^m_/.test(choice)) st.step = '';
   var today = todayIst_();
 
@@ -1324,6 +1327,10 @@ function waFallback_(phone, st, text) {
   if (st.step === 'done') { // after a request, anything typed is for reception
     waNotify_('WhatsApp message after booking ' + (st.booking || ''), phone, text);
     waButtons_(phone, 'Thank you, I have passed your message to reception. They will reply here shortly.', [['m_talk', '📞 Talk to us'], ['menu', 'Main menu']]); return;
+  }
+  if (st.menuAt && Date.now() - st.menuAt < 30 * 60e3) { // the menu went out less than 30 min ago: do not repeat it, reception will read this
+    try { waCore_().waMark({ _internal: true, phone: phone, unread: true }); } catch (e) {}
+    return;
   }
   waMenu_(phone, st, !st.greeted); st.greeted = true;
 }

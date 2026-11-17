@@ -532,6 +532,8 @@ function deskCore(db, hooks) {
   /* WhatsApp rules: we only start a conversation with guests who agreed (ticked at check-in / booking), never after they said STOP,
      and only while the owner has automatic messages switched on (Settings). */
   function waAutoOn() { return cfgGet('waAuto') === 'on'; }
+  function waBotOn() { return cfgGet('waBot') === 'on'; }
+  var DESK_WA_DAY_MAX = 40; // safety: at most this many messages we start (templates) per day, and 2 per guest per day
   function waOptedOut(phone) { var c = find('wachats', 'phone', waPhone(phone)); return !!(c && c.optout); }
   function consent(v) { return v === true || v === 'Yes' ? 'Yes' : 'No'; }
   function first(n) { return String(n || '').trim().split(/\s+/)[0] || 'Guest'; }
@@ -569,8 +571,16 @@ function deskCore(db, hooks) {
     }
     throw new Error('bad_kind');
   }
+  function waSentToday(phone) {
+    var t = today(), n = 0, mine = 0, ph = phone ? waPhone(phone) : '';
+    db.all('wa').forEach(function (x) { if (x.status === 'Sent' && String(x.info || '').slice(0, 10) === t) { n++; if (ph && waPhone(x.to) === ph) mine++; } });
+    db.all('bills').forEach(function (b) { if (/^Sent/.test(b.wa || '') && String(b.wa).slice(5, 15) === t) { n++; if (ph && waPhone(b.phone) === ph) mine++; } });
+    return { all: n, mine: mine };
+  }
   function waSendOne(m) {
     if (waOptedOut(m.to)) { db.set('wa', m, { status: 'Not sent', info: 'Guest said STOP' }); return; }
+    var cnt = waSentToday(m.to);
+    if (cnt.all >= DESK_WA_DAY_MAX || cnt.mine >= 2) { db.set('wa', m, { status: 'Not sent', info: 'Daily safety limit' }); return; }
     try {
       var id1 = hooks.waSend(DESK_WA[m.kind], m.to, waParams(m), null, null);
       db.set('wa', m, { status: 'Sent', info: stamp() + (id1 ? ' · ' + String(id1).slice(-12) : '') });
@@ -601,6 +611,7 @@ function deskCore(db, hooks) {
       if (row.wa === 'Waiting' && !/^Stopped/.test(row.status || '')) {
         if (!waAutoOn()) { if (plusHours(row.sendAt, 72) < now) db.set('bills', row, { wa: 'Not sent (automatic WhatsApp paused)' }); }
         else if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
+        else if (waSentToday(row.phone).all >= DESK_WA_DAY_MAX || waSentToday(row.phone).mine >= 2) { /* safety limit: try again tomorrow */ }
         else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('WhatsApp bill not sent: ' + row.no, row.guest + ' · ' + row.phone + '\n' + String(e && e.message || e)); } }
       }
       if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting' && (billArchived(row) || plusHours(row.pdf, 72) < now)) { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
@@ -2110,13 +2121,14 @@ function deskCore(db, hooks) {
     if (req.out) db.all('wa').forEach(function (m) { if (m.status === 'Waiting' && waPhone(m.to) === c.phone) db.set('wa', m, { status: 'Not sent', info: 'Guest said STOP' }); });
     return { ok: true };
   };
-  api._waOn = function () { return waAutoOn(); }
+  api._waOn = function () { return { auto: waAutoOn(), bot: waBotOn() }; }
   /* Owner / Manager: automatic WhatsApp messages on or paused (Settings) */
   api.waAuto = function (req) {
     var me = auth(req); needApprover(me);
     if (req.on != null) cfgSet('waAuto', req.on ? 'on' : 'off');
+    if (req.bot != null) cfgSet('waBot', req.bot ? 'on' : 'off');
     var waiting = db.all('wa').filter(function (m) { return m.status === 'Waiting'; }).length + db.all('bills').filter(function (b) { return b.wa === 'Waiting'; }).length;
-    return { on: waAutoOn(), waiting: waiting };
+    return { on: waAutoOn(), bot: waBotOn(), waiting: waiting, sentToday: waSentToday('').all, dayMax: DESK_WA_DAY_MAX };
   };
   /* internal: reception replied from the phone → the chat is seen */
   api.waSeen = function (req) {

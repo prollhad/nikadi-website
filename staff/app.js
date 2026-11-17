@@ -1593,12 +1593,19 @@
       '<div class="btns"><button class="btn btn-line" type="button" id="team">Team & PINs</button><button class="btn btn-line" type="button" id="prices">Items & prices</button><button class="btn btn-line" type="button" id="wa">WhatsApp</button></div>' +
       '<div class="panel"><div class="sec-h"><h2>Cancellation policy</h2></div><div class="note">' + esc(S.st.policy.text) + '</div>' +
       '<p class="small">This text appears on the website booking form, in the house rules, in the WhatsApp confirmation and on every booking in this app.</p></div>' +
-      '<div class="panel"><div class="sec-h"><h2>Automatic WhatsApp messages</h2></div><div id="wauto" class="calc">Checking…</div>' +
-      '<p class="small">While paused, nothing at all is sent from the guest house number by the system, not even the assistant\'s replies (guests\' messages are still saved under WhatsApp). Switched on: welcome, membership invite, booking confirmation, bill and assistant replies. They only go to guests who agreed at check-in or booking, never to anyone who replied STOP. While paused, nothing is sent; messages waiting more than a day are dropped instead of being sent late.</p>' +
-      '<button class="btn btn-line" type="button" id="wauto-t">…</button></div>';
-    function waDraw(r) { $('#wauto', v).innerHTML = r.on ? '<b>On.</b> Messages go out automatically.' : '<b>Paused.</b> No automatic WhatsApp messages are sent.' + (r.waiting ? ' ' + r.waiting + ' waiting.' : ''); var b = $('#wauto-t', v); b.textContent = r.on ? 'Pause automatic messages' : 'Switch automatic messages on'; b.dataset.on = r.on ? '1' : ''; }
+      '<div class="panel"><div class="sec-h"><h2>WhatsApp from the system</h2></div><div id="wauto" class="calc">Checking…</div>' +
+      '<div class="btns"><button class="btn btn-line" type="button" id="wbot-t">…</button><button class="btn btn-line" type="button" id="wauto-t">…</button></div>' +
+      '<p class="small"><b>Assistant replies</b>: answers guests who write to us first (menu, rooms, prices, booking). Always allowed by WhatsApp. It does not repeat its menu within 30 minutes and goes quiet for 6 hours when reception replies from the phone.<br>' +
+      '<b>Messages we start</b> (welcome, membership invite, booking confirmation, bill): only to guests who agreed at check-in or booking, never after STOP, at most 40 a day and 2 per guest a day. When both are off, nothing at all is sent by the system; guests\' messages are still saved under WhatsApp.</p></div>';
+    function waDraw(r) {
+      $('#wauto', v).innerHTML = 'Assistant replies: <b>' + (r.bot ? 'On' : 'Off') + '</b> · Messages we start: <b>' + (r.on ? 'On' : 'Paused') + '</b>' + (r.on ? ' (' + r.sentToday + ' of ' + r.dayMax + ' sent today)' : '') + (r.waiting ? ' · ' + r.waiting + ' waiting' : '');
+      var a = $('#wbot-t', v), b = $('#wauto-t', v);
+      a.textContent = r.bot ? 'Turn assistant off' : 'Turn assistant on'; a.dataset.on = r.bot ? '1' : '';
+      b.textContent = r.on ? 'Pause messages we start' : 'Start sending welcome / booking / bill'; b.dataset.on = r.on ? '1' : '';
+    }
     api('deskWaAuto', {}).then(waDraw, function () { $('#wauto', v).textContent = 'Could not check.'; });
-    $('#wauto-t', v).onclick = function () { var b = this, on = !b.dataset.on; busy(b, true); api('deskWaAuto', { on: on }).then(function (r) { busy(b, false); waDraw(r); toast(r.on ? 'Automatic WhatsApp messages on' : 'Automatic WhatsApp messages paused'); }, function (e) { busy(b, false); toast(errText(e)); }); };
+    $('#wbot-t', v).onclick = function () { var b = this; busy(b, true); api('deskWaAuto', { bot: !b.dataset.on }).then(function (r) { busy(b, false); waDraw(r); toast(r.bot ? 'Assistant on' : 'Assistant off'); }, function (e) { busy(b, false); toast(errText(e)); }); };
+    $('#wauto-t', v).onclick = function () { var b = this, on = !b.dataset.on; if (on && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Sure? Only after Meta approved the new templates. Tap again'; return; } busy(b, true); api('deskWaAuto', { on: on }).then(function (r) { busy(b, false); delete b.dataset.sure; waDraw(r); toast(r.on ? 'Messages we start: on' : 'Messages we start: paused'); }, function (e) { busy(b, false); toast(errText(e)); }); };
     $('#team', v).onclick = openTeam; $('#prices', v).onclick = openPrices; $('#wa', v).onclick = openWhatsApp;
   }
   /* Owner: connect the guest house WhatsApp number (Meta WhatsApp Cloud API) for automatic messages. */
@@ -2752,7 +2759,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 59</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 60</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
