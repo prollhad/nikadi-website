@@ -128,3 +128,7 @@ const hd = await call('deskWaHandDone', { token: tok, id: ts.list[0].id, type: t
 console.log('after done', hd.ok, hd.list.length);
 const rec = await call('deskLogin', { pin: '2222' });
 console.log('manager login role', rec.me && rec.me.role);
+const kit = await call('deskWaKit', { token: tok });
+console.log('kit', kit.ok, 'in', kit.in.length, kit.in.map(g => g.name + ':' + g.msgs.map(m => m.kind).join('/')).join(' | '), 'out', kit.out.length, kit.out.map(g => g.name + ':' + g.msgs.map(m => m.kind).join('/')).join(' | '));
+const ks = await call('deskWaKitSent', { token: tok, ref: kit.in[0].key, kind: 'welcome', phone: kit.in[0].phone, name: kit.in[0].name });
+console.log('kit sent', ks.ok, ks.in[0].msgs.find(m => m.kind === 'welcome').sent);

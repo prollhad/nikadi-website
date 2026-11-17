@@ -719,3 +719,18 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .wa-send-bar b{color:var(--gold-hi,#e0be7a);flex:1}.wa-send-bar span{color:var(--muted);font-size:.8rem;flex-basis:100%;order:3}.wa-send-bar i{font-style:normal;color:var(--gold-hi,#e0be7a)}
 .wa-send{display:grid;gap:10px;margin-top:12px;width:100%;grid-column:1/-1}.wa-send-row{display:grid;gap:6px;padding:12px 14px;border:1px solid var(--line);background:var(--panel);border-radius:10px;min-width:0}.wa-send-row .t{color:var(--ink)}.wa-send-row .d{color:var(--muted);font-size:.8rem}.wa-send-row .acts{display:flex;gap:8px;flex-wrap:wrap}
 .wa-prev summary{cursor:pointer;color:var(--muted);font-size:.8rem}.wa-prev pre{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.82rem;margin:6px 0 0;padding:10px;border-radius:8px;background:rgba(127,127,127,.1)}
+/* Ready WhatsApp messages */
+.wk-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.wk-tabs button{flex:1 1 160px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font:inherit;font-size:.85rem;cursor:pointer;text-align:left}
+.wk-tabs button[aria-selected="true"]{border-color:var(--gold-hi,#e0be7a);color:var(--ink)}.wk-tabs b{color:var(--gold-hi,#e0be7a);margin-left:4px}
+.wk-list{display:grid;gap:12px;margin-top:10px}
+.wk-guest{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px;display:grid;gap:8px;min-width:0}
+.wk-guest.todo{border-left:3px solid var(--gold-hi,#e0be7a)}
+.wk-h{display:grid;gap:2px}.wk-h b{color:var(--ink)}.wk-h small{color:var(--muted);font-size:.76rem}
+.wk-msg{display:flex;gap:8px;align-items:stretch;min-width:0}
+.wk-send{flex:1;min-width:0;display:grid;gap:2px;padding:10px 12px;border-radius:10px;border:1px solid rgba(224,190,122,.45);background:rgba(224,190,122,.1);color:var(--ink);text-decoration:none}
+.wk-send .wk-l{font-weight:500}.wk-send .wk-l em{font-style:normal;font-size:.7rem;color:var(--gold-hi,#e0be7a);margin-left:4px}
+.wk-send .wk-s{font-size:.74rem;color:var(--gold-hi,#e0be7a)}
+.wk-msg.sent .wk-send{border-color:var(--line);background:none}.wk-msg.sent .wk-s{color:var(--green)}
+.wk-ed{flex:none;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:.78rem;cursor:pointer}
+.wk-ta{width:100%;box-sizing:border-box;font:inherit;font-size:.9rem;line-height:1.45;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);resize:vertical}

@@ -301,44 +301,60 @@
     ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog, laundry: viewLaundry }[S.tab] || (S.me.role === 'Laundry' ? viewLaundry : viewRooms))(v);
     waBanner(v);
   }
-  /* ---------- WhatsApp to send by hand (owner / manager) ----------
-     While automatic sending is off, the welcome, membership, booking and bill messages wait here.
-     One tap opens WhatsApp on this phone or computer with the message ready; the person just presses send. */
-  var WA_KIND = { welcome: 'Welcome', membership: 'Membership invite', booking: 'Booking confirmed', bill: 'Bill + review link' };
+  /* ---------- Ready WhatsApp messages (front desk) ----------
+     Two folders. Every guest has 4-5 messages already written with their name: tap one, WhatsApp opens with it ready, press send.
+     "Edit" lets you change the words first. A sent message gets a tick (who and when). */
+  var WK = { folder: 'in', data: null, edit: {} };
   function waBanner(v) {
     var n = S.st && S.st.waToSend;
-    if (!n || !approver() || ['today', 'rooms', 'whatsapp', 'bookings'].indexOf(S.tab) < 0 || $('#wa-send-bar', v)) return;
+    if (!n || !mgr() || ['today', 'rooms', 'whatsapp', 'bookings'].indexOf(S.tab) < 0 || $('#wa-send-bar', v)) return;
     var bar = document.createElement('button');
     bar.type = 'button'; bar.id = 'wa-send-bar'; bar.className = 'wa-send-bar';
-    bar.innerHTML = '<b>' + n + ' WhatsApp message' + (n > 1 ? 's' : '') + ' to send</b><span>Welcome, booking and bill messages · tap to send</span><i>→</i>';
-    bar.onclick = openWaSend;
+    bar.innerHTML = '<b>' + n + ' guest' + (n > 1 ? 's' : '') + ' to message on WhatsApp</b><i>→</i><span>Welcome, booking, bill and review messages are ready · tap to send</span>';
+    bar.onclick = function () { openWaSend(); };
     v.insertBefore(bar, v.firstChild);
   }
-  function openWaSend() {
-    var body = openSheet('WhatsApp to send');
+  function waHref(phone, text) { return 'https://wa.me/' + nkPhoneTel(phone).slice(1) + '?text=' + encodeURIComponent(text); }
+  function openWaSend(folder) {
+    if (folder) WK.folder = folder;
+    var body = openSheet('Ready WhatsApp messages');
     body.innerHTML = '<div class="loading">Loading…</div>';
-    function draw(list) {
-      S.st.waToSend = list.length;
-      if (!list.length) { body.innerHTML = '<p class="note">All done. Nothing waiting to be sent.</p>'; var b0 = $('#wa-send-bar'); if (b0) b0.remove(); return; }
-      body.innerHTML = '<p class="small">Tap <b>Open WhatsApp</b>: WhatsApp opens on the guest house number with the message written. Check it and press send. It is marked as sent here.</p>' +
-        '<div class="wa-send">' + list.map(function (m, i) {
-          var href = 'https://wa.me/' + nkPhoneTel(m.phone).slice(1) + '?text=' + encodeURIComponent(m.text);
-          return '<div class="wa-send-row" data-i="' + i + '"><span class="t"><b>' + esc(m.name || nkPhoneShow(m.phone)) + '</b> · ' + esc(WA_KIND[m.kind] || m.kind) + '</span>' +
-            '<span class="d">' + esc(nkPhoneShow(m.phone)) + (m.ref && m.type === 'bill' ? ' · ' + esc(m.ref) : '') + '</span>' +
-            '<details class="wa-prev"><summary>See message</summary><pre>' + esc(m.text) + '</pre></details>' +
-            '<span class="acts"><a class="btn btn-gold" target="_blank" rel="noopener" data-open="' + i + '" href="' + esc(href) + '">Open WhatsApp</a>' +
-            '<button class="btn btn-quiet" type="button" data-skip="' + i + '">Don\'t send</button></span></div>';
-        }).join('') + '</div>';
-      $$('[data-open]', body).forEach(function (a) { a.onclick = function () { done(list[+a.dataset.open], false); }; }); // the link opens WhatsApp; we mark it sent
-      $$('[data-skip]', body).forEach(function (b) { b.onclick = function () {
-        if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Sure? Tap again'; return; }
-        done(list[+b.dataset.skip], true);
+    function draw() {
+      var F = WK.data, list = F[WK.folder];
+      var cnt = function (k) { return F[k].filter(function (g) { return g.todo; }).length; };
+      body.innerHTML = '<div class="wk-tabs" role="tablist">' + [['in', 'Welcome & check-in'], ['out', 'Check-out, bill & review']].map(function (t) {
+          return '<button type="button" role="tab" data-wk="' + t[0] + '" aria-selected="' + (WK.folder === t[0]) + '">📁 ' + t[1] + (cnt(t[0]) ? ' <b>' + cnt(t[0]) + '</b>' : '') + '</button>'; }).join('') + '</div>' +
+        '<p class="small">Tap a message: WhatsApp opens on the guest house number with it written. Press send. Use <b>Edit</b> to change the words first.</p>' +
+        (list.length ? '<div class="wk-list">' + list.map(function (g, gi) {
+          return '<div class="wk-guest' + (g.todo ? ' todo' : '') + '"><div class="wk-h"><b>' + esc(g.name) + '</b><small>' + esc(g.sub) + ' · ' + esc(nkPhoneShow(g.phone)) + '</small></div>' +
+            g.msgs.map(function (m, mi) {
+              var k = g.key + '|' + m.kind, txt = WK.edit[k] != null ? WK.edit[k] : m.text;
+              return '<div class="wk-msg' + (m.sent ? ' sent' : '') + '"><a class="wk-send" target="_blank" rel="noopener" data-g="' + gi + '" data-m="' + mi + '" href="' + esc(waHref(g.phone, txt)) + '">' +
+                '<span class="wk-l">' + esc(m.label) + (WK.edit[k] != null ? ' <em>edited</em>' : '') + '</span><span class="wk-s">' + (m.sent ? '✓ Sent ' + esc(m.sent) : 'Tap to send') + '</span></a>' +
+                '<button class="wk-ed" type="button" data-eg="' + gi + '" data-em="' + mi + '">Edit</button></div>';
+            }).join('') + '</div>';
+        }).join('') + '</div>' : '<p class="note">' + (WK.folder === 'in' ? 'No arriving bookings or guests in house with a WhatsApp number.' : 'No one leaving today or checked out in the last 3 days.') + '</p>');
+      $$('[data-wk]', body).forEach(function (b) { b.onclick = function () { WK.folder = b.dataset.wk; draw(); }; });
+      $$('.wk-send', body).forEach(function (a) { a.onclick = function () {
+        var g = list[+a.dataset.g], m = g.msgs[+a.dataset.m], k = g.key + '|' + m.kind;
+        api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: WK.edit[k] != null }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out'); draw(); }, function () {});
+      }; });
+      $$('.wk-ed', body).forEach(function (b) { b.onclick = function () {
+        var g = list[+b.dataset.eg], m = g.msgs[+b.dataset.em], k = g.key + '|' + m.kind;
+        var box = openSheet('Edit · ' + m.label);
+        box.innerHTML = '<p class="small">To ' + esc(g.name) + ' · ' + esc(nkPhoneShow(g.phone)) + '</p><textarea id="wk-t" class="wk-ta" rows="12">' + esc(WK.edit[k] != null ? WK.edit[k] : m.text) + '</textarea>' +
+          '<div class="acts"><a class="btn btn-gold" id="wk-go" target="_blank" rel="noopener" href="#">Send on WhatsApp</a><button class="btn btn-quiet" type="button" id="wk-rs">Back to the original</button></div>';
+        var ta = $('#wk-t', box), go = $('#wk-go', box);
+        function upd() { go.href = waHref(g.phone, ta.value); }
+        ta.oninput = function () { WK.edit[k] = ta.value; upd(); }; upd();
+        $('#wk-rs', box).onclick = function () { delete WK.edit[k]; ta.value = m.text; upd(); };
+        go.onclick = function () {
+          WK.edit[k] = ta.value;
+          api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: ta.value !== m.text }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out'); closeSheet(); draw(); }, function () {});
+        };
       }; });
     }
-    function done(m, skip) {
-      api('deskWaHandDone', { id: m.id, type: m.type, skip: skip }).then(function (r) { toast(skip ? 'Not sent' : 'Marked as sent'); draw(r.list); }, function (e) { toast(errText(e)); });
-    }
-    api('deskWaToSend', {}).then(function (r) { draw(r.list); }, function (e) { body.innerHTML = '<p class="note">' + esc(errText(e)) + '</p>'; });
+    api('deskWaKit', {}).then(function (r) { WK.data = r; draw(); }, function (e) { body.innerHTML = '<p class="note">' + esc(errText(e)) + '</p>'; });
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -671,7 +687,7 @@
     WA_TABS.forEach(function (t) { cnt[t[0]] = 0; hot[t[0]] = 0; });
     L.forEach(function (c) { c.lists.forEach(function (k) { cnt[k]++; if (c.unread || c.important) hot[k]++; }); });
     var rows = L.filter(function (c) { return c.lists.indexOf(WA.tab) >= 0; });
-    v.innerHTML = '<div class="hrow"><div><p class="kicker">Guest chats on +91 75011 01137 · filed automatically</p><h1>WhatsApp</h1></div><button class="refresh" id="warf" type="button">Refresh</button></div>' +
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Guest chats on +91 75011 01137 · filed automatically</p><h1>WhatsApp</h1></div><div class="upd"><button class="refresh gold" id="wakit" type="button">Ready messages</button><button class="refresh" id="warf" type="button">Refresh</button></div></div>' +
       '<div class="wa-tabs" role="tablist">' + WA_TABS.map(function (t) {
         return '<button type="button" role="tab" data-wt="' + t[0] + '" aria-selected="' + (WA.tab === t[0]) + '"><span>' + t[1] + '</span><b>' + cnt[t[0]] + '</b>' + (hot[t[0]] ? '<i class="wa-dot blink" aria-label="needs attention"></i>' : '') + '</button>';
       }).join('') + '</div>' +
@@ -685,6 +701,7 @@
       }).join('') + '</div>' : '<p class="small">No chats in this list right now.</p>') +
       '<p class="small">Chats are filed by themselves: <b>New enquiry</b> (no paid booking yet) · <b>Advance paid</b> (advance received, or a payment screenshot sent for a booking) · <b>Checked in</b> (staying now) · <b>Member</b> (Nikadi members). Blinking = unread or needs checking. Opening a chat marks it read.</p>';
     $('#warf', v).onclick = function () { refresh(this); waLoad(); };
+    $('#wakit', v).onclick = function () { openWaSend(); };
     $$('[data-wt]', v).forEach(function (b) { b.onclick = function () { WA.tab = b.dataset.wt; render(); }; });
     $$('[data-ph]', v).forEach(function (b) { b.onclick = function () { openWaChat(b.dataset.ph); }; });
   }
@@ -2659,7 +2676,7 @@
       ['Payments', 'Room → Take payment (cash / UPI / card / bank). For UPI or bank write the transaction number.'],
       ['Check-out', 'Room → Check out: nights, bill details (email, company, GSTIN) → the bill is made. It goes to the guest by email and WhatsApp 12 hours later, or press "Send PDF on WhatsApp" now.'],
       ['Bookings', 'Bookings → new / pending / confirmed. Confirm only after the advance is paid; on the day the booking shows on the room in gold.'],
-      ['WhatsApp to send', 'Owner and managers: when the gold bar “WhatsApp messages to send” shows, tap it. Each welcome, booking confirmation, bill and membership invite has an Open WhatsApp button: WhatsApp opens on the guest house number with the message ready, press send. Messages wait 3 days.'],
+      ['Ready WhatsApp messages', 'WhatsApp → Ready messages (or the gold bar). Folder 1 “Welcome & check-in”: booking confirmed, how to reach us, welcome, anything you need, membership. Folder 2 “Check-out, bill & review”: check-out reminder, bill + review, bill only, thank you + Google review, come again. Tap a message: WhatsApp opens with it written, press send. Edit changes the words first. A tick shows who sent it and when.'],
       ['WhatsApp', 'WhatsApp → lists: New enquiry, Advance paid (check the screenshot, then Confirm booking), Checked in, Member. Reply from the app inside 24 hours of the guest\'s last message.'],
       ['Expenses & commission', 'More → Expenses (with bill photo) and Commission (drivers / brokers with phone number).'],
       ['Needs approval', 'Changing a rate, refunds and payment corrections go to the manager / owner: write the reason and wait for "Approved".']]],
@@ -2800,7 +2817,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 61</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 62</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

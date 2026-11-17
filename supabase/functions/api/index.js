@@ -2476,6 +2476,61 @@ function deskCore(db, hooks) {
     });
     return out.sort(function (a, b) { return String(a.at) < String(b.at) ? -1 : 1; });
   }
+  /* ===== Ready WhatsApp messages (front desk sends them by hand, one tap each) =====
+     Two folders: "Welcome & check-in" (arriving bookings + guests in house) and "Check-out, bill & review" (leaving today + left in the last 3 days).
+     Every guest gets 4-5 messages written with their name; the app opens WhatsApp with the text ready. */
+  var DESK_WA_REVIEW = 'https://g.page/r/CfDIGanjxtFCEAE/review', DESK_WA_MAPS = 'https://maps.google.com/?cid=4814848157732686064';
+  function waKitMsgs(folder, o) {
+    var n = o.first, out = [];
+    function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
+    if (folder === 'in') {
+      if (o.booking) add('booking', 'Booking confirmed', waHandText('booking', [n, o.booking.id, String(o.rooms), dd(o.checkin), dd(o.checkout), rupees(o.advance)]));
+      add('directions', 'How to reach us', 'Hare Krishna ' + n + ' 🙏 Here is how to reach Nikadi Guest House:\n📍 Bhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4 (Namahatta Bhavan), Mayapur. Look for our lit NIKADI GUEST HOUSE sign.\nEnter at the left corner of the building, beside the picture of Sri Chaitanya Mahaprabhu, and take the stairs up to our first-floor reception.\nGoogle Maps: ' + DESK_WA_MAPS + '\nCall us any time: +91 75011 01137.');
+      if (o.room) add('welcome', 'Welcome', waHandText('welcome', [n, String(o.room), dd(o.checkin), dd(o.checkout)]));
+      if (o.room) add('care', 'Anything you need?', 'Hare Krishna ' + n + ' 🙏 We hope you are comfortable in room ' + o.room + '.\nIf you need anything, like fresh towels, drinking water, an extra blanket or help with a car, just reply here or call reception on +91 75011 01137. We are happy to help.');
+      if (!o.member) add('membership', 'Membership invite', waHandText('membership', [n]));
+    } else {
+      if (o.leaving) add('checkout', 'Check-out reminder', 'Hare Krishna ' + n + ' 🙏 A gentle reminder from Nikadi Guest House: check-out is by 9:00 AM on ' + dd(o.checkout) + '.\nIf you would like a late check-out, please reply here and we will check if the room is free. Thank you!');
+      if (o.bill) add('bill', 'Bill + review', waHandText('bill', o.bill.params, o.bill.link));
+      if (o.bill) add('billonly', 'Bill only', 'Dear ' + n + ', your bill ' + o.bill.params[1] + ' from Nikadi Guest House: total ' + o.bill.params[2] + ' (incl. GST), ' + o.bill.params[3] + '.\n🧾 See or download it here: ' + o.bill.link + '\nThank you for staying with us 🙏');
+      add('review', 'Thank you + Google review', 'Hare Krishna ' + n + ' 🙏 Thank you so much for staying with us at Nikadi Guest House. It was a joy to have you.\n⭐ If you enjoyed your stay, a short Google review helps other devotees find us: ' + DESK_WA_REVIEW + '\nWhenever the Dham calls you back, we will be happy to welcome you again.');
+      add('again', o.member ? 'Come again (member)' : 'Come again + membership', 'Hare Krishna ' + n + ' 🙏 We hope you reached home safely.\nWhenever you come back to Sri Dham Mayapur, message us here for the best rate.' + (o.member ? ' As a Nikadi member you get your member discount and points on every stay.' : ' Join the free Nikadi Membership for 5–20% off every stay: ' + DESK_WA_SITE + '/app/?join=1') + '\nNikadi Guest House · +91 75011 01137');
+    }
+    return out;
+  }
+  function waKitList(light) {
+    var mem = function (ph) { return light ? false : !!memberOf(ph); };
+    var t = today(), sent = {}, folders = { in: [], out: [] };
+    db.all('wa').forEach(function (m) { if (/^hand:/.test(m.kind) && m.status === 'Sent') sent[m.ref + '|' + m.kind.slice(5)] = m.info; });
+    function ok(phone, waOk) { return phone && waOk !== 'No' && !waOptedOut(phone); }
+    function push(folder, key, o) {
+      var msgs = waKitMsgs(folder, o).map(function (m) { m.sent = sent[key + '|' + m.kind] || ''; return m; });
+      folders[folder].push({ key: key, name: o.name, phone: waPhone(o.phone), room: o.room || '', sub: o.sub, msgs: msgs, todo: msgs.some(function (m) { return !m.sent && (m.kind === 'welcome' || m.kind === 'bill' || m.kind === 'booking'); }) });
+    }
+    db.all('bookings').forEach(function (b) {
+      if (b.status !== 'Confirmed' || !ok(b.phone, b.waOk) || b.checkin > addDays(t, 3) || b.checkout < t) return;
+      var rooms = String(b.rooms || '').split(',').filter(function (x) { return x.trim(); }).length || Number(b.roomsNeeded || 1);
+      push('in', b.id, { name: b.guest, first: first(b.guest), phone: b.phone, checkin: b.checkin, checkout: b.checkout, rooms: rooms, advance: Number(b.advancePaid || 0) - Number(b.refunded || 0), booking: b,
+        sub: 'Booking ' + b.id + ' · arrives ' + dd(b.checkin), member: mem(b.phone) });
+    });
+    db.all('stays').forEach(function (s) {
+      if (!ok(s.phone, s.waOk)) return;
+      if (s.status !== 'In house' && s.status !== 'Checked out') return;
+      var member;
+      if (s.status === 'In house') {
+        member = mem(s.phone);
+        push('in', s.id, { name: s.guest, first: first(s.guest), phone: s.phone, room: s.room, checkin: s.checkin, checkout: s.checkout, member: member, sub: 'Room ' + s.room + ' · ' + dd(s.checkin) + ' to ' + dd(s.checkout) });
+        if (s.checkout <= addDays(t, 1)) push('out', s.id, { name: s.guest, first: first(s.guest), phone: s.phone, room: s.room, checkout: s.checkout, leaving: true, member: member, sub: 'Room ' + s.room + ' · leaves ' + dd(s.checkout) });
+      } else if (s.status === 'Checked out' && String(s.outAt || s.checkout).slice(0, 10) >= addDays(t, -3)) {
+        member = mem(s.phone);
+        var b = billOfStay(s.id), bill = b ? { params: billParams(b), link: DESK_BILL_URL + b.id } : null;
+        push('out', s.id, { name: s.guest, first: first(s.guest), phone: s.phone, room: s.room, checkout: s.checkout, bill: bill, member: member, sub: 'Room ' + s.room + ' · left ' + dd(String(s.outAt || s.checkout).slice(0, 10)) });
+      }
+    });
+    folders.out.reverse();
+    return folders;
+  }
+  function waKitCount() { var f = waKitList(true); return f.in.filter(function (g) { return g.todo; }).length + f.out.filter(function (g) { return g.todo; }).length; }
   function waHandCount() {
     if (waAutoOn()) return 0;
     return db.all('wa').filter(function (m) { return m.status === 'Waiting'; }).length + db.all('bills').filter(function (b) { return b.wa === 'Waiting' && b.phone && !/^(Stopped|On hold)/.test(String(b.status || '')); }).length;
@@ -2736,7 +2791,7 @@ function deskCore(db, hooks) {
     me.canApprove = canApprove(me);
     var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, compHosts: DESK_COMP_HOSTS, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
       approvals: canApprove(me) ? reqs.filter(function (r) { return r.status === 'Pending'; }).length : 0,
-      backToReady: true, waAuto: waAutoOn(), waConsent: true, waToSend: canApprove(me) ? waHandCount() : 0,
+      backToReady: true, waAuto: waAutoOn(), waConsent: true, waToSend: mgr ? waKitCount() : 0,
       laundryNew: mgr ? db.all('laundry').filter(function (x) { return x.status === 'Waiting for approval' || x.status === 'Return to check'; }).length : 0,
       myRequests: me.role === 'Receptionist' ? reqs.filter(function (r) { return r.status === 'Pending' && r.by === me.name; }).length : 0,
       stocklog: db.all('stocklog').slice(-15).reverse(),
@@ -4047,6 +4102,18 @@ function deskCore(db, hooks) {
       if (m.status === 'Waiting') db.set('wa', m, { status: skip ? 'Not sent' : 'Sent', info: stamp() + ' · ' + (skip ? 'Skipped by ' : 'Sent by hand · ') + me.name });
     }
     return { list: waHandList() };
+  };
+  /* Front desk (owner, manager, reception): the ready messages, and marking one as sent */
+  api.waKit = function (req) {
+    var me = auth(req); needMgr(me);
+    return waKitList();
+  };
+  api.waKitSent = function (req) {
+    var me = auth(req); needMgr(me);
+    var kind = String(req.kind || '').replace(/[^a-z]/g, '').slice(0, 20), ref = String(req.ref || '').slice(0, 40);
+    if (!kind || !ref) fail('bad_request');
+    db.add('wa', { id: id('W'), at: stamp(), sendAt: stamp(), to: waPhone(req.phone || ''), name: text(req.name, 60), kind: 'hand:' + kind, ref: ref, status: 'Sent', info: stamp() + ' · ' + me.name + (req.edited ? ' (edited)' : '') });
+    return waKitList();
   };
   api._waOn = function () { return { auto: waAutoOn(), bot: waBotOn() }; }
   /* Owner / Manager: automatic WhatsApp messages on or paused (Settings) */
