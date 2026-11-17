@@ -931,9 +931,9 @@ function ycCall_(path, body, method) {
 }
 /** One message to one number (msg is the WhatsApp message body without from/to: {type:'text', text:{body}} etc.). */
 var _waOutbox = null; // while a WhatsApp webhook is being handled, messages wait here and go out after the lock is released
-/* Quiet mode (script property NK_WA_QUIET = 1): NOTHING is sent from the guest house number through the API —
+/* Quiet mode (Settings → Automatic WhatsApp messages = Paused): NOTHING is sent from the guest house number through the API —
    no assistant replies, no templates, no bills. Incoming messages are still saved in the staff app. Used while Meta reviews the account. */
-function waQuiet_() { try { return PropertiesService.getScriptProperties().getProperty('NK_WA_QUIET') === '1'; } catch (e) { return false; } }
+function waQuiet_() { try { return !waCore_()._waOn(); } catch (e) { return String(e && e.message) === '__NK_WAIT__' ? (function () { throw e; })() : true; } } // the Settings switch "Automatic WhatsApp messages"
 function ycSend_(to, msg, noLog) {
   if (waQuiet_()) throw new Error('wa_paused');
   var y = ycProps_(), d = waKey_(to);

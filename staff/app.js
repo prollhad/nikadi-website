@@ -1594,7 +1594,7 @@
       '<div class="panel"><div class="sec-h"><h2>Cancellation policy</h2></div><div class="note">' + esc(S.st.policy.text) + '</div>' +
       '<p class="small">This text appears on the website booking form, in the house rules, in the WhatsApp confirmation and on every booking in this app.</p></div>' +
       '<div class="panel"><div class="sec-h"><h2>Automatic WhatsApp messages</h2></div><div id="wauto" class="calc">Checking…</div>' +
-      '<p class="small">Welcome, membership invite, booking confirmation and bill. They only go to guests who agreed at check-in or booking, never to anyone who replied STOP. While paused, nothing is sent; messages waiting more than a day are dropped instead of being sent late.</p>' +
+      '<p class="small">While paused, nothing at all is sent from the guest house number by the system, not even the assistant\'s replies (guests\' messages are still saved under WhatsApp). Switched on: welcome, membership invite, booking confirmation, bill and assistant replies. They only go to guests who agreed at check-in or booking, never to anyone who replied STOP. While paused, nothing is sent; messages waiting more than a day are dropped instead of being sent late.</p>' +
       '<button class="btn btn-line" type="button" id="wauto-t">…</button></div>';
     function waDraw(r) { $('#wauto', v).innerHTML = r.on ? '<b>On.</b> Messages go out automatically.' : '<b>Paused.</b> No automatic WhatsApp messages are sent.' + (r.waiting ? ' ' + r.waiting + ' waiting.' : ''); var b = $('#wauto-t', v); b.textContent = r.on ? 'Pause automatic messages' : 'Switch automatic messages on'; b.dataset.on = r.on ? '1' : ''; }
     api('deskWaAuto', {}).then(waDraw, function () { $('#wauto', v).textContent = 'Could not check.'; });

@@ -2110,6 +2110,7 @@ function deskCore(db, hooks) {
     if (req.out) db.all('wa').forEach(function (m) { if (m.status === 'Waiting' && waPhone(m.to) === c.phone) db.set('wa', m, { status: 'Not sent', info: 'Guest said STOP' }); });
     return { ok: true };
   };
+  api._waOn = function () { return waAutoOn(); }
   /* Owner / Manager: automatic WhatsApp messages on or paused (Settings) */
   api.waAuto = function (req) {
     var me = auth(req); needApprover(me);
