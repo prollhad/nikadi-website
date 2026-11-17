@@ -842,6 +842,25 @@ html{overflow-x:hidden}
 .ig-list{display:grid;gap:10px}
 .ig-list .ig-follow{max-width:none}
 .ig-mini{color:var(--gold-hi);white-space:nowrap}
+
+/* membership deck: the approved card artwork (same as the member app and the printed cards) */
+.mdeck .mcard.art2{background:var(--art) center/cover no-repeat,#111!important;padding:0 6.6% 5.6%;grid-template-rows:1fr auto;border-radius:16px;box-shadow:0 26px 50px -20px rgba(0,0,0,.8)!important}
+.mcard.art2::after{display:none}
+.mcard.art2 .a-bot{grid-row:2;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.mcard.art2 .a-name{font-family:var(--body);font-size:.92rem;font-weight:700;letter-spacing:.16em}
+.mcard.art2 .a-id{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.6rem;letter-spacing:.14em;opacity:.75}
+.mcard.art2 .a-pts{display:grid;justify-items:end;gap:2px;text-align:right}
+.mcard.art2 .a-pts b{font-family:var(--display);font-size:1.9rem;font-weight:600;line-height:1}
+.mcard.art2 .a-pts span{font-size:.5rem;letter-spacing:.3em;text-transform:uppercase;opacity:.75}
+.mcard.art2 .a-pts small{font-size:.6rem;opacity:.75}
+.a-silver{--art:url(app/icons/card-silver.svg);color:#23272c}
+.a-gold{--art:url(app/icons/card-gold.svg);color:#efd594;padding:0 9% 7.4% 9%!important}
+.a-gold .a-pts b{color:#f3dda0}
+.a-platinum{--art:url(app/icons/card-platinum.svg);color:#e6ebf2;padding:0 7% 5%!important}
+.a-plus{--art:url(app/icons/card-plus.svg);color:#d9dadc;padding:0 9% 7.4% 9%!important}
+.a-plus .a-bot{flex-direction:column-reverse;align-items:flex-start;max-width:46%;gap:8px}
+.a-plus .a-pts{justify-items:start;text-align:left}
+.a-plus .a-pts b{background:linear-gradient(180deg,#f3dfa6,#c9a35a 70%,#a9823e);-webkit-background-clip:text;background-clip:text;color:transparent}
 </style>
 </head>
 <body>
@@ -1043,10 +1062,10 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       </div>
       <div class="mem-side">
         <div class="mdeck" id="mdeck" aria-label="Sample membership cards for each level">
-          <div class="mcard mc-silver on" data-tier="0"><div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Silver</span></div><div class="mcard-mid"><div class="mcard-pts"><b>100</b><span>points</span></div><span class="mcard-off">5% off</span></div><div class="mcard-bot"><span class="mcard-name">CHANDRAMUKHI</span><span>Sample card · Sri Dham Mayapur</span></div></div>
-          <div class="mcard mc-gold" data-tier="1"><div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Gold</span></div><div class="mcard-mid"><div class="mcard-pts"><b>1,250</b><span>points</span></div><span class="mcard-off">10% off</span></div><div class="mcard-bot"><span class="mcard-name">CHANDRAMUKHI</span><span>Sample card · Sri Dham Mayapur</span></div></div>
-          <div class="mcard mc-platinum" data-tier="2"><div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Platinum</span></div><div class="mcard-mid"><div class="mcard-pts"><b>3,400</b><span>points</span></div><span class="mcard-off">15% off</span></div><div class="mcard-bot"><span class="mcard-name">CHANDRAMUKHI</span><span>Sample card · Sri Dham Mayapur</span></div></div>
-          <div class="mcard mc-plus" data-tier="3"><div class="mcard-top"><span class="mcard-brand">NIKADI</span><span class="mcard-tier">Platinum Plus</span></div><div class="mcard-mid"><div class="mcard-pts"><b>9,800</b><span>points</span></div><span class="mcard-off">20% off</span></div><div class="mcard-bot"><span class="mcard-name">CHANDRAMUKHI</span><span>Sample card · Sri Dham Mayapur</span></div></div>
+          <div class="mcard art2 a-silver on" data-tier="0" role="img" aria-label="Sample Silver membership card for Chandramukhi"><div class="a-bot"><div><div class="a-name">CHANDRAMUKHI</div><div class="a-id">SAMPLE CARD</div></div><div class="a-pts"><b>100</b><span>points</span><small>Worth ₹500 off</small></div></div></div>
+          <div class="mcard art2 a-gold" data-tier="1" role="img" aria-label="Sample Gold membership card for Chandramukhi"><div class="a-bot"><div><div class="a-name">CHANDRAMUKHI</div><div class="a-id">SAMPLE CARD</div></div><div class="a-pts"><b>1,250</b><span>points</span><small>Worth ₹6,000 off</small></div></div></div>
+          <div class="mcard art2 a-platinum" data-tier="2" role="img" aria-label="Sample Platinum membership card for Chandramukhi"><div class="a-bot"><div><div class="a-name">CHANDRAMUKHI</div><div class="a-id">SAMPLE CARD</div></div><div class="a-pts"><b>3,400</b><span>points</span><small>Worth ₹17,000 off</small></div></div></div>
+          <div class="mcard art2 a-plus" data-tier="3" role="img" aria-label="Sample Platinum Plus membership card for Chandramukhi"><div class="a-bot"><div><div class="a-name">CHANDRAMUKHI</div><div class="a-id">SAMPLE CARD</div></div><div class="a-pts"><b>9,800</b><span>points</span><small>Worth ₹49,000 off</small></div></div></div>
           <div class="mdots" role="tablist"><button type="button" role="tab" data-tier="0" aria-selected="true">Silver</button><button type="button" role="tab" data-tier="1">Gold</button><button type="button" role="tab" data-tier="2">Platinum</button><button type="button" role="tab" data-tier="3">Platinum Plus</button></div>
         </div>
         <details class="mem-terms">
