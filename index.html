@@ -796,6 +796,16 @@ body{background:radial-gradient(1200px 600px at 80% -10%,rgba(212,175,55,.08),tr
 .more li b{font-weight:500}
 .more li small{color:var(--muted);font-size:.8rem}
 .more .tt{margin:0;padding:0}
+.carg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:900px){.carg{grid-template-columns:1fr}}
+.car{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:26px;display:flex;flex-direction:column;gap:12px}
+.car-ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:rgba(212,175,55,.12);color:var(--gold-hi)}
+.car-ic svg{width:28px;height:28px}
+.car h3{font-size:1.5rem}
+.car p{color:var(--muted);font-size:.95rem}
+.car-t{align-self:flex-start;font-size:.78rem;padding:5px 12px;border-radius:999px;border:1px solid rgba(212,175,55,.35);color:var(--gold-hi)}
+.car-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:auto;padding-top:6px}
+.car-acts .btn{padding:11px 18px}
 .credits{margin-top:22px;font-size:.74rem;color:var(--muted)}
 
 /* ===== v5: smooth scrolling, Instagram rows, membership card deck, Meet Chandramukhi ===== */
@@ -971,7 +981,7 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
 .qr-book span{color:var(--gold-ink);font-weight:700}
 .qr-toggle{display:none;width:56px;height:56px;border-radius:50%;border:0;background:var(--gold-grad);color:var(--gold-ink);box-shadow:0 10px 26px rgba(0,0,0,.5);cursor:pointer}
 .qr-toggle svg{width:26px;height:26px;transition:transform .25s}
-@media (min-width:1061px){.qrail{top:50%;bottom:auto;transform:translateY(-50%)}.wrap{padding-right:max(clamp(16px,4vw,72px),92px)}}
+@media (min-width:1061px){.qrail{top:50%;bottom:auto;transform:translateY(-50%)}.qr{height:44px;min-width:44px}.qr svg{width:20px;height:20px;margin:0 11px}.qr-list{gap:7px}.wrap{padding-right:max(clamp(16px,4vw,72px),92px)}}
 @media (max-width:1060px){
   .qrail{bottom:calc(84px + env(safe-area-inset-bottom,0px));right:calc(14px + env(safe-area-inset-right,0px))}
   .qr-toggle{display:grid;place-items:center}
@@ -979,7 +989,8 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
   .qrail.open .qr-list{display:flex}
   .qrail.open .qr-toggle svg{transform:rotate(45deg)}
   .qr span{max-width:220px;opacity:1;padding-left:18px}
-  .qr{height:48px}
+  .qr{height:46px}
+  .qr-list{max-height:calc(100svh - 230px);overflow-y:auto;padding:4px 2px;scrollbar-width:none}
 }
 </style>
 </head>
@@ -990,7 +1001,7 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
   <div class="wrap">
     <a class="brand" href="#home"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"></a>
     <nav class="main" aria-label="Sections">
-      <a href="#reviews">Reviews</a><a href="#membership">Membership</a><a href="#rooms">Rooms</a><a href="#location">Location</a><a href="#temple">Temple</a><a href="#explore">Explore</a><a href="#about">About</a><a href="#contact">Contact</a>
+      <a href="#reviews">Reviews</a><a href="#membership">Membership</a><a href="#rooms">Rooms</a><a href="#location">Location</a><a href="#temple">Temple</a><a href="#explore">Explore</a><a href="#cars">Cars</a><a href="#about">About</a><a href="#contact">Contact</a>
     </nav>
     <div class="top-acts">
       <button class="mem-chip" id="memChip" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg><span id="memChipTxt">Member sign in</span></button>
@@ -1265,9 +1276,11 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         <h3>On foot</h3>
         <ul>
           <li><span>Main ISKCON Temple</span><span class="t">8<small>min</small></span></li>
-          <li><span>Govinda's (Mahaprasad)</span><span class="t">10<small>min</small></span></li>
+          <li><span>Govinda's Restaurant</span><span class="t">10<small>min</small></span></li>
           <li><span>Gita Bhavan</span><span class="t">5<small>min</small></span></li>
           <li><span>Gada Bhavan</span><span class="t">2<small>min</small></span></li>
+          <li><span>Radha Rasamrita (prasadam)</span><span class="t">3<small>min</small></span></li>
+          <li><span>Govinda's Prasadam</span><span class="t">5<small>min</small></span></li>
           <li><span>Punjab National Bank</span><span class="t">1<small>min</small></span></li>
           <li><span>Indian Overseas Bank</span><span class="t">1<small>min</small></span></li>
           <li><span>SBI ATM</span><span class="t">1<small>min</small></span></li>
@@ -1386,7 +1399,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       </div>
       <div class="more rv">
         <h3>Prasadam and food</h3>
-        <ul><li><div><b>Govinda&#x27;s</b><small>ISKCON campus · Mahaprasad</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Govinda%27s+Resturant%2C+Gurukula+Rd%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>10 min</b><i>›</i></a><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Govinda%27s+Resturant%2C+Gurukula+Rd%2C+Mayapur&travelmode=driving" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>4 min</b><i>›</i></a></span></li><li><div><b>Gada Bhavan</b><small>ISKCON campus</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Gada+Bhavan%2C+BBT+Rd%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>2 min</b><i>›</i></a></span></li><li><div><b>Gita Bhavan</b><small>ISKCON campus</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Gita+Bhavan%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>5 min</b><i>›</i></a></span></li><li><div><b>Namahatta Bhavan</b><small>Right opposite us</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Namahatta+Bhavan%2C+Bhaktisiddhanta+Saraswati+Marg%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>1 min</b><i>›</i></a></span></li><li><div><b>Sulabh Bhojanalay</b><small>Prasadam hall, ISKCON campus</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Prasadam+Hall%2C+Bhaktisiddhanta+Saraswati+Marg%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>6 min</b><i>›</i></a><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Prasadam+Hall%2C+Bhaktisiddhanta+Saraswati+Marg%2C+Mayapur&travelmode=driving" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b><i>›</i></a></span></li><li><div><b>Pushpa Samadhi Market</b><small>Snacks and shops</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Srila+Prabhupada+Pushpa+Samadhi+Mandir%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>6 min</b><i>›</i></a><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Srila+Prabhupada+Pushpa+Samadhi+Mandir%2C+Mayapur&travelmode=driving" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b><i>›</i></a></span></li><li><div><b>Vrinda&#x27;s Pizzeria</b><small>Pizza and more · Rupanuga Bhavan</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Vrinda%27s+Pizzeria%2C+Rupanuga+Bhavan%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>12 min</b><i>›</i></a><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Vrinda%27s+Pizzeria%2C+Rupanuga+Bhavan%2C+Mayapur&travelmode=driving" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b><i>›</i></a></span></li><li><div><b>Restaurants for lunch</b><small>Pure veg restaurants around us</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/search/vegetarian+restaurants/@23.42668,88.3880999,17z" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>4–5 min</b><i>›</i></a></span></li></ul>
+        <ul><li><div><b>Govinda&#x27;s Restaurant</b><small>ISKCON campus · Mahaprasad</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Govinda%27s+Resturant%2C+Gurukula+Rd%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>10 min</b><i>›</i></a><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Govinda%27s+Resturant%2C+Gurukula+Rd%2C+Mayapur&travelmode=driving" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>4 min</b><i>›</i></a></span></li><li><div><b>Govinda&#x27;s Prasadam</b><small>Vamsi Bhavan Road, ISKCON campus</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Govinda%27s+Prasadam%2C+Vamsi+Bhavan+Rd%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>5 min</b><i>›</i></a><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Govinda%27s+Prasadam%2C+Vamsi+Bhavan+Rd%2C+Mayapur&travelmode=driving" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b><i>›</i></a></span></li><li><div><b>Radha Rasamrita</b><small>Prasadam at Gada Bhavan</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Radha+Rasamrita+%28Prasadam%29%2C+Gada+Bhavan%2C+BBT+Rd%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>3 min</b><i>›</i></a></span></li><li><div><b>Gada Bhavan</b><small>ISKCON campus</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Gada+Bhavan%2C+BBT+Rd%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>2 min</b><i>›</i></a></span></li><li><div><b>Gita Bhavan</b><small>ISKCON campus</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Gita+Bhavan%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>5 min</b><i>›</i></a></span></li><li><div><b>Namahatta Bhavan</b><small>Right opposite us</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Namahatta+Bhavan%2C+Bhaktisiddhanta+Saraswati+Marg%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>1 min</b><i>›</i></a></span></li><li><div><b>Sulabh Bhojanalay</b><small>Prasadam hall, ISKCON campus</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Prasadam+Hall%2C+Bhaktisiddhanta+Saraswati+Marg%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>6 min</b><i>›</i></a><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Prasadam+Hall%2C+Bhaktisiddhanta+Saraswati+Marg%2C+Mayapur&travelmode=driving" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b><i>›</i></a></span></li><li><div><b>Pushpa Samadhi Market</b><small>Snacks and shops</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Srila+Prabhupada+Pushpa+Samadhi+Mandir%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>6 min</b><i>›</i></a><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Srila+Prabhupada+Pushpa+Samadhi+Mandir%2C+Mayapur&travelmode=driving" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b><i>›</i></a></span></li><li><div><b>Vrinda&#x27;s Pizzeria</b><small>Pizza and more · Rupanuga Bhavan</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Vrinda%27s+Pizzeria%2C+Rupanuga+Bhavan%2C+Mayapur&travelmode=walking" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>12 min</b><i>›</i></a><a class="ttl" href="https://www.google.com/maps/dir/?api=1&origin=23.42668,88.3880999&destination=Vrinda%27s+Pizzeria%2C+Rupanuga+Bhavan%2C+Mayapur&travelmode=driving" target="_blank" rel="noopener" title="Open the way in Google Maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16V8a3 3 0 0 1 3-3h7l4 5v6M3 16h18"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M14 5v5h4"/></svg> Toto <b>3 min</b><i>›</i></a></span></li><li><div><b>Restaurants for lunch</b><small>Pure veg restaurants around us</small></div><span class="tt"><a class="ttl" href="https://www.google.com/maps/search/vegetarian+restaurants/@23.42668,88.3880999,17z" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 2 3 3M10 8l-1 5"/></svg> Walk <b>4–5 min</b><i>›</i></a></span></li></ul>
       </div>
     </div>
     <div class="ex-acts rv">
@@ -1397,7 +1410,22 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s" id="amenities">
+<section class="s" id="cars">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="kicker rule">Car service</p>
+      <h2>Travel with <em class="goldtx">Nikadi</em></h2>
+      <p>Our reception arranges a private car with a driver from the guest house to Kolkata Airport, Kolkata city and stations, and for travelling around Kolkata. Tell us your date and time on WhatsApp and we will send you the price and confirm the car.</p>
+    </div>
+    <div class="carg">
+      <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Mayapur ⇄ Kolkata Airport</h3><p>Netaji Subhas Chandra Bose International Airport (CCU). About 3 hours each way. Pick-up from the airport or drop for your flight, timed to your schedule.</p><span class="car-t">About 3 hr</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna%21%20I%20need%20a%20car%20between%20Nikadi%20Guest%20House%20and%20Kolkata%20Airport.%20Date%3A%20%0ATime%20/%20flight%3A%20%0AGuests%3A%20%0ALuggage%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+917501101137">Call</a></div></article>
+      <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Mayapur ⇄ Kolkata city</h3><p>Howrah, Sealdah and Kolkata Station, hotels or any address in Kolkata. About 3½ hours each way.</p><span class="car-t">About 3.5 hr</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna%21%20I%20need%20a%20car%20between%20Nikadi%20Guest%20House%20and%20Kolkata.%20Pick-up%20/%20drop%20address%3A%20%0ADate%20and%20time%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+917501101137">Call</a></div></article>
+      <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Travel around Kolkata</h3><p>A car with driver for a half day or full day in Kolkata: Kalighat, Dakshineswar, Belur Math, ISKCON Kolkata, Victoria Memorial, shopping and more.</p><span class="car-t">Half or full day</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna%21%20I%20would%20like%20a%20car%20for%20travelling%20around%20Kolkata.%20Date%3A%20%0AHalf%20day%20/%20full%20day%3A%20%0APlaces%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+917501101137">Call</a></div></article>
+    </div>
+  </div>
+</section>
+
+<section class="s alt" id="amenities">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">In every room</p>
@@ -1429,7 +1457,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s alt" id="views">
+<section class="s" id="views">
   <div class="wrap">
     <div class="views">
       <figure class="v-main zoom"><img src="img/view-temple.jpg" alt="The domes of the Temple of the Vedic Planetarium lit up at night, seen from Nikadi Guest House" loading="lazy"><figcaption>Temple of the Vedic Planetarium, seen from Nikadi</figcaption></figure>
@@ -1448,7 +1476,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s" id="gallery">
+<section class="s alt" id="gallery">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Gallery</p>
@@ -1481,7 +1509,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s alt" id="booking">
+<section class="s" id="booking">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Booking and payment</p>
@@ -1564,7 +1592,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s" id="rules">
+<section class="s alt" id="rules">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">House rules</p>
@@ -1580,7 +1608,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s alt" id="about">
+<section class="s" id="about">
   <div class="wrap about">
     <figure class="rv"><img src="img/hero/P/facade-day.jpg" alt="Nikadi Guest House by day, opposite ISKCON Gate No. 4" loading="lazy"><figcaption>Nikadi Guest House, opposite ISKCON Gate No. 4</figcaption></figure>
     <div class="tx rv">
@@ -1599,7 +1627,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s" id="faq">
+<section class="s alt" id="faq">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Questions</p>
@@ -1618,7 +1646,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s alt contact" id="contact">
+<section class="s contact" id="contact">
   <div class="wrap">
     <div class="head rv">
       <p class="kicker rule">Contact us</p>
@@ -2152,6 +2180,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <a href="#explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Holy places</span></a>
       <a href="#gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>Gallery</span></a>
       <a href="#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Location</span></a>
+      <a href="#cars"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg><span>Car service</span></a>
       <a href="#booking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="1"/><path d="M3 10h18M7 15h4"/></svg><span>Pay advance</span></a>
       <a href="#forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Forms</span></a>
       <a href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About us</span></a>
@@ -2172,8 +2201,13 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     <a class="qr qr-call" href="tel:+917501101137"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><span>Call +91 75011 01137</span></a>
     <a class="qr qr-sms" href="sms:+917501101137?&body=Hare%20Krishna!%20I%20would%20like%20to%20book%20a%20room%20at%20Nikadi%20Guest%20House."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span>Send an SMS</span></a>
     <a class="qr qr-book" href="#home" data-focus-book><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg><span>Book now</span></a>
+    <a class="qr qr-rooms" href="#rooms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18V7M21 18v-5a3 3 0 0 0-3-3h-8v8M3 14h18"/><circle cx="6.5" cy="10.5" r="1.5"/></svg><span>Rooms</span></a>
+    <a class="qr qr-today" href="#now"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Mayapur today</span></a>
     <a class="qr qr-temple" href="#temple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v3M8 9a4 4 0 0 1 8 0M5 21V12h14v9M3 21h18M9 21v-5h6v5M7 12V9h10v3"/></svg><span>Temple programs</span></a>
     <a class="qr qr-sites" href="#explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Mayapur site scene</span></a>
+    <a class="qr qr-loc" href="#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3zM9 7v13M15 4v13"/></svg><span>Location</span></a>
+    <a class="qr qr-car" href="#cars"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg><span>Car service · Airport & Kolkata</span></a>
+    <a class="qr qr-about" href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About us</span></a>
   </div>
 </nav>
 <a class="fab" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20would%20like%20to%20book%20a%20room%20at%20Nikadi%20Guest%20House.%0ACheck-in%3A%20%0ACheck-out%3A%20%0AGuests%3A%20" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
