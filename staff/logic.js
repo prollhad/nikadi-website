@@ -621,6 +621,35 @@ function deskCore(db, hooks) {
     }
     return out;
   }
+  /* Enquiries: rooms + prices for the guest's dates, the 50% advance and the "advance received" reply */
+  var DESK_UPI = 'nikadiguesthouse@axisbank', DESK_PAY_LINK = 'https://www.nikadiguesthouse.com/#booking';
+  var DESK_TYPE_INFO = { 'Deluxe Double': ['Deluxe Double', 'king bed, up to 2 adults'], 'Deluxe Twin': ['Deluxe Twin', '2 single beds, up to 2 adults'], 'Large Twin': ['Large Twin', '2 single beds, more space, up to 3 adults'] };
+  function roomTypeKey(t) { t = String(t || ''); return /large/i.test(t) ? 'Large Twin' : /twin/i.test(t) ? 'Deluxe Twin' : /double|king/i.test(t) ? 'Deluxe Double' : ''; }
+  function quoteOf(type, ci, co, rooms) { var tot = 0, d = ci; for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { tot += deskRateOn(type, d); d = addDays(d, 1); } return tot * Math.max(1, rooms || 1); }
+  function enqMsgs(o) {
+    var n = o.first ? ' ' + o.first : '', out = [];
+    function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
+    add('hello', 'Hello + ask dates', 'Hare Krishna' + n + ' 🙏 Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur.\nPlease send your check-in date, number of nights, number of guests and rooms, and we will reply with the free rooms and today\'s best price.\nRoom photos: ' + DESK_WA_SITE + '/#rooms');
+    if (o.ci && o.co) {
+      var nights = nightsBetween(o.ci, o.co), rooms = Math.max(1, o.rooms || 1), when = dd(o.ci) + ' to ' + dd(o.co) + ' · ' + nights + ' night' + (nights > 1 ? 's' : '') + ' · ' + rooms + ' room' + (rooms > 1 ? 's' : '');
+      var av = api.availability({ _internal: true, checkin: o.ci, checkout: o.co }), lines = [], best = null, want = roomTypeKey(o.type);
+      ['Deluxe Double', 'Deluxe Twin', 'Large Twin'].forEach(function (k) {
+        var t = av.types.filter(function (x) { return x.type === k; })[0]; if (!t || t.free < rooms) return;
+        var tot = quoteOf(k, o.ci, o.co, rooms), info = DESK_TYPE_INFO[k];
+        lines.push('🛏️ ' + info[0] + ' (' + info[1] + '): ' + rupees(tot) + ' total · ' + rupees(Math.round(tot / nights / rooms)) + ' a night' + (t.free <= 2 ? ' · only ' + t.free + ' left' : ''));
+        if (!best || k === want) best = { type: k, total: tot };
+      });
+      if (lines.length) add('rooms', 'Free rooms & price', 'Hare Krishna' + n + ' 🙏 Rooms free for ' + when + ':\n' + lines.join('\n') + '\nAll rooms are air-conditioned, with private bathroom, geyser, Wi-Fi and TV. Prices include GST. Check-in from 11:00 AM, check-out by 9:00 AM.\nShall we hold a room for you?');
+      else add('full', 'Sorry, we are full', 'Hare Krishna' + n + ' 🙏 Sorry, we are fully booked for ' + when + '. If your dates can change a little, tell us and we will check again. Thank you!');
+      if (best) {
+        var adv = Math.round(best.total / 2);
+        add('advance', 'Ask for 50% advance', 'Hare Krishna' + n + ' 🙏 To hold your ' + DESK_TYPE_INFO[best.type][0] + ' for ' + when + ', please pay the 50% advance of ' + rupees(adv) + ' (total ' + rupees(best.total) + '). The balance is paid at check-in.\n💳 UPI ID: ' + DESK_UPI + ' (Nikadi Guest House)\nOr scan our QR code here: ' + DESK_PAY_LINK + '\nPlease send the payment screenshot in this chat and we will confirm your booking right away.\nCancellation: 3 or more days before check-in, full refund of the advance.');
+        add('paid', 'Advance received', 'Hare Krishna' + n + ' 🙏 Thank you, we have received your advance' + (adv ? ' of ' + rupees(adv) : '') + '. We are confirming your booking now and will send the confirmation with all the details in a moment.');
+      }
+    }
+    add('policy', 'Check-in & cancellation', 'Hare Krishna' + n + ' 🙏 Check-in from 11:00 AM, check-out by 9:00 AM. Please bring a photo ID for every guest.\nA 50% advance holds the room; the balance is paid at check-in.\nCancellation: cancel 3 or more days before check-in for a full refund of the advance; after that the advance is not refundable.\nFull details: ' + DESK_WA_SITE + '/#cancellation');
+    return out;
+  }
   function waKitList(light) {
     var mem = function (ph) { return light ? false : !!memberOf(ph); };
     var t = today(), sent = {}, folders = { in: [], out: [] };
@@ -636,6 +665,15 @@ function deskCore(db, hooks) {
       push('in', b.id, { name: b.guest, first: first(b.guest), phone: b.phone, checkin: b.checkin, checkout: b.checkout, rooms: rooms, advance: Number(b.advancePaid || 0) - Number(b.refunded || 0), booking: b,
         sub: 'Booking ' + b.id + ' · arrives ' + dd(b.checkin), member: mem(b.phone) });
     });
+    folders.enq = [];
+    db.all('bookings').forEach(function (b) {
+      if (b.status !== 'Pending' || !b.phone || waOptedOut(b.phone) || b.checkout < t) return;
+      var msgs = light ? [{ kind: 'advance' }] : enqMsgs({ first: first(b.guest), ci: b.checkin, co: b.checkout, rooms: Number(b.roomsNeeded || 1), type: b.roomType }).filter(function (m) { return m.kind !== 'hello'; });
+      msgs.forEach(function (m) { m.sent = sent[b.id + '|' + m.kind] || ''; });
+      folders.enq.push({ key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Pending booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' · ' + (b.source || ''), msgs: msgs, booking: b.id,
+        todo: !msgs.some(function (m) { return m.sent; }) });
+    });
+    folders.enq.reverse();
     db.all('stays').forEach(function (s) {
       if (!ok(s.phone, s.waOk)) return;
       if (s.status !== 'In house' && s.status !== 'Checked out') return;
@@ -653,7 +691,7 @@ function deskCore(db, hooks) {
     folders.out.reverse();
     return folders;
   }
-  function waKitCount() { var f = waKitList(true); return f.in.filter(function (g) { return g.todo; }).length + f.out.filter(function (g) { return g.todo; }).length; }
+  function waKitCount() { var f = waKitList(true); return ['in', 'out', 'enq'].reduce(function (n, k) { return n + f[k].filter(function (g) { return g.todo; }).length; }, 0); }
   function waHandCount() {
     if (waAutoOn()) return 0;
     return db.all('wa').filter(function (m) { return m.status === 'Waiting'; }).length + db.all('bills').filter(function (b) { return b.wa === 'Waiting' && b.phone && !/^(Stopped|On hold)/.test(String(b.status || '')); }).length;
@@ -2230,6 +2268,14 @@ function deskCore(db, hooks) {
   api.waKit = function (req) {
     var me = auth(req); needMgr(me);
     return waKitList();
+  };
+  /* A new enquiry typed at the desk (phone and dates): ready messages for it */
+  api.waEnquiry = function (req) {
+    var me = auth(req); needMgr(me);
+    var ci = String(req.checkin || ''), nights = Math.max(0, Math.min(60, Number(req.nights) || 0)), co = isYmd(ci) && nights ? addDays(ci, nights) : '';
+    if (ci && !isYmd(ci)) fail('bad_dates');
+    var ph = req.phone ? phoneOk(req.phone) : '';
+    return { phone: ph, msgs: enqMsgs({ first: req.name ? first(req.name) : '', ci: co ? ci : '', co: co, rooms: Number(req.rooms) || 1, type: req.type }) };
   };
   api.waKitSent = function (req) {
     var me = auth(req); needMgr(me);

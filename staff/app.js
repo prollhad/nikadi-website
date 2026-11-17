@@ -304,13 +304,13 @@
   /* ---------- Ready WhatsApp messages (front desk) ----------
      Two folders. Every guest has 4-5 messages already written with their name: tap one, WhatsApp opens with it ready, press send.
      "Edit" lets you change the words first. A sent message gets a tick (who and when). */
-  var WK = { folder: 'in', data: null, edit: {} };
+  var WK = { folder: 'enq', data: null, edit: {} };
   function waBanner(v) {
     var n = S.st && S.st.waToSend;
     if (!n || !mgr() || ['today', 'rooms', 'whatsapp', 'bookings'].indexOf(S.tab) < 0 || $('#wa-send-bar', v)) return;
     var bar = document.createElement('button');
     bar.type = 'button'; bar.id = 'wa-send-bar'; bar.className = 'wa-send-bar';
-    bar.innerHTML = '<b>' + n + ' guest' + (n > 1 ? 's' : '') + ' to message on WhatsApp</b><i>→</i><span>Welcome, booking, bill and review messages are ready · tap to send</span>';
+    bar.innerHTML = '<b>' + n + ' guest' + (n > 1 ? 's' : '') + ' to message on WhatsApp</b><i>→</i><span>Enquiry, advance, welcome, bill and review messages are ready · tap to send</span>';
     bar.onclick = function () { openWaSend(); };
     v.insertBefore(bar, v.firstChild);
   }
@@ -322,22 +322,25 @@
     function draw() {
       var F = WK.data, list = F[WK.folder];
       var cnt = function (k) { return F[k].filter(function (g) { return g.todo; }).length; };
-      body.innerHTML = '<div class="wk-tabs" role="tablist">' + [['in', 'Welcome & check-in'], ['out', 'Check-out, bill & review']].map(function (t) {
+      body.innerHTML = '<div class="wk-tabs" role="tablist">' + [['enq', 'Enquiry & advance'], ['in', 'Welcome & check-in'], ['out', 'Check-out, bill & review']].map(function (t) {
           return '<button type="button" role="tab" data-wk="' + t[0] + '" aria-selected="' + (WK.folder === t[0]) + '">📁 ' + t[1] + (cnt(t[0]) ? ' <b>' + cnt(t[0]) + '</b>' : '') + '</button>'; }).join('') + '</div>' +
         '<p class="small">Tap a message: WhatsApp opens on the guest house number with it written. Press send. Use <b>Edit</b> to change the words first.</p>' +
+        (WK.folder === 'enq' ? enqForm() : '') +
         (list.length ? '<div class="wk-list">' + list.map(function (g, gi) {
-          return '<div class="wk-guest' + (g.todo ? ' todo' : '') + '"><div class="wk-h"><b>' + esc(g.name) + '</b><small>' + esc(g.sub) + ' · ' + esc(nkPhoneShow(g.phone)) + '</small></div>' +
+          return '<div class="wk-guest' + (g.todo ? ' todo' : '') + '"><div class="wk-h"><b>' + esc(g.name) + '</b><small>' + esc(g.sub) + ' · ' + esc(nkPhoneShow(g.phone)) + '</small>' + (g.booking ? '<button class="linkbtn" type="button" data-bk="' + esc(g.booking) + '">Open booking →</button>' : '') + '</div>' +
             g.msgs.map(function (m, mi) {
               var k = g.key + '|' + m.kind, txt = WK.edit[k] != null ? WK.edit[k] : m.text;
               return '<div class="wk-msg' + (m.sent ? ' sent' : '') + '"><a class="wk-send" target="_blank" rel="noopener" data-g="' + gi + '" data-m="' + mi + '" href="' + esc(waHref(g.phone, txt)) + '">' +
                 '<span class="wk-l">' + esc(m.label) + (WK.edit[k] != null ? ' <em>edited</em>' : '') + '</span><span class="wk-s">' + (m.sent ? '✓ Sent ' + esc(m.sent) : 'Tap to send') + '</span></a>' +
                 '<button class="wk-ed" type="button" data-eg="' + gi + '" data-em="' + mi + '">Edit</button></div>';
             }).join('') + '</div>';
-        }).join('') + '</div>' : '<p class="note">' + (WK.folder === 'in' ? 'No arriving bookings or guests in house with a WhatsApp number.' : 'No one leaving today or checked out in the last 3 days.') + '</p>');
+        }).join('') + '</div>' : WK.folder === 'enq' ? '<p class="small">Pending booking requests (website, phone, WhatsApp) also show here, with their prices and advance.</p>' : '<p class="note">' + (WK.folder === 'in' ? 'No arriving bookings or guests in house with a WhatsApp number.' : 'No one leaving today or checked out in the last 3 days.') + '</p>');
       $$('[data-wk]', body).forEach(function (b) { b.onclick = function () { WK.folder = b.dataset.wk; draw(); }; });
+      $$('[data-bk]', body).forEach(function (b) { b.onclick = function () { openBooking(b.dataset.bk); }; });
+      if (WK.folder === 'enq') wireEnq();
       $$('.wk-send', body).forEach(function (a) { a.onclick = function () {
         var g = list[+a.dataset.g], m = g.msgs[+a.dataset.m], k = g.key + '|' + m.kind;
-        api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: WK.edit[k] != null }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out'); draw(); }, function () {});
+        api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: WK.edit[k] != null }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out') + cnt('enq'); draw(); }, function () {});
       }; });
       $$('.wk-ed', body).forEach(function (b) { b.onclick = function () {
         var g = list[+b.dataset.eg], m = g.msgs[+b.dataset.em], k = g.key + '|' + m.kind;
@@ -350,9 +353,50 @@
         $('#wk-rs', box).onclick = function () { delete WK.edit[k]; ta.value = m.text; upd(); };
         go.onclick = function () {
           WK.edit[k] = ta.value;
-          api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: ta.value !== m.text }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out'); closeSheet(); draw(); }, function () {});
+          api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: ta.value !== m.text }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out') + cnt('enq'); closeSheet(); draw(); }, function () {});
         };
       }; });
+    }
+    function enqForm() {
+      var q = WK.q || {}, t = S.st.today;
+      return '<div class="wk-guest wk-enq"><div class="wk-h"><b>New enquiry</b><small>Type what the guest asked; the messages are written for you</small></div>' +
+        '<div class="grid2">' + field('Phone', nkPhoneHtml('q-ph', q.phone || '')) + field('Name', '<input class="input" id="q-nm" maxlength="60" value="' + esc(q.name || '') + '">') + '</div>' +
+        '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="q-in" value="' + esc(q.checkin || t) + '">') + field('Nights', '<input class="input" id="q-n" inputmode="numeric" value="' + esc(q.nights || 1) + '">') + '</div>' +
+        '<div class="grid2">' + field('Guests', '<input class="input" id="q-g" inputmode="numeric" value="' + esc(q.guests || 2) + '">') + field('Rooms', '<input class="input" id="q-r" inputmode="numeric" value="' + esc(q.rooms || 1) + '">') + '</div>' +
+        field('Room type', '<select class="input" id="q-t">' + ['Any', 'Deluxe Double', 'Deluxe Twin', 'Large Twin'].map(function (x) { return '<option' + (x === (q.type || 'Any') ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select>') +
+        '<p class="err" id="q-err"></p><div class="acts"><button class="btn btn-gold" type="button" id="q-go">Write the messages</button><button class="btn btn-quiet" type="button" id="q-bk">Save as booking (pending)</button></div>' +
+        '<div id="q-out">' + (WK.qres ? enqOut(WK.qres) : '') + '</div></div>';
+    }
+    function enqOut(r) {
+      return r.msgs.map(function (m, mi) {
+        return '<div class="wk-msg"><a class="wk-send q-send" target="_blank" rel="noopener" data-qm="' + mi + '" href="' + esc(r.phone ? waHref(r.phone, m.text) : 'https://wa.me/?text=' + encodeURIComponent(m.text)) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-s">' + (r.phone ? 'Tap to send to ' + esc(nkPhoneShow(r.phone)) : 'Tap to send · choose the chat in WhatsApp') + '</span></a>' +
+          '<button class="wk-ed" type="button" data-qe="' + mi + '">Edit</button></div>';
+      }).join('');
+    }
+    function readEnq() {
+      return { phone: nkPhoneVal('q-ph', body), name: $('#q-nm', body).value.trim(), checkin: $('#q-in', body).value, nights: Number($('#q-n', body).value) || 1, guests: Number($('#q-g', body).value) || 2, rooms: Number($('#q-r', body).value) || 1, type: $('#q-t', body).value };
+    }
+    function wireEnq() {
+      function wireOut() {
+        $$('[data-qe]', body).forEach(function (b) { b.onclick = function () {
+          var r = WK.qres, m = r.msgs[+b.dataset.qe], box = openSheet('Edit · ' + m.label);
+          box.innerHTML = '<textarea id="wk-t" class="wk-ta" rows="12">' + esc(m.text) + '</textarea><div class="acts"><a class="btn btn-gold" id="wk-go" target="_blank" rel="noopener" href="#">Send on WhatsApp</a></div>';
+          var ta = $('#wk-t', box), go = $('#wk-go', box);
+          function upd() { go.href = r.phone ? waHref(r.phone, ta.value) : 'https://wa.me/?text=' + encodeURIComponent(ta.value); }
+          ta.oninput = upd; upd(); go.onclick = function () { setTimeout(closeSheet, 300); };
+        }; });
+      }
+      wireOut();
+      $('#q-go', body).onclick = function () {
+        var x = this, q = WK.q = readEnq(); busy(x, true); $('#q-err', body).textContent = '';
+        api('deskWaEnquiry', { phone: q.phone, name: q.name, checkin: q.checkin, nights: q.nights, rooms: q.rooms, type: q.type === 'Any' ? '' : q.type }).then(function (r) {
+          busy(x, false); WK.qres = r; $('#q-out', body).innerHTML = enqOut(r); wireOut();
+        }, function (e) { busy(x, false); $('#q-err', body).textContent = errText(e); });
+      };
+      $('#q-bk', body).onclick = function () {
+        var q = WK.q = readEnq();
+        openBookingForm({ guest: q.name, phone: q.phone, checkin: q.checkin, checkout: addDays(q.checkin, q.nights), guests: q.guests, roomsNeeded: q.rooms, roomType: q.type === 'Deluxe Double' ? 'Deluxe Double (King)' : q.type === 'Any' ? '' : q.type });
+      };
     }
     api('deskWaKit', {}).then(function (r) { WK.data = r; draw(); }, function (e) { body.innerHTML = '<p class="note">' + esc(errText(e)) + '</p>'; });
   }
@@ -2817,7 +2861,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 62</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 63</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
