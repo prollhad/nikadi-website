@@ -2453,11 +2453,23 @@ function deskCore(db, hooks) {
      Same wording as the approved templates; links are written out because a typed message has no buttons and no PDF. */
   var DESK_WA_SITE = 'https://www.nikadiguesthouse.com';
   function sd(ymd) { return dd(ymd).replace(/ \d{4}$/, ''); } // 17 Nov (short, for WhatsApp)
+  /* "Dear Mr. Das" / "Dear Mr./Mrs. Das": title from the check-in form when we have it, and the last name */
+  function salute(name, title) {
+    var parts = String(name || '').replace(/[^A-Za-z\u0900-\u0D7F .'-]/g, ' ').trim().split(/\s+/).filter(function (w) { return w && !/^(mr|mrs|ms|miss|dr|shri|sri|smt)\.?$/i.test(w); });
+    var last = parts.length ? parts[parts.length - 1] : '';
+    last = last ? last.charAt(0).toUpperCase() + last.slice(1) : '';
+    var t = ['Mr.', 'Ms.', 'Mrs.', 'Dr.'].indexOf(String(title || '')) >= 0 ? title : 'Mr./Mrs.';
+    return last ? 'Dear ' + t + ' ' + last : 'Dear Sir/Ma\'am';
+  }
+  /* WhatsApp links can turn some emoji into "?" (seen on WhatsApp for computers): keep only symbols that always show */
+  function waSafe(t) {
+    return String(t).replace(/\u2B50\uFE0F?/g, '★').replace(/\uD83D\uDECF\uFE0F?/g, '•').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]\uFE0F?/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n').replace(/ {2,}/g, ' ').replace(/ ([,.!:])/g, '$1').trim();
+  }
   function waHandText(kind, p, link) {
-    if (kind === 'welcome') return 'Dear Sir/Ma\'am, Hare Krishna 🙏 Welcome to Nikadi Guest House!\nYour room is ' + p[1] + ', from ' + p[2] + ' to ' + p[3] + '. Check-out is by 9:00 AM.\nFor anything you need, just reply here or call +91 75011 01137.\n🌐 ' + DESK_WA_SITE;
-    if (kind === 'membership') return 'Dear Sir/Ma\'am, Hare Krishna 🙏 Thank you for choosing Nikadi Guest House.\nJoin the free Nikadi Membership and get 100 welcome points:\n⭐ Silver (on joining): 5% off every stay, 1 point per ₹100, birthday points\n⭐ Gold (15 nights in 2 years): 10% off, 1.5 points per ₹100, early check-in\n⭐ Platinum (40 nights in 2 years): 15% off, 2 points per ₹100, late check-out till 11 AM, free room upgrade, free dental kit\n⭐ Platinum Plus (100 nights, kept for 10 years): 20% off, 4 points per ₹100, late check-out till 12 noon, free extra mattress, festival booking priority\nJoin before you check out and this stay counts too. Join in one minute: ' + DESK_WA_SITE + '/app/?join=1';
-    if (kind === 'booking') return 'Dear Sir/Ma\'am, Hare Krishna 🙏 Your booking ' + p[1] + ' at Nikadi Guest House is confirmed: ' + p[2] + ' room(s), ' + p[3] + ' to ' + p[4] + '. Advance received: ' + p[5] + '.\nCheck-in from 11:00 AM, check-out by 9:00 AM. Cancel 3 or more days before check-in for a full refund; after that the advance is not refundable.\n📍 How to reach us: Bhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4, Mayapur. Reception is on the first floor: enter at the left corner of the building and take the stairs up, near the Mahaprabhu photo. Google Maps: https://maps.google.com/?cid=4814848157732686064\nQuestions: +91 75011 01137.';
-    if (kind === 'bill') return 'Dear Sir/Ma\'am, thank you so much for staying with us at Nikadi Guest House. Your bill ' + p[1] + ': total ' + p[2] + ' (incl. GST), ' + p[3] + '.\n🧾 See or download your bill: ' + link + '\nWe hope your time in Sri Dham Mayapur was peaceful and full of blessings, and we will be happy to welcome you again.\n⭐ Enjoyed your stay? A short Google review helps other devotees find us: https://g.page/r/CfDIGanjxtFCEAE/review';
+    if (kind === 'welcome') return p[0] + ', Hare Krishna! Welcome to Nikadi Guest House!\nYour room is ' + p[1] + ', from ' + p[2] + ' to ' + p[3] + '. Check-out is by 9:00 AM.\nFor anything you need, just reply here or call +91 75011 01137.\n🌐 ' + DESK_WA_SITE;
+    if (kind === 'membership') return p[0] + ', Hare Krishna! Thank you for choosing Nikadi Guest House.\nJoin the free Nikadi Membership and get 100 welcome points:\n⭐ Silver (on joining): 5% off every stay, 1 point per ₹100, birthday points\n⭐ Gold (15 nights in 2 years): 10% off, 1.5 points per ₹100, early check-in\n⭐ Platinum (40 nights in 2 years): 15% off, 2 points per ₹100, late check-out till 11 AM, free room upgrade, free dental kit\n⭐ Platinum Plus (100 nights, kept for 10 years): 20% off, 4 points per ₹100, late check-out till 12 noon, free extra mattress, festival booking priority\nJoin before you check out and this stay counts too. Join in one minute: ' + DESK_WA_SITE + '/app/?join=1';
+    if (kind === 'booking') return p[0] + ', Hare Krishna! Your booking ' + p[1] + ' at Nikadi Guest House is confirmed: ' + p[2] + ' room(s), ' + p[3] + ' to ' + p[4] + '. Advance received: ' + p[5] + '.\nCheck-in from 11:00 AM, check-out by 9:00 AM. Cancel 3 or more days before check-in for a full refund; after that the advance is not refundable.\n📍 How to reach us: Bhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4, Mayapur. Reception is on the first floor: enter at the left corner of the building and take the stairs up, near the Mahaprabhu photo. Google Maps: https://maps.google.com/?cid=4814848157732686064\nQuestions: +91 75011 01137.';
+    if (kind === 'bill') return p[0] + ', thank you so much for staying with us at Nikadi Guest House. Your bill ' + p[1] + ': total ' + p[2] + ' (incl. GST), ' + p[3] + '.\n🧾 See or download your bill: ' + link + '\nWe hope your time in Sri Dham Mayapur was peaceful and full of blessings, and we will be happy to welcome you again.\n⭐ Enjoyed your stay? A short Google review helps other devotees find us: https://g.page/r/CfDIGanjxtFCEAE/review';
     throw new Error('bad_kind');
   }
   function billParams(row) {
@@ -2487,17 +2499,17 @@ function deskCore(db, hooks) {
     function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
     if (folder === 'in') {
       if (o.booking) add('booking', 'Booking confirmed', waHandText('booking', [n, o.booking.id, String(o.rooms), dd(o.checkin), dd(o.checkout), rupees(o.advance)]));
-      if (o.booking) add('reg', 'Registration form', 'Dear Sir/Ma\'am, Hare Krishna 🙏 Please fill our guest registration form before arrival, so check-in takes only a minute: ' + DESK_WA_SITE + '/#guest-registration');
-      add('directions', 'How to reach us', 'Dear Sir/Ma\'am, Hare Krishna 🙏 Here is how to reach Nikadi Guest House:\n📍 Bhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4 (Namahatta Bhavan), Mayapur. Look for our lit NIKADI GUEST HOUSE sign.\nEnter at the left corner of the building, beside the picture of Sri Chaitanya Mahaprabhu, and take the stairs up to our first-floor reception.\nGoogle Maps: ' + DESK_WA_MAPS + '\nCall us any time: +91 75011 01137.');
+      if (o.booking) add('reg', 'Registration form', n + ', Hare Krishna! Please fill our guest registration form before arrival, so check-in takes only a minute: ' + DESK_WA_SITE + '/#guest-registration');
+      add('directions', 'How to reach us', n + ', Hare Krishna! Here is how to reach Nikadi Guest House:\n📍 Bhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4 (Namahatta Bhavan), Mayapur. Look for our lit NIKADI GUEST HOUSE sign.\nEnter at the left corner of the building, beside the picture of Sri Chaitanya Mahaprabhu, and take the stairs up to our first-floor reception.\nGoogle Maps: ' + DESK_WA_MAPS + '\nCall us any time: +91 75011 01137.');
       if (o.room) add('welcome', 'Welcome', waHandText('welcome', [n, String(o.room), dd(o.checkin), dd(o.checkout)]));
-      if (o.room) add('care', 'Anything you need?', 'Dear Sir/Ma\'am, Hare Krishna 🙏 We hope you are comfortable in room ' + o.room + '.\nIf you need anything, like fresh towels, drinking water, an extra blanket or help with a car, just reply here or call reception on +91 75011 01137. We are happy to help.');
+      if (o.room) add('care', 'Anything you need?', n + ', Hare Krishna! We hope you are comfortable in room ' + o.room + '.\nIf you need anything, like fresh towels, drinking water, an extra blanket or help with a car, just reply here or call reception on +91 75011 01137. We are happy to help.');
       if (!o.member) add('membership', 'Membership invite', waHandText('membership', [n]));
     } else {
-      if (o.leaving) add('checkout', 'Check-out reminder', 'Dear Sir/Ma\'am, Hare Krishna 🙏 A gentle reminder from Nikadi Guest House: check-out is by 9:00 AM on ' + dd(o.checkout) + '.\nIf you would like a late check-out, please reply here and we will check if the room is available. Thank you!');
-      if (o.bill) add('bill', 'Bill + review', waHandText('bill', o.bill.params, o.bill.link));
-      if (o.bill) add('billonly', 'Bill only', 'Dear Sir/Ma\'am, your bill ' + o.bill.params[1] + ' from Nikadi Guest House: total ' + o.bill.params[2] + ' (incl. GST), ' + o.bill.params[3] + '.\n🧾 See or download it here: ' + o.bill.link + '\nThank you for staying with us 🙏');
-      add('review', 'Thank you + Google review', 'Dear Sir/Ma\'am, Hare Krishna 🙏 Thank you so much for staying with us at Nikadi Guest House. It was a joy to have you.\n⭐ If you enjoyed your stay, a short Google review helps other devotees find us: ' + DESK_WA_REVIEW + '\nWhenever the Dham calls you back, we will be happy to welcome you again.');
-      add('again', o.member ? 'Come again (member)' : 'Come again + membership', 'Dear Sir/Ma\'am, Hare Krishna 🙏 We hope you reached home safely.\nWhenever you come back to Sri Dham Mayapur, message us here for the best rate.' + (o.member ? ' As a Nikadi member you get your member discount and points on every stay.' : ' Join the free Nikadi Membership for 5–20% off every stay: ' + DESK_WA_SITE + '/app/?join=1') + '\nNikadi Guest House · +91 75011 01137');
+      if (o.leaving) add('checkout', 'Check-out reminder', n + ', Hare Krishna! A gentle reminder from Nikadi Guest House: check-out is by 9:00 AM on ' + dd(o.checkout) + '.\nIf you would like a late check-out, please reply here and we will check if the room is available. Thank you!');
+      if (o.bill) add('bill', 'Bill + review', waHandText('bill', [n].concat(o.bill.params.slice(1)), o.bill.link));
+      if (o.bill) add('billonly', 'Bill only', n + ', your bill ' + o.bill.params[1] + ' from Nikadi Guest House: total ' + o.bill.params[2] + ' (incl. GST), ' + o.bill.params[3] + '.\n🧾 See or download it here: ' + o.bill.link + '\nThank you for staying with us 🙏');
+      add('review', 'Thank you + Google review', n + ', Hare Krishna! Thank you so much for staying with us at Nikadi Guest House. It was a joy to have you.\n⭐ If you enjoyed your stay, a short Google review helps other devotees find us: ' + DESK_WA_REVIEW + '\nWhenever the Dham calls you back, we will be happy to welcome you again.');
+      add('again', o.member ? 'Come again (member)' : 'Come again + membership', n + ', Hare Krishna! We hope you reached home safely.\nWhenever you come back to Sri Dham Mayapur, message us here for the best rate.' + (o.member ? ' As a Nikadi member you get your member discount and points on every stay.' : ' Join the free Nikadi Membership for 5–20% off every stay: ' + DESK_WA_SITE + '/app/?join=1') + '\nNikadi Guest House · +91 75011 01137');
     }
     return out;
   }
@@ -2507,9 +2519,9 @@ function deskCore(db, hooks) {
   function roomTypeKey(t) { t = String(t || ''); return /large/i.test(t) ? 'Large Twin' : /twin/i.test(t) ? 'Deluxe Twin' : /double|king/i.test(t) ? 'Deluxe Double' : ''; }
   function quoteOf(type, ci, co, rooms) { var tot = 0, d = ci; for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { tot += deskRateOn(type, d); d = addDays(d, 1); } return tot * Math.max(1, rooms || 1); }
   function enqMsgs(o) {
-    var n = o.first ? ' ' + o.first : '', out = [];
+    var n = o.first || 'Dear Sir/Ma\'am', out = [];
     function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
-    add('hello', 'Hello + ask dates', 'Dear Sir/Ma\'am, Hare Krishna 🙏 Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur.\nPlease send your check-in date, number of nights, number of guests and rooms, and we will reply with the available rooms and today\'s best price.\nRoom photos: ' + DESK_WA_SITE + '/#rooms');
+    add('hello', 'Hello + ask dates', n + ', Hare Krishna! Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur.\nPlease send your check-in date, number of nights, number of guests and rooms, and we will reply with the available rooms and today\'s best price.\nRoom photos: ' + DESK_WA_SITE + '/#rooms');
     if (o.ci && o.co) {
       var nights = nightsBetween(o.ci, o.co), rooms = Math.max(1, o.rooms || 1), when = dd(o.ci) + ' to ' + dd(o.co) + ' · ' + nights + ' night' + (nights > 1 ? 's' : '') + ' · ' + rooms + ' room' + (rooms > 1 ? 's' : '');
       var av = api.availability({ _internal: true, checkin: o.ci, checkout: o.co }), lines = [], best = null, want = roomTypeKey(o.type);
@@ -2519,16 +2531,16 @@ function deskCore(db, hooks) {
         lines.push('🛏️ ' + info[0] + ' (' + info[1] + '): ' + rupees(tot) + ' total · ' + rupees(Math.round(tot / nights / rooms)) + ' a night' + (t.free <= 2 ? ' · only ' + t.free + ' left' : ''));
         if (!best || k === want) best = { type: k, total: tot };
       });
-      if (lines.length) add('rooms', 'Available rooms & price', 'Dear Sir/Ma\'am, Hare Krishna 🙏 Rooms available for ' + when + ':\n' + lines.join('\n') + '\nAll rooms are air-conditioned, with private bathroom, geyser, Wi-Fi and TV. Prices include GST. Check-in from 11:00 AM, check-out by 9:00 AM.\nShall we hold a room for you?');
-      else add('full', 'Sorry, we are full', 'Dear Sir/Ma\'am, Hare Krishna 🙏 Sorry, we are fully booked for ' + when + '. If your dates can change a little, tell us and we will check again. Thank you!');
+      if (lines.length) add('rooms', 'Available rooms & price', n + ', Hare Krishna! Rooms available for ' + when + ':\n' + lines.join('\n') + '\nAll rooms are air-conditioned, with private bathroom, geyser, Wi-Fi and TV. Prices include GST. Check-in from 11:00 AM, check-out by 9:00 AM.\nShall we hold a room for you?');
+      else add('full', 'Sorry, we are full', n + ', Hare Krishna! Sorry, we are fully booked for ' + when + '. If your dates can change a little, tell us and we will check again. Thank you!');
       if (best) {
         var adv = Math.round(best.total / 2);
-        add('advance', 'Ask for 50% advance', 'Dear Sir/Ma\'am, Hare Krishna 🙏 To hold your ' + DESK_TYPE_INFO[best.type][0] + ' for ' + when + ', please pay the 50% advance of ' + rupees(adv) + ' (total ' + rupees(best.total) + '). The balance is paid at check-in.\n💳 UPI ID: ' + DESK_UPI + ' (Nikadi Guest House)\nOr scan our QR code here: ' + DESK_PAY_LINK + '\nPlease send the payment screenshot in this chat and we will confirm your booking right away.\nCancellation: 3 or more days before check-in, full refund of the advance.');
-        add('paid', 'Advance received', 'Dear Sir/Ma\'am, Hare Krishna 🙏 Thank you, we have received your advance' + (adv ? ' of ' + rupees(adv) : '') + '. We are confirming your booking now and will send the confirmation with all the details in a moment.');
+        add('advance', 'Ask for 50% advance', n + ', Hare Krishna! To hold your ' + DESK_TYPE_INFO[best.type][0] + ' for ' + when + ', please pay the 50% advance of ' + rupees(adv) + ' (total ' + rupees(best.total) + '). The balance is paid at check-in.\n💳 UPI ID: ' + DESK_UPI + ' (Nikadi Guest House)\nOr scan our QR code here: ' + DESK_PAY_LINK + '\nPlease send the payment screenshot in this chat and we will confirm your booking right away.\nCancellation: 3 or more days before check-in, full refund of the advance.');
+        add('paid', 'Advance received', n + ', Hare Krishna! Thank you, we have received your advance' + (adv ? ' of ' + rupees(adv) : '') + '. We are confirming your booking now and will send the confirmation with all the details in a moment.');
       }
     }
-    add('reg', 'Registration form', 'Dear Sir/Ma\'am, Hare Krishna 🙏 Please fill our guest registration form before arrival, so check-in takes only a minute: ' + DESK_WA_SITE + '/#guest-registration');
-    add('policy', 'Check-in & cancellation', 'Dear Sir/Ma\'am, Hare Krishna 🙏 Check-in from 11:00 AM, check-out by 9:00 AM. Please bring a photo ID for every guest.\nA 50% advance holds the room; the balance is paid at check-in.\nCancellation: cancel 3 or more days before check-in for a full refund of the advance; after that the advance is not refundable.\nFull details: ' + DESK_WA_SITE + '/#cancellation');
+    add('reg', 'Registration form', n + ', Hare Krishna! Please fill our guest registration form before arrival, so check-in takes only a minute: ' + DESK_WA_SITE + '/#guest-registration');
+    add('policy', 'Check-in & cancellation', n + ', Hare Krishna! Check-in from 11:00 AM, check-out by 9:00 AM. Please bring a photo ID for every guest.\nA 50% advance holds the room; the balance is paid at check-in.\nCancellation: cancel 3 or more days before check-in for a full refund of the advance; after that the advance is not refundable.\nFull details: ' + DESK_WA_SITE + '/#cancellation');
     return out;
   }
   function waKitList(light) {
@@ -2537,20 +2549,20 @@ function deskCore(db, hooks) {
     db.all('wa').forEach(function (m) { if (/^hand:/.test(m.kind) && m.status === 'Sent') sent[m.ref + '|' + m.kind.slice(5)] = m.info; });
     function ok(phone, waOk) { return phone && waOk !== 'No' && !waOptedOut(phone); }
     function push(folder, key, o) {
-      var msgs = waKitMsgs(folder, o).map(function (m) { m.sent = sent[key + '|' + m.kind] || ''; return m; });
+      var msgs = waKitMsgs(folder, o).map(function (m) { m.text = waSafe(m.text); m.sent = sent[key + '|' + m.kind] || ''; return m; });
       folders[folder].push({ key: key, name: o.name, phone: waPhone(o.phone), room: o.room || '', sub: o.sub, msgs: msgs, todo: msgs.some(function (m) { return !m.sent && (m.kind === 'welcome' || m.kind === 'bill' || m.kind === 'booking'); }) });
     }
     db.all('bookings').forEach(function (b) {
       if (b.status !== 'Confirmed' || !ok(b.phone, b.waOk) || b.checkin > addDays(t, 3) || b.checkout < t) return;
       var rooms = String(b.rooms || '').split(',').filter(function (x) { return x.trim(); }).length || Number(b.roomsNeeded || 1);
-      push('in', b.id, { name: b.guest, first: first(b.guest), phone: b.phone, checkin: b.checkin, checkout: b.checkout, rooms: rooms, advance: Number(b.advancePaid || 0) - Number(b.refunded || 0), booking: b,
+      push('in', b.id, { name: b.guest, first: salute(b.guest), phone: b.phone, checkin: b.checkin, checkout: b.checkout, rooms: rooms, advance: Number(b.advancePaid || 0) - Number(b.refunded || 0), booking: b,
         sub: 'Booking ' + b.id + ' · arrives ' + dd(b.checkin), member: mem(b.phone) });
     });
     folders.enq = [];
     db.all('bookings').forEach(function (b) {
       if (b.status !== 'Pending' || !b.phone || waOptedOut(b.phone) || b.checkout < t) return;
-      var msgs = light ? [{ kind: 'advance' }] : enqMsgs({ first: first(b.guest), ci: b.checkin, co: b.checkout, rooms: Number(b.roomsNeeded || 1), type: b.roomType }).filter(function (m) { return m.kind !== 'hello'; });
-      msgs.forEach(function (m) { m.sent = sent[b.id + '|' + m.kind] || ''; });
+      var msgs = light ? [{ kind: 'advance' }] : enqMsgs({ first: salute(b.guest), ci: b.checkin, co: b.checkout, rooms: Number(b.roomsNeeded || 1), type: b.roomType }).filter(function (m) { return m.kind !== 'hello'; });
+      msgs.forEach(function (m) { if (m.text) m.text = waSafe(m.text); m.sent = sent[b.id + '|' + m.kind] || ''; });
       folders.enq.push({ key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Pending booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' · ' + (b.source || ''), msgs: msgs, booking: b.id,
         todo: !msgs.some(function (m) { return m.sent; }) });
     });
@@ -2561,12 +2573,12 @@ function deskCore(db, hooks) {
       var member;
       if (s.status === 'In house') {
         member = mem(s.phone);
-        push('in', s.id, { name: s.guest, first: first(s.guest), phone: s.phone, room: s.room, checkin: s.checkin, checkout: s.checkout, member: member, sub: 'Room ' + s.room + ' · ' + dd(s.checkin) + ' to ' + dd(s.checkout) });
-        if (s.checkout <= addDays(t, 1)) push('out', s.id, { name: s.guest, first: first(s.guest), phone: s.phone, room: s.room, checkout: s.checkout, leaving: true, member: member, sub: 'Room ' + s.room + ' · leaves ' + dd(s.checkout) });
+        push('in', s.id, { name: s.guest, first: salute(s.guest, s.title), phone: s.phone, room: s.room, checkin: s.checkin, checkout: s.checkout, member: member, sub: 'Room ' + s.room + ' · ' + dd(s.checkin) + ' to ' + dd(s.checkout) });
+        if (s.checkout <= addDays(t, 1)) push('out', s.id, { name: s.guest, first: salute(s.guest, s.title), phone: s.phone, room: s.room, checkout: s.checkout, leaving: true, member: member, sub: 'Room ' + s.room + ' · leaves ' + dd(s.checkout) });
       } else if (s.status === 'Checked out' && String(s.outAt || s.checkout).slice(0, 10) >= addDays(t, -3)) {
         member = mem(s.phone);
         var b = billOfStay(s.id), bill = b ? { params: billParams(b), link: DESK_BILL_URL + b.id } : null;
-        push('out', s.id, { name: s.guest, first: first(s.guest), phone: s.phone, room: s.room, checkout: s.checkout, bill: bill, member: member, sub: 'Room ' + s.room + ' · left ' + dd(String(s.outAt || s.checkout).slice(0, 10)) });
+        push('out', s.id, { name: s.guest, first: salute(s.guest, s.title), phone: s.phone, room: s.room, checkout: s.checkout, bill: bill, member: member, sub: 'Room ' + s.room + ' · left ' + dd(String(s.outAt || s.checkout).slice(0, 10)) });
       }
     });
     folders.out.reverse();
@@ -4158,7 +4170,7 @@ function deskCore(db, hooks) {
     if (ci && !isYmd(ci)) fail('bad_dates');
     if (co && (dayNum(co) <= dayNum(ci) || dayNum(co) - dayNum(ci) > 60)) fail('bad_dates');
     var ph = req.phone ? phoneOk(req.phone) : '';
-    return { phone: ph, msgs: enqMsgs({ first: req.name ? first(req.name) : '', ci: co ? ci : '', co: co, rooms: Number(req.rooms) || 1, type: req.type }) };
+    return { phone: ph, msgs: enqMsgs({ first: req.name ? salute(req.name) : '', ci: co ? ci : '', co: co, rooms: Number(req.rooms) || 1, type: req.type }).map(function (m) { m.text = waSafe(m.text); return m; }) };
   };
   api.waKitSent = function (req) {
     var me = auth(req); needMgr(me);
