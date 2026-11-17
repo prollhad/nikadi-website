@@ -151,3 +151,4 @@ const k5 = await call('deskWaKit', { token: tok }); const og = k5.out[0];
 const c1 = (await call('deskState', { token: tok })).waToSend;
 const dn = await call('deskWaKitDone', { token: tok, folder: 'out', refs: [og.key] });
 console.log('done', dn.ok, 'still listed', !!dn.out.find(g => g.key === og.key), 'count', c1, '->', (await call('deskState', { token: tok })).waToSend);
+const k6 = await call('deskWaKit', { token: tok }); console.log('gen', k6.gen.length, '\n' + k6.gen.find(m => m.kind === 'grooms').text);

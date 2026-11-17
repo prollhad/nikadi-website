@@ -2560,6 +2560,22 @@ function deskCore(db, hooks) {
       'Please send the payment screenshot in this chat. Your room is held for you once the advance is received.\n' +
       'Cancellation: 3 or more days before check-in, full refund of the advance.';
   }
+  /* General enquiry replies: no name or dates needed, send to anyone */
+  function genMsgs() {
+    var G = 'Dear Sir/Ma\'am, Hare Krishna!', t = today(), out = [];
+    function add(kind, label, text) { out.push({ kind: kind, label: label, text: waSafe(text) }); }
+    add('ghello', 'Thank you for contacting us', G + ' Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur. How can we help you?');
+    add('gdates', 'Please share your dates', G + ' Please share your check-in date, check-out date, number of guests and rooms needed, and we will reply with the available rooms and today\'s best price.');
+    add('gfind', 'How to find us', G + ' Here is how to reach Nikadi Guest House:\nBhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4 (Namahatta Bhavan), Mayapur. Look for our lit NIKADI GUEST HOUSE sign.\nEnter at the left corner of the building, beside the picture of Sri Chaitanya Mahaprabhu, and take the stairs up to our first-floor reception.\nGoogle Maps: ' + DESK_WA_MAPS + '\nCall us any time: +91 75011 01137.');
+    add('grooms', 'Our rooms & prices', G + ' Our air-conditioned rooms (private bathroom with geyser, Wi-Fi and TV):\n• Deluxe Double (king bed, up to 2 adults): ' + rupees(deskRateOn('Deluxe Double', t)) + ' a night\n• Deluxe Twin (2 single beds, up to 2 adults): ' + rupees(deskRateOn('Deluxe Twin', t)) + ' a night\n• Large Twin (2 single beds, more space, up to 3 adults): ' + rupees(deskRateOn('Large Twin', t)) + ' a night\nPrices include GST and can change by date. Send us your dates for the exact price.');
+    add('gphotos', 'Photos & website', G + ' You can see our rooms and photos here: ' + DESK_WA_SITE + '/#rooms');
+    add('gpay', 'Advance & payment', G + ' To confirm a booking we take a 50% advance; the balance is paid at check-in.\nUPI ID: ' + DESK_UPI + ' (Nikadi Guest House)\nQR code: ' + DESK_PAY_LINK + '\nPlease send the payment screenshot in this chat.');
+    add('grules', 'Check-in & house rules', G + ' Check-in from 11:00 AM, check-out by 9:00 AM. Please bring a photo ID for every guest.\nNikadi is a pure vegetarian home: no smoking, tobacco or alcohol. Quiet hours 10 PM to 6 AM. Rooms only; Govinda\'s and prasadam halls are a short walk away.');
+    add('gcancel', 'Cancellation policy', G + ' Cancel 3 or more days before check-in for a full refund of the advance. After that, the advance is not refundable. Full details: ' + DESK_WA_SITE + '/#cancellation');
+    add('gcall', 'We will call you back', G + ' Thank you for your message. Our reception will call you back shortly. You can also call us on +91 75011 01137.');
+    add('gthanks', 'Thank you, see you soon', G + ' Thank you for choosing Nikadi Guest House. We look forward to welcoming you in Sri Dham Mayapur!');
+    return out;
+  }
   function waKitList(light) {
     var mem = function (ph) { return light ? false : !!memberOf(ph); };
     var t = today(), sent = {}, folders = { in: [], out: [] };
@@ -2603,6 +2619,7 @@ function deskCore(db, hooks) {
     });
     folders.out.reverse();
     folders.out = folders.out.filter(function (g) { return !g.done; }); // Check-out guests marked Done leave the list
+    if (!light) folders.gen = genMsgs();
     return folders;
   }
   function waKitCount() { var f = waKitList(true); return ['in', 'out', 'enq'].reduce(function (n, k) { return n + f[k].filter(function (g) { return g.todo; }).length; }, 0); }

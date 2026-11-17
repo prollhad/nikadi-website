@@ -351,7 +351,7 @@
       body.innerHTML = '<div class="wk-tabs" role="tablist">' + [['enq', 'Enquiry & advance'], ['in', 'Welcome & check-in'], ['out', 'Check-out, bill & review']].map(function (t) {
           return '<button type="button" role="tab" data-wk="' + t[0] + '" aria-selected="' + (WK.folder === t[0]) + '">📁 ' + t[1] + (cnt(t[0]) ? ' <b>' + cnt(t[0]) + '</b>' : '') + '</button>'; }).join('') + '</div>' +
         '<p class="small">Tap a message: WhatsApp opens on the guest house number with it written. Press send. Use <b>Edit</b> to change the words first.</p>' +
-        (WK.folder === 'enq' ? enqForm() : '') +
+        (WK.folder === 'enq' ? genBox() + enqForm() : '') +
         (WK.folder === 'out' && list.length > 1 ? '<div class="wk-all"><button class="btn btn-line sm" type="button" id="wk-alldone">Mark all ' + list.length + ' as done</button></div>' : '') +
         (list.length ? '<div class="wk-list">' + list.map(function (g, gi) {
           var canDone = WK.folder === 'out'; // Done is only for Check-out, bill & review
@@ -387,7 +387,7 @@
         };
       }
       wireDone();
-      if (WK.folder === 'enq') wireEnq();
+      if (WK.folder === 'enq') { wireEnq(); wireGen(); }
       $$('.wk-send', body).forEach(function (a) { a.onclick = function () {
         var g = list[+a.dataset.g], m = g.msgs[+a.dataset.m], k = g.key + '|' + m.kind;
         api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: WK.edit[k] != null }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out') + cnt('enq'); draw(); }, function () {});
@@ -406,6 +406,16 @@
           api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: ta.value !== m.text }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out') + cnt('enq'); closeSheet(); draw(); }, function () {});
         };
       }; });
+    }
+    function genBox() { // messages for anyone: no name or dates needed
+      var gen = WK.data.gen || [];
+      if (!gen.length) return '';
+      return '<details class="wk-guest wk-gen"' + (WK.genOpen !== false ? ' open' : '') + '><summary class="wk-h"><div class="wk-hl"><b>Quick replies for anyone</b><small>No name needed · type the phone in New enquiry below to send to that number, or choose the chat in WhatsApp</small></div></summary>' +
+        gen.map(function (m, mi) {
+          var ph = WK.q && WK.q.phone, href = ph ? waHref(ph, m.text) : 'https://wa.me/?text=' + encodeURIComponent(m.text);
+          return '<div class="wk-msg"><a class="wk-send" target="_blank" rel="noopener" href="' + esc(href) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-s">' + (ph ? 'Tap to send to ' + esc(nkPhoneShow(ph)) : 'Tap to send · choose the chat') + '</span></a>' +
+            '<button class="wk-ed" type="button" data-ge="' + mi + '">Edit</button></div>';
+        }).join('') + '</details>';
     }
     function enqForm() {
       var q = WK.q || {}, t = S.st.today;
@@ -426,6 +436,16 @@
     function readEnq() {
       return { phone: nkPhoneVal('q-ph', body), name: $('#q-nm', body).value.trim(), checkin: $('#q-in', body).value, checkout: $('#q-out-d', body).value, guests: Number($('#q-g', body).value) || 2, rooms: Number($('#q-r', body).value) || 1, type: $('#q-t', body).value };
     }
+    function wireGen() {
+      var d = $('.wk-gen', body); if (d) d.ontoggle = function () { WK.genOpen = d.open; };
+      $$('[data-ge]', body).forEach(function (b) { b.onclick = function () {
+        var m = WK.data.gen[+b.dataset.ge], ph = WK.q && WK.q.phone, box = openSheet('Edit · ' + m.label);
+        box.innerHTML = '<textarea id="wk-t" class="wk-ta" rows="10">' + esc(m.text) + '</textarea><div class="acts"><a class="btn btn-gold" id="wk-go" target="_blank" rel="noopener" href="#">Send on WhatsApp</a></div>';
+        var ta = $('#wk-t', box), go = $('#wk-go', box);
+        function upd() { go.href = ph ? waHref(ph, ta.value) : 'https://wa.me/?text=' + encodeURIComponent(ta.value); }
+        ta.oninput = upd; upd(); go.onclick = function () { setTimeout(closeSheet, 300); };
+      }; });
+    }
     function wireEnq() {
       function wireOut() {
         $$('[data-qe]', body).forEach(function (b) { b.onclick = function () {
@@ -437,6 +457,7 @@
         }; });
       }
       wireOut();
+      var qph = $('#q-ph', body); if (qph) qph.addEventListener('change', function () { WK.q = readEnq(); var y = window.scrollY; draw(); window.scrollTo(0, y); });
       $('#q-in', body).onchange = function () { var o = $('#q-out-d', body); if (!o.value || o.value <= this.value) o.value = addDays(this.value, 1); };
       $('#q-go', body).onclick = function () {
         var x = this, q = WK.q = readEnq(); busy(x, true); $('#q-err', body).textContent = '';
@@ -2942,7 +2963,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 72</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 73</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

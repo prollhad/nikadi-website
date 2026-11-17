@@ -749,3 +749,4 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .wk-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.wk-hl{display:grid;gap:2px;min-width:0}
 .wk-donebox{flex:none;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;max-width:60%}.wk-ask{font-size:.74rem;color:var(--muted);flex-basis:100%;text-align:right}
 .wk-all{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;margin-top:6px}
+.wk-gen summary{cursor:pointer;list-style:none}.wk-gen summary::-webkit-details-marker{display:none}.wk-gen summary b::after{content:' ▾';color:var(--muted);font-weight:400}.wk-gen:not([open]) summary b::after{content:' ▸'}.wk-gen{margin-bottom:12px}
