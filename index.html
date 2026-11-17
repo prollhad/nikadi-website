@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>document.documentElement.classList.add("js")</script>
 <title>Nikadi Guest House</title>
 <link rel="icon" href="/favicon.ico?v=2" sizes="any">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png?v=2">
@@ -438,7 +439,7 @@ footer .brand b{font-size:1.2rem}
 .done .btn{padding:11px 18px}
 
 /* membership */
-.member{background:radial-gradient(120% 90% at 85% 20%,rgba(201,163,90,.12),transparent 60%),var(--panel);border-block:1px solid var(--line)}
+section.member{background:radial-gradient(120% 90% at 85% 20%,rgba(201,163,90,.12),transparent 60%),var(--panel);border-block:1px solid var(--line)}
 .mem-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
 @media (max-width:900px){.mem-grid{grid-template-columns:1fr;gap:40px}}
 .mem-copy{display:grid;gap:18px;min-width:0}
@@ -567,6 +568,140 @@ footer .brand b{font-size:1.2rem}
 .rd-note{border-top:1px solid var(--line);padding-top:24px;display:grid;gap:12px;justify-items:start}
 .rd-note p{color:var(--muted);font-size:.93rem}
 .amen-note{margin-top:16px;font-size:.88rem;color:var(--muted)}
+
+/* ===== v3 additions: reviews, live gadgets, explore, about, faq, contact form, phone dock ===== */
+@media (max-width:720px){section.s{padding-block:64px}.head{margin-bottom:32px}}
+nav.main{gap:22px}
+@media (max-width:1060px){nav.main{display:none}}
+/* scroll reveal */
+.js .rv{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+.js .rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){.rv{opacity:1;transform:none}}
+
+/* Google reviews */
+.rev-top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:32px}
+.rev-top .head{margin-bottom:0}
+.g-score{display:flex;align-items:center;gap:18px;border:1px solid var(--line);background:var(--panel);padding:16px 22px;text-decoration:none}
+.g-score .gl{width:34px;height:34px;flex:none}
+.g-score b{font-family:var(--display);font-size:2.6rem;line-height:1;font-weight:600}
+.g-score .gs{display:grid;gap:2px;font-size:.8rem;color:var(--muted)}
+.stars{--p:100%;display:inline-block;font-size:1.05rem;letter-spacing:2px;line-height:1;background:linear-gradient(90deg,var(--gold-hi) var(--p),#4a4038 var(--p));-webkit-background-clip:text;background-clip:text;color:transparent}
+.rev-track{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(290px,360px);gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:14px;scrollbar-width:thin;scrollbar-color:var(--line) transparent;overscroll-behavior-x:contain}
+.rev{scroll-snap-align:start;border:1px solid var(--line);background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.rev-who{display:flex;align-items:center;gap:12px}
+.rev-av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:500;font-size:1.05rem;color:var(--gold-ink);background:var(--gold);flex:none}
+.rev-who b{display:block;font-weight:500}
+.rev-who small{color:var(--muted);font-size:.74rem}
+.rev p{color:var(--ink);font-size:.95rem;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.rev.open p{-webkit-line-clamp:unset;display:block}
+.rev-more{background:none;border:0;padding:0;color:var(--gold-hi);font:inherit;font-size:.82rem;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:3px}
+.rev-foot{margin-top:auto;display:flex;align-items:center;gap:8px;font-size:.74rem;color:var(--muted);letter-spacing:.04em}
+.rev-foot svg{width:14px;height:14px}
+.rev-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.rev-nav .arr{width:44px;height:44px;border:1px solid var(--line);background:transparent;color:var(--gold);font-size:1.3rem;cursor:pointer}
+.rev-nav .arr:hover{border-color:var(--gold)}
+.rev-nav .sp{flex:1}
+@media (max-width:620px){.rev-nav .arr,.rev-nav .sp{display:none}.rev-nav .btn{flex:1 1 auto}.rev-track{grid-auto-columns:86%}}
+
+/* live gadgets */
+.gad{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+@media (max-width:1000px){.gad{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.gad{grid-template-columns:1fr}}
+.gw{border:1px solid var(--line);background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:10px;min-width:0;position:relative;overflow:hidden}
+.gw .lbl{font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold)}
+.gw .big{font-family:var(--display);font-size:2.9rem;line-height:1;font-weight:600}
+.gw .big small{font-size:1.1rem;color:var(--muted);margin-left:6px;font-family:var(--body);font-weight:300}
+.gw .sub{color:var(--muted);font-size:.86rem}
+.gw .pill{align-self:flex-start;font-size:.74rem;padding:5px 10px;border:1px solid rgba(201,163,90,.45);color:var(--gold-hi);letter-spacing:.04em}
+.gw .pill.ok{border-color:rgba(120,190,130,.5);color:#9fd6a6}
+.gw .btn{padding:11px 16px;margin-top:auto}
+.fc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.fc div{border-top:1px solid var(--line);padding-top:8px;font-size:.78rem;color:var(--muted);display:grid;gap:2px}
+.fc b{color:var(--ink);font-weight:400;font-size:.9rem}
+.sunbar{position:relative;height:46px;margin:6px 0 2px}
+.sunbar svg{width:100%;height:100%;overflow:visible}
+.sunrow{display:flex;justify-content:space-between;font-size:.86rem}
+.sunrow b{display:block;font-family:var(--display);font-size:1.6rem;font-weight:600}
+.pr-row{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:8px}
+.pr-row b{font-family:var(--display);font-size:1.6rem;font-weight:600;color:var(--gold-hi)}
+.pr-row s{color:var(--muted);font-size:.8rem;margin-right:6px}
+
+/* explore */
+.ex{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+@media (max-width:1000px){.ex{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.ex{grid-template-columns:1fr}}
+.ex article{border:1px solid var(--line);background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:10px;transition:border-color .25s,transform .25s}
+.ex article:hover{border-color:rgba(201,163,90,.55);transform:translateY(-3px)}
+.ex .ic{width:40px;height:40px;color:var(--gold)}
+.ex h3{font-size:1.5rem}
+.ex p{color:var(--muted);font-size:.92rem}
+.ex .how{margin-top:auto;font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-hi)}
+.ex-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+
+/* about */
+.about{display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center}
+@media (max-width:900px){.about{grid-template-columns:1fr;gap:32px}}
+.about figure{margin:0;position:relative;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line)}
+.about figure img{width:100%;height:100%;object-fit:cover}
+.about figure figcaption{position:absolute;left:0;right:0;bottom:0;padding:40px 18px 14px;background:linear-gradient(transparent,rgba(10,8,7,.85));font-size:.8rem;letter-spacing:.06em}
+@media (max-width:900px){.about figure{aspect-ratio:16/11}}
+.about .tx{display:grid;gap:18px}
+.about .tx p{color:var(--muted)}
+.about .tx p.lead{color:var(--ink);font-size:1.08rem}
+.pillars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:6px}
+@media (max-width:560px){.pillars{grid-template-columns:1fr}}
+.pillars div{border-top:1px solid var(--gold);padding-top:12px;display:grid;gap:4px}
+.pillars b{font-family:var(--display);font-size:1.3rem;font-weight:600}
+.pillars span{font-size:.86rem;color:var(--muted)}
+.team{display:flex;flex-wrap:wrap;gap:8px}
+.team span{font-size:.78rem;border:1px solid var(--line);padding:6px 12px;color:var(--ink)}
+
+/* faq */
+.faq{display:grid;gap:10px;max-width:860px}
+.faq details{border:1px solid var(--line);background:var(--panel)}
+.faq summary{cursor:pointer;list-style:none;padding:18px 22px;display:flex;justify-content:space-between;gap:16px;font-weight:400}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--gold);font-size:1.3rem;line-height:1}
+.faq details[open] summary::after{content:"–"}
+.faq .a{padding:0 22px 18px;color:var(--muted)}
+.faq .a a{color:var(--gold-hi)}
+
+/* contact v3 */
+.cgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;max-width:1040px;margin:0 auto}
+@media (max-width:900px){.cgrid{grid-template-columns:1fr}}
+.cgrid .card{padding:26px 20px}
+.qform{max-width:1040px;margin:24px auto 0;border:1px solid rgba(201,163,90,.45);background:linear-gradient(135deg,rgba(201,163,90,.08),rgba(201,163,90,.02) 60%);padding:26px;display:grid;gap:16px;text-align:left}
+.qform h3{font-size:1.7rem}
+.qf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.qf{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.qf label{display:grid;gap:6px;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);min-width:0}
+.qf input,.qf select,.qform textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);font:inherit;font-size:.95rem;padding:11px 12px;border-radius:0;min-width:0}
+.qform textarea{min-height:84px;resize:vertical}
+.qf .w2{grid-column:span 2}
+.qacts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.qacts small{color:var(--muted)}
+.cmsg{font-size:.82rem;color:var(--gold-hi);min-height:1em}
+
+/* phone dock + menu */
+.dock{display:none}
+@media (max-width:1060px){
+  .dock{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:16;background:rgba(20,17,15,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+  .dock a,.dock button{display:grid;justify-items:center;gap:3px;padding:6px 2px;color:var(--muted);text-decoration:none;font:inherit;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;background:none;border:0;cursor:pointer;min-width:0}
+  .dock svg{width:22px;height:22px;color:var(--ink)}
+  .dock .bk{color:var(--gold-ink);background:var(--gold);border-radius:12px;margin:0 4px}
+  .dock .bk svg{color:var(--gold-ink)}
+  .fab{display:none}
+  body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+}
+.menu{position:fixed;inset:0;z-index:70;background:rgba(10,8,7,.7);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:grid;align-items:end}
+.menu-card{background:var(--band);border-top:1px solid var(--gold);padding:20px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-height:88vh;overflow-y:auto;animation:menuup .25s ease}
+@keyframes menuup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.menu-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.menu-head button{background:none;border:1px solid var(--line);color:var(--ink);width:40px;height:40px;font-size:1.3rem;cursor:pointer}
+.menu-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.menu-grid a,.menu-grid button{display:grid;justify-items:center;gap:8px;padding:16px 6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-decoration:none;font:inherit;font-size:.78rem;text-align:center;cursor:pointer}
+.menu-grid svg{width:24px;height:24px;color:var(--gold)}
+.menu-grid .hot{border-color:rgba(201,163,90,.6)}
 </style>
 </head>
 <body>
@@ -576,7 +711,7 @@ footer .brand b{font-size:1.2rem}
   <div class="wrap">
     <a class="brand" href="#home"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"></a>
     <nav class="main" aria-label="Sections">
-      <a href="#rooms">Rooms</a><a href="#gallery">Gallery</a><a href="#amenities">Amenities</a><a href="#membership">Membership</a><a href="#location">Location</a><a href="#contact">Contact</a>
+      <a href="#rooms">Rooms</a><a href="#reviews">Reviews</a><a href="#membership">Membership</a><a href="#explore">Explore</a><a href="#about">About</a><a href="#location">Location</a><a href="#contact">Contact</a>
     </nav>
     <div class="top-acts">
       <button class="mem-chip" id="memChip" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg><span id="memChipTxt">Member sign in</span></button>
@@ -639,139 +774,53 @@ footer .brand b{font-size:1.2rem}
   </div>
 </div>
 
-<section class="s alt" id="views">
+
+<section class="s" id="reviews">
   <div class="wrap">
-    <div class="views">
-      <figure class="v-main zoom"><img src="img/view-temple.jpg" alt="The domes of the Temple of the Vedic Planetarium lit up at night, seen from Nikadi Guest House" loading="lazy"><figcaption>Temple of the Vedic Planetarium, seen from Nikadi</figcaption></figure>
-      <div class="v-side">
-        <div class="head">
-          <p class="kicker rule">The view</p>
-          <h2>In the heart of Sri Dham Mayapur</h2>
-          <p>From the guest house you can see the great domes of the Temple of the Vedic Planetarium over the trees. ISKCON Gate No. 4 is right across the road, with prasadam stalls and e-rickshaws to the temple just outside our door.</p>
-        </div>
-        <div class="v-pair">
-          <figure class="zoom"><img src="img/view-street.jpg" alt="Evening street outside Nikadi Guest House with stalls, e-rickshaws and pilgrims" loading="lazy"><figcaption>Outside our door</figcaption></figure>
-          <figure class="zoom"><img src="img/view-window.jpg" alt="View of the lit street from a window at Nikadi Guest House" loading="lazy"><figcaption>Evening on our street</figcaption></figure>
-        </div>
+    <div class="rev-top">
+      <div class="head rv">
+        <p class="kicker rule">Guest reviews</p>
+        <h2>What our guests say</h2>
+        <p>Real reviews from Google, written by guests who stayed with us.</p>
       </div>
+      <a class="g-score rv" href="https://maps.google.com/?cid=4814848157732686064" target="_blank" rel="noopener" aria-label="Rated 4.0 out of 5 from 21 Google reviews. Open on Google Maps">
+        <svg class="gl" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><b>4.0</b><span class="gs"><span class="stars" style="--p:80%">★★★★★</span><span>21 reviews on Google</span></span>
+      </a>
+    </div>
+    <div class="rev-track" id="revTrack" tabindex="0" aria-label="Google reviews, swipe for more">
+      <article class="rev"><div class="rev-who"><span class="rev-av" aria-hidden="true">A</span><div><b>Ajay Malakar</b><small>Guest</small></div></div><span class="stars" style="--p:100%" aria-label="5 out of 5 stars">★★★★★</span><p>Excellent Stay – Highly Recommended!
+
+The room was very nice, clean, and comfortable. All the staff members were extremely polite, friendly, and helpful. Their behavior was excellent, and the service was outstanding. Overall, I had a wonderful experience. Highly recommended! 😊</p><button class="rev-more" type="button" hidden>Read more</button><div class="rev-foot"><svg class="gsm" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span>Google review · Nov 2026</span></div></article>
+      <article class="rev"><div class="rev-who"><span class="rev-av" aria-hidden="true">S</span><div><b>Subhankar Ghosh</b><small>Guest</small></div></div><span class="stars" style="--p:100%" aria-label="5 out of 5 stars">★★★★★</span><p>Outstanding Guest House Experience!
+
+I had a wonderful experience staying at this guest house. The service was excellent, the rooms were clean and comfortable, and the overall atmosphere was very pleasant.
+
+A special mention goes to the receptionist, Mr. Sourav Ghosh, for his polite behaviour, friendly nature, and outstanding hospitality. He was always helpful, professional, and attentive to every guest&#x27;s needs.
+
+His warm welcome and excellent customer service made our stay even more memorable.
+
+Highly recommended! I would definitely love to visit again.
+
+Special thanks to Mr. Sourav Ghosh for making our stay so special!</p><button class="rev-more" type="button" hidden>Read more</button><div class="rev-foot"><svg class="gsm" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span>Google review · Nov 2026</span></div></article>
+      <article class="rev"><div class="rev-who"><span class="rev-av" aria-hidden="true">A</span><div><b>Anirban Das</b><small>Guest</small></div></div><span class="stars" style="--p:100%" aria-label="5 out of 5 stars">★★★★★</span><p>Decent Guest House with all the features you would expect. I didn&#x27;t get any accommodation inside the Iskcon Campus, as it was the Good Friday weekend..so had to opt for Nikadi Guest House. I had a very nice stay with my family, staff behaviour is very good along with the services. It&#x27;s right opposite of Iskcon Gate 4... I would highly recommend this one.</p><button class="rev-more" type="button" hidden>Read more</button><div class="rev-foot"><svg class="gsm" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span>Google review · 2025</span></div></article>
+      <article class="rev"><div class="rev-who"><span class="rev-av" aria-hidden="true">V</span><div><b>vivek kumar</b><small>Guest</small></div></div><span class="stars" style="--p:100%" aria-label="5 out of 5 stars">★★★★★</span><p>This hotel is very nice and very clean.Every employee here is very kind.And specially thank you Sourav bhai🙏
+His behavior is very beautiful.
+At least you should visit this hotel once.It is right next to the temple.</p><button class="rev-more" type="button" hidden>Read more</button><div class="rev-foot"><svg class="gsm" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span>Google review · 2025</span></div></article>
+      <article class="rev"><div class="rev-who"><span class="rev-av" aria-hidden="true">V</span><div><b>vivek</b><small>Local Guide</small></div></div><span class="stars" style="--p:100%" aria-label="5 out of 5 stars">★★★★★</span><p>Very comfortable stay very nice rooms very clean … good enough...worth it... HIGHLY RECOMMEND</p><button class="rev-more" type="button" hidden>Read more</button><div class="rev-foot"><svg class="gsm" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span>Google review · 2025</span></div></article>
+      <article class="rev"><div class="rev-who"><span class="rev-av" aria-hidden="true">D</span><div><b>Dr. Tamoghna Das</b><small>Local Guide</small></div></div><span class="stars" style="--p:100%" aria-label="5 out of 5 stars">★★★★★</span><p>Loved it</p><button class="rev-more" type="button" hidden>Read more</button><div class="rev-foot"><svg class="gsm" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span>Google review · 2024</span></div></article>
+    </div>
+    <div class="rev-nav">
+      <button class="arr" type="button" data-rev="-1" aria-label="Previous reviews">‹</button><button class="arr" type="button" data-rev="1" aria-label="More reviews">›</button>
+      <span class="sp"></span>
+      <a class="btn btn-line" href="https://maps.google.com/?cid=4814848157732686064" target="_blank" rel="noopener">Read all on Google</a>
+      <a class="btn btn-gold" href="https://g.page/r/CfDIGanjxtFCEAE/review" target="_blank" rel="noopener">★ Write a review</a>
     </div>
   </div>
 </section>
 
-<section class="s" id="rooms">
+<section class="s alt member" id="membership">
   <div class="wrap">
-    <div class="head">
-      <p class="kicker rule">Accommodation</p>
-      <h2>Our deluxe rooms</h2>
-      <p>Each room has a 10 inch mattress, attached bathroom with geyser and western toilet, television, wardrobe and round-the-clock Wi-Fi.</p>
-    </div>
-
-    <div class="room-grid">
-    <article class="room">
-      <a class="ph" href="#room-deluxe-double" aria-label="View Deluxe Double room photos and details"><img src="img/rooms/double-01.jpg" alt="Deluxe Double room with king bed and warm cove lighting" loading="lazy" style="object-position:50% 70%"><span class="ph-tag">16 photos</span></a>
-      <div class="tx">
-        <p class="kicker">For couples</p>
-        <h3>Deluxe Double</h3>
-        <p class="room-size">190 sq ft · 17.7 m²</p>
-        <p>A spacious room with a king-size bed, sofa corner, work desk and a private bathroom with rain shower.</p>
-        <ul class="specs"><li>King bed</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
-        <div class="price" data-kind="double"><span class="from">Per night</span><s class="was">₹5,000</s><b>₹3,500</b><span class="deal">Special offer</span><span class="n">till 23 December</span></div>
-        <a class="mrate" data-kind="double" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>Members save a further 5–20%</span></a>
-        <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-double">View room</a><a class="btn btn-line" href="#home" data-room="0">Book this room</a></div>
-      </div>
-    </article>
-
-    <article class="room">
-      <a class="ph" href="#room-deluxe-twin" aria-label="View Deluxe Twin room photos and details"><img src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds" loading="lazy" style="object-position:50% 60%"><span class="ph-tag">10 photos</span></a>
-      <div class="tx">
-        <p class="kicker">For friends and family</p>
-        <h3>Deluxe Twin</h3>
-        <p class="room-size">150 sq ft · 13.9 m²</p>
-        <p>Two separate beds, a sofa corner and a private bathroom with rain shower. Well suited to friends, family or devotees travelling together.</p>
-        <ul class="specs"><li>2 single beds</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
-        <div class="price" data-kind="twin"><span class="from">Per night</span><s class="was">₹4,500</s><b>₹3,000</b><span class="deal">Special offer</span><span class="n">till 23 December</span></div>
-        <a class="mrate" data-kind="twin" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>Members save a further 5–20%</span></a>
-        <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-twin">View room</a><a class="btn btn-line" href="#home" data-room="1">Book this room</a></div>
-      </div>
-    </article>
-    </div>
-
-    <div class="times">
-      <div><span>Check-in</span><b>11:00 AM</b></div>
-      <div><span>Check-out</span><b>9:00 AM</b></div>
-    </div>
-  </div>
-</section>
-
-<section class="s alt" id="gallery">
-  <div class="wrap">
-    <div class="head">
-      <p class="kicker rule">Gallery</p>
-      <h2>Inside and around Nikadi</h2>
-      <p>Tap any photo to see it larger. See every room photo under <a href="#room-deluxe-double" style="color:var(--gold-hi)">Deluxe Double</a> and <a href="#room-deluxe-twin" style="color:var(--gold-hi)">Deluxe Twin</a>.</p>
-    </div>
-    <div class="gal">
-      <figure class="zoom"><img src="img/facade-front.jpg" alt="Front of Nikadi Guest House at night with the lit sign" loading="lazy"><figcaption>Nikadi Guest House at night</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-reception.jpg" alt="Reception desk with wood-panelled wall, clock and devotional pictures" loading="lazy"><figcaption>Reception</figcaption></figure>
-      <figure class="zoom"><img src="img/stairs.jpg" alt="Marble staircase with a framed picture of Sri Chaitanya Mahaprabhu" loading="lazy"><figcaption>Stairs to first-floor reception</figcaption></figure>
-      <figure class="zoom"><img src="img/mahaprabhu.jpg" alt="Framed picture of Sri Chaitanya Mahaprabhu at the entrance" loading="lazy" style="object-position:50% 40%"><figcaption>Entrance at the left corner · stairs up to reception</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-02.jpg" alt="Deluxe Double room with bed, wardrobe, TV unit and sofa" loading="lazy"><figcaption>Deluxe Double room</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds and sofa" loading="lazy"><figcaption>Deluxe Twin room</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-reception-desk.jpg" alt="Staff member at the reception desk" loading="lazy" style="object-position:50% 35%"><figcaption>Front desk</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-reception-wide.jpg" alt="Reception counter with backlit marble front" loading="lazy"><figcaption>Reception counter</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-reception-stairs.jpg" alt="Reception seen from the staircase" loading="lazy"><figcaption>Reception from the stairs</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/twin-02.jpg" alt="Single beds in the Deluxe Twin room" loading="lazy"><figcaption>Twin beds</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-04.jpg" alt="Deluxe Double room window with full-length curtains" loading="lazy"><figcaption>Window and curtains</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-stairs.jpg" alt="Staircase with steel railings leading to the rooms" loading="lazy"><figcaption>Staircase to the rooms</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-stairs-landing.jpg" alt="Staircase landing with window and fire extinguisher" loading="lazy"><figcaption>Staircase landing</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-corridor.jpg" alt="Long corridor with marble floor and cove lighting" loading="lazy"><figcaption>Room corridor</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-12.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"><figcaption>Bathroom</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/twin-04.jpg" alt="Smart TV unit with desk, kettle and wardrobe in the Deluxe Twin room" loading="lazy"><figcaption>Smart TV and work desk</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-10.jpg" alt="Nikadi morning kit with bamboo toothbrushes, toiletries and wooden comb" loading="lazy"><figcaption>Morning kit</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-fire-safety.jpg" alt="Fire extinguisher and CCTV camera on the staircase wall" loading="lazy" style="object-position:50% 55%"><figcaption>Fire safety and CCTV</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-security.jpg" alt="CCTV monitor and biometric attendance device at reception" loading="lazy"><figcaption>Security at reception</figcaption></figure>
-      <figure class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Entrance sign</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-first-aid.jpg" alt="Reception corner with a picture of Lord Narasimha and the first aid kit" loading="lazy" style="object-position:50% 30%"><figcaption>Reception corner</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-14.jpg" alt="Deluxe Double room with curtains drawn" loading="lazy"><figcaption>Restful evenings</figcaption></figure>
-    </div>
-  </div>
-</section>
-
-<section class="s" id="amenities">
-  <div class="wrap">
-    <div class="head">
-      <p class="kicker rule">In every room</p>
-      <h2>Thoughtful comforts</h2>
-    </div>
-    <ul class="amen">
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/></svg><span>Wi-Fi, 24/7</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v20M4 6l16 12M20 6 4 18"/></svg><span>Air conditioning</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg><span>Geyser, hot water</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="6" rx="1"/><path d="M5 17v3M19 17v3M5 11V7h14v4"/></svg><span>10 inch mattress</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M8 21h8"/></svg><span>Television</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM17 10h2a2 2 0 0 1 0 4h-2"/></svg><span>Electric kettle</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 2h4v3h-4zM9 5h6l1 4v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9z"/></svg><span>Drinking water</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 20 15 9M14 4h6v4l-5 5-4-4z"/></svg><span>Morning kit</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="3" width="6" height="8" rx="2"/><path d="M8 11v10M5 6h6"/></svg><span>Wooden comb</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 12h14v3a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5zM7 12V5a2 2 0 0 1 4 0"/></svg><span>Western toilet</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18"/></svg><span>Wardrobe and mirror</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg><span>Dustbins, room and bath</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg><span>Mosquito repellent</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8c3-2 6 2 9 0s6-2 9 0v10c-3-2-6 2-9 0s-6-2-9 0z"/></svg><span>Comforter blanket</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M5 8h14M9 13h6"/></svg><span>Bath towels</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="8" width="18" height="9" rx="1"/><path d="M6 8v9M18 8v9"/></svg><span>Floor mat</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10M12 4v4M5 8h14v3a7 7 0 0 1-14 0zM12 18v3"/></svg><span>Water, 24 hours</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="16" height="11" rx="1"/><path d="M19 11h2v3h-2M11 9l-3 4h4l-3 4"/></svg><span>Inverter power backup</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Security, 24 hours</span></li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="8" rx="1"/><path d="M16 10l5-2v6l-5-2M7 15v4M4 19h6"/></svg><span>CCTV and fire safety</span></li>
-    </ul>
-    <p class="amen-note">Our team is here for you: reception is staffed 16 hours a day, housekeeping 8 hours a day, and a bell boy helps with luggage from 8 AM to 4 PM. Security is on duty round the clock. CCTV covers the property, fire extinguishers are mounted on the stairs, and a first aid kit is kept at reception. If the power goes, an inverter keeps the lights and fans running.</p>
-  </div>
-</section>
-
-<section class="s member" id="membership">
-  <div class="wrap">
-    <div class="mem-grid">
+    <div class="mem-grid rv">
       <div class="mem-copy">
         <p class="kicker rule">Nikadi Membership</p>
         <h2>Stay more. Rise higher.</h2>
@@ -833,9 +882,185 @@ footer .brand b{font-size:1.2rem}
   </div>
 </section>
 
+
+<section class="s" id="views">
+  <div class="wrap">
+    <div class="views">
+      <figure class="v-main zoom"><img src="img/view-temple.jpg" alt="The domes of the Temple of the Vedic Planetarium lit up at night, seen from Nikadi Guest House" loading="lazy"><figcaption>Temple of the Vedic Planetarium, seen from Nikadi</figcaption></figure>
+      <div class="v-side">
+        <div class="head rv">
+          <p class="kicker rule">The view</p>
+          <h2>In the heart of Sri Dham Mayapur</h2>
+          <p>From the guest house you can see the great domes of the Temple of the Vedic Planetarium over the trees. ISKCON Gate No. 4 is right across the road, with prasadam stalls and e-rickshaws to the temple just outside our door.</p>
+        </div>
+        <div class="v-pair">
+          <figure class="zoom"><img src="img/view-street.jpg" alt="Evening street outside Nikadi Guest House with stalls, e-rickshaws and pilgrims" loading="lazy"><figcaption>Outside our door</figcaption></figure>
+          <figure class="zoom"><img src="img/view-window.jpg" alt="View of the lit street from a window at Nikadi Guest House" loading="lazy"><figcaption>Evening on our street</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s alt" id="rooms">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="kicker rule">Accommodation</p>
+      <h2>Our deluxe rooms</h2>
+      <p>Each room has a 10 inch mattress, attached bathroom with geyser and western toilet, television, wardrobe and round-the-clock Wi-Fi.</p>
+    </div>
+
+    <div class="room-grid">
+    <article class="room">
+      <a class="ph" href="#room-deluxe-double" aria-label="View Deluxe Double room photos and details"><img src="img/rooms/double-01.jpg" alt="Deluxe Double room with king bed and warm cove lighting" loading="lazy" style="object-position:50% 70%"><span class="ph-tag">16 photos</span></a>
+      <div class="tx">
+        <p class="kicker">For couples</p>
+        <h3>Deluxe Double</h3>
+        <p class="room-size">190 sq ft · 17.7 m²</p>
+        <p>A spacious room with a king-size bed, sofa corner, work desk and a private bathroom with rain shower.</p>
+        <ul class="specs"><li>King bed</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
+        <div class="price" data-kind="double"><span class="from">Per night</span><s class="was">₹5,000</s><b>₹3,500</b><span class="deal">Special offer</span><span class="n">till 23 December</span></div>
+        <a class="mrate" data-kind="double" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>Members save a further 5–20%</span></a>
+        <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-double">View room</a><a class="btn btn-line" href="#home" data-room="0">Book this room</a></div>
+      </div>
+    </article>
+
+    <article class="room">
+      <a class="ph" href="#room-deluxe-twin" aria-label="View Deluxe Twin room photos and details"><img src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds" loading="lazy" style="object-position:50% 60%"><span class="ph-tag">10 photos</span></a>
+      <div class="tx">
+        <p class="kicker">For friends and family</p>
+        <h3>Deluxe Twin</h3>
+        <p class="room-size">150 sq ft · 13.9 m²</p>
+        <p>Two separate beds, a sofa corner and a private bathroom with rain shower. Well suited to friends, family or devotees travelling together.</p>
+        <ul class="specs"><li>2 single beds</li><li>Up to 3 guests</li><li>Air-conditioned</li><li>Attached bath</li><li>TV</li></ul>
+        <div class="price" data-kind="twin"><span class="from">Per night</span><s class="was">₹4,500</s><b>₹3,000</b><span class="deal">Special offer</span><span class="n">till 23 December</span></div>
+        <a class="mrate" data-kind="twin" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>Members save a further 5–20%</span></a>
+        <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-twin">View room</a><a class="btn btn-line" href="#home" data-room="1">Book this room</a></div>
+      </div>
+    </article>
+    </div>
+
+    <div class="times">
+      <div><span>Check-in</span><b>11:00 AM</b></div>
+      <div><span>Check-out</span><b>9:00 AM</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="now">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="kicker rule">Mayapur right now</p>
+      <h2>Plan your day in the Dham</h2>
+      <p>Live time, weather and sun for Sri Dham Mayapur, tonight's room price, and how far you are from us.</p>
+    </div>
+    <div class="gad">
+      <div class="gw rv" id="gwClock">
+        <span class="lbl">Time in Mayapur</span>
+        <span class="big" id="gClock">--:--</span>
+        <span class="sub" id="gDate">&nbsp;</span>
+        <span class="pill" id="gDesk">Check-in from 11:00 AM · check-out by 9:00 AM</span>
+      </div>
+      <div class="gw rv" id="gwWx">
+        <span class="lbl">Weather</span>
+        <span class="big" id="gTemp">--°<small id="gCond">Loading</small></span>
+        <span class="sub" id="gWxSub">&nbsp;</span>
+        <div class="fc" id="gFc"></div>
+      </div>
+      <div class="gw rv" id="gwSun">
+        <span class="lbl">Sunrise and sunset</span>
+        <div class="sunbar"><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><path d="M4 44 Q100 -30 196 44" fill="none" stroke="#3a322b" stroke-width="1.5" stroke-dasharray="3 4"/><circle id="gSunDot" cx="4" cy="44" r="6" fill="#e0be7a"/></svg></div>
+        <div class="sunrow"><span>Sunrise<b id="gRise">--:--</b></span><span style="text-align:right">Sunset<b id="gSet">--:--</b></span></div>
+        <span class="sub" id="gSunSub">Mangala arati is before sunrise. Bring a shawl in winter.</span>
+      </div>
+      <div class="gw rv" id="gwPrice">
+        <span class="lbl" id="gPrLbl">Tonight's price</span>
+        <div class="pr-row"><span>Deluxe Double</span><span><s id="gPrDs"></s><b id="gPrD">--</b></span></div>
+        <div class="pr-row"><span>Deluxe Twin</span><span><s id="gPrTs"></s><b id="gPrT">--</b></span></div>
+        <span class="sub">Per room, per night. Members save 5–20% more.</span>
+        <a class="btn btn-gold" href="#home" data-focus-book>Check my dates</a>
+      </div>
+    </div>
+    <div class="gad" style="margin-top:18px;grid-template-columns:minmax(0,1fr)">
+      <div class="gw rv" style="flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 22px">
+        <div style="display:grid;gap:4px;flex:1 1 260px;min-width:0"><span class="lbl">How far am I?</span><span class="sub" id="gFar">Tap the button and we show how far you are from Nikadi, and the way here.</span></div>
+        <button class="btn btn-line" type="button" id="gFarBtn" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg> Find my distance</button>
+        <a class="btn btn-gold" href="https://www.google.com/maps/dir/?api=1&destination=Nikadi+Guest+House,+Mayapur,+West+Bengal" target="_blank" rel="noopener" style="margin:0">Directions to Nikadi</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s alt" id="gallery">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="kicker rule">Gallery</p>
+      <h2>Inside and around Nikadi</h2>
+      <p>Tap any photo to see it larger. See every room photo under <a href="#room-deluxe-double" style="color:var(--gold-hi)">Deluxe Double</a> and <a href="#room-deluxe-twin" style="color:var(--gold-hi)">Deluxe Twin</a>.</p>
+    </div>
+    <div class="gal">
+      <figure class="zoom"><img src="img/facade-front.jpg" alt="Front of Nikadi Guest House at night with the lit sign" loading="lazy"><figcaption>Nikadi Guest House at night</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-reception.jpg" alt="Reception desk with wood-panelled wall, clock and devotional pictures" loading="lazy"><figcaption>Reception</figcaption></figure>
+      <figure class="zoom"><img src="img/stairs.jpg" alt="Marble staircase with a framed picture of Sri Chaitanya Mahaprabhu" loading="lazy"><figcaption>Stairs to first-floor reception</figcaption></figure>
+      <figure class="zoom"><img src="img/mahaprabhu.jpg" alt="Framed picture of Sri Chaitanya Mahaprabhu at the entrance" loading="lazy" style="object-position:50% 40%"><figcaption>Entrance at the left corner · stairs up to reception</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-02.jpg" alt="Deluxe Double room with bed, wardrobe, TV unit and sofa" loading="lazy"><figcaption>Deluxe Double room</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds and sofa" loading="lazy"><figcaption>Deluxe Twin room</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-reception-desk.jpg" alt="Staff member at the reception desk" loading="lazy" style="object-position:50% 35%"><figcaption>Front desk</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-reception-wide.jpg" alt="Reception counter with backlit marble front" loading="lazy"><figcaption>Reception counter</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-reception-stairs.jpg" alt="Reception seen from the staircase" loading="lazy"><figcaption>Reception from the stairs</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/twin-02.jpg" alt="Single beds in the Deluxe Twin room" loading="lazy"><figcaption>Twin beds</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-04.jpg" alt="Deluxe Double room window with full-length curtains" loading="lazy"><figcaption>Window and curtains</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-stairs.jpg" alt="Staircase with steel railings leading to the rooms" loading="lazy"><figcaption>Staircase to the rooms</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-stairs-landing.jpg" alt="Staircase landing with window and fire extinguisher" loading="lazy"><figcaption>Staircase landing</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-corridor.jpg" alt="Long corridor with marble floor and cove lighting" loading="lazy"><figcaption>Room corridor</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-12.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"><figcaption>Bathroom</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/twin-04.jpg" alt="Smart TV unit with desk, kettle and wardrobe in the Deluxe Twin room" loading="lazy"><figcaption>Smart TV and work desk</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-10.jpg" alt="Nikadi morning kit with bamboo toothbrushes, toiletries and wooden comb" loading="lazy"><figcaption>Morning kit</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-fire-safety.jpg" alt="Fire extinguisher and CCTV camera on the staircase wall" loading="lazy" style="object-position:50% 55%"><figcaption>Fire safety and CCTV</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-security.jpg" alt="CCTV monitor and biometric attendance device at reception" loading="lazy"><figcaption>Security at reception</figcaption></figure>
+      <figure class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Entrance sign</figcaption></figure>
+      <figure class="zoom"><img src="img/hotel-first-aid.jpg" alt="Reception corner with a picture of Lord Narasimha and the first aid kit" loading="lazy" style="object-position:50% 30%"><figcaption>Reception corner</figcaption></figure>
+      <figure class="zoom"><img src="img/rooms/double-14.jpg" alt="Deluxe Double room with curtains drawn" loading="lazy"><figcaption>Restful evenings</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="amenities">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="kicker rule">In every room</p>
+      <h2>Thoughtful comforts</h2>
+    </div>
+    <ul class="amen">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/></svg><span>Wi-Fi, 24/7</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v20M4 6l16 12M20 6 4 18"/></svg><span>Air conditioning</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg><span>Geyser, hot water</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="6" rx="1"/><path d="M5 17v3M19 17v3M5 11V7h14v4"/></svg><span>10 inch mattress</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M8 21h8"/></svg><span>Television</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM17 10h2a2 2 0 0 1 0 4h-2"/></svg><span>Electric kettle</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 2h4v3h-4zM9 5h6l1 4v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9z"/></svg><span>Drinking water</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 20 15 9M14 4h6v4l-5 5-4-4z"/></svg><span>Morning kit</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="3" width="6" height="8" rx="2"/><path d="M8 11v10M5 6h6"/></svg><span>Wooden comb</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 12h14v3a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5zM7 12V5a2 2 0 0 1 4 0"/></svg><span>Western toilet</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18"/></svg><span>Wardrobe and mirror</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg><span>Dustbins, room and bath</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg><span>Mosquito repellent</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8c3-2 6 2 9 0s6-2 9 0v10c-3-2-6 2-9 0s-6-2-9 0z"/></svg><span>Comforter blanket</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M5 8h14M9 13h6"/></svg><span>Bath towels</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="8" width="18" height="9" rx="1"/><path d="M6 8v9M18 8v9"/></svg><span>Floor mat</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10M12 4v4M5 8h14v3a7 7 0 0 1-14 0zM12 18v3"/></svg><span>Water, 24 hours</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="16" height="11" rx="1"/><path d="M19 11h2v3h-2M11 9l-3 4h4l-3 4"/></svg><span>Inverter power backup</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Security, 24 hours</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="8" rx="1"/><path d="M16 10l5-2v6l-5-2M7 15v4M4 19h6"/></svg><span>CCTV and fire safety</span></li>
+    </ul>
+    <p class="amen-note">Our team is here for you: reception is staffed 16 hours a day, housekeeping 8 hours a day, and a bell boy helps with luggage from 8 AM to 4 PM. Security is on duty round the clock. CCTV covers the property, fire extinguishers are mounted on the stairs, and a first aid kit is kept at reception. If the power goes, an inverter keeps the lights and fans running.</p>
+  </div>
+</section>
+
+
 <section class="s alt" id="booking">
   <div class="wrap">
-    <div class="head">
+    <div class="head rv">
       <p class="kicker rule">Booking and payment</p>
       <h2>Reserve in three simple steps</h2>
       <p>Pay securely by UPI from any app. Your booking is confirmed on WhatsApp once we receive the 50% advance. You can also fill our booking and registration forms online, below.</p>
@@ -918,7 +1143,7 @@ footer .brand b{font-size:1.2rem}
 
 <section class="s" id="location">
   <div class="wrap">
-    <div class="head">
+    <div class="head rv">
       <p class="kicker rule">Location</p>
       <h2>Across from Gate No. 4</h2>
       <p>The temple, prasadam halls and banks are all a short walk from our door.</p>
@@ -960,9 +1185,34 @@ footer .brand b{font-size:1.2rem}
   </div>
 </section>
 
-<section class="s alt" id="rules">
+
+<section class="s alt" id="explore">
   <div class="wrap">
-    <div class="head">
+    <div class="head rv">
+      <p class="kicker rule">Things to do</p>
+      <h2>So much to see in Sri Dham Mayapur</h2>
+      <p>Everything below is easy to reach from our door. E-rickshaws wait right outside, and our reception is happy to help you plan.</p>
+    </div>
+    <div class="ex">
+      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v3M8 9a4 4 0 0 1 8 0M5 21V12h14v9M3 21h18M9 21v-5h6v5M7 12V9h10v3"/></svg><h3>Sri Mayapur Chandrodaya Mandir</h3><p>The main ISKCON temple, home of Sri Sri Radha Madhava, the Pancha Tattva and Sri Narasimhadeva. Go early for mangala arati and the morning darshan.</p><span class="how">On foot · 8 min</span></article>
+      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M6 20v-6a6 6 0 0 1 12 0v6M12 8V4M10 20v-3h4v3"/></svg><h3>Temple of the Vedic Planetarium</h3><p>The great domes you can see from our windows. One of the largest temples in the world, beautiful when it is lit up at night.</p><span class="how">On foot · from Gate No. 4</span></article>
+      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-4 0-8-3-9-7 3 0 6 1 9 4 3-3 6-4 9-4-1 4-5 7-9 7zM12 17c-2-2-3-5-2-9 1 1 2 2 2 3 0-1 1-2 2-3 1 4 0 7-2 9z"/></svg><h3>Srila Prabhupada&#x27;s Samadhi</h3><p>The Pushpa Samadhi Mandir of Srila Prabhupada, the founder of ISKCON, with its museum. A peaceful place in the evening.</p><span class="how">Short walk or e-rickshaw</span></article>
+      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h18a9 9 0 0 1-18 0zM8 7c0-1 1-2 1-3M12 7c0-1 1-2 1-3M16 7c0-1 1-2 1-3"/></svg><h3>Govinda&#x27;s</h3><p>Prasadam meals and snacks in the ISKCON campus. We are room only, so this is where most of our guests eat.</p><span class="how">On foot · 8 min</span></article>
+      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15h18l-3 4H6zM12 4v11M12 4l6 8h-6"/></svg><h3>The Ganga and the ghats</h3><p>Sit by the river where the Ganga meets the Jalangi, or take a boat across to Navadvip. Sunset on the river is unforgettable.</p><span class="how">E-rickshaw</span></article>
+      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a6 6 0 0 0 6-6c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-3-2 2-3 4-3 7a6 6 0 0 0 6 6z"/></svg><h3>Yogapitha</h3><p>The holy birthplace of Sri Chaitanya Mahaprabhu, a short ride from the guest house. Visit with Srivas Angan, where the first kirtans were held.</p><span class="how">E-rickshaw</span></article>
+      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8l-2-3M19 8l2-3M6 8h12v6a6 6 0 0 1-12 0zM10 13h.01M14 13h.01M10 17h4"/></svg><h3>Goshala</h3><p>Visit the cows cared for by the ISKCON Mayapur community, and feed them yourself.</p><span class="how">E-rickshaw</span></article>
+      <article class="rv"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15M5 19l7-7"/></svg><h3>Navadvip Mandala Parikrama</h3><p>Walk or ride to the nine islands of Navadvip with the pilgrims, especially in the weeks before Gaura Purnima.</p><span class="how">Ask us for help</span></article>
+    </div>
+    <div class="ex-acts rv">
+      <a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna!%20Can%20you%20help%20me%20plan%20my%20visit%20in%20Mayapur%3F" target="_blank" rel="noopener">Ask us to plan your visit</a>
+      <a class="btn btn-line" href="#location">See distances from Nikadi</a>
+    </div>
+  </div>
+</section>
+
+<section class="s" id="rules">
+  <div class="wrap">
+    <div class="head rv">
       <p class="kicker rule">House rules</p>
       <h2>A sattvic home in the holy dham</h2>
     </div>
@@ -976,38 +1226,106 @@ footer .brand b{font-size:1.2rem}
   </div>
 </section>
 
-<section class="s contact" id="contact">
+
+<section class="s alt" id="about">
+  <div class="wrap about">
+    <figure class="rv"><img src="img/facade-night.jpg" alt="Nikadi Guest House at night, opposite ISKCON Gate No. 4" loading="lazy"><figcaption>Nikadi Guest House, opposite ISKCON Gate No. 4</figcaption></figure>
+    <div class="tx rv">
+      <p class="kicker rule">About us</p>
+      <h2 style="font-size:clamp(2.2rem,5vw,3.4rem)">A quiet home for pilgrims, right at the temple gate</h2>
+      <p class="lead">Nikadi Guest House was made for devotees and families who want to stay close to the Mayapur ISKCON Temple and come back to a clean, cool and peaceful room after darshan.</p>
+      <p>We are a small guest house on Bhaktisiddhanta Saraswati Marg, across the road from ISKCON Gate No. 4. Our home follows the rhythm of the Dham: pure vegetarian, free of intoxication, early mornings and quiet nights. Our team is happy to guide you to darshan, prasadam and the holy places, and to help with e-rickshaws, luggage and anything you need.</p>
+      <div class="pillars">
+        <div><b>Close</b><span>8 minutes on foot to the Main Temple and Govinda's.</span></div>
+        <div><b>Clean</b><span>Daily housekeeping, fresh linen and hot water in every room.</span></div>
+        <div><b>Caring</b><span>A warm welcome and help whenever you need it.</span></div>
+      </div>
+      <div class="team"><span>Reception 16 hours a day</span><span>Housekeeping team</span><span>Bell boy 8 AM – 4 PM</span><span>Security round the clock</span></div>
+      <p style="font-size:.82rem">Nikadi Guest House is a unit of Nikadi Projects Pvt. Ltd.</p>
+    </div>
+  </div>
+</section>
+
+
+<section class="s" id="faq">
   <div class="wrap">
-    <div class="head">
-      <p class="kicker rule">Contact</p>
+    <div class="head rv">
+      <p class="kicker rule">Questions</p>
+      <h2>Good to know</h2>
+    </div>
+    <div class="faq rv">
+      <details><summary>What are the check-in and check-out times?</summary><div class="a">Check-in is from 11:00 AM and check-out is by 9:00 AM. Gold members and above get early check-in from 9 AM when the room is available.</div></details>
+      <details><summary>How do I confirm my booking?</summary><div class="a">Send your dates on WhatsApp or use the booking bar at the top. Once we confirm the room is available, pay a 50% advance by UPI, card or bank transfer. The balance is paid at check-in. <a href="#booking">See how to book and pay</a>.</div></details>
+      <details><summary>Can I cancel?</summary><div class="a">Yes. Cancel 3 or more days before check-in and we refund your full advance. Less than 3 days before, on the day of arrival or a no-show is not refunded. <a href="#cancellation">Read the full policy</a>.</div></details>
+      <details><summary>Do you serve food?</summary><div class="a">We are room only, so meals are not served. Govinda's in the ISKCON campus is an 8 minute walk, and there are prasadam stalls right outside our door. Drinking water is provided.</div></details>
+      <details><summary>How many guests can stay in a room?</summary><div class="a">Each Deluxe Double and Deluxe Twin room takes up to 3 guests. For groups and festival dates, message us and we will plan the rooms for you.</div></details>
+      <details><summary>Is the guest house vegetarian?</summary><div class="a">Yes. Out of respect for Sri Dham Mayapur, no non-veg food, eggs, smoking, tobacco or alcohol are allowed on the premises. There is a ₹2,000 fine for any violation.</div></details>
+      <details><summary>Where exactly is the reception?</summary><div class="a">On the first floor. Enter at the left corner of the building, by the picture of Sri Chaitanya Mahaprabhu, and take the stairs up. <a href="#location">Watch the walk-up video</a>.</div></details>
+      <details><summary>What is Nikadi Membership?</summary><div class="a">A free membership for guests who come back. You get 100 welcome points, 5–20% off every booking, and free nights with your points. <a href="#membership">See the levels</a>.</div></details>
+    </div>
+  </div>
+</section>
+
+
+<section class="s alt contact" id="contact">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="kicker rule">Contact us</p>
       <h2>We are happy to help</h2>
       <p>Call or WhatsApp for bookings, group stays and festival dates.</p>
     </div>
-    <div class="cards">
-      <div class="card">
+    <div class="cgrid">
+      <div class="card rv">
         <span class="lbl">Phone and WhatsApp</span>
         <span class="val" id="phone">+91 75011 01137</span>
         <div class="acts">
-          <a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20would%20like%20to%20book%20a%20room%20at%20Nikadi%20Guest%20House.%0ACheck-in%3A%20%0ACheck-out%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20would%20like%20to%20book%20a%20room%20at%20Nikadi%20Guest%20House." target="_blank" rel="noopener">WhatsApp</a>
           <a class="btn btn-line" href="tel:+917501101137">Call</a>
+          <button class="btn btn-line" type="button" data-copy="+91 75011 01137">Copy</button>
         </div>
       </div>
-      <div class="card">
+      <div class="card rv">
         <span class="lbl">Email</span>
-        <span class="val" id="email">nikadiguesthouse@gmail.com</span>
+        <span class="val" id="email" style="font-size:clamp(1.15rem,3.6vw,1.45rem)">nikadiguesthouse@gmail.com</span>
         <div class="acts">
           <a class="btn btn-line" href="mailto:nikadiguesthouse@gmail.com">Send email</a>
           <button class="btn btn-line" type="button" id="copyEmail">Copy email</button>
         </div>
         <span class="msg" id="emailMsg" aria-live="polite"></span>
       </div>
-      <div class="card" style="grid-column:1/-1">
-        <span class="lbl">Follow us</span>
-        <span class="val">@nikadiguesthouse · /nikadiguesthouse</span>
+      <div class="card rv">
+        <span class="lbl">Visit us</span>
+        <span class="val" style="font-size:1.15rem;line-height:1.4">Opp. ISKCON Gate No. 4<br>Mayapur, Nadia 741313</span>
+        <div class="acts">
+          <a class="btn btn-line" href="https://www.google.com/maps/dir/?api=1&destination=Nikadi+Guest+House,+Mayapur,+West+Bengal" target="_blank" rel="noopener">Directions</a>
+          <a class="btn btn-line" href="https://maps.google.com/?cid=4814848157732686064" target="_blank" rel="noopener">Google Maps</a>
+        </div>
+      </div>
+    </div>
+    <form class="qform rv" id="qForm" autocomplete="on">
+      <h3>Send us a quick message</h3>
+      <div class="qf">
+        <label class="w2">Your name<input name="name" required maxlength="60" autocomplete="name"></label>
+        <label>Check-in<input name="ci" type="date"></label>
+        <label>Nights<select name="n"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option value="8+">8 or more</option></select></label>
+        <label>Guests<select name="g"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option value="7+">7 or more</option></select></label>
+        <label>Room<select name="r"><option>Deluxe Double</option><option>Deluxe Twin</option><option>Any room</option></select></label>
+        <label class="w2">About<select name="t"><option>Booking enquiry</option><option>Group or festival stay</option><option>Question about my booking</option><option>Something else</option></select></label>
+      </div>
+      <textarea name="m" maxlength="500" placeholder="Your message (optional)" aria-label="Your message"></textarea>
+      <div class="qacts"><button class="btn btn-gold" type="submit">Send on WhatsApp</button><small>Opens WhatsApp with your message ready to send.</small></div>
+    </form>
+    <div class="cgrid" style="margin-top:24px">
+      <div class="card rv" style="grid-column:1/-1">
+        <span class="lbl">Follow and share</span>
+        <span class="val">@nikadiguesthouse</span>
         <div class="acts">
           <a class="btn btn-line" href="https://www.instagram.com/nikadiguesthouse/" target="_blank" rel="noopener">Instagram</a>
           <a class="btn btn-line" href="https://www.facebook.com/nikadiguesthouse" target="_blank" rel="noopener">Facebook</a>
+          <a class="btn btn-line" href="https://g.page/r/CfDIGanjxtFCEAE/review" target="_blank" rel="noopener">★ Review us</a>
+          <button class="btn btn-line" type="button" data-share>Share this website</button>
         </div>
+        <span class="cmsg" id="cMsg" aria-live="polite"></span>
       </div>
     </div>
   </div>
@@ -1463,6 +1781,38 @@ footer .brand b{font-size:1.2rem}
     </div>
   </div>
 </section>
+
+
+<nav class="dock" aria-label="Quick actions">
+  <a href="tel:+917501101137"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><span>Call</span></a>
+  <a href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20would%20like%20to%20book%20a%20room%20at%20Nikadi%20Guest%20House." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21l1.6-4.7A8.5 8.5 0 1 1 8 19.6z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-2-2l.8-1-1-2z"/></svg><span>WhatsApp</span></a>
+  <a class="bk" href="#home" data-focus-book><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Book</span></a>
+  <a href="https://www.google.com/maps/dir/?api=1&destination=Nikadi+Guest+House,+Mayapur,+West+Bengal" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Directions</span></a>
+  <button type="button" id="menuBtn" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span></button>
+</nav>
+
+<div class="menu" id="menu" hidden role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="menu-card">
+    <div class="menu-head"><img src="img/brand/lockup-light.png" alt="Nikadi Guest House" style="height:34px;width:auto"><button type="button" data-menu-x aria-label="Close menu">×</button></div>
+    <div class="menu-grid">
+      <a href="#rooms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18V7M21 18v-5a3 3 0 0 0-3-3h-8v8M3 14h18M6.5 10.5a1.5 1.5 0 1 0 0-.01"/></svg><span>Rooms</span></a>
+      <a href="#reviews"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/></svg><span>Reviews</span></a>
+      <a href="#membership"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg><span>Membership</span></a>
+      <a href="#explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Things to do</span></a>
+      <a href="#gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>Gallery</span></a>
+      <a href="#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Location</span></a>
+      <a href="#booking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="1"/><path d="M3 10h18M7 15h4"/></svg><span>Pay advance</span></a>
+      <a href="#forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Forms</span></a>
+      <a href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About us</span></a>
+      <a href="#faq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17v.01"/></svg><span>FAQ</span></a>
+      <a href="#contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg><span>Contact</span></a>
+      <a class="hot" href="app/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg><span>Member login</span></a>
+      <button type="button" data-share><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/></svg><span>Share</span></button>
+      <a href="https://g.page/r/CfDIGanjxtFCEAE/review" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/></svg><span>Write a review</span></a>
+      <a href="#home" class="hot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>Back to top</span></a>
+    </div>
+  </div>
+</div>
 
 <a class="fab" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20would%20like%20to%20book%20a%20room%20at%20Nikadi%20Guest%20House.%0ACheck-in%3A%20%0ACheck-out%3A%20%0AGuests%3A%20" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
@@ -1965,5 +2315,146 @@ var WA = "917501101137";
 })();
 </script>
 
+<script>
+/* ---- v3: reviews carousel, live gadgets, phone dock + menu, quick message, share, scroll reveal ---- */
+(function(){
+  function $(id){return document.getElementById(id);}
+  function pad(n){return (n<10?'0':'')+n;}
+  var LAT=23.42668, LNG=88.3880999;
+  function ist(){return new Date(Date.now()+330*60000);} /* read with getUTC* */
+  function t12(h,m){var ap=h<12?'AM':'PM';h=h%12||12;return h+':'+pad(m)+' '+ap;}
+  function dur(min){var h=Math.floor(min/60),m=min%60;return (h?h+' h ':'')+m+' min';}
+
+  /* scroll reveal */
+  var rv=document.querySelectorAll('.rv');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px'});
+    rv.forEach(function(el){io.observe(el);});
+  } else rv.forEach(function(el){el.classList.add('in');});
+
+  /* reviews: arrows + read more */
+  var tr=$('revTrack');
+  if(tr){
+    document.querySelectorAll('[data-rev]').forEach(function(b){b.addEventListener('click',function(){var c=tr.querySelector('.rev');tr.scrollBy({left:(c?c.offsetWidth+18:320)*(+b.getAttribute('data-rev')),behavior:'smooth'});});});
+    function checkMore(){tr.querySelectorAll('.rev').forEach(function(r){var p=r.querySelector('p'),b=r.querySelector('.rev-more');if(!r.classList.contains('open'))b.hidden=p.scrollHeight<=p.clientHeight+2;});}
+    tr.addEventListener('click',function(e){var b=e.target.closest('.rev-more');if(!b)return;var r=b.closest('.rev');r.classList.toggle('open');b.textContent=r.classList.contains('open')?'Show less':'Read more';});
+    window.addEventListener('load',checkMore);window.addEventListener('resize',checkMore);setTimeout(checkMore,300);
+  }
+
+  /* clock + desk status */
+  function tick(){
+    var d=ist(),h=d.getUTCHours(),m=d.getUTCMinutes(),now=h*60+m;
+    if($('gClock'))$('gClock').innerHTML=(h%12||12)+':'+pad(m)+'<small>'+(h<12?'AM':'PM')+'</small>';
+    var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],mon=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    if($('gDate'))$('gDate').textContent=days[d.getUTCDay()]+', '+d.getUTCDate()+' '+mon[d.getUTCMonth()]+' · India time';
+    var p=$('gDesk');if(p){
+      if(now<9*60){p.textContent='Check-out by 9:00 AM · in '+dur(9*60-now);p.className='pill';}
+      else if(now<11*60){p.textContent='Check-in opens at 11:00 AM · in '+dur(11*60-now);p.className='pill';}
+      else if(now<22*60){p.textContent='Check-in is open now · from 11:00 AM';p.className='pill ok';}
+      else{p.textContent='Arriving late tonight? WhatsApp us before you come';p.className='pill';}
+    }
+    sunDot();
+  }
+  tick();setInterval(tick,20000);
+
+  /* weather + sun (Open-Meteo, no key) */
+  var WX={0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Fog',48:'Fog',51:'Drizzle',53:'Drizzle',55:'Drizzle',56:'Drizzle',57:'Drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',66:'Rain',67:'Rain',71:'Snow',73:'Snow',75:'Snow',80:'Showers',81:'Showers',82:'Heavy showers',95:'Thunderstorm',96:'Thunderstorm',99:'Thunderstorm'};
+  var SUN=null;
+  function hm(iso){var t=String(iso).slice(11,16).split(':');return [+t[0],+t[1]];}
+  function sunDot(){
+    var dot=$('gSunDot');if(!dot||!SUN)return;
+    var d=ist(),now=d.getUTCHours()*60+d.getUTCMinutes(),f=(now-SUN[0])/(SUN[1]-SUN[0]);
+    var sub=$('gSunSub');
+    if(f<0||f>1){dot.setAttribute('cx',f<0?4:196);dot.setAttribute('cy',44);dot.setAttribute('opacity','.35');
+      if(sub)sub.textContent=f<0?'Sunrise in '+dur(SUN[0]-now)+'. Mangala arati is before sunrise.':'The sun has set. Evening arati and kirtan time in the Dham.';return;}
+    var t=f,x=(1-t)*(1-t)*4+2*(1-t)*t*100+t*t*196,y=(1-t)*(1-t)*44+2*(1-t)*t*(-30)+t*t*44;
+    dot.setAttribute('cx',x.toFixed(1));dot.setAttribute('cy',y.toFixed(1));dot.setAttribute('opacity','1');
+    if(sub)sub.textContent='Sunset in '+dur(SUN[1]-now)+'. Lovely time for a walk by the Ganga.';
+  }
+  if($('gTemp')){
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LNG+'&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=Asia%2FKolkata&forecast_days=4')
+    .then(function(r){return r.json();}).then(function(w){
+      var c=w.current,dl=w.daily;
+      $('gTemp').innerHTML=Math.round(c.temperature_2m)+'°<small>'+(WX[c.weather_code]||'')+'</small>';
+      $('gWxSub').textContent='Humidity '+c.relative_humidity_2m+'% · today '+Math.round(dl.temperature_2m_min[0])+'° to '+Math.round(dl.temperature_2m_max[0])+'°'+(dl.precipitation_probability_max[0]!=null?' · rain '+dl.precipitation_probability_max[0]+'%':'');
+      var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],h='';
+      for(var i=1;i<4;i++){var dd=new Date(dl.time[i]+'T00:00:00Z');h+='<div><span>'+dn[dd.getUTCDay()]+'</span><b>'+Math.round(dl.temperature_2m_max[i])+'° / '+Math.round(dl.temperature_2m_min[i])+'°</b><span>'+(WX[dl.weather_code[i]]||'')+'</span></div>';}
+      $('gFc').innerHTML=h;
+      var a=hm(dl.sunrise[0]),b=hm(dl.sunset[0]);
+      $('gRise').textContent=t12(a[0],a[1]);$('gSet').textContent=t12(b[0],b[1]);
+      SUN=[a[0]*60+a[1],b[0]*60+b[1]];sunDot();
+    }).catch(function(){$('gTemp').innerHTML='<small style="margin:0">Weather is not available right now</small>';$('gWxSub').textContent='';});
+  }
+
+  /* tonight's price (from pricing.js) */
+  var R=window.NikadiRates;
+  if(R&&$('gPrD')){
+    var td=R.today(),P=R.period(td),inr=function(n){return '₹'+Number(n).toLocaleString('en-IN');};
+    $('gPrD').textContent=inr(P.double);$('gPrT').textContent=inr(P.twin);
+    if(R.standard('double')>P.double){$('gPrDs').textContent=inr(R.standard('double'));$('gPrTs').textContent=inr(R.standard('twin'));}
+    if(P.offer)$('gPrLbl').textContent="Tonight's price · "+P.offer.name;
+  }
+
+  /* how far am I */
+  var fb=$('gFarBtn');
+  if(fb)fb.addEventListener('click',function(){
+    var out=$('gFar');
+    if(!navigator.geolocation){out.textContent='Your browser cannot share your location. Tap Directions to open Google Maps.';return;}
+    out.textContent='Finding you…';
+    navigator.geolocation.getCurrentPosition(function(p){
+      var R0=6371,dLa=(LAT-p.coords.latitude)*Math.PI/180,dLo=(LNG-p.coords.longitude)*Math.PI/180;
+      var a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(p.coords.latitude*Math.PI/180)*Math.cos(LAT*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+      var km=R0*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+      out.innerHTML=km<0.3?'<b>You are here!</b> Look for the lit NIKADI GUEST HOUSE sign opposite Gate No. 4. Reception is on the first floor.'
+        :km<3?'<b>'+(km<1?Math.round(km*1000)+' m':km.toFixed(1)+' km')+'</b> away (straight line). About '+Math.max(2,Math.round(km*13))+' minutes on foot, or hop on an e-rickshaw.'
+        :'<b>'+Math.round(km)+' km</b> away (straight line). Tap Directions for the road route and travel time.';
+    },function(){out.textContent='We could not get your location. Tap Directions to open Google Maps instead.';},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
+  });
+
+  /* book buttons focus the booking bar */
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-focus-book]');if(!b)return;
+    var f=$('bookForm');if(!f)return;e.preventDefault();closeMenu();
+    f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){var ci=$('ci');if(ci)try{ci.focus({preventScroll:true});}catch(x){}},500);
+  });
+
+  /* phone menu */
+  var menu=$('menu');
+  function closeMenu(){if(menu&&!menu.hidden){menu.hidden=true;document.body.style.overflow='';}}
+  if(menu){
+    $('menuBtn').addEventListener('click',function(){menu.hidden=false;document.body.style.overflow='hidden';});
+    menu.addEventListener('click',function(e){if(e.target===menu||e.target.closest('[data-menu-x]')||e.target.closest('a'))closeMenu();});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu();});
+  }
+
+  /* share + copy */
+  function say(t){var m=$('cMsg');if(m){m.textContent=t;setTimeout(function(){m.textContent='';},3000);}}
+  document.addEventListener('click',function(e){
+    var s=e.target.closest('[data-share]');
+    if(s){var d={title:'Nikadi Guest House, Mayapur',text:'AC rooms opposite ISKCON Gate No. 4, Sri Dham Mayapur',url:'https://www.nikadiguesthouse.com/'};
+      if(navigator.share)navigator.share(d).catch(function(){});
+      else if(navigator.clipboard)navigator.clipboard.writeText(d.url).then(function(){say('Website link copied');},function(){say(d.url);});
+      else say(d.url);
+      return;}
+    var c=e.target.closest('[data-copy]');
+    if(c){var v=c.getAttribute('data-copy');var done=function(){var o=c.textContent;c.textContent='Copied';setTimeout(function(){c.textContent=o;},1600);};
+      if(navigator.clipboard)navigator.clipboard.writeText(v).then(done,function(){});}
+  });
+
+  /* quick message → WhatsApp */
+  var q=$('qForm');
+  if(q){
+    var ci=q.elements.ci;try{ci.min=new Date(Date.now()+330*60000).toISOString().slice(0,10);}catch(x){}
+    q.addEventListener('submit',function(e){
+      e.preventDefault();var f=q.elements,L=['Hare Krishna! '+f.t.value+' from '+f.name.value.trim()+'.'];
+      if(f.ci.value){var p=f.ci.value.split('-');L.push('Check-in: '+(+p[2])+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1]-1]+' '+p[0]+' · '+f.n.value+' night'+(f.n.value==='1'?'':'s'));}
+      L.push('Guests: '+f.g.value+' · Room: '+f.r.value);
+      if(f.m.value.trim())L.push(f.m.value.trim());
+      window.open('https://wa.me/917501101137?text='+encodeURIComponent(L.join('\n')),'_blank','noopener');
+    });
+  }
+})();
+
+</script>
 </body>
 </html>
