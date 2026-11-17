@@ -728,7 +728,7 @@ body{background:radial-gradient(1200px 600px at 80% -10%,rgba(212,175,55,.08),tr
 .room:hover,.site:hover,.gw-arati:hover{border-color:rgba(212,175,55,.6)}
 
 /* next arati gadget */
-.gad2{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+.gad2{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (max-width:760px){.gad2{grid-template-columns:1fr}}
 .gw-arati{text-decoration:none;color:inherit}
 
@@ -992,6 +992,53 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
   .qr{height:46px}
   .qr-list{max-height:calc(100svh - 230px);overflow-y:auto;padding:4px 2px;scrollbar-width:none}
 }
+
+/* transport */
+.tp-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.tp-tabs button{font:inherit;font-size:.86rem;padding:10px 20px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.tp-tabs button[aria-selected="true"]{background:var(--gold-grad);color:var(--gold-ink);border-color:transparent;font-weight:700}
+.acbox{display:grid;grid-template-columns:auto 1fr;gap:20px;padding:24px;border-radius:var(--r);border:1px solid rgba(120,190,255,.45);background:linear-gradient(135deg,rgba(80,150,255,.14),rgba(212,175,55,.06));margin-bottom:20px}
+.acb-ic{width:60px;height:60px;border-radius:18px;display:grid;place-items:center;background:rgba(120,190,255,.16);color:#9fd0ff}
+.acb-ic svg{width:32px;height:32px}
+.acb-tx{display:grid;gap:10px;min-width:0}
+.acb-tx .kicker{color:#9fd0ff}
+.acb-tx h3{font-size:1.5rem}
+.acb-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.acb-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.acb-grid{grid-template-columns:1fr}.acbox{grid-template-columns:1fr}}
+.acb-grid div{display:grid;gap:2px;padding:10px 14px;border-radius:14px;background:rgba(10,15,31,.55);border:1px solid rgba(120,190,255,.25)}
+.acb-grid b{font-weight:700;color:#cfe7ff}
+.acb-grid span{font-size:.78rem;color:var(--muted)}
+.acb-note{font-size:.85rem;color:var(--muted)}
+.tr-grid,.bus-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.bus-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1000px){.tr-grid,.bus-grid{grid-template-columns:1fr}}
+.trc,.busc{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.trc-h{display:flex;gap:14px;align-items:flex-start}
+.trc-h>svg{width:44px;height:44px;flex:none;padding:9px;border-radius:14px;background:rgba(212,175,55,.12);color:var(--gold-hi)}
+.trc-h h3{font-size:1.3rem;margin-bottom:4px}
+.trc-h p{font-size:.86rem;color:var(--muted)}
+.nxt{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-radius:14px;background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.3)}
+.nxt .nl{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-hi);margin-right:6px;width:100%}
+.nxt .nc{display:inline-flex;gap:6px;align-items:baseline;padding:5px 11px;border-radius:999px;background:rgba(10,15,31,.6);border:1px solid var(--line);font-size:.82rem}
+.nxt .nc b{color:var(--ink)}
+.nxt .nc.ac{border-color:rgba(120,190,255,.6);color:#cfe7ff}
+.nxt .nc small{color:var(--muted)}
+.dir .dl{font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.ttab{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.ttab li{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:baseline;padding:7px 10px;border-radius:12px;border:1px solid var(--line);background:rgba(10,15,31,.4);font-size:.82rem}
+.ttab li b{font-weight:700}
+.ttab li span{color:var(--muted);font-size:.76rem}
+.ttab li em{font-style:normal;font-size:.66rem;font-weight:700;padding:1px 7px;border-radius:999px;background:#9fd0ff;color:#06203a}
+.ttab li em.x{background:var(--gold);color:var(--gold-ink)}
+.ttab li.ac{border-color:rgba(120,190,255,.6);background:rgba(80,150,255,.12)}
+.ttab li.gone{opacity:.4}
+.ttab li.soon{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.bus-t{list-style:none;margin:0;padding:0;display:grid}
+.bus-t li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:.88rem;flex-wrap:wrap}
+.bus-t li:first-child{border-top:0}
+.bus-t span{color:var(--muted)}
+.bus-t b{font-weight:700;text-align:right}
 </style>
 </head>
 <body>
@@ -1001,7 +1048,7 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
   <div class="wrap">
     <a class="brand" href="#home"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"></a>
     <nav class="main" aria-label="Sections">
-      <a href="#reviews">Reviews</a><a href="#membership">Membership</a><a href="#rooms">Rooms</a><a href="#location">Location</a><a href="#temple">Temple</a><a href="#explore">Explore</a><a href="#cars">Cars</a><a href="#about">About</a><a href="#contact">Contact</a>
+      <a href="#reviews">Reviews</a><a href="#membership">Membership</a><a href="#rooms">Rooms</a><a href="#location">Location</a><a href="#temple">Temple</a><a href="#explore">Explore</a><a href="#transport">Travel</a><a href="#about">About</a><a href="#contact">Contact</a>
     </nav>
     <div class="top-acts">
       <button class="mem-chip" id="memChip" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg><span id="memChipTxt">Member sign in</span></button>
@@ -1070,7 +1117,7 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
     <div class="head rv">
       <p class="kicker rule">Mayapur right now</p>
       <h2>Plan your day in the Dham</h2>
-      <p>Live time, weather and sun for Sri Dham Mayapur, tonight's room price, and how far you are from us.</p>
+      <p>Live time, weather and sun for Sri Dham Mayapur, the next temple program, the next train from Kolkata, tonight's room price, and how far you are from us.</p>
     </div>
     <div class="gad">
       <div class="gw rv" id="gwClock">
@@ -1101,6 +1148,7 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
     </div>
     <div class="gad gad2" style="margin-top:18px">
       <a class="gw rv gw-arati" href="#temple"><span class="lbl">Next at the temple</span><span class="big" id="gArati" style="font-size:2.2rem">&nbsp;</span><span class="sub" id="gAratiIn">&nbsp;</span><span class="sub" style="color:var(--gold-hi)">See all temple timings ›</span></a>
+      <a class="gw rv gw-arati" href="#transport" data-tp-go="train"><span class="lbl">Next train to Mayapur</span><span class="big" id="gTrain" style="font-size:2.2rem">&nbsp;</span><span class="sub" id="gTrainIn">&nbsp;</span><span class="sub" id="gTrainAc" style="color:#9fd0ff">&nbsp;</span><span class="sub" style="color:var(--gold-hi)">All trains and buses ›</span></a>
       <div class="gw rv" style="flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 22px">
         <div style="display:grid;gap:4px;flex:1 1 260px;min-width:0"><span class="lbl">How far am I?</span><span class="sub" id="gFar">Tap the button and we show how far you are from Nikadi, and the way here.</span></div>
         <button class="btn btn-line" type="button" id="gFarBtn" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg> Find my distance</button>
@@ -1410,17 +1458,94 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </section>
 
-<section class="s" id="cars">
+<section class="s" id="transport">
   <div class="wrap">
     <div class="head rv">
-      <p class="kicker rule">Car service</p>
-      <h2>Travel with <em class="goldtx">Nikadi</em></h2>
-      <p>Our reception arranges a private car with a driver from the guest house to Kolkata Airport, Kolkata city and stations, and for travelling around Kolkata. Tell us your date and time on WhatsApp and we will send you the price and confirm the car.</p>
+      <p class="kicker rule">Travel and transport</p>
+      <h2>Getting to <em class="goldtx">Mayapur</em> and back</h2>
+      <p>Everything in one place: our private car service, local and AC trains from Kolkata, and buses. Live times below show the next departures right now.</p>
     </div>
-    <div class="carg">
+
+    <div class="tp-tabs rv" role="tablist">
+      <button type="button" role="tab" data-tp="car" aria-selected="true">Car service</button>
+      <button type="button" role="tab" data-tp="train" aria-selected="false">Trains</button>
+      <button type="button" role="tab" data-tp="bus" aria-selected="false">Buses</button>
+    </div>
+
+    <div class="tp-pane" data-pane="car">
+      <div class="carg">
       <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Mayapur ⇄ Kolkata Airport</h3><p>Netaji Subhas Chandra Bose International Airport (CCU). About 3 hours each way. Pick-up from the airport or drop for your flight, timed to your schedule.</p><span class="car-t">About 3 hr</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna%21%20I%20need%20a%20car%20between%20Nikadi%20Guest%20House%20and%20Kolkata%20Airport.%20Date%3A%20%0ATime%20/%20flight%3A%20%0AGuests%3A%20%0ALuggage%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+917501101137">Call</a></div></article>
       <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Mayapur ⇄ Kolkata city</h3><p>Howrah, Sealdah and Kolkata Station, hotels or any address in Kolkata. About 3½ hours each way.</p><span class="car-t">About 3.5 hr</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna%21%20I%20need%20a%20car%20between%20Nikadi%20Guest%20House%20and%20Kolkata.%20Pick-up%20/%20drop%20address%3A%20%0ADate%20and%20time%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+917501101137">Call</a></div></article>
       <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Travel around Kolkata</h3><p>A car with driver for a half day or full day in Kolkata: Kalighat, Dakshineswar, Belur Math, ISKCON Kolkata, Victoria Memorial, shopping and more.</p><span class="car-t">Half or full day</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna%21%20I%20would%20like%20a%20car%20for%20travelling%20around%20Kolkata.%20Date%3A%20%0AHalf%20day%20/%20full%20day%3A%20%0APlaces%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+917501101137">Call</a></div></article>
+    </div>
+    </div>
+
+    <div class="tp-pane" data-pane="train" hidden>
+      <div class="acbox rv">
+        <div class="acb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4 6l16 12M20 6L4 18M9 3l3 2 3-2M9 21l3-2 3 2"/></svg></div>
+        <div class="acb-tx">
+          <p class="kicker">AC local train · Galloping AC EMU</p>
+          <h3>Sealdah ⇄ Krishnanagar City in air-conditioned comfort</h3>
+          <div class="acb-grid">
+            <div><b>9:48 AM → 12:07 PM</b><span>Sealdah to Krishnanagar · 31845</span></div>
+            <div><b>11:55 AM → 2:11 PM</b><span>Sealdah to Krishnanagar · 31847</span></div>
+            <div><b>1:30 PM → 3:40 PM</b><span>Krishnanagar to Sealdah · 31846</span></div>
+            <div><b>4:05 PM → 6:20 PM</b><span>Krishnanagar to Sealdah · 31848</span></div>
+          </div>
+          <p class="acb-note">Stops at Bidhannagar, Dum Dum, Barrackpore, Shyamnagar, Naihati, Kalyani, Chakdaha and Ranaghat. About 2 hours 20 minutes. AC local tickets cost more than the ordinary local; buy at the counter or on the UTS app.</p>
+        </div>
+      </div>
+
+      <div class="tr-grid">
+        <div class="trc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 10h14M9 20l-2 2M15 20l2 2M8 16l-1 4h10l-1-4"/><circle cx="9" cy="13" r=".7"/><circle cx="15" cy="13" r=".7"/></svg><div><h3>Kolkata (Sealdah) ⇄ Krishnanagar</h3><p>Sealdah main line · about 2 hr 20 min · then about 40 minutes by bus, auto or car from Krishnanagar to Mayapur.</p></div></div>
+          <div class="nxt" data-k="sk"></div>
+          <div class="dir"><p class="dl">Sealdah → Krishnanagar City</p><ol class="ttab"><li class="tr" data-d="03:20"><b>3:20 AM</b><span>→ 5:48 AM</span></li><li class="tr" data-d="05:37"><b>5:37 AM</b><span>→ 8:00 AM</span></li><li class="tr" data-d="06:10"><b>6:10 AM</b><span>→ 8:34 AM</span></li><li class="tr" data-d="06:55"><b>6:55 AM</b><span>→ 9:22 AM</span></li><li class="tr" data-d="07:52"><b>7:52 AM</b><span>→ 10:10 AM</span></li><li class="tr" data-d="09:34"><b>9:34 AM</b><span>→ 11:50 AM</span></li><li class="tr ac" data-d="09:48"><b>9:48 AM</b><span>→ 12:07 PM</span><em>AC</em></li><li class="tr" data-d="10:28"><b>10:28 AM</b><span>→ 12:35 PM</span></li><li class="tr" data-d="10:52"><b>10:52 AM</b><span>→ 1:18 PM</span></li><li class="tr ac" data-d="11:55"><b>11:55 AM</b><span>→ 2:11 PM</span><em>AC</em></li><li class="tr" data-d="12:05"><b>12:05 PM</b><span>→ 2:26 PM</span></li><li class="tr" data-d="13:15"><b>1:15 PM</b><span>→ 3:35 PM</span></li><li class="tr" data-d="15:25"><b>3:25 PM</b><span>→ 5:50 PM</span></li><li class="tr" data-d="16:08"><b>4:08 PM</b><span>→ 6:35 PM</span></li><li class="tr" data-d="17:05"><b>5:05 PM</b><span>→ 7:29 PM</span></li><li class="tr" data-d="17:34"><b>5:34 PM</b><span>→ 7:49 PM</span></li><li class="tr ex" data-d="18:20"><b>6:20 PM</b><span>→ 8:12 PM</span><em class="x">Express</em></li><li class="tr" data-d="18:43"><b>6:43 PM</b><span>→ 8:59 PM</span></li><li class="tr" data-d="19:20"><b>7:20 PM</b><span>→ 9:30 PM</span></li><li class="tr" data-d="19:35"><b>7:35 PM</b><span>→ 9:57 PM</span></li><li class="tr" data-d="21:00"><b>9:00 PM</b><span>→ 11:22 PM</span></li></ol></div>
+          <div class="nxt" data-k="ks"></div>
+          <div class="dir"><p class="dl">Krishnanagar City → Sealdah</p><ol class="ttab"><li class="tr" data-d="04:20"><b>4:20 AM</b><span>→ 6:46 AM</span></li><li class="tr" data-d="05:00"><b>5:00 AM</b><span>→ 7:12 AM</span></li><li class="tr" data-d="06:07"><b>6:07 AM</b><span>→ 8:27 AM</span></li><li class="tr" data-d="07:04"><b>7:04 AM</b><span>→ 9:22 AM</span></li><li class="tr ex" data-d="08:04"><b>8:04 AM</b><span>→ 10:25 AM</span><em class="x">Express</em></li><li class="tr" data-d="08:40"><b>8:40 AM</b><span>→ 11:00 AM</span></li><li class="tr" data-d="09:00"><b>9:00 AM</b><span>→ 11:22 AM</span></li><li class="tr" data-d="09:50"><b>9:50 AM</b><span>→ 12:10 PM</span></li><li class="tr" data-d="12:12"><b>12:12 PM</b><span>→ 2:30 PM</span></li><li class="tr ac" data-d="13:30"><b>1:30 PM</b><span>→ 3:40 PM</span><em>AC</em></li><li class="tr" data-d="13:50"><b>1:50 PM</b><span>→ 4:00 PM</span></li><li class="tr" data-d="14:15"><b>2:15 PM</b><span>→ 4:15 PM</span></li><li class="tr" data-d="15:20"><b>3:20 PM</b><span>→ 5:37 PM</span></li><li class="tr ac" data-d="16:05"><b>4:05 PM</b><span>→ 6:20 PM</span><em>AC</em></li><li class="tr" data-d="16:20"><b>4:20 PM</b><span>→ 6:40 PM</span></li><li class="tr" data-d="18:32"><b>6:32 PM</b><span>→ 8:58 PM</span></li><li class="tr" data-d="19:24"><b>7:24 PM</b><span>→ 9:43 PM</span></li><li class="tr" data-d="20:00"><b>8:00 PM</b><span>→ 10:25 PM</span></li><li class="tr" data-d="20:25"><b>8:25 PM</b><span>→ 10:55 PM</span></li><li class="tr" data-d="21:10"><b>9:10 PM</b><span>→ 11:25 PM</span></li><li class="tr" data-d="22:22"><b>10:22 PM</b><span>→ 12:40 AM</span></li></ol></div>
+        </div>
+        <div class="trc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 10h14M9 20l-2 2M15 20l2 2M8 16l-1 4h10l-1-4"/><circle cx="9" cy="13" r=".7"/><circle cx="15" cy="13" r=".7"/></svg><div><h3>Howrah ⇄ Nabadwip Dham</h3><p>Howrah–Katwa line · about 2 hr 10 min · then a toto to the Nabadwip ghat and the ferry across the Ganga to Mayapur.</p></div></div>
+          <div class="nxt" data-k="hn"></div>
+          <div class="dir"><p class="dl">Howrah → Nabadwip Dham</p><ol class="ttab"><li class="tr" data-d="05:22"><b>5:22 AM</b><span>→ 7:32 AM</span></li><li class="tr" data-d="08:00"><b>8:00 AM</b><span>→ 10:10 AM</span></li><li class="tr" data-d="10:00"><b>10:00 AM</b><span>→ 12:12 PM</span></li><li class="tr" data-d="12:10"><b>12:10 PM</b><span>→ 2:22 PM</span></li><li class="tr ex" data-d="14:00"><b>2:00 PM</b><span>→ 3:45 PM</span><em class="x">Express</em></li><li class="tr" data-d="14:30"><b>2:30 PM</b><span>→ 4:35 PM</span></li><li class="tr" data-d="17:05"><b>5:05 PM</b><span>→ 7:20 PM</span></li><li class="tr" data-d="18:00"><b>6:00 PM</b><span>→ 8:05 PM</span></li><li class="tr" data-d="19:25"><b>7:25 PM</b><span>→ 9:29 PM</span></li><li class="tr" data-d="20:30"><b>8:30 PM</b><span>→ 11:02 PM</span></li></ol></div>
+          <div class="nxt" data-k="nh"></div>
+          <div class="dir"><p class="dl">Nabadwip Dham → Howrah</p><ol class="ttab"><li class="tr" data-d="04:27"><b>4:27 AM</b><span>→ 6:57 AM</span></li><li class="tr" data-d="06:19"><b>6:19 AM</b><span>→ 8:55 AM</span></li><li class="tr" data-d="07:07"><b>7:07 AM</b><span>→ 9:30 AM</span></li><li class="tr" data-d="07:41"><b>7:41 AM</b><span>→ 10:18 AM</span></li><li class="tr" data-d="08:30"><b>8:30 AM</b><span>→ 10:55 AM</span></li><li class="tr ex" data-d="10:05"><b>10:05 AM</b><span>→ 12:40 PM</span><em class="x">Express</em></li><li class="tr" data-d="11:38"><b>11:38 AM</b><span>→ 2:22 PM</span></li><li class="tr" data-d="15:31"><b>3:31 PM</b><span>→ 6:00 PM</span></li><li class="tr" data-d="16:16"><b>4:16 PM</b><span>→ 6:45 PM</span></li><li class="tr" data-d="20:09"><b>8:09 PM</b><span>→ 10:44 PM</span></li></ol></div>
+        </div>
+      </div>
+      <p class="credits">Train times from the Indian Railways timetable (erail.in, ixigo), November 2026. Timetables change, so please check <a href="https://enquiry.indianrail.gov.in/mntes/" target="_blank" rel="noopener">NTES</a> or <a href="https://erail.in/trains-between-stations/sealdah-SDAH/krishnanagar-city-jn-KNJ" target="_blank" rel="noopener">erail.in</a> before you travel. Some AC and express trains do not run every day.</p>
+    </div>
+
+    <div class="tp-pane" data-pane="bus" hidden>
+      <div class="bus-grid">
+        <article class="busc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/></svg><div><h3>Kolkata ⇄ Mayapur · WBTC government bus</h3><p>Non-AC, every day. Via Ultadanga, Airport, Barasat, Ranaghat, Shantipur and Krishnanagar.</p></div></div>
+          <ul class="bus-t">
+            <li><span>From Kolkata (Esplanade)</span><b>6:15 AM · 3:00 PM</b></li>
+            <li><span>From ISKCON Mayapur (Vamsi Bhavan)</span><b>6:15 AM · 3:30 PM</b></li>
+            <li><span>Fare</span><b>about ₹108</b></li>
+          </ul>
+          <div class="car-acts"><a class="btn btn-line" href="https://wbtconline.in/home" target="_blank" rel="noopener">Book on WBTC</a><a class="btn btn-line" href="tel:+918697733469">Call WBTC</a></div>
+        </article>
+        <article class="busc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/></svg><div><h3>Kolkata ⇄ Mayapur · AC Volvo</h3><p>Friday, Saturday and Sunday. Kolkata – Krishnanagar – Mayapur.</p></div></div>
+          <ul class="bus-t">
+            <li><span>From Kolkata (Esplanade)</span><b>7:00 AM</b></li>
+            <li><span>From ISKCON Mayapur (Vamsi Bhavan)</span><b>4:00 PM</b></li>
+            <li><span>More buses and seats</span><b>redBus · MakeMyTrip</b></li>
+          </ul>
+          <div class="car-acts"><a class="btn btn-line" href="https://www.redbus.in/bus-tickets/kolkata-to-mayapur-iskcon" target="_blank" rel="noopener">Kolkata → Mayapur buses</a><a class="btn btn-line" href="https://www.redbus.in/bus-tickets/mayapur-iskcon-to-kolkata" target="_blank" rel="noopener">Mayapur → Kolkata buses</a></div>
+        </article>
+        <article class="busc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/></svg><div><h3>Mayapur → Bhubaneswar</h3><p>Overnight bus to Odisha (Padhi Travels), via Kharagpur, Balasore, Bhadrak and Chandikhol. OSRTC buses are also listed on AbhiBus.</p></div></div>
+          <ul class="bus-t">
+            <li><span>Leaves Mayapur</span><b>6:00 PM</b></li>
+            <li><span>Reaches Bhubaneswar</span><b>5:55 AM · about 12 hr</b></li>
+            <li><span>Fare</span><b>from about ₹1,200</b></li>
+          </ul>
+          <div class="car-acts"><a class="btn btn-line" href="https://www.abhibus.com/buses/1266933/Mayapur-West-Bengal-Bhubaneswar" target="_blank" rel="noopener">See seats on AbhiBus</a><a class="btn btn-line" href="https://wa.me/917501101137?text=Hare%20Krishna!%20Can%20you%20help%20me%20with%20the%20bus%20from%20Mayapur%20to%20Bhubaneswar%3F" target="_blank" rel="noopener">Ask us</a></div>
+        </article>
+      </div>
+      <p class="credits">Bus times from ISKCON Mayapur (srimayapurdhama.com) and AbhiBus, November 2026. Please confirm before you travel; our reception is happy to help.</p>
     </div>
   </div>
 </section>
@@ -2180,7 +2305,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <a href="#explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Holy places</span></a>
       <a href="#gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>Gallery</span></a>
       <a href="#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Location</span></a>
-      <a href="#cars"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg><span>Car service</span></a>
+      <a href="#transport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg><span>Travel</span></a>
       <a href="#booking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="1"/><path d="M3 10h18M7 15h4"/></svg><span>Pay advance</span></a>
       <a href="#forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Forms</span></a>
       <a href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About us</span></a>
@@ -2206,7 +2331,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     <a class="qr qr-temple" href="#temple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v3M8 9a4 4 0 0 1 8 0M5 21V12h14v9M3 21h18M9 21v-5h6v5M7 12V9h10v3"/></svg><span>Temple programs</span></a>
     <a class="qr qr-sites" href="#explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Mayapur site scene</span></a>
     <a class="qr qr-loc" href="#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3zM9 7v13M15 4v13"/></svg><span>Location</span></a>
-    <a class="qr qr-car" href="#cars"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg><span>Car service · Airport & Kolkata</span></a>
+    <a class="qr qr-car" href="#transport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg><span>Travel · cars, trains, buses</span></a>
     <a class="qr qr-about" href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About us</span></a>
   </div>
 </nav>
@@ -2926,6 +3051,50 @@ var WA = "917501101137";
 t.addEventListener('click',function(){var o=r.classList.toggle('open');t.setAttribute('aria-expanded',o?'true':'false');});
 r.addEventListener('click',function(e){if(e.target.closest('.qr'))r.classList.remove('open');});
 document.addEventListener('click',function(e){if(!e.target.closest('#qrail'))r.classList.remove('open');});})();
+</script>
+<script>
+/* transport: tabs + live next trains */
+(function(){
+  var sec=document.getElementById('transport'); if(!sec) return;
+  var tabs=sec.querySelectorAll('[data-tp]'), panes=sec.querySelectorAll('[data-pane]');
+  function show(k){tabs.forEach(function(t){t.setAttribute('aria-selected',t.getAttribute('data-tp')===k?'true':'false');});panes.forEach(function(p){p.hidden=p.getAttribute('data-pane')!==k;});}
+  tabs.forEach(function(t){t.addEventListener('click',function(){show(t.getAttribute('data-tp'));});});
+  if(location.hash==='#trains')show('train');
+  function mins(t){var a=t.split(':');return +a[0]*60+(+a[1]);}
+  function t12(t){var a=t.split(':'),h=+a[0];return (h%12||12)+':'+a[1]+(h<12?' AM':' PM');}
+  function upd(){
+    var d=new Date(Date.now()+330*60000),now=d.getUTCHours()*60+d.getUTCMinutes();
+    sec.querySelectorAll('.nxt').forEach(function(box){
+      var list=box.nextElementSibling.querySelectorAll('.tr'),up=[];
+      list.forEach(function(li){var m=mins(li.getAttribute('data-d'));li.classList.toggle('gone',m<now);li.classList.remove('soon');if(m>=now)up.push(li);});
+      var tomorrow=false; if(!up.length){up=[].slice.call(list);tomorrow=true;}
+      up=up.slice(0,3); if(up[0])up[0].classList.add('soon');
+      var dl=box.nextElementSibling.querySelector('.dl').textContent;
+      box.innerHTML='<span class="nl">Next trains · '+dl+(tomorrow?' · tomorrow':'')+'</span>'+up.map(function(li){var m=mins(li.getAttribute('data-d')),inm=tomorrow?(24*60-now+m):(m-now),h=Math.floor(inm/60);return '<span class="nc'+(li.classList.contains('ac')?' ac':'')+'"><b>'+t12(li.getAttribute('data-d'))+'</b>'+(li.classList.contains('ac')?' AC':'')+' <small>'+(inm<1?'now':'in '+(h?h+' h':'')+(inm%60?(h?' ':'')+(inm%60)+' min':''))+'</small></span>';}).join('');
+    });
+  }
+  upd(); setInterval(upd,30000);
+})();
+</script>
+<script>
+(function(){
+  var sk=[].slice.call(document.querySelectorAll('#transport .dir'))[0]; if(!sk||!document.getElementById('gTrain'))return;
+  function mins(t){var a=t.split(':');return +a[0]*60+(+a[1]);}
+  function t12(t){var a=t.split(':'),h=+a[0];return (h%12||12)+':'+a[1]+(h<12?' AM':' PM');}
+  function dur(m){var h=Math.floor(m/60),r=m%60;return m<1?'a moment':(h?h+' h':'')+(r?(h?' ':'')+r+' min':'');}
+  function upd(){
+    var d=new Date(Date.now()+330*60000),now=d.getUTCHours()*60+d.getUTCMinutes();
+    var rows=[].slice.call(sk.querySelectorAll('.tr')).map(function(li){return {t:li.getAttribute('data-d'),ac:li.classList.contains('ac'),arr:li.querySelector('span').textContent.replace('→ ','')};});
+    var nx=rows.filter(function(r){return mins(r.t)>=now;}),tm=!nx.length; if(tm)nx=rows;
+    var n=nx[0],inm=tm?24*60-now+mins(n.t):mins(n.t)-now;
+    document.getElementById('gTrain').textContent=t12(n.t)+(n.ac?' AC':'');
+    document.getElementById('gTrainIn').textContent='Sealdah → Krishnanagar · '+(tm?'tomorrow, ':'')+'in '+dur(inm)+' · arrives '+n.arr;
+    var ac=nx.filter(function(r){return r.ac;})[0];
+    document.getElementById('gTrainAc').textContent=ac&&ac!==n?'Next AC local: '+t12(ac.t)+' (arrives '+ac.arr+')':(n.ac?'This one is the AC local':'No more AC locals today · next at 9:48 AM');
+  }
+  upd();setInterval(upd,30000);
+  document.querySelectorAll('[data-tp-go]').forEach(function(a){a.addEventListener('click',function(){var b=document.querySelector('#transport [data-tp="'+a.getAttribute('data-tp-go')+'"]');if(b)b.click();});});
+})();
 </script>
 </body>
 </html>
