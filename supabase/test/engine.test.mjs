@@ -152,3 +152,7 @@ const c1 = (await call('deskState', { token: tok })).waToSend;
 const dn = await call('deskWaKitDone', { token: tok, folder: 'out', refs: [og.key] });
 console.log('done', dn.ok, 'still listed', !!dn.out.find(g => g.key === og.key), 'count', c1, '->', (await call('deskState', { token: tok })).waToSend);
 const k6 = await call('deskWaKit', { token: tok }); console.log('gen', k6.gen.length, '\n' + k6.gen.find(m => m.kind === 'grooms').text);
+const bkc = await call('deskBookingRequest', { guest: 'Sita Ram Ghosh', phone: '9800022233', guests: 2, roomsNeeded: 1, roomType: 'Deluxe Twin', checkin: st4.today.slice(0, 8) + '27', checkout: st4.today.slice(0, 8) + '28', waOk: true });
+const cc = await call('deskBookingCancel', { token: tok, id: bkc.id || (bkc.booking && bkc.booking.id), reason: 'test' });
+const k7 = await call('deskWaKit', { token: tok }); const cg = k7.enq.find(g => g.cancelled);
+console.log('cancel', cc.ok || cc.error, !!cg, cg && cg.msgs.map(m => m.kind).join('/'), '\n' + (cg && cg.msgs[0].text));

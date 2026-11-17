@@ -725,6 +725,21 @@ function deskCore(db, hooks) {
       folders.enq.push({ key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Pending booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' · ' + (b.source || ''), msgs: msgs, booking: b.id, done: done,
         todo: !done && !msgs.some(function (m) { return m.sent; }) });
     });
+    /* Cancelled in the last 7 days: the cancellation message with the refund details */
+    db.all('bookings').forEach(function (b) {
+      if (b.status !== 'Cancelled' || !b.phone || waOptedOut(b.phone) || String(b.closedAt || '').slice(0, 10) < addDays(t, -7)) return;
+      var sal = salute(b.guest), paid = Number(b.advancePaid || 0), back = Number(b.refunded || 0), kept = Math.max(0, paid - back);
+      var msgs = light ? [] : [
+        { kind: 'cancelled', label: 'Booking cancelled', text: sal + ', Hare Krishna! As requested, your booking ' + b.id + ' at Nikadi Guest House for ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' has been cancelled.' +
+          (back > 0 ? '\nWe have refunded ' + rupees(back) + ' to you. It can take a few working days to reach your account.' : '') +
+          (kept > 0 ? '\nAs per our cancellation policy, ' + rupees(kept) + ' of the advance is not refundable.' : '') +
+          '\nWe hope to welcome you in Sri Dham Mayapur another time. For a new booking, just message us here.' },
+        { kind: 'cancelagain', label: 'Book again another time', text: sal + ', Hare Krishna! Whenever you plan your next visit to Sri Dham Mayapur, message us here and we will give you our best rate. Nikadi Guest House, opposite ISKCON Gate No. 4 · +91 75011 01137' }
+      ];
+      msgs.forEach(function (m) { m.text = waSafe(m.text); m.sent = sent[b.id + '|' + m.kind] || ''; });
+      folders.enq.push({ key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Cancelled ' + dd(String(b.closedAt).slice(0, 10)) + ' · booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout), msgs: msgs, booking: b.id, cancelled: true,
+        todo: !msgs.some(function (m) { return m.sent; }) && !light });
+    });
     folders.enq.reverse();
     db.all('stays').forEach(function (s) {
       if (!ok(s.phone, s.waOk)) return;

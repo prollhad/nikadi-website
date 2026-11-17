@@ -353,7 +353,7 @@
         '<p class="small">Tap a message: WhatsApp opens on the guest house number with it written. Press send. Use <b>Edit</b> to change the words first.</p>' +
         (WK.folder === 'enq' ? genBox() + enqForm() : '') +
         (WK.folder === 'out' && list.length > 1 ? '<div class="wk-all"><button class="btn btn-line sm" type="button" id="wk-alldone">Mark all ' + list.length + ' as done</button></div>' : '') +
-        (WK.folder === 'enq' && list.length ? '<h3 class="wk-sec">Booking requests · tap a name to see their messages</h3>' : '') +
+        (WK.folder === 'enq' && list.length ? '<h3 class="wk-sec">Booking requests & cancellations · tap a name to see their messages</h3>' : '') +
         (list.length ? '<div class="wk-list">' + list.map(function (g, gi) {
           var canDone = WK.folder === 'out'; // Done is only for Check-out, bill & review
           var fold = WK.folder === 'enq', open = !fold || WK.open === g.key; // Enquiry: tap a name to open that guest's messages
@@ -479,7 +479,7 @@
         openBookingForm({ guest: q.name, phone: q.phone, checkin: q.checkin, checkout: q.checkout, guests: q.guests, roomsNeeded: q.rooms, roomType: q.type === 'Deluxe Double' ? 'Deluxe Double (King)' : q.type === 'Any' ? '' : q.type });
       };
     }
-    api('deskWaKit', {}).then(function (r) { WK.data = r; draw(); }, function (e) { body.innerHTML = '<p class="note">' + esc(errText(e)) + '</p>'; });
+    api('deskWaKit', {}).then(function (r) { WK.data = r; draw(); var o = $('.wk-guest.fold.open', body); if (o) setTimeout(function () { o.scrollIntoView({ block: 'start' }); }, 50); }, function (e) { body.innerHTML = '<p class="note">' + esc(errText(e)) + '</p>'; });
   }
 
   /* auto refresh every 30 s while the app is open and no form is open */
@@ -2021,13 +2021,15 @@
         (b.advancePaid - b.refunded > 0 ? '<button class="btn btn-quiet" id="k-ref" type="button">Refund part of advance</button>' : '') +
         '<button class="btn btn-danger" id="k-cancel" type="button">Cancel booking</button>' + (b.checkin <= t ? '<button class="btn btn-danger" id="k-ns" type="button">Guest did not come</button>' : '') + '</div>';
     }
+    if (b.status === 'Cancelled' && b.phone) h += '<div class="btns"><button class="btn btn-line" id="k-wcan" type="button">WhatsApp: cancellation message</button></div>';
     if ((b.status === 'Cancelled' || b.status === 'No-show') && b.advancePaid - b.refunded > 0) h += '<div class="btns"><button class="btn btn-quiet" id="k-ref" type="button">Refund money (' + inr(b.advancePaid - b.refunded) + ' kept)</button></div>';
     if (b.payments.length) h += '<p class="small">Tap a payment to correct a mistake.' + (rcp() ? ' Changes go to the manager for approval.' : '') + '</p>';
     if (open && !b.comp) h += '<div class="policy"><b>Cancellation policy</b>' + esc(S.st.policy.text) + '</div>';
     body.innerHTML = h;
     var q = function (sel) { return $(sel, body); };
     if (q('#k-conf')) q('#k-conf').onclick = function () { openConfirm(b, body); };
-    if (q('#k-wadv')) q('#k-wadv').onclick = function () { openWaSend('enq'); };
+    if (q('#k-wadv')) q('#k-wadv').onclick = function () { WK.open = b.id; openWaSend('enq'); };
+    if (q('#k-wcan')) q('#k-wcan').onclick = function () { WK.open = b.id; openWaSend('enq'); };
     if (open && mgr() && !b.comp) q('#k-adv').onclick = function () { openAdvance(b, body); };
     if (q('#k-edit')) q('#k-edit').onclick = function () { openBookingForm(b, body); };
     if (q('#k-cancel')) q('#k-cancel').onclick = function () { openCancel(b, body); };
@@ -2972,7 +2974,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 75</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 76</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
