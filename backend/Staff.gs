@@ -89,13 +89,13 @@ var DESK_SCHEMA = {
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
     ['balance', 'Balance (₹)', 'n'], ['notes', 'Notes'], ['inBy', 'Checked in by'], ['inAt', 'Checked in at', 't'], ['outBy', 'Checked out by'], ['outAt', 'Checked out at', 't'],
-    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)'], ['address', 'Guest address'], ['companions', 'Other guests in the room'], ['comp', 'Free stay: guest of'], ['compRef', 'Free stay: reference']] },
+    ['booking', 'Booking ID'], ['email', 'Email'], ['gstin', 'Guest GSTIN', 's'], ['company', 'Company / billing name'], ['bill', 'Bill no.'], ['title', 'Title (Mr./Ms./Mrs./Dr.)'], ['address', 'Guest address'], ['companions', 'Other guests in the room'], ['comp', 'Free stay: guest of'], ['compRef', 'Free stay: reference'], ['waOk', 'WhatsApp messages OK (guest agreed)'], ['waOffers', 'WhatsApp offers OK (guest agreed)']] },
   bookings: { sheet: 'Bookings', cols: [['id', 'Booking ID'], ['status', 'Status'], ['source', 'Source'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['email', 'Email'],
     ['guests', 'Guests', 'n'], ['roomsNeeded', 'Rooms needed', 'n'], ['roomType', 'Room preference'], ['rooms', 'Room numbers', 's'], ['checkin', 'Check-in date', 'd'],
     ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Rate per room per night (₹)', 'n'], ['total', 'Total (₹)', 'n'],
     ['advanceDue', 'Advance required, 50% (₹)', 'n'], ['advancePaid', 'Advance paid (₹)', 'n'], ['refunded', 'Refunded (₹)', 'n'], ['notes', 'Notes'],
     ['created', 'Created', 't'], ['createdBy', 'Created by'], ['confirmedBy', 'Confirmed by'], ['confirmedAt', 'Confirmed at', 't'],
-    ['closedBy', 'Closed by'], ['closedAt', 'Closed at', 't'], ['closeNote', 'Cancellation / closing note'], ['advanceSet', 'Advance agreed (₹, blank = 50%)', 'n'], ['comp', 'Free stay (whose guest)'], ['compRef', 'Free stay reference']] },
+    ['closedBy', 'Closed by'], ['closedAt', 'Closed at', 't'], ['closeNote', 'Cancellation / closing note'], ['advanceSet', 'Advance agreed (₹, blank = 50%)', 'n'], ['comp', 'Free stay (whose guest)'], ['compRef', 'Free stay reference'], ['waOk', 'WhatsApp messages OK (guest agreed)']] },
   charges: { sheet: 'Room charges', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['item', 'Item'], ['qty', 'Qty', 'n'],
     ['price', 'Unit price (₹)', 'n'], ['total', 'Total (₹)', 'n'], ['free', 'Free'], ['note', 'Note'], ['by', 'Added by'], ['removed', 'Removed']] },
   payments: { sheet: 'Payments', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['amount', 'Amount (₹)', 'n'],
@@ -119,7 +119,7 @@ var DESK_SCHEMA = {
   wa: { sheet: 'WhatsApp messages', lazy: true, cols: [['id', 'ID'], ['at', 'Made', 't'], ['sendAt', 'Send at', 't'], ['to', 'To', 's'], ['name', 'Guest'], ['kind', 'Message'], ['ref', 'Stay / booking'], ['status', 'Status'], ['info', 'Details']] },
   wachats: { sheet: 'WhatsApp chats', lazy: true, cols: [['phone', 'Phone', 's'], ['name', 'Name on WhatsApp'], ['first', 'First message', 't'], ['last', 'Last message', 't'],
     ['lastText', 'Last message text'], ['unread', 'Unread', 'n'], ['important', 'Important (why)'], ['proof', 'Payment screenshot (Drive file ID)', 's'], ['proofType', 'Screenshot type', 's'], ['proofAt', 'Screenshot at', 't'],
-    ['readBy', 'Last read by'], ['readAt', 'Last read at', 't'], ['lastIn', 'Last message from guest', 't']] },
+    ['readBy', 'Last read by'], ['readAt', 'Last read at', 't'], ['lastIn', 'Last message from guest', 't'], ['optout', 'Said STOP (no automatic messages)']] },
   wamsgs: { sheet: 'WhatsApp inbox', lazy: true, cols: [['at', 'Time', 't'], ['phone', 'Phone', 's'], ['dir', 'From'], ['text', 'Message'], ['file', 'Photo / file (Drive file ID)', 's'], ['type', 'Type', 's'], ['wamid', 'WhatsApp ID (system)', 's']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   linen: { sheet: 'Linen', cols: [['item', 'Item'], ['price', 'Laundry price per piece (₹)', 'n'], ['store', 'Clean in store', 'n'], ['rooms', 'In rooms', 'n'], ['dirty', 'Used, waiting for laundry', 'n'],
@@ -244,7 +244,7 @@ function deskCore(db, hooks) {
     var mgr = isMgr(me);
     var v = { id: b.id, status: b.status, source: b.source, guest: mgr ? b.guest : String(b.guest || '').split(/\s+/)[0], guests: b.guests, roomsNeeded: b.roomsNeeded,
       roomType: b.roomType, rooms: roomList(b.rooms), checkin: b.checkin, checkout: b.checkout, nights: b.nights, created: b.created, createdBy: b.createdBy,
-      confirmedBy: b.confirmedBy, confirmedAt: b.confirmedAt, closedBy: b.closedBy, closedAt: b.closedAt, closeNote: b.closeNote, daysBefore: daysBefore(b), comp: b.comp || '', compRef: b.compRef || '' };
+      confirmedBy: b.confirmedBy, confirmedAt: b.confirmedAt, closedBy: b.closedBy, closedAt: b.closedAt, closeNote: b.closeNote, daysBefore: daysBefore(b), waOk: b.waOk === 'Yes', comp: b.comp || '', compRef: b.compRef || '' };
     if (mgr) {
       v.phone = b.phone; v.email = b.email; v.rate = b.rate; v.total = b.total; v.advanceDue = b.advanceDue; v.advanceSet = Number(b.advanceSet) > 0; v.advancePaid = b.advancePaid; v.refunded = b.refunded; v.notes = b.notes;
       v.payments = bookingPays(b.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: p.note, by: p.by }; }).reverse();
@@ -395,7 +395,7 @@ function deskCore(db, hooks) {
   function companionsOut(v) { return String(v || '').split(';').map(function (x) { return x.trim(); }).filter(Boolean); }
   function stayView(s, me) {
     var mgr = isMgr(me);
-    var v = { id: s.id, room: s.room, guest: s.guest, guests: s.guests, checkin: s.checkin, checkout: s.checkout, nights: s.nights, status: s.status,
+    var v = { id: s.id, room: s.room, guest: s.guest, guests: s.guests, waOk: s.waOk === 'Yes', waOffers: s.waOffers === 'Yes', checkin: s.checkin, checkout: s.checkout, nights: s.nights, status: s.status,
       leavesToday: s.status === 'In house' && s.checkout <= today(), inBy: s.inBy, inAt: s.inAt, outBy: s.outBy, outAt: s.outAt };
     v.charges = chargesOf(s.id).map(function (c) {
       var o = { id: c.id, at: c.at, item: c.item, qty: c.qty, free: c.free === 'Yes', note: c.note, by: c.by };
@@ -499,7 +499,7 @@ function deskCore(db, hooks) {
     if (!row) {
       d.no = newBillNo(); d.id = newBillId();
       row = db.add('bills', { id: d.id, no: d.no, at: stamp(), stay: s.id, room: s.room, guest: s.guest, phone: s.phone, email: s.email || '', total: billTotal(d), by: me.name, sent: '', data: JSON.stringify(d),
-        sendAt: plusHours(s.outAt || stamp(), DESK_BILL_DELAY_HOURS), status: s.email ? 'Scheduled' : 'No email', pdf: '', edited: '', wa: s.phone ? 'Waiting' : 'No phone' });
+        sendAt: plusHours(s.outAt || stamp(), DESK_BILL_DELAY_HOURS), status: s.email ? 'Scheduled' : 'No email', pdf: '', edited: '', wa: !s.phone ? 'No phone' : s.waOk === 'Yes' ? 'Waiting' : 'No WhatsApp consent' });
       db.set('stays', s, { bill: d.no });
     } else {
       var p = { guest: s.guest, email: s.email || '', total: billTotal(d), data: JSON.stringify(d) };
@@ -535,6 +535,11 @@ function deskCore(db, hooks) {
   /* Emails every bill whose time has come. Runs on its own (timer) and also when the app is used. */
   /* ---- WhatsApp ---- */
   function waReady() { try { return !!(hooks.waReady && hooks.waReady()); } catch (e) { return false; } }
+  /* WhatsApp rules: we only start a conversation with guests who agreed (ticked at check-in / booking), never after they said STOP,
+     and only while the owner has automatic messages switched on (Settings). */
+  function waAutoOn() { return cfgGet('waAuto') === 'on'; }
+  function waOptedOut(phone) { var c = find('wachats', 'phone', waPhone(phone)); return !!(c && c.optout); }
+  function consent(v) { return v === true || v === 'Yes' ? 'Yes' : 'No'; }
   function first(n) { return String(n || '').trim().split(/\s+/)[0] || 'Guest'; }
   function dd(ymd) { var p = String(ymd || '').slice(0, 10).split('-'); return p.length < 3 ? '' : +p[2] + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+p[1] - 1] + ' ' + p[0]; }
   function rupees(n) { return '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN'); }
@@ -553,9 +558,9 @@ function deskCore(db, hooks) {
     db.add('wa', { id: id('W'), at: stamp(), sendAt: at || stamp(), to: String(phone), name: name, kind: kind, ref: ref, status: 'Waiting', info: '' });
   }
   function welcomeMsgs(s) {
-    if (!waReady() || !s.phone) return;
+    if (!waReady() || !s.phone || s.waOk !== 'Yes') return;
     waQueue('welcome', s.phone, s.guest, s.id);
-    if (firstVisit(s) && !memberOf(s.phone)) waQueue('membership', s.phone, s.guest, s.id, plusHours(stamp(), 0.05)); // first stay with us, not yet a member
+    if (s.waOffers === 'Yes' && firstVisit(s) && !memberOf(s.phone)) waQueue('membership', s.phone, s.guest, s.id, plusHours(stamp(), 0.05)); // first stay with us, not yet a member
   }
   function firstVisit(s) { return !db.all('stays').some(function (x) { return x.id !== s.id && x.phone === s.phone && x.checkin <= s.checkin; }); }
   function waParams(m) {
@@ -571,6 +576,7 @@ function deskCore(db, hooks) {
     throw new Error('bad_kind');
   }
   function waSendOne(m) {
+    if (waOptedOut(m.to)) { db.set('wa', m, { status: 'Not sent', info: 'Guest said STOP' }); return; }
     try {
       var id1 = hooks.waSend(DESK_WA[m.kind], m.to, waParams(m), null, null);
       db.set('wa', m, { status: 'Sent', info: stamp() + (id1 ? ' · ' + String(id1).slice(-12) : '') });
@@ -582,6 +588,7 @@ function deskCore(db, hooks) {
     var d = JSON.parse(row.data), B = typeof NikadiBill !== 'undefined' ? NikadiBill : null, c = B ? B.compute(d) : null;
     var total = c ? c.total : Number(row.total || 0), due = c ? c.due : 0;
     var params = [B ? B.greetName(d.guest) : first(d.guest.name), d.no, rupees(total), Math.abs(due) < 0.5 ? 'paid in full' : due > 0 ? 'balance due ' + rupees(due) : 'refund due ' + rupees(-due)];
+    if (waOptedOut(row.phone)) throw new Error('wa_opted_out');
     waEnsureChat(row.phone, d.guest && d.guest.name);
     var mid = hooks.waSend(DESK_WA.bill, String(row.phone), params, pdf, 'Nikadi-Bill-' + String(d.no).replace(/[^A-Za-z0-9-]+/g, '-') + '.pdf', DESK_BILL_URL + row.id);
     db.set('bills', row, { wa: 'Sent ' + stamp() });
@@ -598,13 +605,16 @@ function deskCore(db, hooks) {
         catch (e) { db.set('bills', row, { status: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('Bill email not sent: ' + row.no, row.guest + ' · ' + row.email + '\n' + String(e && e.message || e)); }
       }
       if (row.wa === 'Waiting' && !/^Stopped/.test(row.status || '')) {
-        if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
+        if (!waAutoOn()) { if (plusHours(row.sendAt, 72) < now) db.set('bills', row, { wa: 'Not sent (automatic WhatsApp paused)' }); }
+        else if (!ready) db.set('bills', row, { wa: 'Not sent (WhatsApp not connected)' });
         else { try { waBill(row); out.push(row.no + ' (WhatsApp)'); } catch (e) { db.set('bills', row, { wa: 'Failed: ' + String(e && e.message || e).slice(0, 60) }); raiseAlert('WhatsApp bill not sent: ' + row.no, row.guest + ' · ' + row.phone + '\n' + String(e && e.message || e)); } }
       }
       if (row.pdf && row.status !== 'Scheduled' && row.wa !== 'Waiting' && (billArchived(row) || plusHours(row.pdf, 72) < now)) { pdfClear(row.id); db.set('bills', row, { pdf: '' }); }
     });
     db.all('wa').forEach(function (m) {
       if (m.status !== 'Waiting' || m.sendAt > now) return;
+      if (!waAutoOn()) { if (plusHours(m.sendAt, 24) < now) db.set('wa', m, { status: 'Not sent', info: 'Automatic WhatsApp was paused' }); return; }
+      if (plusHours(m.sendAt, 24) < now) { db.set('wa', m, { status: 'Not sent', info: 'Too old to send' }); return; }
       if (!ready) { db.set('wa', m, { status: 'Not sent', info: 'WhatsApp not connected' }); return; }
       waSendOne(m); out.push(m.kind + ' → ' + m.to);
     });
@@ -812,7 +822,7 @@ function deskCore(db, hooks) {
     me.canApprove = canApprove(me);
     var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, compHosts: DESK_COMP_HOSTS, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
       approvals: canApprove(me) ? reqs.filter(function (r) { return r.status === 'Pending'; }).length : 0,
-      backToReady: true,
+      backToReady: true, waAuto: waAutoOn(), waConsent: true,
       laundryNew: mgr ? db.all('laundry').filter(function (x) { return x.status === 'Waiting for approval' || x.status === 'Return to check'; }).length : 0,
       myRequests: me.role === 'Receptionist' ? reqs.filter(function (r) { return r.status === 'Pending' && r.by === me.name; }).length : 0,
       stocklog: db.all('stocklog').slice(-15).reverse(),
@@ -868,7 +878,8 @@ function deskCore(db, hooks) {
     var clash = roomClash(r.room, cin, cout); if (clash) clashFail(r.room, clash);
     var s = db.add('stays', { id: id('S'), room: r.room, guest: guest, phone: phoneOk(req.phone), guests: guests, checkin: cin, checkout: cout,
       nights: nightsBetween(cin, cout), rate: rate, rateNote: text(req.rateNote, 160), status: 'In house', roomTotal: 0, extras: 0, paid: 0, balance: 0,
-      notes: text(req.notes, 300), inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: '', companions: companionsIn(req.companions, guests), comp: comp, compRef: comp ? text(req.compRef, 120) : '' });
+      notes: text(req.notes, 300), inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: '', companions: companionsIn(req.companions, guests), comp: comp, compRef: comp ? text(req.compRef, 120) : '',
+      waOk: consent(req.waOk), waOffers: consent(req.waOk) === 'Yes' ? consent(req.waOffers) : 'No' });
     if (adv > 0) {
       if (METHODS.indexOf(req.method) < 0) fail('method_required');
       db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: r.room, amount: adv, method: req.method, note: 'Paid at check-in', by: me.name, booking: '', ref: text(req.ref, 40) });
@@ -893,6 +904,9 @@ function deskCore(db, hooks) {
     if (req.compRef != null && s.comp) p.compRef = text(req.compRef, 120);
     if (req.rateNote != null) p.rateNote = text(req.rateNote, 160);
     if (req.notes != null) p.notes = text(req.notes, 300);
+    var askedNow = false;
+    if (req.waOk != null) { p.waOk = consent(req.waOk); askedNow = p.waOk === 'Yes' && s.waOk !== 'Yes'; if (p.waOk !== 'Yes') p.waOffers = 'No'; }
+    if (req.waOffers != null && (p.waOk || s.waOk) === 'Yes') p.waOffers = consent(req.waOffers);
     if (req.companions != null) p.companions = companionsIn(req.companions, p.guests != null ? p.guests : s.guests);
     var cin = req.checkin != null ? String(req.checkin) : s.checkin, cout = req.checkout != null ? String(req.checkout) : s.checkout;
     if (!isYmd(cin) || !isYmd(cout) || dayNum(cout) <= dayNum(cin)) fail('bad_dates');
@@ -916,6 +930,7 @@ function deskCore(db, hooks) {
     db.set('stays', s, p);
     recompute(s);
     afterChange(s, me, rt0);
+    if (askedNow && s.status === 'In house') welcomeMsgs(s); // the guest agreed later: welcome now
     return { stay: stayView(s, me) };
   };
 
@@ -1430,7 +1445,7 @@ function deskCore(db, hooks) {
     /* the check-out was reversed earlier: same invoice number, dated today, sending switched back on */
     if (/^On hold/.test(String(b.row.status || ''))) {
       pdfClear(b.row.id);
-      db.set('bills', b.row, { at: stamp(), status: s.email ? 'Scheduled' : 'No email', sendAt: plusHours(stamp(), DESK_BILL_DELAY_HOURS), wa: s.phone ? 'Waiting' : 'No phone', pdf: '' });
+      db.set('bills', b.row, { at: stamp(), status: s.email ? 'Scheduled' : 'No email', sendAt: plusHours(stamp(), DESK_BILL_DELAY_HOURS), wa: !s.phone ? 'No phone' : s.waOk === 'Yes' ? 'Waiting' : 'No WhatsApp consent', pdf: '' });
     }
     return { stay: stayView(s, me), member: member, bill: billInfo(s, b), emailed: '' };
   };
@@ -1525,6 +1540,8 @@ function deskCore(db, hooks) {
     if (!waReady()) fail('wa_not_connected');
     var s = checkedOut(req), b = saveBill(s, me, null);
     var ph = phoneOk(req.phone || s.phone || ''); if (!ph) fail('phone_required');
+    if (s.waOk !== 'Yes') { if (!req.agreed) fail('wa_no_consent'); db.set('stays', s, { waOk: 'Yes' }); } // reception asked the guest just now
+    if (waOptedOut(ph)) fail('wa_opted_out');
     var pdf = req.pdf || pdfOf(b.row.id); if (!pdf) fail('no_pdf');
     var row = b.row, keep = row.phone;
     row.phone = ph;
@@ -2066,6 +2083,7 @@ function deskCore(db, hooks) {
     p.rate = comp ? 0 : rate;
     if (!comp && b && b.comp && !(Number(req.rate) > 0)) p.rate = deskRateOn(p.roomType, p.checkin); // back to a paying guest
     p.notes = text(req.notes != null ? req.notes : b && b.notes, 400);
+    p.waOk = req.waOk != null ? consent(req.waOk) : b ? (b.waOk || 'No') : 'No';
     return p;
   }
 
@@ -2089,6 +2107,21 @@ function deskCore(db, hooks) {
     if (proof) { p.proof = file; p.proofType = text(req.mime, 60) || type; p.proofAt = at; p.important = b ? 'Payment screenshot for booking ' + b.id + ' · check it' : 'Photo / file received · check it'; }
     if (c) db.set('wachats', c, p); else db.add('wachats', Object.assign({ phone: ph, name: '', first: at, important: '', proof: '', proofType: '', proofAt: '', readBy: '', readAt: '' }, p));
     return { booking: b ? { id: b.id, status: b.status, checkin: b.checkin } : null, proof: proof };
+  };
+  /* internal: the guest wrote STOP / START */
+  api.waOptOut = function (req) {
+    if (!req._internal) fail('unknown_action');
+    var c = waEnsureChat(req.phone, req.name); if (!c) return {};
+    db.set('wachats', c, { optout: req.out ? stamp() : '' });
+    if (req.out) db.all('wa').forEach(function (m) { if (m.status === 'Waiting' && waPhone(m.to) === c.phone) db.set('wa', m, { status: 'Not sent', info: 'Guest said STOP' }); });
+    return { ok: true };
+  };
+  /* Owner / Manager: automatic WhatsApp messages on or paused (Settings) */
+  api.waAuto = function (req) {
+    var me = auth(req); needApprover(me);
+    if (req.on != null) cfgSet('waAuto', req.on ? 'on' : 'off');
+    var waiting = db.all('wa').filter(function (m) { return m.status === 'Waiting'; }).length + db.all('bills').filter(function (b) { return b.wa === 'Waiting'; }).length;
+    return { on: waAutoOn(), waiting: waiting };
   };
   /* internal: reception replied from the phone → the chat is seen */
   api.waSeen = function (req) {
@@ -2138,7 +2171,7 @@ function deskCore(db, hooks) {
     var since = addDays(today(), -60);
     var list = db.all('wachats').filter(function (c) { return String(c.last).slice(0, 10) >= since || Number(c.unread) > 0 || c.important; }).map(function (c) {
       var l = waLists(c);
-      return { phone: c.phone, name: c.name, last: c.last, lastText: c.lastText, unread: Number(c.unread) || 0, important: c.important || '', proof: !!c.proof,
+      return { phone: c.phone, name: c.name, last: c.last, lastText: c.lastText, unread: Number(c.unread) || 0, important: c.important || '', proof: !!c.proof, optout: !!c.optout,
         lists: l.lists, stay: l.stay, booking: l.booking };
     }).sort(function (a, b) { return (b.important ? 1 : 0) - (a.important ? 1 : 0) || (b.unread > 0) - (a.unread > 0) || (a.last < b.last ? 1 : -1); });
     return { chats: list };
@@ -2209,7 +2242,8 @@ function deskCore(db, hooks) {
     if (n >= 30) fail('too_many_requests');
     db.kvSet('web_bookings', String(n + 1), 3600);
     var p = bookingInput({ guest: req.guest, phone: req.phone, email: req.email, guests: req.guests, roomsNeeded: req.roomsNeeded, roomType: req.roomType,
-      checkin: req.checkin, checkout: req.checkout, notes: req.notes, rate: req._internal ? req.rate : null });
+      checkin: req.checkin, checkout: req.checkout, notes: req.notes, rate: req._internal ? req.rate : null,
+      waOk: req._internal && /WhatsApp/.test(String(req.source || '')) ? true : !!req.waOk }); // asked on WhatsApp = they wrote to us first; website: their own tick
     if (dayNum(p.checkin) < dayNum(today()) || dayNum(p.checkin) > dayNum(today()) + 400) fail('bad_dates');
     var dup = db.all('bookings').filter(function (b) { return b.status === 'Pending' && b.phone === p.phone && b.checkin === p.checkin && b.checkout === p.checkout; })[0];
     if (dup) return { id: dup.id, duplicate: true };
@@ -2290,7 +2324,7 @@ function deskCore(db, hooks) {
     if (amt < Number(b.advanceDue)) db.set('bookings', b, { advanceSet: amt }); // the guest paid less than 50%: that is the agreed advance
     db.add('payments', { id: id('P'), at: stamp(), stay: '', room: rooms.join(', '), amount: amt, method: req.method, note: 'Booking advance', by: me.name, booking: b.id, ref: ref });
     recomputeBooking(b);
-    if (waReady()) waQueue('booking', b.phone, b.guest, b.id);
+    if (waReady() && b.waOk === 'Yes') waQueue('booking', b.phone, b.guest, b.id);
     var wc = find('wachats', 'phone', String(b.phone || '')); if (wc && wc.important) db.set('wachats', wc, { important: '', readBy: me.name, readAt: stamp() }); // advance checked
     return { booking: bookingView(b, me) };
   };
@@ -2379,7 +2413,7 @@ function deskCore(db, hooks) {
       var g = Math.min(DESK_MAX_GUESTS, Math.max(1, Math.ceil(guestsLeft / (rooms.length - i)))); guestsLeft -= g;
       var s = db.add('stays', { id: id('S'), room: n, guest: b.guest, phone: b.phone, guests: g, checkin: cin, checkout: b.checkout, nights: nightsBetween(cin, b.checkout),
         rate: b.comp ? 0 : b.rate, rateNote: 'Booking ' + b.id + (rooms.length > 1 ? ' · ' + rooms.length + ' rooms' : ''), status: 'In house', roomTotal: 0, extras: 0, paid: 0, balance: 0,
-        notes: b.notes, inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: b.id, comp: b.comp || '', compRef: b.comp ? b.compRef || '' : '' });
+        notes: b.notes, inBy: me.name, inAt: stamp(), outBy: '', outAt: '', booking: b.id, comp: b.comp || '', compRef: b.comp ? b.compRef || '' : '', waOk: b.waOk === 'Yes' ? 'Yes' : 'No', waOffers: 'No' });
       var share = i === 0 ? left - each * (rooms.length - 1) : each;
       if (share > 0) db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: n, amount: share, method: FROM_ADV, note: 'Advance from booking ' + b.id, by: me.name, booking: b.id, ref: '' });
       recompute(s);

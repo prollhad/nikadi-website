@@ -986,7 +986,7 @@ function whatsappCreateTemplates() {
   return out;
 }
 function whatsappTemplateList_() {
-  var foot = { type: 'FOOTER', text: 'Nikadi Guest House · Mayapur' };
+  var foot = { type: 'FOOTER', text: 'Nikadi Guest House · Reply STOP to unsubscribe' };
   var site = { type: 'URL', text: 'Visit our website', url: NK_SITE };
   var call = { type: 'PHONE_NUMBER', text: 'Call reception', phone_number: '+917501101137' };
   var body = function (name, ex) { return { type: 'BODY', text: WA_TEXTS[name].replace(/\{(\d)\}/g, '{{$1}}'), example: { body_text: [ex] } }; };
@@ -1144,6 +1144,13 @@ function waInbound_(msg) {
     }
   }
 
+  /* STOP / START: the guest decides whether we may send automatic messages (WhatsApp rules) */
+  if (/^(stop|unsubscribe|stop messages|stop all)$/.test(low)) {
+    try { waCore_().waOptOut({ _internal: true, phone: phone, name: st.full || '', out: true }); } catch (e) { console.error(e); }
+    waText_(phone, 'Done 🙏 You will not get any more automatic messages from Nikadi Guest House. You can still write to us here any time. To get booking and bill messages again, reply START.');
+    st.step = 'done'; waSave_(phone, st); return;
+  }
+  if (low === 'start') { try { waCore_().waOptOut({ _internal: true, phone: phone, name: st.full || '', out: false }); } catch (e) { console.error(e); } }
   var wake = /^(menu|hi+|hello|hey|hare krishna|haribol|namaste|start|bot|0)\b/.test(low);
   if (st.human && st.human > Date.now()) {
     if (choice === 'm_bot' || /^(menu|bot)$/.test(low)) { st.human = 0; waMenu_(phone, st, false); }
@@ -1360,7 +1367,7 @@ function ycDeskSend_(template, to10, params, pdf, fileName, url, lang) {
     var body = WA_TEXTS[template].replace(/\{(\d)\}/g, function (_, i) { return params && params[i - 1] != null ? String(params[i - 1]) : ''; });
     if (media) return ycSend_(to10, { type: 'document', document: { id: media, filename: fileName || 'bill.pdf', caption: body.slice(0, 1024) } });
     var cta = WA_CTA[template];
-    if (cta) return ycSend_(to10, { type: 'interactive', interactive: { type: 'cta_url', body: { text: body.slice(0, 1024) }, footer: { text: 'Nikadi Guest House · Mayapur' },
+    if (cta) return ycSend_(to10, { type: 'interactive', interactive: { type: 'cta_url', body: { text: body.slice(0, 1024) }, footer: { text: 'Nikadi Guest House · Reply STOP to unsubscribe' },
       action: { name: 'cta_url', parameters: { display_text: cta.text, url: cta.url } } } });
     return waText_(to10, body);
   }

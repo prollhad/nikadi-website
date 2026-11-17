@@ -15,7 +15,7 @@
     hk_checklist: 'Tick every line of the checklist first.',
     changelog_unavailable: 'The change log starts when the app moves to the new fast server.',
     comp_host: 'Pick whose guest this is.',
-    comp_no_money: 'This is a free stay. No money is taken.', linen_not_empty: 'This item still has pieces counted (in store, rooms or laundry). Set its counts to 0 first, or untick “In use” to hide it.', laundry_paid: 'This list is already paid, so it cannot be deleted. Change the counts instead.', laundry_empty: 'Write how many of at least one item.', laundry_approved: 'This was already approved. A manager can change it.', laundry_return_open: 'There is already a return waiting to be checked.', laundry_not_out: 'This list has not been given to the laundry yet.', laundry_no_return: 'Nothing to check.', nothing_to_pay: 'Nothing to pay.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
+    comp_no_money: 'This is a free stay. No money is taken.', wa_no_consent: 'The guest has not agreed to WhatsApp messages. Ask them first.', wa_opted_out: 'This guest replied STOP, so we cannot send WhatsApp messages to them.', linen_not_empty: 'This item still has pieces counted (in store, rooms or laundry). Set its counts to 0 first, or untick “In use” to hide it.', laundry_paid: 'This list is already paid, so it cannot be deleted. Change the counts instead.', laundry_empty: 'Write how many of at least one item.', laundry_approved: 'This was already approved. A manager can change it.', laundry_return_open: 'There is already a return waiting to be checked.', laundry_not_out: 'This list has not been given to the laundry yet.', laundry_no_return: 'Nothing to check.', nothing_to_pay: 'Nothing to pay.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
     bill_no_required: 'Write the invoice number.',
     old_record: 'This record is more than a few months old and is kept in the archive Sheet. It can be viewed but not changed.',
     drive_unavailable: 'Google Drive is not connected here.',
@@ -980,7 +980,7 @@
     var t = S.st.today, body = openSheet('Check in · Room ' + r.room, 'ready');
     body.innerHTML = '<p class="small">' + esc(r.type + ' · ' + r.beds) + '</p>' +
       field('Guest name', '<input class="input" id="f-guest" autocomplete="off" maxlength="80">', true) +
-      field('Phone (optional)', nkPhoneHtml('f-phone', '', ' autocomplete="off"')) +
+      field('Phone (optional)', nkPhoneHtml('f-phone', '', ' autocomplete="off"')) + waConsentHtml(undefined, false, true) +
       '<div id="f-mem"></div>' +
       '<div class="field"><span>Guests in this room <i>*</i></span>' + stepper('f-guests', 2, 1, 20) + '</div>' + compBox() +
       '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="f-in" value="' + t + '">', true) +
@@ -1025,7 +1025,9 @@
     $('#go', body).onclick = function () {
       var free = segVal(body, 'stype') === 'Free stay';
       if (free && !segVal(body, 'comp')) { $('#err', body).textContent = 'Pick whose guest this is.'; vibrate(); return; }
-      submit(this, $('#err', body), 'deskCheckIn', {
+      var wok = waConsentVal(body, nkPhoneVal('f-phone', body));
+      if (wok === undefined) { $('#err', body).textContent = 'Ask the guest: may we send WhatsApp messages (welcome, bill)? Tap Guest agreed or No.'; vibrate(); return; }
+      submit(this, $('#err', body), 'deskCheckIn', { waOk: !!wok, waOffers: !!wok && segVal(body, 'waoff') === 'Yes',
         comp: free ? segVal(body, 'comp') : '', compRef: free ? $('#f-cref', body).value : '',
         room: r.room, guest: $('#f-guest', body).value, phone: nkPhoneVal('f-phone', body), guests: Number($('#f-guests', body).textContent), companions: compVal(body),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''),
@@ -1054,7 +1056,7 @@
     var body = openSheet('Edit stay · Room ' + s.room);
     var free = S.st.rooms.filter(function (r) { return r.status === 'Ready'; });
     body.innerHTML = field('Guest name', '<input class="input" id="f-guest" maxlength="80" value="' + esc(s.guest) + '">', true) +
-      field('Phone', nkPhoneHtml('f-phone', s.phone || '')) +
+      field('Phone', nkPhoneHtml('f-phone', s.phone || '')) + waConsentHtml(s.waOk ? true : s.phone ? false : undefined, s.waOffers, true) +
       '<div class="field"><span>Guests</span>' + stepper('f-guests', s.guests, 1, 20) + '</div>' + compBox() +
       '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="f-in" value="' + esc(s.checkin) + '">') +
       field('Check-out', '<input class="input" type="date" id="f-out" value="' + esc(s.checkout) + '">') + '</div>' +
@@ -1082,6 +1084,7 @@
       var d = { id: s.id, companions: compVal(body), guest: $('#f-guest', body).value, phone: nkPhoneVal('f-phone', body), guests: Number($('#f-guests', body).textContent),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''), rateNote: $('#f-rnote', body).value, notes: $('#f-notes', body).value };
       if (s.comp) { delete d.rate; delete d.rateNote; d.compRef = $('#f-cref', body).value; }
+      var wok2 = waConsentVal(body, d.phone); if (wok2 != null) { d.waOk = wok2; d.waOffers = wok2 && segVal(body, 'waoff') === 'Yes'; }
       if ($('#f-why', body)) d.reason = $('#f-why', body).value;
       if ($('#f-room', body).value) { d.room = Number($('#f-room', body).value); d.fromReady = segVal(body, 'fromst') === 'Back to ready'; }
       submit(this, $('#err', body), 'deskUpdateStay', d, function (res) {
@@ -1323,6 +1326,12 @@
       draw();
     }, function (e) { body.innerHTML = '<p class="err">' + esc(errText(e)) + '</p>'; });
   }
+  /* WhatsApp consent (Meta's rules: we only start chats with guests who agreed) */
+  function waConsentHtml(waOk, offers, withOffers) {
+    return '<div class="field wa-consent"><span>WhatsApp messages from us (welcome, booking, bill): <b>ask the guest</b></span>' + seg('waok', ['Guest agreed', 'No'], waOk === true ? 'Guest agreed' : waOk === false ? 'No' : '') + '</div>' +
+      (withOffers ? '<div class="field"><span>Membership offers on WhatsApp</span>' + seg('waoff', ['Yes', 'No'], offers ? 'Yes' : 'No') + '</div>' : '');
+  }
+  function waConsentVal(body, phone) { var v = segVal(body, 'waok'); return !String(phone || '').replace(/\D/g, '') ? null : v === 'Guest agreed' ? true : v === 'No' ? false : undefined; }
   function linenDone(msg) { toast(msg); LAU.data = null; closeAllSheetsQuiet(); refresh(); if (S.tab === 'laundry') render(); }
   function laundryDone(msg) { toast(msg); LAU.data = null; closeAllSheetsQuiet(); go('laundry'); refresh(); }
   /* one laundry list */
@@ -1583,7 +1592,13 @@
     v.innerHTML = '<div><p class="kicker">Owner only</p><h1>Settings</h1></div>' +
       '<div class="btns"><button class="btn btn-line" type="button" id="team">Team & PINs</button><button class="btn btn-line" type="button" id="prices">Items & prices</button><button class="btn btn-line" type="button" id="wa">WhatsApp</button></div>' +
       '<div class="panel"><div class="sec-h"><h2>Cancellation policy</h2></div><div class="note">' + esc(S.st.policy.text) + '</div>' +
-      '<p class="small">This text appears on the website booking form, in the house rules, in the WhatsApp confirmation and on every booking in this app.</p></div>';
+      '<p class="small">This text appears on the website booking form, in the house rules, in the WhatsApp confirmation and on every booking in this app.</p></div>' +
+      '<div class="panel"><div class="sec-h"><h2>Automatic WhatsApp messages</h2></div><div id="wauto" class="calc">Checking…</div>' +
+      '<p class="small">Welcome, membership invite, booking confirmation and bill. They only go to guests who agreed at check-in or booking, never to anyone who replied STOP. While paused, nothing is sent; messages waiting more than a day are dropped instead of being sent late.</p>' +
+      '<button class="btn btn-line" type="button" id="wauto-t">…</button></div>';
+    function waDraw(r) { $('#wauto', v).innerHTML = r.on ? '<b>On.</b> Messages go out automatically.' : '<b>Paused.</b> No automatic WhatsApp messages are sent.' + (r.waiting ? ' ' + r.waiting + ' waiting.' : ''); var b = $('#wauto-t', v); b.textContent = r.on ? 'Pause automatic messages' : 'Switch automatic messages on'; b.dataset.on = r.on ? '1' : ''; }
+    api('deskWaAuto', {}).then(waDraw, function () { $('#wauto', v).textContent = 'Could not check.'; });
+    $('#wauto-t', v).onclick = function () { var b = this, on = !b.dataset.on; busy(b, true); api('deskWaAuto', { on: on }).then(function (r) { busy(b, false); waDraw(r); toast(r.on ? 'Automatic WhatsApp messages on' : 'Automatic WhatsApp messages paused'); }, function (e) { busy(b, false); toast(errText(e)); }); };
     $('#team', v).onclick = openTeam; $('#prices', v).onclick = openPrices; $('#wa', v).onclick = openWhatsApp;
   }
   /* Owner: connect the guest house WhatsApp number (Meta WhatsApp Cloud API) for automatic messages. */
@@ -1824,7 +1839,7 @@
     var types = ['Any', 'Deluxe Double (King)', 'Deluxe Twin', 'Large Twin'];
     body.innerHTML = (isNew ? '<p class="small">Saved as <b>Pending</b>. It goes on the calendar only after you confirm it (paying guests: after the advance is recorded; free stays: just pick the rooms).</p>' : '') +
       '<div class="grid2">' + field('Guest name', '<input class="input" id="b-guest" maxlength="80" value="' + esc(pre.guest || '') + '">', true) +
-      field('Phone', nkPhoneHtml('b-phone', pre.phone || ''), true) + '</div>' +
+      field('Phone', nkPhoneHtml('b-phone', pre.phone || ''), true) + '</div>' + waConsentHtml(pre.id ? !!pre.waOk : undefined, false, false) +
       field('Email', '<input class="input" id="b-email" type="email" maxlength="80" value="' + esc(pre.email || '') + '">') +
       '<div class="grid2">' + field('Check-in', '<input class="input" type="date" id="b-in" value="' + esc(cin) + '">', true) + field('Check-out', '<input class="input" type="date" id="b-out" value="' + esc(cout) + '">', true) + '</div>' +
       '<div class="grid2">' + field('Guests', '<input class="input" id="b-guests" inputmode="numeric" value="' + (pre.guests || 2) + '">', true) +
@@ -1870,6 +1885,9 @@
         guests: $('#b-guests', body).value.replace(/\D/g, ''), rate: $('#b-rate', body).value.replace(/\D/g, ''), notes: $('#b-notes', body).value,
         comp: bFree() ? segVal(body, 'bcomp') : '', compRef: bFree() ? $('#b-cref', body).value : '' };
       if (bFree() && !d.comp) { $('#err', body).textContent = 'Pick whose guest this is.'; vibrate(); return; }
+      var wok3 = waConsentVal(body, d.phone);
+      if (wok3 === undefined) { $('#err', body).textContent = 'Ask the guest: may we send the booking confirmation on WhatsApp? Tap Guest agreed or No.'; vibrate(); return; }
+      if (wok3 != null) d.waOk = wok3;
       if (bFree()) delete d.rate;
       if ($('#b-rooms', body)) d.roomsNeeded = $('#b-rooms', body).value.replace(/\D/g, '');
       if ($('#b-type', body)) d.roomType = $('#b-type', body).value;
@@ -2346,13 +2364,14 @@
         busy(x, true); note('');
         makePdf(b).then(function (r) {
           if (demo) throw { message: 'wa_not_connected' };
-          return api('deskBillWhatsApp', { id: b.stay, pdf: r.base64() });
+          return api('deskBillWhatsApp', { id: b.stay, pdf: r.base64(), agreed: x.dataset.agreed === '1' });
         }).then(function (res) {
           busy(x, false); x.textContent = 'Sent on WhatsApp ✓';
           note('The PDF bill was sent to ' + nkPhoneShow(res.sentTo) + ' from the guest house WhatsApp number. It also shows in the WhatsApp Business app.');
         }, function (e) {
           busy(x, false);
           var why = (e && e.message) || e;
+          if (why === 'wa_no_consent') { x.dataset.agreed = '1'; x.textContent = 'Guest agreed to WhatsApp? Tap again to send'; note('This guest was not asked about WhatsApp messages at check-in. Ask them; if they agree, tap the button again.'); return; }
           if (why !== 'wa_not_connected' && why !== 'wa_template_pending' && why !== 'wa_send_failed') { toast(errText(e)); return; }
           // fallback: share from this phone (the message carries the online bill link too)
           try { if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {}); } catch (e2) {}
@@ -2733,7 +2752,7 @@
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 57</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 58</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };
