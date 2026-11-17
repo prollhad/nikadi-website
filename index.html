@@ -861,6 +861,16 @@ html{overflow-x:hidden}
 .ig-follow .go{margin-left:auto;background:var(--gold-grad);color:var(--gold-ink);padding:9px 18px;border-radius:999px;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;display:block}
 .meet-row{grid-auto-columns:minmax(280px,360px);justify-content:start}
 .meet-row{align-items:start}
+.meet-media{display:grid;gap:14px;min-width:0}
+.igc-tap{display:none}
+@media (hover:none) and (pointer:coarse){.meet-row .igc{position:relative}.meet-row .igc-tap{display:block;position:absolute;inset:0;z-index:2;background:transparent}}
+.mnav{display:flex;align-items:center;justify-content:center;gap:12px}
+.mnav-arr{width:44px;height:44px;border-radius:50%;border:1px solid rgba(212,175,55,.55);background:var(--panel);color:var(--gold-hi);font-size:1.6rem;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0 0 3px}
+.mnav-dots{display:flex;align-items:center;gap:8px}
+.mnav-dots button{width:9px;height:9px;padding:0;border-radius:999px;border:0;background:rgba(255,255,255,.28);cursor:pointer;transition:width .25s,background .25s}
+.mnav-dots button.on{width:24px;background:var(--gold)}
+.mnav-dots button.vid{width:auto;height:28px;padding:0 12px;font:inherit;font-size:.72rem;letter-spacing:.08em;color:var(--gold-hi);background:transparent;border:1px solid rgba(212,175,55,.55)}
+.mnav-dots button.vid.on{background:var(--gold-grad);color:var(--gold-ink);border-color:transparent}
 .mvid{scroll-snap-align:start;scroll-snap-stop:always;position:relative;margin:0;height:600px;border-radius:var(--r);overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(212,175,55,.45),0 20px 44px rgba(0,0,0,.5)}
 @media (max-width:620px){.meet-row{grid-auto-columns:84%;scroll-padding-inline:8%}.meet-row>*{scroll-snap-align:center;scroll-snap-stop:always}}
 .mvid video{width:100%;height:100%;object-fit:cover;display:block}
@@ -1498,7 +1508,8 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         <ul class="meet-facts"><li><b>29K</b><span>followers</span></li><li><b>1M+</b><span>monthly reach</span></li><li><b>Mayapur</b><span>West Bengal</span></li></ul>
         <a class="ig-follow" href="https://www.instagram.com/chandraamukhi_/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg><span><b>@chandraamukhi_</b><small>Follow on Instagram</small></span><span class="go">Follow</span></a>
       </div>
-      <div class="igs-row meet-row rv" id="meetIg">
+      <div class="meet-media rv">
+      <div class="igs-row meet-row" id="meetIg">
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DfmiyJyGSTU/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DfmiyJyGSTU/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DeStY5gGT1T/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DeStY5gGT1T/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
         <figure class="mvid" id="mvid">
@@ -1508,6 +1519,12 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         </figure>
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DT9ZDRhkufm/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DT9ZDRhkufm/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
         <div class="igc"><blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DH_OdjQzSGU/?utm_source=ig_embed" data-instgrm-version="14"><a href="https://www.instagram.com/p/DH_OdjQzSGU/" target="_blank" rel="noopener">View this post by @chandraamukhi_ on Instagram</a></blockquote></div>
+      </div>
+      <div class="mnav" id="meetNav" aria-label="Chandramukhi's photos and video">
+        <button class="mnav-arr" type="button" data-d="-1" aria-label="Previous">&#8249;</button>
+        <div class="mnav-dots"><button type="button" data-i="0" aria-label="Photo 1"></button><button type="button" data-i="1" aria-label="Photo 2"></button><button type="button" class="vid" data-i="2" aria-label="Get to know me video">&#9654; Video</button><button type="button" data-i="3" aria-label="Photo 3"></button><button type="button" data-i="4" aria-label="Photo 4"></button></div>
+        <button class="mnav-arr" type="button" data-d="1" aria-label="Next">&#8250;</button>
+      </div>
       </div>
     </div>
   </div>
@@ -3283,6 +3300,24 @@ function play(){var p=v.play();if(p&&p.catch)p.catch(function(){});}
 if('IntersectionObserver' in window){new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&e.intersectionRatio>.35)play();else v.pause();});},{threshold:[0,.35,.6]}).observe(v);}else play();
 document.addEventListener('visibilitychange',function(){if(document.hidden)v.pause();});
 b.addEventListener('click',function(){var on=v.muted;v.muted=!on;if(on){v.volume=1;play();}b.setAttribute('aria-pressed',on?'true':'false');b.setAttribute('aria-label',on?'Turn sound off':'Turn sound on');b.querySelector('span').textContent=on?'Sound off':'Sound on';});
+})();
+</script>
+<script>
+(function(){var row=document.getElementById('meetIg'),nav=document.getElementById('meetNav');if(!row||!nav)return;
+var items=[].slice.call(row.children),dots=[].slice.call(nav.querySelectorAll('.mnav-dots button')),cur=0;
+function go(i){i=Math.max(0,Math.min(items.length-1,i));var it=items[i];var left=it.offsetLeft-row.offsetLeft-(row.clientWidth-it.offsetWidth)/2;
+  if(row.clientWidth>=row.scrollWidth-4)return;row.scrollTo({left:Math.max(0,left),behavior:'smooth'});}
+function mark(){var mid=row.scrollLeft+row.clientWidth/2,best=0,bd=1e9;items.forEach(function(it,i){var c=it.offsetLeft-row.offsetLeft+it.offsetWidth/2,d=Math.abs(c-mid);if(d<bd){bd=d;best=i;}});
+  cur=best;dots.forEach(function(d,i){d.classList.toggle('on',i===cur);});}
+nav.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.d)go(cur+ +b.dataset.d);else go(+b.dataset.i);});
+var t;row.addEventListener('scroll',function(){clearTimeout(t);t=setTimeout(mark,60);},{passive:true});
+window.addEventListener('resize',mark);mark();
+})();
+</script>
+<script>
+/* phones: Instagram's frames swallow sideways swipes, so a clear layer on top lets the row scroll; a tap still opens the post */
+(function(){var row=document.getElementById('meetIg');if(!row)return;
+row.querySelectorAll('.igc').forEach(function(c){var a=c.querySelector('blockquote a');if(!a)return;var t=document.createElement('a');t.className='igc-tap';t.href=a.href;t.target='_blank';t.rel='noopener';t.setAttribute('aria-label','Open this post on Instagram');c.appendChild(t);});
 })();
 </script>
 </body>
