@@ -219,6 +219,7 @@
 
   /* ---------- shell: side menu on computers, tabs at the bottom on phones ---------- */
   var ICON = {
+    photos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17l5-4.5 3.5 3 3-2.5L20 17"/></svg>',
     regs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5h6v2.5H9zM8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg>',
     help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.1-2.4 3.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
     changelog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16M4 10h10M4 15h12M4 20h8"/><circle cx="19" cy="17" r="3"/><path d="M19 15.6V17l1 .8"/></svg>',
@@ -241,11 +242,11 @@
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { regs: 'Registrations', help: 'Help', changelog: 'Change log', today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies', whatsapp: 'WhatsApp', laundry: 'Laundry' };
+  var NAMES = { photos: 'Photos', regs: 'Registrations', help: 'Help', changelog: 'Change log', today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies', whatsapp: 'WhatsApp', laundry: 'Laundry' };
   function navFor(desk) {
     if (S.me && S.me.role === 'Laundry') return ['laundry'];
     if (!mgr()) return desk ? ['rooms', 'housekeeping', 'add', 'stock', 'laundry', 'calendar'] : ['rooms', 'housekeeping', 'add', 'stock', 'calendar'];
-    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'whatsapp', 'regs', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock', 'laundry'].concat(owner() ? ['reports', 'attendance', 'changelog', 'settings'] : []);
+    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'whatsapp', 'regs', 'photos', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock', 'laundry'].concat(owner() ? ['reports', 'attendance', 'changelog', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
@@ -284,7 +285,7 @@
     nav();
     refresh();
   }
-  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission', 'idcopy', 'whatsapp', 'regs', 'help', 'changelog', 'laundry'].indexOf(S.tab) < 0) S.tab = S.me.role === 'Laundry' ? 'laundry' : 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
+  window.matchMedia('(min-width: 1000px)').addEventListener('change', function () { if (S.token && S.st) { if (navFor(isDesk()).indexOf(S.tab) < 0 && ['add', 'stock', 'approvals', 'settings', 'reports', 'bills', 'attendance', 'housekeeping', 'expenses', 'commission', 'idcopy', 'whatsapp', 'regs', 'photos', 'help', 'changelog', 'laundry'].indexOf(S.tab) < 0) S.tab = S.me.role === 'Laundry' ? 'laundry' : 'rooms'; if (isDesk() && S.tab === 'more') S.tab = 'today'; nav(); render(); } });
 
   function refresh(btn) {
     if (S.loading) return Promise.resolve();
@@ -299,8 +300,58 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, regs: viewRegs, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog, laundry: viewLaundry }[S.tab] || (S.me.role === 'Laundry' ? viewLaundry : viewRooms))(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, regs: viewRegs, photos: viewPhotos, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog, laundry: viewLaundry }[S.tab] || (S.me.role === 'Laundry' ? viewLaundry : viewRooms))(v);
     waBanner(v);
+  }
+  /* ---------- Photos of GH: the website photos, ready to share on WhatsApp ----------
+     Pick a folder, tap photos to select, then Share: on a phone the share sheet opens (choose WhatsApp).
+     On a computer (no share sheet) each photo can be copied and pasted into WhatsApp Web, or downloaded. */
+  var PH = { data: null, folder: null, sel: {} };
+  function viewPhotos(v) {
+    if (!mgr()) { S.tab = 'rooms'; return render(); }
+    if (!PH.data) {
+      v.innerHTML = '<div><p class="kicker">To share on WhatsApp</p><h1>Photos of GH</h1></div><div class="loading">Loading…</div>';
+      fetch('photos.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (d) { PH.data = d; PH.folder = PH.folder || d.folders[0]; if (S.tab === 'photos') render(); }, function () { v.innerHTML = '<p class="note">Could not load the photos. Check the internet and refresh.</p>'; });
+      return;
+    }
+    var D = PH.data, list = D.photos.filter(function (p) { return p.cat === PH.folder; }), nSel = Object.keys(PH.sel).length;
+    var canFiles = !!(navigator.canShare && window.File && (function () { try { return navigator.canShare({ files: [new File(['x'], 'x.jpg', { type: 'image/jpeg' })] }); } catch (e) { return false; } })());
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">To share on WhatsApp</p><h1>Photos of GH</h1></div></div>' +
+      '<div class="ph-folders">' + D.folders.map(function (f) { var n = D.photos.filter(function (p) { return p.cat === f; }).length; return '<button type="button" class="ph-f' + (f === PH.folder ? ' on' : '') + '" data-pf="' + esc(f) + '">📁 ' + esc(f) + ' <small>' + n + '</small></button>'; }).join('') + '</div>' +
+      '<div class="ph-bar"><button class="btn btn-quiet sm" type="button" id="ph-all">' + (list.every(function (p) { return PH.sel[p.src]; }) ? 'Unselect all' : 'Select all in this folder') + '</button>' +
+      '<button class="btn btn-gold sm" type="button" id="ph-share"' + (nSel ? '' : ' disabled') + '>' + (canFiles ? 'Share ' + (nSel || '') + ' on WhatsApp' : 'Download ' + (nSel || '')) + '</button>' + (nSel ? '<button class="linkbtn" type="button" id="ph-clear">Clear (' + nSel + ')</button>' : '') + '</div>' +
+      (canFiles ? '<p class="small">Tap photos to select them, then Share and choose WhatsApp.</p>' : '<p class="small">On a computer: tap a photo, then <b>Copy</b> and paste it into the WhatsApp Web chat (Ctrl+V). Or select several and Download.</p>') +
+      '<div class="ph-grid">' + list.map(function (p, i) {
+        return '<button type="button" class="ph-t' + (PH.sel[p.src] ? ' sel' : '') + '" data-pi="' + i + '"><img loading="lazy" src="' + esc(p.thumb) + '" alt="' + esc(p.name) + '"><span>' + esc(p.name.replace(/\.[a-z]+$/i, '')) + '</span><i>✓</i></button>';
+      }).join('') + '</div>';
+    $$('[data-pf]', v).forEach(function (b) { b.onclick = function () { PH.folder = b.dataset.pf; render(); }; });
+    $$('[data-pi]', v).forEach(function (b) { b.onclick = function () {
+      var p = list[+b.dataset.pi];
+      if (!canFiles && !nSel) return openPhoto(p);
+      if (PH.sel[p.src]) delete PH.sel[p.src]; else PH.sel[p.src] = p; render();
+    }; });
+    $('#ph-all', v).onclick = function () { var all = list.every(function (p) { return PH.sel[p.src]; }); list.forEach(function (p) { if (all) delete PH.sel[p.src]; else PH.sel[p.src] = p; }); render(); };
+    if ($('#ph-clear', v)) $('#ph-clear', v).onclick = function () { PH.sel = {}; render(); };
+    $('#ph-share', v).onclick = function () {
+      var x = this, ps = Object.keys(PH.sel).map(function (k) { return PH.sel[k]; }); if (!ps.length) return;
+      busy(x, true);
+      Promise.all(ps.map(function (p) { return fetch(p.src).then(function (r) { return r.blob(); }).then(function (b) { return new File([b], p.name, { type: b.type || 'image/jpeg' }); }); })).then(function (files) {
+        busy(x, false);
+        if (canFiles && navigator.canShare({ files: files })) return navigator.share({ files: files, text: 'Nikadi Guest House · ' + PH.folder + ' · www.nikadiguesthouse.com' }).then(function () { PH.sel = {}; render(); }, function () {});
+        files.forEach(function (f) { var a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000); });
+      }, function () { busy(x, false); toast('Could not load the photos. Try again.'); });
+    };
+  }
+  function openPhoto(p) {
+    var body = openSheet(p.name.replace(/\.[a-z]+$/i, ''));
+    body.innerHTML = '<img class="ph-big" src="' + esc(p.src) + '" alt="' + esc(p.name) + '"><div class="btns"><button class="btn btn-gold" type="button" id="ph-copy">Copy (then paste in WhatsApp)</button><a class="btn btn-quiet" href="' + esc(p.src) + '" download="' + esc(p.name) + '">Download</a></div>';
+    $('#ph-copy', body).onclick = function () {
+      var x = this;
+      fetch(p.src).then(function (r) { return r.blob(); }).then(function (b) { return createImageBitmap(b); }).then(function (bmp) {
+        var c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height; c.getContext('2d').drawImage(bmp, 0, 0);
+        return new Promise(function (res) { c.toBlob(res, 'image/png'); });
+      }).then(function (png) { return navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]); }).then(function () { x.textContent = 'Copied ✓ · paste it in the WhatsApp chat (Ctrl+V)'; }, function () { toast('Copy did not work here. Use Download instead.'); });
+    };
   }
   /* ---------- Guest registration cards (filled on the website) ---------- */
   var REGS = { list: null };
@@ -2832,6 +2883,7 @@
       ['Bookings', 'Bookings → new / pending / confirmed. Confirm only after the advance is paid; on the day the booking shows on the room in gold.'],
       ['Registration cards', 'Send the guest the “Registration form” message. When they fill it on the website, the card appears in More → Registration cards (gold “New”), linked to their booking. They send their ID photo on WhatsApp. Open it, check it, and tap Mark as checked.'],
       ['Done (check-out folder)', 'In Ready messages → Check-out, bill & review, each guest has a Done button. Send the messages you want, tap Done, then Confirm: the guest leaves the list and the waiting number goes down. Cancel keeps them. Mark all as done clears the whole folder (also with Confirm).'],
+      ['Photos of GH', 'More → Photos of GH: the website photos in folders (Deluxe Double, Deluxe Twin, Reception, Common spaces, Building & views). On a phone: tap photos to select, tap Share and choose WhatsApp. On a computer: tap a photo → Copy → paste it in WhatsApp Web, or select several and Download. The same photos are also in Google Drive → Photos of GH.'],
       ['Dummy bookings', 'Rooms screen → the small Dummy switch next to To clean (front desk only). Green = on: tap any free room and it shows as Booked in pink; tap it again to free it. No details to fill. Only the screen changes; real bookings, the website and prices are not affected. Turn the switch off to show the real rooms again.'],
       ['Ready WhatsApp messages', 'WhatsApp → Ready messages (or the gold bar). Folder 1 “Welcome & check-in”: booking confirmed, how to reach us, welcome, anything you need, membership. Folder 2 “Check-out, bill & review”: check-out reminder, bill + review, bill only, thank you + Google review, come again. Tap a message: WhatsApp opens with it written, press send. Edit changes the words first. A tick shows who sent it and when.'],
       ['WhatsApp', 'WhatsApp → lists: New enquiry, Advance paid (check the screenshot, then Confirm booking), Checked in, Member. Reply from the app inside 24 hours of the guest\'s last message.'],
@@ -2970,11 +3022,11 @@
 
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
-    var list = [['whatsapp', 'WhatsApp', 'Guest chats: new enquiries, advance paid, checked in, members'], ['regs', 'Registration cards', 'Guest registration forms filled on the website'], ['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['idcopy', 'ID copies', 'Guest ID / passport copies for each room, print on A4'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
+    var list = [['whatsapp', 'WhatsApp', 'Guest chats: new enquiries, advance paid, checked in, members'], ['regs', 'Registration cards', 'Guest registration forms filled on the website'], ['photos', 'Photos of GH', 'Room and guest house photos to share on WhatsApp'], ['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['idcopy', 'ID copies', 'Guest ID / passport copies for each room, print on A4'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
       ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
-    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 76</p>';
+    }).join('') + '</div><div data-install></div><button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 77</p>';
     installUi($('[data-install]', v));
     $$('[data-go]', v).forEach(function (b) { b.onclick = function () { go(b.dataset.go); }; });
     $('#lo', v).onclick = function () { logout(false); };

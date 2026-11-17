@@ -752,3 +752,14 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .wk-gen summary{cursor:pointer;list-style:none}.wk-gen summary::-webkit-details-marker{display:none}.wk-gen summary b::after{content:' ▾';color:var(--muted);font-weight:400}.wk-gen:not([open]) summary b::after{content:' ▸'}.wk-gen{margin-bottom:12px}
 .wk-sec{font-size:.9rem;margin:18px 0 0;color:var(--ink)}.wk-name{display:flex;align-items:center;gap:8px;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;text-align:left}.wk-name b{font-size:1.02rem}.wk-name i{font-style:normal;color:var(--gold-hi,#e0be7a)}.wk-guest.fold:not(.open){gap:0}
 .wk-send .wk-p{font-size:.76rem;color:var(--muted);line-height:1.4;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+
+/* Photos of GH */
+.ph-folders{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.ph-f{padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font:inherit;font-size:.85rem;cursor:pointer}.ph-f.on{border-color:var(--gold-hi,#e0be7a);color:var(--ink)}.ph-f small{color:var(--gold-hi,#e0be7a);margin-left:4px}
+.ph-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:8px}
+.ph-t{position:relative;padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;background:var(--panel);cursor:pointer;display:grid;color:var(--ink);font:inherit}
+.ph-t img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}.ph-t span{font-size:.7rem;padding:4px 6px;text-align:left;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-t i{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.45);color:transparent;font-style:normal;display:grid;place-items:center;font-size:.8rem;border:1px solid rgba(255,255,255,.6)}
+.ph-t.sel{border-color:var(--gold-hi,#e0be7a)}.ph-t.sel i{background:var(--gold-hi,#e0be7a);color:#1a1408;border-color:transparent}
+.ph-big{width:100%;max-height:60vh;object-fit:contain;border-radius:10px;background:#000}

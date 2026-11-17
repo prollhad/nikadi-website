@@ -10,3 +10,6 @@ head = ('/**\n * Nikadi Guest House — Staff app backend (rooms, bills, stock, 
         ' * Add this as a second file (Staff.gs) next to Code.gs in the same Apps Script project.\n */\n\n')
 open(os.path.join(R, 'backend/Staff.gs'), 'w').write(head + logic + '\n' + bill + '\n' + adapter)
 print('backend/Staff.gs written')
+
+# keep the staff app's photo list (staff/photos.json) in step with the website photos
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'build-photos.py')).read())
