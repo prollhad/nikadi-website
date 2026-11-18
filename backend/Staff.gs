@@ -689,6 +689,12 @@ function deskCore(db, hooks) {
     add('policy', 'Check-in & cancellation', n + ', Hare Krishna! Check-in from 11:00 AM, check-out by 9:00 AM. Please bring a photo ID for every guest.\nA 50% advance holds the room; the balance is paid at check-in.\nCancellation: cancel 3 or more days before check-in for a full refund of the advance; after that the advance is not refundable.\nFull details: ' + DESK_WA_SITE + '/#cancellation');
     return out;
   }
+  function noPayText(b, sal) {
+    return sal + ', Hare Krishna! We hope you are keeping well. We were happily holding booking ' + b.id + ' at Nikadi Guest House for ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' for you. ' +
+      'As we have not received the advance or a reply from you, we have released the room, so this booking now stands cancelled.\n' +
+      'No worries at all, plans change! Whenever you wish to come to Sri Dham Mayapur, just message us here and we will gladly book again for you at our best rate.\n' +
+      'With warm wishes, Nikadi Guest House · opposite ISKCON Gate No. 4 · +91 75011 01137';
+  }
   /* Pending booking: the full "advance pending" message with rooms, dates, total and the advance to pay */
   function advPendingText(b, sal) {
     var nights = nightsBetween(b.checkin, b.checkout), rooms = Math.max(1, Number(b.roomsNeeded || 1)), list = roomList(b.rooms);
@@ -743,6 +749,7 @@ function deskCore(db, hooks) {
       if (b.status !== 'Pending' || !b.phone || waOptedOut(b.phone) || b.checkout < t) return;
       var msgs = light ? [{ kind: 'advance' }] : enqMsgs({ first: salute(b.guest), ci: b.checkin, co: b.checkout, rooms: Number(b.roomsNeeded || 1), type: b.roomType }).filter(function (m) { return m.kind !== 'hello'; });
       if (!light) msgs.unshift({ kind: 'advpending', label: 'Advance pending: confirm booking', text: advPendingText(b, salute(b.guest)) });
+      if (!light) msgs.push({ kind: 'nopay', label: 'No advance received: booking released', text: noPayText(b, salute(b.guest)) });
       msgs.forEach(function (m) { if (m.text) m.text = waSafe(m.text); m.sent = sent[b.id + '|' + m.kind] || ''; });
       var done = sent[b.id + '|doneenq'] || '';
       folders.enq.push({ key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Pending booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' · ' + (b.source || ''), msgs: msgs, booking: b.id, done: done,
@@ -752,13 +759,14 @@ function deskCore(db, hooks) {
     db.all('bookings').forEach(function (b) {
       if (b.status !== 'Cancelled' || !b.phone || waOptedOut(b.phone) || String(b.closedAt || '').slice(0, 10) < addDays(t, -7)) return;
       var sal = salute(b.guest), paid = Number(b.advancePaid || 0), back = Number(b.refunded || 0), kept = Math.max(0, paid - back);
-      var msgs = light ? [] : [
-        { kind: 'cancelled', label: 'Booking cancelled', text: sal + ', Hare Krishna! As requested, your booking ' + b.id + ' at Nikadi Guest House for ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' has been cancelled.' +
+      var msgs = light ? [] : (paid > 0 ? [] : [{ kind: 'nopay', label: 'Cancelled: no advance or reply', text: noPayText(b, sal) }]).concat([
+        { kind: 'cancelled', label: paid > 0 ? 'Booking cancelled' : 'Cancelled at the guest\'s request', text: sal + ', Hare Krishna! As requested, your booking ' + b.id + ' at Nikadi Guest House for ' + dd(b.checkin) + ' to ' + dd(b.checkout) + ' has been cancelled.' +
           (back > 0 ? '\nWe have refunded ' + rupees(back) + ' to you. It can take a few working days to reach your account.' : '') +
           (kept > 0 ? '\nAs per our cancellation policy, ' + rupees(kept) + ' of the advance is not refundable.' : '') +
           '\nWe hope to welcome you in Sri Dham Mayapur another time. For a new booking, just message us here.' },
         { kind: 'cancelagain', label: 'Book again another time', text: sal + ', Hare Krishna! Whenever you plan your next visit to Sri Dham Mayapur, message us here and we will give you our best rate. Nikadi Guest House, opposite ISKCON Gate No. 4 · +91 75011 01137' }
-      ];
+
+      ]);
       msgs.forEach(function (m) { m.text = waSafe(m.text); m.sent = sent[b.id + '|' + m.kind] || ''; });
       folders.enq.push({ done: sent[b.id + '|doneenq'] || '', key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Cancelled ' + dd(String(b.closedAt).slice(0, 10)) + ' · booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout), msgs: msgs, booking: b.id, cancelled: true,
         todo: !msgs.some(function (m) { return m.sent; }) && !light });
