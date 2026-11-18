@@ -22,6 +22,7 @@ out = []
 for dp, dn, fn in os.walk(os.path.join(ROOT, 'img')):
     for f in sorted(fn):
         if not re.search(r'\.(jpe?g|png|webp)$', f, re.I): continue
+        if f.lower().endswith('.webp') and os.path.exists(os.path.join(dp, f[:-5] + '.jpg')): continue
         p = os.path.relpath(os.path.join(dp, f), ROOT).replace(os.sep, '/'); c = cat(p)
         if not c: continue
         t = p.replace('img/rooms/', 'img/rooms/t/')

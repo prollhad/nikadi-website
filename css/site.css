@@ -823,6 +823,36 @@ nav.main a{white-space:nowrap}
 .guest-wall figcaption{padding:10px 14px;font-size:.84rem;color:var(--muted)}
 .guest-wall figcaption b{color:var(--ink);font-weight:700}
 
+
+/* language switch */
+html.i18n-wait body{opacity:0}
+body{transition:opacity .25s}
+html[data-lang=bn]{--display:"Noto Serif Bengali",Georgia,serif;--body:"Noto Sans Bengali","Lato",system-ui,sans-serif}
+html[data-lang=hi]{--display:"Noto Serif Devanagari",Georgia,serif;--body:"Noto Sans Devanagari","Lato",system-ui,sans-serif}
+html[data-lang=ru]{--display:"Cormorant Garamond",Georgia,serif;--body:"Noto Sans","Lato",system-ui,sans-serif}
+html[data-lang=zh]{--display:"Noto Serif SC","Songti SC",serif;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+html[data-lang=bn] .kicker,html[data-lang=hi] .kicker,html[data-lang=zh] .kicker,html[data-lang=bn] nav.main,html[data-lang=hi] nav.main,html[data-lang=zh] nav.main{letter-spacing:.06em}
+html[data-lang=bn] h1,html[data-lang=bn] h2,html[data-lang=hi] h1,html[data-lang=hi] h2{line-height:1.25}
+html[data-lang=ru] h1,html[data-lang=ru] h2,html[data-lang=ru] h3{font-weight:600}
+.lang{position:relative}
+.lang-btn{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:.8rem;letter-spacing:.08em;cursor:pointer}
+.lang-btn:hover{border-color:rgba(217,173,85,.6)}
+.lang-btn svg{width:17px;height:17px;color:var(--gold-hi)}
+.lang-list{position:absolute;right:0;top:calc(100% + 8px);z-index:40;min-width:180px;padding:6px;border-radius:var(--r-sm);border:1px solid var(--line);background:#0d142c;box-shadow:0 20px 50px rgba(0,0,0,.5);display:grid}
+.lang-list button{all:unset;cursor:pointer;padding:10px 12px;border-radius:10px;display:flex;justify-content:space-between;gap:12px;font-size:.92rem;color:var(--ink)}
+.lang-list button small{color:var(--muted);font-size:.74rem}
+.lang-list button:hover,.lang-list button:focus-visible{background:rgba(217,173,85,.12)}
+.lang-list button[aria-current=true]{color:var(--gold-hi)}
+@media (max-width:620px){.lang-btn{width:40px;padding:0;justify-content:center}.lang-btn span{display:none}}
+.menu-langs{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.menu-langs button{border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:.86rem;padding:8px 12px;border-radius:999px;cursor:pointer}
+.menu-langs button[aria-current=true]{background:var(--gold-grad);color:var(--gold-ink);border-color:transparent;font-weight:700}
+
+.room-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1100px){.room-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.room-grid .room-large{grid-column:1/-1}}
+@media (max-width:760px){.room-grid{grid-template-columns:minmax(0,1fr)}}
+.ph-new{position:absolute;left:12px;top:12px;z-index:2;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--gold-ink);background:var(--gold-grad);padding:5px 10px;border-radius:999px}
+
 /* live availability calendar */
 .avc{margin-top:48px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(217,173,85,.05),transparent 140px),var(--panel);border-radius:var(--r);padding:26px;display:grid;gap:18px}
 .avc-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}

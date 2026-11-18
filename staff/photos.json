@@ -2,9 +2,11 @@
 "folders": [
 "Deluxe Double (king bed)",
 "Deluxe Twin",
+"Large Twin",
 "Reception",
 "Common spaces",
-"Building & views"
+"Building & views",
+"Other"
 ],
 "photos": [
 {
@@ -104,6 +106,18 @@
 "thumb": "/img/rooms/t/double-16.jpg"
 },
 {
+"cat": "Deluxe Double (king bed)",
+"name": "Deluxe Double 17.jpg",
+"src": "/img/rooms/double-17.jpg",
+"thumb": "/img/rooms/t/double-17.jpg"
+},
+{
+"cat": "Deluxe Double (king bed)",
+"name": "Deluxe Double 18.jpg",
+"src": "/img/rooms/double-18.jpg",
+"thumb": "/img/rooms/t/double-18.jpg"
+},
+{
 "cat": "Deluxe Twin",
 "name": "Deluxe Twin 01.jpg",
 "src": "/img/rooms/twin-01.jpg",
@@ -162,6 +176,72 @@
 "name": "Deluxe Twin 10.jpg",
 "src": "/img/rooms/twin-10.jpg",
 "thumb": "/img/rooms/t/twin-10.jpg"
+},
+{
+"cat": "Deluxe Twin",
+"name": "Deluxe Twin 11.jpg",
+"src": "/img/rooms/twin-11.jpg",
+"thumb": "/img/rooms/t/twin-11.jpg"
+},
+{
+"cat": "Deluxe Twin",
+"name": "Deluxe Twin 12.jpg",
+"src": "/img/rooms/twin-12.jpg",
+"thumb": "/img/rooms/t/twin-12.jpg"
+},
+{
+"cat": "Deluxe Twin",
+"name": "Deluxe Twin 13.jpg",
+"src": "/img/rooms/twin-13.jpg",
+"thumb": "/img/rooms/t/twin-13.jpg"
+},
+{
+"cat": "Large Twin",
+"name": "Large Twin 01.jpg",
+"src": "/img/rooms/large-01.jpg",
+"thumb": "/img/rooms/t/large-01.jpg"
+},
+{
+"cat": "Large Twin",
+"name": "Large Twin 02.jpg",
+"src": "/img/rooms/large-02.jpg",
+"thumb": "/img/rooms/t/large-02.jpg"
+},
+{
+"cat": "Large Twin",
+"name": "Large Twin 03.jpg",
+"src": "/img/rooms/large-03.jpg",
+"thumb": "/img/rooms/t/large-03.jpg"
+},
+{
+"cat": "Large Twin",
+"name": "Large Twin 04.jpg",
+"src": "/img/rooms/large-04.jpg",
+"thumb": "/img/rooms/t/large-04.jpg"
+},
+{
+"cat": "Large Twin",
+"name": "Large Twin 05.jpg",
+"src": "/img/rooms/large-05.jpg",
+"thumb": "/img/rooms/t/large-05.jpg"
+},
+{
+"cat": "Large Twin",
+"name": "Large Twin 06.jpg",
+"src": "/img/rooms/large-06.jpg",
+"thumb": "/img/rooms/t/large-06.jpg"
+},
+{
+"cat": "Large Twin",
+"name": "Large Twin 07.jpg",
+"src": "/img/rooms/large-07.jpg",
+"thumb": "/img/rooms/t/large-07.jpg"
+},
+{
+"cat": "Large Twin",
+"name": "Large Twin 08.jpg",
+"src": "/img/rooms/large-08.jpg",
+"thumb": "/img/rooms/t/large-08.jpg"
 },
 {
 "cat": "Reception",
@@ -249,6 +329,18 @@
 },
 {
 "cat": "Building & views",
+"name": "Facade Night 2.jpg",
+"src": "/img/facade-night-2.jpg",
+"thumb": "/img/facade-night-2.jpg"
+},
+{
+"cat": "Building & views",
+"name": "Facade Night Wide.jpg",
+"src": "/img/facade-night-wide.jpg",
+"thumb": "/img/facade-night-wide.jpg"
+},
+{
+"cat": "Building & views",
 "name": "Facade Night.jpg",
 "src": "/img/facade-night.jpg",
 "thumb": "/img/facade-night.jpg"
@@ -276,6 +368,18 @@
 "name": "Walkup Original Poster.jpg",
 "src": "/img/walkup-original-poster.jpg",
 "thumb": "/img/walkup-original-poster.jpg"
+},
+{
+"cat": "Other",
+"name": "Chandramukhi Get To Know Me.jpg",
+"src": "/img/meet/chandramukhi-get-to-know-me.jpg",
+"thumb": "/img/meet/chandramukhi-get-to-know-me.jpg"
+},
+{
+"cat": "Other",
+"name": "Kit 01.jpg",
+"src": "/img/rooms/kit-01.jpg",
+"thumb": "/img/rooms/t/kit-01.jpg"
 }
 ]
 }

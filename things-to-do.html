@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>document.documentElement.classList.add("js")</script>
+<script>(function(){try{var m=location.search.match(/[?&]lang=(en|bn|hi|ru|zh|es)\b/),l=m?m[1]:localStorage.getItem('nk_lang');if(m)localStorage.setItem('nk_lang',l);if(l&&l!=='en'){var d=document.documentElement;d.lang=l==='zh'?'zh-Hans':l;d.setAttribute('data-lang',l);d.classList.add('i18n-wait');setTimeout(function(){d.classList.remove('i18n-wait');},2500);var F={bn:'Noto+Serif+Bengali:wght@500;600&family=Noto+Sans+Bengali:wght@400;600;700',hi:'Noto+Serif+Devanagari:wght@500;600&family=Noto+Sans+Devanagari:wght@400;600;700',ru:'Cormorant+Garamond:wght@500;600;700&family=Noto+Sans:wght@400;600;700',zh:'Noto+Serif+SC:wght@500;600&family=Noto+Sans+SC:wght@400;500;700'};if(F[l])document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family='+F[l]+'&display=swap">');}}catch(e){}})();</script>
 <title>Things to do in Mayapur: holy places, ghats & prasadam · Nikadi Guest House</title>
 <link rel="icon" href="/favicon.ico?v=2" sizes="any">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png?v=2">
@@ -26,7 +27,7 @@
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Lato:wght@300;400;700&display=swap">
-<link rel="stylesheet" href="/css/site.css?v=f31ebdc9">
+<link rel="stylesheet" href="/css/site.css?v=118fc4ba">
 <script>(function(){var M={"home":"/","heroMember":"/","offerCard":"/","ocTag":"/","ocTitle":"/","ocFoot":"/","heroSlides":"/","capKick":"/","capText":"/","capNo":"/","capOf":"/","heroProg":"/","heroPrev":"/","heroNext":"/","bookForm":"/","rm":"/","gu":"/","bookSum":"/","now":"/","gwClock":"/","gClock":"/","gDate":"/","gDesk":"/","gwWx":"/","gTemp":"/","gCond":"/","gWxSub":"/","gFc":"/","gwSun":"/","gSunDot":"/","gRise":"/","gSet":"/","gSunSub":"/","gwPrice":"/","gPrLbl":"/","gPrDs":"/","gPrD":"/","gPrTs":"/","gPrT":"/","gAratiLbl":"/","gArati":"/","gAratiIn":"/","gTrain":"/","gTrainIn":"/","gTrainAc":"/","gFar":"/","gFarBtn":"/","rooms":"/","avc":"/","avcPrev":"/","avcNext":"/","avcMonths":"/","avcSel":"/","avcClear":"/","avcBook":"/","avcNote":"/","reviews":"/","revTrack":"/","member-teaser":"/","location":"/","amenities":"/","gallery":"/","booking":"/","cancellation":"/","payOnline":"/","poName":"/","poPhone":"/","poAmt":"/","poNote":"/","poHint":"/","poErr":"/","poGo":"/","poOk":"/","qr":"/","upiId":"/","upiActs":"/","upiLink":"/","upiMsg":"/","accNo":"/","ifsc":"/","bankMsg":"/","forms":"/","rules":"/","about":"/","team":"/","staffGrid":"/","guests":"/","guestWall":"/","faq":"/","phone":"/","email":"/","emailMsg":"/","qForm":"/","cMsg":"/","temple":"/temple.html","prog":"/temple.html","progLive":"/temple.html","progLiveName":"/temple.html","progLiveSub":"/temple.html","progNow":"/temple.html","progNext":"/temple.html","progIn":"/temple.html","igs":"/temple.html","festivals":"/temple.html","fvNext":"/temple.html","fvList":"/temple.html","meet":"/temple.html","meetIg":"/temple.html","mvid":"/temple.html","mvidV":"/temple.html","mvidS":"/temple.html","meetNav":"/temple.html","transport":"/travel.html","gourdham":"/travel.html","gtForm":"/travel.html","membership":"/membership.html","mdeck":"/membership.html"},h=location.hash.slice(1);if(h&&M[h])location.replace(M[h]+"#"+h);})();</script>
 </head>
 <body data-page="things-to-do">
@@ -39,6 +40,7 @@
       <a href="/#rooms">Rooms</a><a href="/temple.html">Temple</a><a href="/things-to-do.html" aria-current="page">Things to do</a><a href="/travel.html">Travel</a><a href="/membership.html">Membership</a><a href="/#reviews">Reviews</a><a href="/#location">Location</a><a href="/#contact">Contact</a>
     </nav>
     <div class="top-acts">
+      <div class="lang" data-noi18n><button class="lang-btn" type="button" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9S14.5 18.3 12 21c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg><span id="langCode">EN</span></button><div class="lang-list" id="langList" hidden></div></div>
       <button class="mem-chip" id="memChip" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg><span id="memChipTxt">Member sign in</span></button>
       <a class="btn btn-gold" href="/#booking">Book now</a>
     </div>
@@ -164,6 +166,7 @@
             <select id="a_room" required data-role="room" data-l="Room type">
               <option value="Deluxe Double (King bed)" data-kind="double">Deluxe Double (King bed)</option>
               <option value="Deluxe Twin" data-kind="twin">Deluxe Twin</option>
+              <option value="Large Twin" data-kind="double">Large Twin</option>
             </select></label>
           <label class="fld"><span>No. of rooms <i>*</i></span><input id="a_rooms" type="number" min="1" max="10" value="1" required data-role="rooms" data-l="No. of rooms"><small>Maximum 3 guests per room. Rooms are added automatically.</small></label>
           <div class="fld full"><span>Extras</span>
@@ -250,6 +253,7 @@
             <select id="r_room" required data-role="room" data-l="Room type">
               <option value="Deluxe Double (King bed)" data-kind="double">Deluxe Double (King bed)</option>
               <option value="Deluxe Twin" data-kind="twin">Deluxe Twin</option>
+              <option value="Large Twin" data-kind="double">Large Twin</option>
             </select></label>
           <label class="fld"><span>Adults <i>*</i></span><input id="r_ad" type="number" min="1" max="20" value="2" required data-role="adults" data-l="Adults"></label>
           <label class="fld"><span>Children</span><input id="r_ch" type="number" min="0" max="20" value="0" data-role="children" data-l="Children"></label>
@@ -382,7 +386,7 @@
         <img class="rd-img" src="img/rooms/double-01.jpg" alt="King bed with fresh white linen in the Deluxe Double room">
         <button type="button" class="rd-nav prev" aria-label="Previous photo">&#8249;</button>
         <button type="button" class="rd-nav next" aria-label="Next photo">&#8250;</button>
-        <span class="rd-count" aria-live="polite">1 / 16</span>
+        <span class="rd-count" aria-live="polite">1 / 19</span>
       </div>
       <p class="rd-cap">King bed with fresh linen</p>
       <div class="rd-thumbs" role="list">
@@ -402,6 +406,9 @@
         <button type="button" role="listitem" data-src="img/rooms/double-12.jpg" data-cap="Bathroom with rain shower"><img src="img/rooms/t/double-12.jpg" alt="Bathroom with shower" loading="lazy"></button>
         <button type="button" role="listitem" data-src="img/rooms/double-13.jpg" data-cap="Vanity with LED mirror and geyser"><img src="img/rooms/t/double-13.jpg" alt="Bathroom vanity" loading="lazy"></button>
         <button type="button" role="listitem" data-src="img/rooms/double-16.jpg" data-cap="Washbasin, LED mirror and towel ring"><img src="img/rooms/t/double-16.jpg" alt="Washbasin and towel ring" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-17.jpg" data-cap="Sofa corner, wardrobe and TV unit"><img src="img/rooms/t/double-17.jpg" alt="Sofa corner, wardrobe and TV unit" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/double-18.jpg" data-cap="Floor-length curtains and cove lighting"><img src="img/rooms/t/double-18.jpg" alt="Floor-length curtains and cove lighting" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/kit-01.jpg" data-cap="The Nikadi morning kit: bamboo toothbrushes, neem comb, shampoo, shower gel and moisturiser"><img src="img/rooms/t/kit-01.jpg" alt="The Nikadi morning kit: bamboo toothbrushes, neem comb, shampoo, shower gel and moisturiser" loading="lazy"></button>
       </div>
     </div>
 
@@ -483,7 +490,7 @@
         <img class="rd-img" src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds, sofa and window">
         <button type="button" class="rd-nav prev" aria-label="Previous photo">&#8249;</button>
         <button type="button" class="rd-nav next" aria-label="Next photo">&#8250;</button>
-        <span class="rd-count" aria-live="polite">1 / 10</span>
+        <span class="rd-count" aria-live="polite">1 / 13</span>
       </div>
       <p class="rd-cap">Two single beds and sofa corner</p>
       <div class="rd-thumbs" role="list">
@@ -497,6 +504,9 @@
         <button type="button" role="listitem" data-src="img/rooms/twin-08.jpg" data-cap="Sofa corner with drinking water"><img src="img/rooms/t/twin-08.jpg" alt="Sofa and coffee table with water bottles" loading="lazy"></button>
         <button type="button" role="listitem" data-src="img/rooms/twin-09.jpg" data-cap="Washbasin with LED mirror"><img src="img/rooms/t/twin-09.jpg" alt="Bathroom washbasin with LED mirror" loading="lazy"></button>
         <button type="button" role="listitem" data-src="img/rooms/twin-10.jpg" data-cap="Bathroom with rain shower"><img src="img/rooms/t/twin-10.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-11.jpg" data-cap="Window light and sofa corner"><img src="img/rooms/t/twin-11.jpg" alt="Window light and sofa corner" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-12.jpg" data-cap="Smart TV, kettle and desk"><img src="img/rooms/t/twin-12.jpg" alt="Smart TV, kettle and desk" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/twin-13.jpg" data-cap="Morning kit on fresh linen"><img src="img/rooms/t/twin-13.jpg" alt="Morning kit on fresh linen" loading="lazy"></button>
       </div>
     </div>
 
@@ -569,6 +579,98 @@
     </div>
   </div>
 </section>
+
+<section class="sheet" id="room-large-twin" hidden aria-label="Large Twin room details">
+  <div class="sheet-bar"><div class="wrap"><span class="brand brand-row"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"><span>Large Twin</span></span><a class="btn btn-line" href="/#rooms">Close</a></div></div>
+  <div class="wrap rd">
+    <div class="rd-gal" data-gallery>
+      <div class="rd-main">
+        <img class="rd-img" src="img/rooms/large-01.jpg" alt="Large Twin room with two single beds, sofa, extra mattress and marble floor">
+        <button type="button" class="rd-nav prev" aria-label="Previous photo">&#8249;</button>
+        <button type="button" class="rd-nav next" aria-label="Next photo">&#8250;</button>
+        <span class="rd-count" aria-live="polite">1 / 8</span>
+      </div>
+      <p class="rd-cap">Two single beds, sofa and an extra mattress, on marble floors</p>
+      <div class="rd-thumbs" role="list">
+        <button type="button" role="listitem" data-src="img/rooms/large-01.jpg" data-cap="Two single beds, sofa and an extra mattress, on marble floors"><img src="img/rooms/t/large-01.jpg" alt="Large Twin room with two single beds, sofa, extra mattress and marble floor" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/large-04.jpg" data-cap="The full room, with floor-length curtains and cove lighting"><img src="img/rooms/t/large-04.jpg" alt="Full Large Twin room view with curtains and cove lighting" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/large-06.jpg" data-cap="Plenty of floor space for a third guest"><img src="img/rooms/t/large-06.jpg" alt="Two single beds and extra mattress in the Large Twin room" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/large-05.jpg" data-cap="Wardrobe, TV unit, sofa and air conditioning"><img src="img/rooms/t/large-05.jpg" alt="Wardrobe, TV unit with kettle, sofa and air conditioner" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/large-03.jpg" data-cap="Fresh linen and the Nikadi morning kit"><img src="img/rooms/t/large-03.jpg" alt="Twin beds with fresh linen, towels and morning kit" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/large-02.jpg" data-cap="Bedside table and full-length mirror"><img src="img/rooms/t/large-02.jpg" alt="Single bed with bedside table and mirror" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/large-07.jpg" data-cap="A large marble bathroom with rain shower"><img src="img/rooms/t/large-07.jpg" alt="Large bathroom with marble walls, rain shower and geyser" loading="lazy"></button>
+        <button type="button" role="listitem" data-src="img/rooms/large-08.jpg" data-cap="Designer washbasin with LED mirror"><img src="img/rooms/t/large-08.jpg" alt="Gold mosaic washbasin with round LED mirror" loading="lazy"></button>
+      </div>
+    </div>
+
+    <div class="rd-info">
+      <div class="rd-head">
+        <p class="kicker rule">3rd floor · Roof terrace · Up to 3 guests</p>
+        <h2>Large Twin Room</h2>
+        <p>Our most spacious room, on the 3rd floor with our roof terrace right outside. Two single beds, an extra mattress for a third guest, a sofa corner, polished marble floors, warm cove lighting and a large marble bathroom with rain shower. Ideal for families and small groups.</p>
+      </div>
+
+      <dl class="rd-facts">
+        <div><dt>Beds</dt><dd>2 single<small>+ extra mattress</small></dd></div>
+        <div><dt>Guests</dt><dd>Up to 3<small>per room</small></dd></div>
+        <div><dt>Floor</dt><dd>3rd floor<small>roof terrace outside</small></dd></div>
+        <div><dt>Bathroom</dt><dd>Large<small>marble, rain shower</small></dd></div>
+      </dl>
+
+      <div class="rd-book">
+        <div class="price" data-kind="double"><span class="from">Per night</span><s class="was">₹5,000</s><b>₹3,500</b><span class="deal">Special offer</span><span class="n">till 23 December</span></div>
+        <a class="mrate" data-kind="double" href="app/?book=1"><span class="mrate-tag">Member rate</span><span>Members save a further 5–20%</span></a>
+        <div class="rd-btns">
+          <a class="btn btn-gold" href="/#home" data-room="2">Book this room</a>
+          <a class="btn btn-line" href="#advance-booking">Fill booking form</a>
+        </div>
+        <p class="rd-times">Check-in 11:00 AM · Check-out 9:00 AM</p>
+      </div>
+
+      <div class="rd-lists">
+        <div>
+          <h3>In the room</h3>
+          <ul class="rd-ul">
+            <li>Two single beds with 10 inch mattresses</li>
+            <li>Extra mattress for a third guest</li>
+            <li>Comforter blankets and fresh linen</li>
+            <li>Air conditioning and ceiling fan</li>
+            <li>Wall-mounted TV</li>
+            <li>Wi-Fi, 24/7</li>
+            <li>Electric kettle and drinking water</li>
+            <li>Two-seater sofa</li>
+            <li>Wardrobe and work desk</li>
+            <li>Bedside tables and full-length mirror</li>
+            <li>Polished marble floors</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Bathroom</h3>
+          <ul class="rd-ul">
+            <li>Large bathroom with marble walls</li>
+            <li>Rain shower</li>
+            <li>Geyser for hot water</li>
+            <li>Designer washbasin with LED mirror and glass shelf</li>
+            <li>Western toilet with health faucet</li>
+            <li>Bath towels and floor mat</li>
+          </ul>
+          <h3>Roof terrace</h3>
+          <ul class="rd-ul">
+            <li>Right outside the room, on the 3rd floor</li>
+            <li>Open air and sky views over Mayapur</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rd-note">
+        <h3>Good to know</h3>
+        <p>The Large Twin is on the 3rd floor and is reached by the stairs. Pure vegetarian property. No smoking, tobacco, gutka, pan or alcohol, with a ₹2,000 fine for any violation. Meals are not served; Govinda's is a 10 minute walk. A 50% advance confirms your booking.</p>
+        <a class="btn btn-line" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20have%20a%20question%20about%20the%20Large%20Twin%20room." target="_blank" rel="noopener">Ask about this room</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 
 
 <nav class="dock" aria-label="Quick actions">
@@ -680,6 +782,6 @@
 
 <script src="/pricing.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="/js/site.js?v=d2fdf807"></script>
+<script src="/js/site.js?v=072ba19a"></script>
 </body>
 </html>

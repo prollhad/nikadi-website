@@ -394,11 +394,13 @@ try{
   var S=[
     ['double-04','Deluxe Double','Wide windows and soft morning light','62% 74%'],
     ['double-01','Deluxe Double','King bed and warm cove lighting','50% 72%'],
+    ['large-twin','Large Twin · 3rd floor','Room for three, with the roof terrace outside','40% 60%'],
     ['double-05','Deluxe Double','Deep sleep, soft linen','50% 70%'],
+    ['facade-night','Nikadi Guest House','Opposite ISKCON Gate No. 4, lit up at night','50% 45%'],
     ['facade-day','Nikadi Guest House','On Bhaktisiddhanta Saraswati Marg'],
     ['reception','Reception','First floor, open 16 hours a day']
   ];
-  var ALT={'double-01':'Deluxe Double room with king bed','double-05':'Deluxe Double room with king bed and wardrobe','facade-night':'Nikadi Guest House lit up at night','double-02':'Deluxe Double room with sofa and wardrobe','twin-03':'Deluxe Twin room with two single beds','facade-day':'Nikadi Guest House building by day','reception':'Nikadi reception desk','double-04':'Deluxe Double room by the window'};
+  var ALT={'large-twin':'Large Twin room with two single beds and marble floor','facade-night':'Nikadi Guest House lit up at night','double-01':'Deluxe Double room with king bed','double-05':'Deluxe Double room with king bed and wardrobe','facade-night':'Nikadi Guest House lit up at night','double-02':'Deluxe Double room with sofa and wardrobe','twin-03':'Deluxe Twin room with two single beds','facade-day':'Nikadi Guest House building by day','reception':'Nikadi reception desk','double-04':'Deluxe Double room by the window'};
   var imgs=[box.querySelector('img')], i=0, timer=null, loaded={0:true};
   for(var k=1;k<S.length;k++){var im=document.createElement('img');im.alt=ALT[S[k][0]]||'';im.decoding='async';im.width=1100;im.height=1375;box.appendChild(im);imgs.push(im);}
   function load(k){if(loaded[k])return;loaded[k]=true;imgs[k].src='img/hero/'+(matchMedia('(min-width:1001px)').matches?'W/':'P/')+S[k][0]+'.webp';if(S[k][3])imgs[k].style.objectPosition=S[k][3];}
@@ -931,7 +933,7 @@ try{
   var ty=+today.slice(0,4),tm=+today.slice(5,7)-1,off=0,MAXOFF=5,type='Deluxe Double',AV=null,ci=null,co=null,state='loading';
   function stat(d){
     if(!AV)return '';var row=AV[d];if(!row)return '';
-    var re=type==='Deluxe Twin'?/twin/i:/double/i,best='';
+    var re=type==='Large Twin'?/large/i:type==='Deluxe Twin'?/^(?!.*large).*twin/i:/double/i,best='';
     Object.keys(row).forEach(function(k){if(!re.test(k))return;var v=row[k];if(v==='free'||(v==='few'&&best!=='free')||(v==='full'&&!best))best=v;});
     return best;
   }
@@ -979,7 +981,7 @@ try{
   $('avcBook').setAttribute('data-focus-book','');
   $('avcBook').addEventListener('click',function(){
     var a=$('ci'),b=$('co'),r=$('rm');if(!a||!b)return;
-    a.value=ci;b.value=co;if(r)r.selectedIndex=type==='Deluxe Twin'?1:0;
+    a.value=ci;b.value=co;if(r)r.selectedIndex=type==='Large Twin'?2:type==='Deluxe Twin'?1:0;
     [a,b,r].forEach(function(el){if(!el)return;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));});
   });
   function load(){
