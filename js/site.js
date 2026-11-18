@@ -381,7 +381,7 @@ try{
         else{tmp.copy(SH.position).sub(MOONC);var dm=tmp.length();if(dm<MR+2){SH.position.copy(MOONC).add(tmp.multiplyScalar((MR+2)/dm));}}
         /* planets: bump off them; the Earth takes you home */
         for(var bi=0;bi<bodies.length;bi++){var B=bodies[bi];tmp.copy(SH.position).sub(B.m.position);var dB=tmp.length();if(B.m.visible&&dB<B.r*1.06+3){if(B.exit){landEarth();break;}if(B.name!=='Sun'&&!busyW){landOn(B);break;}SH.position.copy(B.m.position).add(tmp.multiplyScalar((B.r*1.06+3)/dB));shipV*=.3;if(t-tooHot>4){tooHot=t;showBanner('Too hot to land!','The Sun is 5,500 °C at the surface. Try a planet instead.');}}}
-        if(curB&&(SH.position.y>420||Math.hypot(SH.position.x,SH.position.z)>700))leaveWorld();
+        if(curB){var LW=HALF*.9;if(Math.abs(SH.position.x)>LW){SH.position.x=-Math.sign(SH.position.x)*HALF*.86;camPos.set(0,0,0);}if(Math.abs(SH.position.z)>LW){SH.position.z=-Math.sign(SH.position.z)*HALF*.86;camPos.set(0,0,0);}if(SH.position.y>420)leaveWorld();}
         shipRoll+=(-tn*(.25+Math.min(.35,Math.abs(shipV)/2000))-shipRoll)*Math.min(1,dt*4);
         SH.rotation.set(-Math.max(-.35,Math.min(.35,shipVy/1200)),shipYaw,shipRoll,'YXZ');
         var pow=Math.min(1,Math.max(fw>0?.35:0,Math.abs(shipV)/600)+(K[' ']?.25:0));fires.forEach(function(f){f.visible=pow>.05;f.scale.set(1,.4+pow*(run?1.8:1)+Math.random()*.15,1);});shipLight.intensity=pow*3;
@@ -820,7 +820,6 @@ try{
     ['large-twin','Large Twin · 3rd floor','Room for three, with the roof terrace outside','40% 60%'],
     ['double-05','Deluxe Double','Deep sleep, soft linen','50% 70%'],
     ['facade-night','Nikadi Guest House','Opposite ISKCON Gate No. 4, lit up at night','50% 45%'],
-    ['facade-day','Nikadi Guest House','On Bhaktisiddhanta Saraswati Marg'],
     ['reception','Reception','First floor, open 16 hours a day']
   ];
   var ALT={'large-twin':'Large Twin room with two single beds and marble floor','facade-night':'Nikadi Guest House lit up at night','double-01':'Deluxe Double room with king bed','double-05':'Deluxe Double room with king bed and wardrobe','facade-night':'Nikadi Guest House lit up at night','double-02':'Deluxe Double room with sofa and wardrobe','twin-03':'Deluxe Twin room with two single beds','facade-day':'Nikadi Guest House building by day','reception':'Nikadi reception desk','double-04':'Deluxe Double room by the window'};
