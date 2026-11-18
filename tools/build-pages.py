@@ -8,7 +8,7 @@ src = (root / 'site/src.html').read_text(encoding='utf-8')
 BASE = 'https://www.nikadiguesthouse.com'
 
 PAGES = {
-  'index.html': {'url': '/', 'sections': ['home', 'rooms', 'now', 'reviews', 'member-teaser', 'amenities', 'gallery', 'booking', 'faq', 'contact'],
+  'index.html': {'url': '/', 'sections': ['home', 'overview', 'rooms', 'now', 'reviews', 'member-teaser', 'amenities', 'gallery', 'booking', 'faq', 'contact'],
     'title': 'Nikadi Guest House · Deluxe rooms opposite ISKCON Mayapur',
     'desc': 'Nikadi Guest House, Mayapur. Premium AC deluxe rooms opposite ISKCON Gate No. 4, an 8 minute walk from the Main ISKCON Temple. Live availability, member rates and our own cars.'},
   'temple.html': {'url': '/temple.html', 'sections': ['temple', 'festivals', 'meet'],

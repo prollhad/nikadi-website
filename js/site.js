@@ -57,19 +57,39 @@ try{
     if(wax){x.arc(cx,cy,r,Math.PI/2,Math.PI*1.5,false);x.ellipse(cx,cy,Math.abs(k)*r,r,0,-Math.PI/2,Math.PI/2,k<0);}
     else{x.arc(cx,cy,r,-Math.PI/2,Math.PI/2,false);x.ellipse(cx,cy,Math.abs(k)*r,r,0,Math.PI/2,-Math.PI/2,k<0);}
     x.fill();x.restore();}
-  function night(force){var h=ist().getUTCHours();if(!force&&!(h>=23||h<3))return;
-    var ns=document.createElement('div');ns.id='nightsky';ns.setAttribute('aria-hidden','true');ns.innerHTML='<canvas></canvas><div class="moon"><canvas width="200" height="200"></canvas></div>';document.body.insertBefore(ns,document.body.firstChild);
-    var c=ns.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1);
-    function stars(){var W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;x.clearRect(0,0,W,H);
-      var sg=x.createLinearGradient(0,0,0,H);sg.addColorStop(0,'#050916');sg.addColorStop(1,'#0b1226');x.fillStyle=sg;x.fillRect(0,0,W,H);
-      var n=Math.round(innerWidth*innerHeight/2600),seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
-      for(var i=0;i<n;i++){var r=rnd(),sz=r<.92?.5+rnd()*.6:1+rnd()*.9;x.fillStyle='rgba('+(r<.1?'255,236,214':r<.2?'214,226,255':'240,244,255')+','+(.25+rnd()*.6).toFixed(2)+')';x.beginPath();x.arc(rnd()*W,rnd()*H,sz*dpr,0,7);x.fill();}
-      // a faint band of the Milky Way
-      var mw=x.createLinearGradient(0,H*.1,W,H*.9);mw.addColorStop(0,'rgba(180,190,230,0)');mw.addColorStop(.5,'rgba(180,190,230,.05)');mw.addColorStop(1,'rgba(180,190,230,0)');x.fillStyle=mw;x.fillRect(0,0,W,H);}
-    stars();addEventListener('resize',stars);drawMoon(ns.querySelector('.moon canvas'),moonPhase());
-    document.documentElement.classList.add('night-mood');}
+  /* ---- the sky behind the page follows the real sun over Mayapur: dawn, a soft day, a many-coloured sunset, dusk and a starry night ---- */
+  function sunMin(rise){var d=ist(),N=Math.floor((Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-Date.UTC(d.getUTCFullYear(),0,0))/864e5),R=Math.PI/180,lat=23.4267,lng=88.388,lh=lng/15;
+    var t=N+((rise?6:18)-lh)/24,M=.9856*t-3.289,L=(M+1.916*Math.sin(M*R)+.02*Math.sin(2*M*R)+282.634)%360,RA=Math.atan(.91764*Math.tan(L*R))/R;RA=(RA+360)%360;
+    RA=(RA+(Math.floor(L/90)-Math.floor(RA/90))*90)/15;var sd=.39782*Math.sin(L*R),cd=Math.cos(Math.asin(sd)),ch=(Math.cos(90.833*R)-sd*Math.sin(lat*R))/(cd*Math.cos(lat*R));
+    var H=(rise?360-Math.acos(ch)/R:Math.acos(ch)/R)/15,T=H+RA-.06571*t-6.622,UT=((T-lh)%24+24)%24;return Math.round(((UT+5.5)%24)*60);}
+  function phase(){var d=ist(),m=d.getUTCHours()*60+d.getUTCMinutes(),sr=sunMin(true),ss=sunMin(false);
+    if(m>=sr-40&&m<sr+50)return 'dawn';if(m>=sr+50&&m<ss-70)return 'day';if(m>=ss-70&&m<ss+35)return 'sunset';if(m>=ss+35&&m<ss+80)return 'dusk';return 'night';}
+  var ns=null,cur=null;
+  function paint(ph){var c=ns.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1),W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;
+    var seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
+    function grad(st){var g=x.createLinearGradient(0,0,0,H);st.forEach(function(q){g.addColorStop(q[0],q[1]);});x.fillStyle=g;x.fillRect(0,0,W,H);}
+    function blob(cx,cy,rx,ry,col){x.save();x.translate(cx*W,cy*H);x.scale(1,ry/rx);var g=x.createRadialGradient(0,0,0,0,0,rx*W);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.beginPath();x.arc(0,0,rx*W,0,7);x.fill();x.restore();}
+    function stars(k){var n=Math.round(innerWidth*innerHeight/2600*k);for(var i=0;i<n;i++){var r=rnd(),sz=r<.92?.5+rnd()*.6:1+rnd()*.9;x.fillStyle='rgba('+(r<.1?'255,236,214':r<.2?'214,226,255':'240,244,255')+','+((.25+rnd()*.6)*Math.min(1,k*1.4)).toFixed(2)+')';x.beginPath();x.arc(rnd()*W,rnd()*H*(k<1?.7:1),sz*dpr,0,7);x.fill();}}
+    if(ph==='night'){grad([[0,'#050916'],[1,'#0b1226']]);stars(1);var mw=x.createLinearGradient(0,H*.1,W,H*.9);mw.addColorStop(0,'rgba(180,190,230,0)');mw.addColorStop(.5,'rgba(180,190,230,.05)');mw.addColorStop(1,'rgba(180,190,230,0)');x.fillStyle=mw;x.fillRect(0,0,W,H);}
+    else if(ph==='dusk'){grad([[0,'#0a0f2a'],[.45,'#1e2160'],[.75,'#4a2d6e'],[.92,'#7a3a5e'],[1,'#a85a48']]);stars(.45);}
+    else if(ph==='dawn'){grad([[0,'#141a44'],[.35,'#3c3a7c'],[.62,'#86629e'],[.82,'#d58aa0'],[1,'#f3b08a']]);stars(.2);blob(.7,.95,.5,.25,'rgba(255,214,160,.35)');}
+    else if(ph==='day'){grad([[0,'#26427c'],[.45,'#1b2f5c'],[1,'#132244']]);blob(.82,.04,.45,.32,'rgba(255,226,170,.2)');blob(.82,.04,.12,.1,'rgba(255,240,210,.18)');
+      for(var i=0;i<6;i++)blob(.1+rnd()*.8,.08+rnd()*.5,.12+rnd()*.12,.04,'rgba(220,230,255,.05)');}
+    else {/* sunset, after the photo: deep violet-blue sky, magenta, hot orange and gold, pink clouds, the sea catching the light */
+      grad([[0,'#262a7a'],[.22,'#4a3aa6'],[.42,'#8a45a8'],[.56,'#d4567c'],[.66,'#ff7a2c'],[.72,'#ffb03a'],[.735,'#ffc75a'],[.75,'#ff8d3a'],[.8,'#7c4a8e'],[1,'#22346f']]);
+      blob(.62,.5,.34,.12,'rgba(255,170,90,.55)');blob(.2,.53,.24,.08,'rgba(255,190,220,.5)');blob(.75,.46,.22,.08,'rgba(255,200,210,.45)');blob(.45,.55,.3,.06,'rgba(255,150,170,.35)');
+      blob(.65,.82,.18,.14,'rgba(255,140,50,.4)');}
+  }
+  function ambient(ph){if(!ns){ns=document.createElement('div');ns.id='nightsky';ns.setAttribute('aria-hidden','true');ns.innerHTML='<canvas></canvas><div class="moon"><canvas width="200" height="200"></canvas></div>';document.body.insertBefore(ns,document.body.firstChild);
+      addEventListener('resize',function(){if(cur)paint(cur);});drawMoon(ns.querySelector('.moon canvas'),moonPhase());}
+    if(ph===cur)return;cur=ph;paint(ph);var de=document.documentElement;
+    de.classList.remove('sky-dawn','sky-day','sky-sunset','sky-dusk','sky-night');de.classList.add('night-mood','sky-'+ph);}
+  function night(force){ambient(force?'night':phase());}
+  var pq=(location.search.match(/[?&]sky=(\w+)/)||[])[1];
+  ambient(/^(dawn|day|sunset|dusk|night)$/.test(pq||'')?pq:phase());
+  if(!pq)setInterval(function(){if(!document.hidden)ambient(phase());},5*60000);
   var q=(location.search.match(/[?&]fx=(\w+)/)||[])[1];
-  night(q==='night');
+  if(q==='night')ambient('night');
   if(q==='dusk'||q==='dawn')setTimeout(function(){sky(q);},900);if(q==='thunder')setTimeout(thunder,900);if(q==='rain')setTimeout(rain,900);
   window.nkFx={sky:sky,thunder:thunder,rain:rain,night:night};
 })();
