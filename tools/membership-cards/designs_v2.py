@@ -238,34 +238,39 @@ def lotus_badge(cv, cx, cy, s, G, G2, layer='GOLD'):
         cv.fill(circle(cx + s * .48 * math.cos(a), cy + s * .48 * math.sin(a), s * .07), '#7a5824', layer)
 
 def plus_front(cv, m, art_only=False):
+    """Platinum Plus 'Titan': black titanium, brushed; the Nikadi mark as the hero in brushed 24k gold; faint etched ripples."""
+    import random
     full = rrect(0, 0, W, H, R)
-    cv.fill(full, ('lin', 0, H, W, 0, [(0, '#0b0b0d'), (.45, '#18181b'), (.6, '#202024'), (1, '#0a0a0c')]), 'BASE')
-    cx, cy = W - 19.5, H / 2 - 1
+    cv.fill(full, ('lin', 0, H, W, 0, [(0, '#0a0a0c'), (.38, '#151518'), (.52, '#1e1e22'), (.66, '#141417'), (1, '#09090b')]), 'BASE')
+    cx, cy = W / 2, 33.0
+    GOLD = [(0, '#fbeec4'), (.28, '#e5c57d'), (.55, '#b88f45'), (.78, '#ecd394'), (1, '#9c7533')]
+    GOLD2 = [(0, '#c9a35a'), (.5, '#f3dfa6'), (1, '#8d6a2e')]
     def art():
-        # brushed steel: fine horizontal hairlines
-        for k in range(0, 270):
-            y = -1 + k * .21
-            col = '#1d1d21' if k % 3 else '#232328'
-            cv.stroke(poly([(-2, y), (W + 2, y)], False), col, .045, 'ENGRAVE')
-        # soft sheen behind the rosette
-        # guilloche rosette, engraved steel, with a gold inner band
-        rosette(cv, cx, cy, 26.5, 1.9, 22, 9, '#5d6066', .05, 'ENGRAVE')
-        rosette(cv, cx, cy, 21.0, 1.6, 18, 9, '#73767c', .05, 'ENGRAVE', rot=.2)
-        rosette(cv, cx, cy, 15.6, 1.3, 15, 8, '#8f9297', .05, 'ENGRAVE', rot=.4)
-        rosette(cv, cx, cy, 10.6, 1.0, 12, 8, '#b59050', .055, 'GOLD', rot=.1)
-        for r, c, w in ((29.0, '#46484d', .06), (23.9, '#5a5c61', .05), (18.4, '#6a6d72', .05), (13.1, '#a8823f', .07), (7.9, '#d4b06a', .09), (7.2, '#a8823f', .05)):
-            cv.stroke(circle(cx, cy, r), c, w, 'GOLD' if c.startswith('#a8') or c.startswith('#d4') else 'ENGRAVE')
-        for k in range(72):
-            a = 2 * math.pi * k / 72
-            cv.fill(circle(cx + 13.1 * math.cos(a), cy + 13.1 * math.sin(a), .1), '#d4b06a', 'GOLD')
-        lotus_badge(cv, cx, cy, 1.9, '#d4b06a', '#8a6a2c')
+        rnd = random.Random(11)
+        y = -1.0
+        while y < H + 1:
+            c = rnd.choice(('#18181b', '#1b1b1f', '#202024', '#161619', '#1d1d21'))
+            cv.stroke(poly([(-2, y), (W + 2, y)], False), c, .05 + rnd.random() * .03, 'ENGRAVE'); y += .16 + rnd.random() * .1
+        # etched ripples spreading from the mark, fading out
+        for k in range(1, 26):
+            r = 14 + k * 2.15
+            col = '#2a2a2f' if k % 5 == 0 else '#222226'
+            cv.stroke(ellipse(cx, cy, r * 1.06, r, 0, 160), col, .06 if k % 5 else .08, 'ENGRAVE')
     clipped(cv, full, art)
-    # thin gold rule down the card, and the lettering
-    brand_row(cv, 6, H - 6 - 8.2, 8.2, {'dark': X['gold3'], 'light': X['gold2'], 'arc': X['gold']}, 'gloock', 13.5, ('lin', 0, H - 5, 0, H - 14, [(0, '#f8e7b5'), (.5, '#d4b06a'), (1, '#a8823f')]), X['steel'], layer='GOLD', word_track=.2, sub=False)
-    T(cv, 'arsenal', 'P L A T I N U M   P L U S', 6, H - 19.6, 5.0, X['gold3'], .3, layer='GOLD')
-    cv.stroke(poly([(6, H - 21.4), (17, H - 21.4)], False), X['gold'], .14, 'GOLD')
-    T(cv, 'work', 'SRI DHAM MAYAPUR', 6, H - 24.6, 3.2, X['steel'], .4, layer='ENGRAVE')
+    # a soft pool of light under the mark
+    cv.fill(ellipse(cx, cy - 1, 15.5, 13.5, 0, 120), ('rad', cx, cy - 1, 15.5, [(0, '#25252a'), (1, '#18181b')]), 'BASE')
+    for r, c, w in ((13.2, '#3a3a40', .07), (12.4, '#a8823f', .09)):
+        cv.stroke(ellipse(cx, cy - 1, r * 1.06, r, 0, 160), c, w, 'GOLD' if c == '#a8823f' else 'ENGRAVE')
+    # the Nikadi mark in brushed gold
+    mh = 17.0
+    shapes, mw = mark_shapes(cx - mh * 318 / 345 / 2, cy - mh / 2 - .4, mh)
+    for t, c in shapes:
+        cv.fill(c, {'dark': ('lin', cx - mw / 2, cy + mh / 2, cx + mw / 2, cy - mh / 2, GOLD2), 'light': ('lin', cx - mw / 2, cy + mh / 2, cx + mw / 2, cy - mh / 2, GOLD), 'arc': ('lin', cx - mw / 2, 0, cx + mw / 2, 0, GOLD)}[t], 'GOLD')
+    # wordmark and level
+    T(cv, 'gloock', 'N I K A D I', cx, 15.6, 8.6, ('lin', cx - 14, 18, cx + 14, 15, GOLD), .26, align='center', layer='GOLD')
+    T(cv, 'work', 'PLATINUM  PLUS', 6, H - 7.6, 3.4, '#9a9ca2', .62, layer='ENGRAVE')
+    T(cv, 'work', 'SRI DHAM MAYAPUR', W - 6, H - 7.6, 3.0, '#6f7177', .5, align='right', layer='ENGRAVE')
     if not art_only:
-        T(cv, 'arsenal', m['name'].upper(), 6, 12.4, 7.8, X['bright'], .14, layer='PERSONALISE')
-        T(cv, 'plexmono', m['no'], 6, 8.2, 4.6, X['steel'], .14, layer='PERSONALISE')
-        T(cv, 'work', 'SINCE ' + m['since'], 6, 4.6, 3.1, X['gold'], .4, layer='PERSONALISE')
+        T(cv, 'arsenal', m['name'].upper(), 6, 7.6, 6.8, '#d9dadc', .16, layer='PERSONALISE')
+        T(cv, 'plexmono', m['no'], W - 6, 7.6, 4.2, '#8f9297', .14, align='right', layer='PERSONALISE')
+        T(cv, 'work', 'MEMBER SINCE ' + m['since'], W - 6, 4.4, 2.8, '#b59050', .42, align='right', layer='PERSONALISE')

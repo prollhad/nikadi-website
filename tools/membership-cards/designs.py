@@ -463,7 +463,8 @@ def plus_back(cv, m):
     cv.fill(rrect(0, 0, W, H, R), ('lin', 0, H, W, 0, X['bg']), 'BASE')
     cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), X['gold'], .2, 'GOLD')
     L = 7
-    shikhara(cv, L + 2.2, H - 11.6, 3.6, 5.2, X['steel'], X['gold'], .1, tiers=5, ribs=(.5,), flag=True, mini=False)
+    _ms, _mw = mark_shapes(L - .4, H - 12.0, 5.0)
+    for _t, _c in _ms: cv.fill(_c, {'dark': X['gold2'], 'light': X['gold3'], 'arc': X['gold']}[_t], 'GOLD')
     T(cv, 'gloock', 'NIKADI MEMBERSHIP', L + 6, H - 10.6, 8.2, X['gold3'], .2, layer='GOLD')
     T(cv, 'work', 'PLATINUM PLUS  ·  YOUR PRIVILEGES', L + 6, H - 14.0, 3.6, X['steel'], .36, layer='ENGRAVE')
     y = H - 19.0

@@ -4,7 +4,7 @@ Four designs, the same in print and in the member app:
 - Silver "Pearl": pearl silver with an embossed line drawing of the Nikadi building.
 - Gold "Lotus": temple maroon with a gold lotus mandala and a double gold frame (gold hot-foil).
 - Platinum "Padma": midnight navy, a silver lotus rising from the Ganga under a halo, with two diyas (silver hot-foil).
-- Platinum Plus "Guilloche": brushed black steel with an engraved guilloche rosette, a gold inner band and a gold lotus at its heart.
+- Platinum Plus "Titan": brushed black titanium, the Nikadi mark in brushed 24k gold as the hero, faint etched ripples, minimal engraved lettering.
 
 Files:
 - engine.py: a small vector engine (PDF CMYK/spot colours + SVG), with text drawn as outlines.
