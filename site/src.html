@@ -3511,7 +3511,11 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     var SIZE=900,HALF=SIZE/2,CR=[],i,HA=14,HO=0,HS=.012,FEAT=[],HEART=0;
     function craters(n,big){CR=[];for(var k=0;k<n*2.5;k++){var r=Math.random()<.12?14+Math.random()*16:2+Math.pow(Math.random(),2)*9;CR.push([Math.random()*SIZE-HALF,Math.random()*SIZE-HALF,r,r*(.18+Math.random()*.1)*(big||1)]);}if(n)CR.push([0,-40,22,4.5*(big||1)]);}
     craters(70);
-    function height(x,z){var h=(fbm(x*HS+HO,z*HS+HO,5)-.5)*HA+(fbm(x*.09+HO,z*.09,3)-.5)*1.3;
+    /* heightA is the exact formula; height() reads the same grid the ground mesh is drawn from, so feet always touch the ground */
+    var N=360,HG=new Float32Array((N+1)*(N+1));
+    function height(x,z){var c=SIZE/N,fx=(x+HALF)/c,fz=(z+HALF)/c;if(fx<0||fz<0||fx>=N||fz>=N)return heightA(x,z);var ix=fx|0,iz=fz|0,u=fx-ix,v=fz-iz,k=iz*(N+1)+ix,ha=HG[k],hd=HG[k+1],hb=HG[k+N+1],hc=HG[k+N+2];
+      return u+v<=1?ha+(hd-ha)*u+(hb-ha)*v:hc+(hb-hc)*(1-u)+(hd-hc)*(1-v);}
+    function heightA(x,z){var h=(fbm(x*HS+HO,z*HS+HO,5)-.5)*HA+(fbm(x*.09+HO,z*.09,3)-.5)*1.3;
       for(var k=0;k<CR.length;k++){var c=CR[k],dx=x-c[0],dz=z-c[1],d2=dx*dx+dz*dz,rr=c[2]*1.8;if(d2>rr*rr)continue;var d=Math.sqrt(d2)/c[2];
         if(d<1)h+=c[3]*(d*d-1);h+=c[3]*.38*Math.exp(-Math.pow((d-1)/.28,2));}
       for(var f=0;f<FEAT.length;f++){var F=FEAT[f],fd=Math.hypot(x-F.x,z-F.z);if(fd<F.r){var fu=1-fd/F.r;h+=F.h*fu*fu*(3-2*fu);if(fd<F.r*.14)h-=F.h*.18*(1-fd/(F.r*.14));}}
@@ -3520,8 +3524,8 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     var gc=document.createElement('canvas');gc.width=gc.height=256;var gx=gc.getContext('2d'),gi=gx.createImageData(256,256);for(i=0;i<256*256;i++){var q=200+Math.random()*55;gi.data[i*4]=gi.data[i*4+1]=gi.data[i*4+2]=q;gi.data[i*4+3]=255;}gx.putImageData(gi,0,0);
     var gt=new T.CanvasTexture(gc);gt.wrapS=gt.wrapT=T.RepeatWrapping;gt.repeat.set(300,300);
     /* ---- ground ---- */
-    var N=300,geo=new T.PlaneGeometry(SIZE,SIZE,N,N);geo.rotateX(-Math.PI/2);var pa=geo.attributes.position,col=new Float32Array(pa.count*3);
-    for(i=0;i<pa.count;i++){var x=pa.getX(i),z=pa.getZ(i),y=height(x,z);pa.setY(i,y);var g=.3+(fbm(x*.05+9,z*.05+3,3)-.5)*.2+(fbm(x*.4,z*.4,2)-.5)*.08,m=fbm(x*.006+40,z*.006,3)<.42?.72:1;col[i*3]=g*m;col[i*3+1]=g*m*.985;col[i*3+2]=g*m*.96;}
+    var geo=new T.PlaneGeometry(SIZE,SIZE,N,N);geo.rotateX(-Math.PI/2);var pa=geo.attributes.position,col=new Float32Array(pa.count*3);
+    for(i=0;i<pa.count;i++){var x=pa.getX(i),z=pa.getZ(i),y=heightA(x,z);HG[i]=y;pa.setY(i,y);var g=.3+(fbm(x*.05+9,z*.05+3,3)-.5)*.2+(fbm(x*.4,z*.4,2)-.5)*.08,m=fbm(x*.006+40,z*.006,3)<.42?.72:1;col[i*3]=g*m;col[i*3+1]=g*m*.985;col[i*3+2]=g*m*.96;}
     geo.setAttribute('color',new T.BufferAttribute(col,3));geo.computeVertexNormals();
     var ground=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,map:gt,roughness:1,metalness:0}));ground.receiveShadow=true;S.add(ground);
     /* the rest of the moon, so it is a real ball when you fly away */
@@ -3660,7 +3664,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       Pluto:{g:1.6,ground:[.72,.63,.53],rock:0xa08a72,sky:0x000000,fog:null,cr:60,ha:12,float:1,fact:'A tiny icy world, with a heart-shaped plain of nitrogen ice.'}};
     var ringSky=new T.Mesh(new T.RingGeometry(900,1700,128),new T.MeshBasicMaterial({color:0xe3cfa0,transparent:true,opacity:.45,side:T.DoubleSide,depthWrite:false,fog:false}));ringSky.rotation.set(-1.1,0,.35);ringSky.position.set(0,300,-600);ringSky.visible=false;S.add(ringSky);
     function regen(name){var w=WORLDS[name];featFor(name);HA=w.ha;HO=name==='Moon'?0:(name.charCodeAt(0)*7.3+name.charCodeAt(1)*3.1);HS=w.bands?.006:.012;craters(w.cr,w.bands?0:1);
-      for(var i=0;i<pa.count;i++){var x=pa.getX(i),z=pa.getZ(i),y=height(x,z);pa.setY(i,y);var g=1+(fbm(x*.05+9+HO,z*.05+3,3)-.5)*.6+(fbm(x*.4,z*.4,2)-.5)*.25,m=fbm(x*.006+40+HO,z*.006,3)<.42?.75:1;
+      for(var i=0;i<pa.count;i++){var x=pa.getX(i),z=pa.getZ(i),y=heightA(x,z);HG[i]=y;pa.setY(i,y);var g=1+(fbm(x*.05+9+HO,z*.05+3,3)-.5)*.6+(fbm(x*.4,z*.4,2)-.5)*.25,m=fbm(x*.006+40+HO,z*.006,3)<.42?.75:1;
         if(w.bands)m*=.82+.3*Math.sin(z*.05+fbm(x*.02,z*.02,3)*6);col[i*3]=w.ground[0]*g*m;col[i*3+1]=w.ground[1]*g*m;col[i*3+2]=w.ground[2]*g*m;}
       pa.needsUpdate=true;geo.attributes.color.needsUpdate=true;geo.computeVertexNormals();placeRocks();rm.color.setHex(w.rock);
       floaters.forEach(function(f){f.visible=!!w.float;});dust.material.color.setHex(w.dust||0xd8d4cc);dust.material.opacity=w.dust?.8:.55;
@@ -4099,7 +4103,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       if(fw||tn||K[' ']){moved+=dt;if(moved>6)help.classList.add('dim');}
       R.render(S,cam);}
     featFor('Moon');buildActs('Moon');reset();
-    if(/[?&]moonwalk=1/.test(location.search))window.__mw={R:R,S:S,cam:cam,tp:function(x,z){A.position.set(x,groundAt(x,z,0),z);vel.set(0,0,0);onGround=true;camPos.set(0,0,0);},info:function(){return {cur:cur,mode:mode,a:A.position.toArray().map(Math.round),pr:PR.on,goal:goalEl.textContent};},portal:function(){SH.position.copy(PORTALP).add(new T.Vector3(0,0,700));shipYaw=Math.PI;},ship:function(){return SH.position.toArray();},to:function(n){var B=bodies.filter(function(b){return b.name===n;})[0];SH.position.copy(B.m.position).add(new T.Vector3(0,0,B.r*1.6));shipYaw=Math.PI;}};
+    if(/[?&]moonwalk=1/.test(location.search))window.__mw={R:R,S:S,cam:cam,tp:function(x,z){A.position.set(x,groundAt(x,z,0),z);vel.set(0,0,0);onGround=true;camPos.set(0,0,0);},swarg:function(){enterSwarg();},land:function(n){landOn(bodies.filter(function(b){return b.name===n;})[0]);},info:function(){return {cur:cur,mode:mode,a:A.position.toArray().map(Math.round),pr:PR.on,goal:goalEl.textContent};},portal:function(){SH.position.copy(PORTALP).add(new T.Vector3(0,0,700));shipYaw=Math.PI;},ship:function(){return SH.position.toArray();},to:function(n){var B=bodies.filter(function(b){return b.name===n;})[0];SH.position.copy(B.m.position).add(new T.Vector3(0,0,B.r*1.6));shipYaw=Math.PI;}};
     return {start:function(){last=performance.now();cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight);raf=requestAnimationFrame(frame);},stop:function(){cancelAnimationFrame(raf);K={};}};
   }
   function show(){box.hidden=false;document.documentElement.style.overflow='hidden';open=true;
