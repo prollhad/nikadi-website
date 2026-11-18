@@ -40,6 +40,8 @@ strong{font-weight:500}
 .btn svg{width:16px;height:16px;flex:none}
 
 /* header */
+.home-back{position:absolute;top:calc(100% + 10px);left:max(16px,env(safe-area-inset-left,0px),calc((100vw - 1140px)/2 + 16px));display:inline-flex;align-items:center;gap:6px;padding:8px 16px 8px 10px;border-radius:999px;background:rgba(10,15,31,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(217,173,85,.55);color:var(--gold-hi);text-decoration:none;font-size:.8rem;font-weight:700;letter-spacing:.06em;box-shadow:0 10px 26px rgba(0,0,0,.4);transition:background .2s,border-color .2s}
+.home-back svg{width:16px;height:16px}.home-back:hover,.home-back:focus-visible{background:rgba(217,173,85,.18);border-color:var(--gold)}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:rgba(10,15,31,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
 .brand{text-decoration:none;display:grid;line-height:1}
@@ -1016,8 +1018,8 @@ html[data-lang=ru] h1,html[data-lang=ru] h2,html[data-lang=ru] h3{font-weight:60
 .avc.offline .avc-legend span:has(.lg.full){display:none}.avc.offline .avd:not([class*="a-dm-"]) i{display:none}
 
 /* weather gadget opens the full forecast */
-a.gw-wx{text-decoration:none;color:inherit;cursor:pointer;transition:border-color .25s,transform .25s}
-a.gw-wx:hover{border-color:rgba(217,173,85,.6);transform:translateY(-2px)}
+.gw-wx{text-decoration:none;color:inherit;cursor:pointer;transition:border-color .25s,transform .25s;-webkit-tap-highlight-color:transparent}.gw-more{text-decoration:none;position:relative;z-index:1}.gw-more:hover{text-decoration:underline}
+.gw-wx:hover{border-color:rgba(217,173,85,.6);transform:translateY(-2px)}
 .wx-wrap{max-width:980px!important;padding-block:30px 72px;display:grid;gap:26px}
 .wx-wrap{grid-template-columns:minmax(0,1fr)}.wx-wrap>*{min-width:0}
 .wx-now{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px 26px;align-items:center;border:1px solid var(--line);background:var(--panel);padding:24px}

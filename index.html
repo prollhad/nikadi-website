@@ -28,7 +28,7 @@
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Lato:wght@300;400;700&display=swap">
-<link rel="stylesheet" href="/css/site.css?v=8c75ebae">
+<link rel="stylesheet" href="/css/site.css?v=d4f5f63c">
 <script>(function(){var M={"temple":"/temple.html","prog":"/temple.html","progLive":"/temple.html","progLiveName":"/temple.html","progLiveSub":"/temple.html","progNow":"/temple.html","progNext":"/temple.html","progIn":"/temple.html","igs":"/temple.html","festivals":"/temple.html","fvNext":"/temple.html","fvCal":"/temple.html","fvMonths":"/temple.html","fvDlg":"/temple.html","fvdT":"/temple.html","meet":"/temple.html","meetIg":"/temple.html","mvid":"/temple.html","mvidV":"/temple.html","mvidS":"/temple.html","meetNav":"/temple.html","location":"/travel.html","transport":"/travel.html","gourdham":"/travel.html","gtForm":"/travel.html","gtMoney":"/travel.html","about":"/about.html","team":"/about.html","staffGrid":"/about.html","guests":"/about.html","guestWall":"/about.html","rules":"/about.html","explore":"/things-to-do.html","views":"/things-to-do.html","membership":"/membership.html","mdeck":"/membership.html"},h=location.hash.slice(1);if(h&&M[h])location.replace(M[h]+"#"+h);})();</script>
 </head>
 <body data-page="index">
@@ -46,6 +46,8 @@
       <a class="btn btn-gold" href="#booking"><span class="bk-l">Book now</span><span class="bk-s">Book</span></a>
     </div>
   </div>
+  <a class="home-back" id="homeBack" href="/" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"/></svg><span>Back to home</span></a>
+  <script>(function(){var p=location.pathname;if(!/^\/(index\.html)?$/.test(p)){var b=document.getElementById('homeBack');if(b)b.hidden=false;}})();</script>
 </header>
 
 <section class="hero" id="home">
@@ -196,19 +198,20 @@
         <span class="sub" id="gDate">&nbsp;</span>
         <span class="pill" id="gDesk">Check-in from 11:00 AM · check-out by 9:00 AM</span>
       </div>
-      <a class="gw rv gw-wx" id="gwWx" href="#weather" aria-label="Weather in Mayapur, open the full forecast">
+      <div class="gw rv gw-wx" id="gwWx" role="button" tabindex="0" aria-label="Weather in Mayapur, tap to see it on the page">
         <span class="lbl">Weather</span>
         <span class="big" id="gTemp">--°<small id="gCond">Loading</small></span>
         <span class="sub" id="gWxSub">&nbsp;</span>
         <div class="fc" id="gFc"></div>
-        <span class="sub" style="color:var(--gold-hi);margin-top:auto">Hourly and 7-day forecast ›</span>
-      </a>
-      <a class="gw rv gw-wx" id="gwSun" href="#weather" aria-label="Sunrise and sunset, open the full forecast">
+        <a class="sub gw-more" href="#weather" style="color:var(--gold-hi);margin-top:auto">Hourly and 7-day forecast ›</a>
+      </div>
+      <div class="gw rv gw-wx" id="gwSun" role="button" tabindex="0" aria-label="Sunrise and sunset, tap to see the sky change">
         <span class="lbl">Sunrise and sunset</span>
         <div class="sunbar"><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><path d="M4 44 Q100 -30 196 44" fill="none" stroke="#26315a" stroke-width="1.5" stroke-dasharray="3 4"/><circle id="gSunDot" cx="4" cy="44" r="6" fill="#f4d797"/></svg></div>
         <div class="sunrow"><span>Sunrise<b id="gRise">--:--</b></span><span style="text-align:right">Sunset<b id="gSet">--:--</b></span></div>
         <span class="sub" id="gSunSub">Mangala arati is before sunrise. Bring a shawl in winter.</span>
-      </a>
+      <a class="sub gw-more" href="#weather" style="color:var(--gold-hi)">Full forecast ›</a>
+      </div>
       <div class="gw rv" id="gwPrice">
         <span class="lbl" id="gPrLbl">Tonight's price</span>
         <div class="pr-row"><span>Deluxe Double</span><span><s id="gPrDs"></s><b id="gPrD">--</b></span></div>
@@ -1209,6 +1212,6 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 <script src="/pricing.js"></script>
 <script src="/calendar.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="/js/site.js?v=132d7cc5"></script>
+<script src="/js/site.js?v=d41f6510"></script>
 </body>
 </html>

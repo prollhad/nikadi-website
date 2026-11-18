@@ -69,6 +69,8 @@ strong{font-weight:500}
 .btn svg{width:16px;height:16px;flex:none}
 
 /* header */
+.home-back{position:absolute;top:calc(100% + 10px);left:max(16px,env(safe-area-inset-left,0px),calc((100vw - 1140px)/2 + 16px));display:inline-flex;align-items:center;gap:6px;padding:8px 16px 8px 10px;border-radius:999px;background:rgba(10,15,31,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(217,173,85,.55);color:var(--gold-hi);text-decoration:none;font-size:.8rem;font-weight:700;letter-spacing:.06em;box-shadow:0 10px 26px rgba(0,0,0,.4);transition:background .2s,border-color .2s}
+.home-back svg{width:16px;height:16px}.home-back:hover,.home-back:focus-visible{background:rgba(217,173,85,.18);border-color:var(--gold)}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:rgba(10,15,31,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
 .brand{text-decoration:none;display:grid;line-height:1}
@@ -1045,8 +1047,8 @@ html[data-lang=ru] h1,html[data-lang=ru] h2,html[data-lang=ru] h3{font-weight:60
 .avc.offline .avc-legend span:has(.lg.full){display:none}.avc.offline .avd:not([class*="a-dm-"]) i{display:none}
 
 /* weather gadget opens the full forecast */
-a.gw-wx{text-decoration:none;color:inherit;cursor:pointer;transition:border-color .25s,transform .25s}
-a.gw-wx:hover{border-color:rgba(217,173,85,.6);transform:translateY(-2px)}
+.gw-wx{text-decoration:none;color:inherit;cursor:pointer;transition:border-color .25s,transform .25s;-webkit-tap-highlight-color:transparent}.gw-more{text-decoration:none;position:relative;z-index:1}.gw-more:hover{text-decoration:underline}
+.gw-wx:hover{border-color:rgba(217,173,85,.6);transform:translateY(-2px)}
 .wx-wrap{max-width:980px!important;padding-block:30px 72px;display:grid;gap:26px}
 .wx-wrap{grid-template-columns:minmax(0,1fr)}.wx-wrap>*{min-width:0}
 .wx-now{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px 26px;align-items:center;border:1px solid var(--line);background:var(--panel);padding:24px}
@@ -1571,6 +1573,8 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
       <a class="btn btn-gold" href="#booking"><span class="bk-l">Book now</span><span class="bk-s">Book</span></a>
     </div>
   </div>
+  <a class="home-back" id="homeBack" href="/" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"/></svg><span>Back to home</span></a>
+  <script>(function(){var p=location.pathname;if(!/^\/(index\.html)?$/.test(p)){var b=document.getElementById('homeBack');if(b)b.hidden=false;}})();</script>
 </header>
 
 <section class="hero" id="home">
@@ -1655,19 +1659,20 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
         <span class="sub" id="gDate">&nbsp;</span>
         <span class="pill" id="gDesk">Check-in from 11:00 AM · check-out by 9:00 AM</span>
       </div>
-      <a class="gw rv gw-wx" id="gwWx" href="#weather" aria-label="Weather in Mayapur, open the full forecast">
+      <div class="gw rv gw-wx" id="gwWx" role="button" tabindex="0" aria-label="Weather in Mayapur, tap to see it on the page">
         <span class="lbl">Weather</span>
         <span class="big" id="gTemp">--°<small id="gCond">Loading</small></span>
         <span class="sub" id="gWxSub">&nbsp;</span>
         <div class="fc" id="gFc"></div>
-        <span class="sub" style="color:var(--gold-hi);margin-top:auto">Hourly and 7-day forecast ›</span>
-      </a>
-      <a class="gw rv gw-wx" id="gwSun" href="#weather" aria-label="Sunrise and sunset, open the full forecast">
+        <a class="sub gw-more" href="#weather" style="color:var(--gold-hi);margin-top:auto">Hourly and 7-day forecast ›</a>
+      </div>
+      <div class="gw rv gw-wx" id="gwSun" role="button" tabindex="0" aria-label="Sunrise and sunset, tap to see the sky change">
         <span class="lbl">Sunrise and sunset</span>
         <div class="sunbar"><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><path d="M4 44 Q100 -30 196 44" fill="none" stroke="#26315a" stroke-width="1.5" stroke-dasharray="3 4"/><circle id="gSunDot" cx="4" cy="44" r="6" fill="#f4d797"/></svg></div>
         <div class="sunrow"><span>Sunrise<b id="gRise">--:--</b></span><span style="text-align:right">Sunset<b id="gSet">--:--</b></span></div>
         <span class="sub" id="gSunSub">Mangala arati is before sunrise. Bring a shawl in winter.</span>
-      </a>
+      <a class="sub gw-more" href="#weather" style="color:var(--gold-hi)">Full forecast ›</a>
+      </div>
       <div class="gw rv" id="gwPrice">
         <span class="lbl" id="gPrLbl">Tonight's price</span>
         <div class="pr-row"><span>Deluxe Double</span><span><s id="gPrDs"></s><b id="gPrD">--</b></span></div>
@@ -3252,37 +3257,78 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   var fx=document.createElement('div');fx.id='fx';fx.setAttribute('aria-hidden','true');document.body.appendChild(fx);
   var busy=false;
   function done(ms){setTimeout(function(){fx.classList.remove('fx-on');setTimeout(function(){fx.className='';fx.innerHTML='';busy=false;},1700);},ms);}
-  function sky(kind){if(busy)return;busy=true;
-    fx.className='fx-'+kind;fx.innerHTML='<div class="fx-tint"></div><div class="fx-glow"></div><div class="fx-sun"></div>';
-    requestAnimationFrame(function(){requestAnimationFrame(function(){fx.classList.add('fx-on');});});done(6200);}
   function seg(x,y,n,spread,step){var d='M'+x.toFixed(1)+' '+y.toFixed(1),pts=[];for(var i=0;i<n;i++){x+=(Math.random()-.5)*spread;y+=step*(.5+Math.random());d+=' L'+x.toFixed(1)+' '+y.toFixed(1);pts.push([x,y]);}return {d:d,pts:pts};}
   function bolt(){var x0=25+Math.random()*50,main=seg(x0,-2,26,3.2,2.4),paths=[main.d];
     for(var b=0;b<3;b++){var p=main.pts[4+Math.floor(Math.random()*14)];paths.push(seg(p[0],p[1],6+Math.floor(Math.random()*6),4,2).d);}
     var g=paths.map(function(d,i){var w=i?.12:.22;return '<path d="'+d+'" stroke="rgba(170,190,255,.35)" stroke-width="'+(w*6)+'"/><path d="'+d+'" stroke="#f4f7ff" stroke-width="'+w+'"/>';}).join('');
     return {x:x0,svg:'<svg class="fx-bolt" viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%" fill="none" stroke-linejoin="round" stroke-linecap="round"><g style="filter:blur(.15px)">'+g+'</g></svg>'};}
-  function thunder(){if(busy)return;busy=true;var b=bolt();
-    fx.className='fx-storm';fx.innerHTML='<div class="fx-dark"></div><div class="fx-flash"></div>'+b.svg;fx.style.setProperty('--fxx',b.x+'%');
-    requestAnimationFrame(function(){fx.classList.add('fx-on');});
-    var f=fx.querySelector('.fx-flash'),bo=fx.querySelector('.fx-bolt');
-    function strike(t){setTimeout(function(){if(RM)return;f.classList.remove('go');bo.classList.remove('go');void f.offsetWidth;f.classList.add('go');bo.classList.add('go');},t);}
-    strike(250);strike(1300);strike(2100);done(2900);}
-  function rain(){if(busy)return;busy=true;
-    fx.className='fx-rain';fx.innerHTML='<div class="fx-dark"></div><canvas></canvas>';requestAnimationFrame(function(){fx.classList.add('fx-on');});
+  /* ---- sound (soft, made in the browser) and gentle vibration on phones that support it ---- */
+  var AC=null,NB=null;
+  function ac(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){AC=null;}return AC;}
+  function noise(a,sec,brown){var n=Math.floor(a.sampleRate*sec),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0),l=0;for(var i=0;i<n;i++){var w=Math.random()*2-1;if(brown){l=(l+.02*w)/1.02;d[i]=l*3.5;}else d[i]=w;}return b;}
+  function vib(p){try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}}
+  function rainSound(sec,vol){var a=ac();if(!a)return;var t=a.currentTime,src=a.createBufferSource();src.buffer=noise(a,sec,false);
+    var hp=a.createBiquadFilter();hp.type='highpass';hp.frequency.value=800;var lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=5200;var g=a.createGain();
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.9);g.gain.setValueAtTime(vol,t+sec-1.4);g.gain.linearRampToValueAtTime(0,t+sec);
+    src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(a.destination);src.start(t);src.stop(t+sec);
+    var tick=noise(a,.035,false);for(var i=0;i<sec*16;i++){var tt=t+.4+Math.random()*(sec-1),o=a.createBufferSource();o.buffer=tick;var bp=a.createBiquadFilter();bp.type='bandpass';bp.frequency.value=2200+Math.random()*4200;bp.Q.value=5;
+      var gg=a.createGain();gg.gain.setValueAtTime(vol*(.4+Math.random()*.8),tt);gg.gain.exponentialRampToValueAtTime(.0001,tt+.035);o.connect(bp);bp.connect(gg);gg.connect(a.destination);o.start(tt);}}
+  function thunderSound(at,big){var a=ac();if(!a)return;var t=a.currentTime+at;
+    var cr=a.createBufferSource();cr.buffer=noise(a,.4,false);var ch=a.createBiquadFilter();ch.type='lowpass';ch.frequency.value=2400;var cg=a.createGain();cg.gain.setValueAtTime(0,t);cg.gain.linearRampToValueAtTime(.09*big,t+.02);cg.gain.exponentialRampToValueAtTime(.0001,t+.4);cr.connect(ch);ch.connect(cg);cg.connect(a.destination);cr.start(t);
+    var r=a.createBufferSource();r.buffer=noise(a,4.5,true);var lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(420,t);lp.frequency.exponentialRampToValueAtTime(110,t+4);
+    var g=a.createGain(),N=60,cv=new Float32Array(N);for(var i=0;i<N;i++){var k=i/(N-1),env=k<.04?k/.04:Math.pow(1-k,1.6);cv[i]=Math.max(.0001,.32*big*env*(.55+.45*Math.random()));}
+    g.gain.setValueAtTime(.0001,t);g.gain.setValueCurveAtTime(cv,t+.03,4.3);r.connect(lp);lp.connect(g);g.connect(a.destination);r.start(t);r.stop(t+4.5);}
+  /* ---- clouds drawn as soft, lit puffs ---- */
+  function cloudSprite(w,h,top,low,base){var a=document.createElement('canvas');a.width=w;a.height=h;var x=a.getContext('2d');
+    for(var i=0;i<54;i++){var k=Math.random(),cx=w*(.1+.8*k),hump=Math.sin(Math.PI*k),r=h*(.1+.24*hump)*(.7+Math.random()*.6),cy=h*.74-Math.random()*h*.44*hump-r*.15;
+      var g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.55,'rgba(255,255,255,.88)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();}
+    x.globalCompositeOperation='destination-out';var fb=x.createLinearGradient(0,h*.7,0,h*.92);fb.addColorStop(0,'rgba(0,0,0,0)');fb.addColorStop(1,'rgba(0,0,0,1)');x.fillStyle=fb;x.fillRect(0,h*.7,w,h*.3);
+    x.globalCompositeOperation='source-atop';var cg=x.createLinearGradient(0,h*.05,0,h*.85);cg.addColorStop(0,top);cg.addColorStop(.5,low);cg.addColorStop(1,base);x.fillStyle=cg;x.fillRect(0,0,w,h);
+    var b=document.createElement('canvas');b.width=w;b.height=h;var y=b.getContext('2d');if('filter' in y){y.filter='blur('+Math.max(2,Math.round(h*.03))+'px)';y.drawImage(a,0,0);return b;}return a;}
+  /* one scene engine for every moment: o = {sky,sun,clouds,tone,rain,dur,dawn,dusk} */
+  function scene(o){if(busy)return;busy=true;fx.className='fx-scene';fx.innerHTML='<canvas></canvas><div class="fx-flash"></div>';
     var c=fx.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1),W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;
-    var N=Math.round(innerWidth*.45),drops=[];for(var i=0;i<N;i++)drops.push({x:Math.random()*W,y:Math.random()*H,l:(10+Math.random()*16)*dpr,v:(14+Math.random()*10)*dpr,a:.15+Math.random()*.35});
-    var t0=performance.now(),dur=4800;
-    (function frame(t){var k=(t-t0)/dur;if(k>1||RM){x.clearRect(0,0,W,H);return;}
-      var fade=k<.12?k/.12:k>.8?(1-k)/.2:1;x.clearRect(0,0,W,H);x.lineCap='round';
-      drops.forEach(function(d){x.strokeStyle='rgba(200,215,235,'+(d.a*fade).toFixed(3)+')';x.lineWidth=dpr;x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d.x-d.l*.18,d.y+d.l);x.stroke();
-        d.y+=d.v;d.x-=d.v*.18;if(d.y>H){d.y=-d.l;d.x=Math.random()*W*1.1;}});
-      requestAnimationFrame(frame);})(t0);
-    done(4800);}
-  function weatherMoment(){var w=window.NK_WX,c=w&&w.current?w.current.weather_code:null;if(c==null)return;
-    if(c>=95)thunder();else if((c>=51&&c<=67)||(c>=80&&c<=82))rain();}
-  /* sunrise card: dawn light before noon, dusk light after */
-  var sun=document.getElementById('gwSun');
-  if(sun)sun.addEventListener('click',function(e){e.preventDefault();sky(ist().getUTCHours()<12?'dawn':'dusk');});
-  var wx=document.getElementById('gwWx');if(wx)wx.addEventListener('click',function(){weatherMoment();});
+    var T={bright:['#ffffff','#f1f5fc','#c6d2e6'],grey:['#dfe3ea','#a7afbd','#6c7486'],dark:['#8c95a8','#4f576a','#23283a'],glow:['#ffe6ef','#ffab8e','#a8578f']}[o.tone||'bright'];
+    var cl=[];for(var i=0;i<(o.clouds||0);i++){var cw=(o.tone==='dark'?.55:.38)*W*(.7+Math.random()*.6),ch=cw*.42;
+      cl.push({s:cloudSprite(Math.round(cw),Math.round(ch),T[0],T[1],T[2]),x:(Math.random()*1.3-.3)*W,y:(o.tone==='dark'?-.12+Math.random()*.35:.02+Math.random()*.4)*H,v:(.15+Math.random()*.35)*dpr*(Math.random()<.5?-1:1),w:cw,h:ch});}
+    var drops=[],spl=[];if(o.rain){var N=Math.round(innerWidth*(o.rain>1?.7:.45));for(var j=0;j<N;j++)drops.push({x:Math.random()*W,y:-Math.random()*H,l:(12+Math.random()*18)*dpr,v:(15+Math.random()*10)*dpr,a:.2+Math.random()*.4});}
+    var t0=performance.now(),dur=o.dur||6500,last=t0;
+    requestAnimationFrame(function(){fx.classList.add('fx-on');});
+    (function frame(t){var k=(t-t0)/dur,dt=Math.min(50,t-last)/16.7;last=t;if(k>1){x.clearRect(0,0,W,H);return;}
+      var fa=k<.14?k/.14:k>.8?(1-k)/.2:1;x.clearRect(0,0,W,H);x.globalAlpha=fa;
+      var g=x.createLinearGradient(0,0,0,H);(o.sky||[]).forEach(function(q){g.addColorStop(q[0],q[1]);});if(o.sky){x.fillStyle=g;x.fillRect(0,0,W,H);}
+      if(o.sun){var sx=o.sun.x*W,sy,sr=Math.min(W,H)*.09;
+        if(o.dawn)sy=H*(1.02-.55*Math.min(1,k*1.25));else if(o.dusk)sy=H*(.42+.62*Math.min(1,k*1.1));else sy=o.sun.y*H;
+        var hg=x.createRadialGradient(sx,sy,0,sx,sy,sr*7);hg.addColorStop(0,o.sun.c0||'rgba(255,244,214,.9)');hg.addColorStop(.18,o.sun.c1||'rgba(255,210,130,.5)');hg.addColorStop(1,'rgba(255,160,90,0)');x.fillStyle=hg;x.fillRect(0,0,W,H);
+        x.save();x.translate(sx,sy);x.rotate(k*.6);for(var r=0;r<14;r++){x.rotate(Math.PI*2/14);var rg=x.createLinearGradient(0,0,sr*6,0);rg.addColorStop(0,'rgba(255,236,190,.28)');rg.addColorStop(1,'rgba(255,236,190,0)');x.fillStyle=rg;x.beginPath();x.moveTo(0,-sr*.25);x.lineTo(sr*6,-sr*.9);x.lineTo(sr*6,sr*.9);x.lineTo(0,sr*.25);x.fill();}x.restore();
+        var dg=x.createRadialGradient(sx,sy,0,sx,sy,sr);dg.addColorStop(0,'#fffaf0');dg.addColorStop(.7,o.sun.d||'#ffe2a0');dg.addColorStop(1,'rgba(255,200,120,0)');x.fillStyle=dg;x.beginPath();x.arc(sx,sy,sr,0,7);x.fill();}
+      cl.forEach(function(q){q.x+=q.v*dt;x.drawImage(q.s,q.x,q.y,q.w,q.h);});
+      if(drops.length){x.lineCap='round';drops.forEach(function(d){x.strokeStyle='rgba(205,220,240,'+(d.a*fa).toFixed(3)+')';x.lineWidth=dpr*1.1;x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d.x-d.l*.15,d.y+d.l);x.stroke();
+          d.y+=d.v*dt;d.x-=d.v*.15*dt;if(d.y>H-4*dpr){if(Math.random()<.5)spl.push({x:d.x,y:H-3*dpr-Math.random()*H*.05,r:1,a:.5});d.y=-d.l-Math.random()*H*.2;d.x=Math.random()*W*1.1;}});
+        spl=spl.filter(function(p){p.r+=1.2*dt;p.a-=.03*dt;if(p.a<=0)return false;x.strokeStyle='rgba(215,228,245,'+(p.a*fa).toFixed(3)+')';x.lineWidth=dpr;x.beginPath();x.ellipse(p.x,p.y,p.r*dpr,p.r*.35*dpr,0,0,7);x.stroke();return true;});}
+      x.globalAlpha=1;if(!RM)requestAnimationFrame(frame);})(t0);
+    if(o.storm){var f=fx.querySelector('.fx-flash');[600,2300,3900].forEach(function(at,i){var bo=bolt();setTimeout(function(){fx.style.setProperty('--fxx',bo.x+'%');var old=fx.querySelector('.fx-bolt');if(old)old.remove();fx.insertAdjacentHTML('beforeend',bo.svg);var b2=fx.querySelector('.fx-bolt');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');b2.classList.add('go');},at);
+        thunderSound(at/1000+.15+Math.random()*.25,i===1?1:.7);setTimeout(function(){vib(i===1?[90,40,220,70,160,60,110,90,70]:[60,50,140,80,80]);},at+150);});}
+    if(o.rain){rainSound(dur/1000,o.rain>1?.06:.045);var pat=[],tt=0;while(tt<dur-800){var on=6+Math.round(Math.random()*8),off=50+Math.round(Math.random()*160);pat.push(on,off);tt+=on+off;}setTimeout(function(){vib(pat);},500);}
+    done(dur);}
+  var BLUE=[[0,'rgba(86,156,236,.62)'],[.45,'rgba(140,194,248,.32)'],[.8,'rgba(170,210,250,0)']],
+      GREY=[[0,'rgba(70,80,100,.6)'],[.7,'rgba(60,70,90,.35)'],[1,'rgba(60,70,90,.2)']],
+      STORM=[[0,'rgba(14,18,30,.8)'],[.6,'rgba(24,30,46,.62)'],[1,'rgba(24,30,46,.5)']];
+  function sunny(){scene({sky:BLUE,sun:{x:.8,y:.13},clouds:4,tone:'bright',dur:6500});}
+  function partly(){scene({sky:BLUE,sun:{x:.82,y:.12},clouds:8,tone:'bright',dur:7000});}
+  function cloudy(){scene({sky:GREY,clouds:11,tone:'grey',dur:7000});}
+  function rain(){scene({sky:STORM,clouds:12,tone:'dark',rain:1,dur:5500});}
+  function thunder(){scene({sky:STORM,clouds:13,tone:'dark',rain:2,storm:1,dur:5800});}
+  function sky(kind){if(kind==='dawn')scene({dawn:1,sky:[[0,'rgba(40,46,110,.5)'],[.4,'rgba(150,100,170,.45)'],[.7,'rgba(240,140,160,.5)'],[1,'rgba(255,196,140,.7)']],sun:{x:.5,c0:'rgba(255,246,220,.95)',c1:'rgba(255,190,150,.55)',d:'#ffe6b8'},clouds:6,tone:'glow',dur:7500});
+    else scene({dusk:1,sky:[[0,'rgba(38,42,122,.6)'],[.25,'rgba(74,58,166,.55)'],[.45,'rgba(138,69,168,.55)'],[.6,'rgba(212,86,124,.55)'],[.72,'rgba(255,122,44,.65)'],[.82,'rgba(255,176,58,.7)'],[1,'rgba(124,74,142,.6)']],sun:{x:.5,c0:'rgba(255,232,190,.95)',c1:'rgba(255,140,60,.6)',d:'#ffc067'},clouds:7,tone:'glow',dur:7500});}
+  function weatherMoment(){var w=window.NK_WX,c=w&&w.current?w.current.weather_code:null;
+    if(c==null){partly();return;}
+    if(c>=95)thunder();else if((c>=51&&c<=67)||(c>=80&&c<=82))rain();else if(c===3||c===45||c===48)cloudy();else if(c===2)partly();else sunny();}
+  /* tap the cards: the moment plays straight away (first tap); the forecast opens from its own link */
+  function tapCard(el,fn){if(!el)return;el.addEventListener('click',function(e){if(e.target.closest('.gw-more'))return;e.preventDefault();ac();fn();});
+    el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();ac();fn();}});}
+  tapCard(document.getElementById('gwSun'),function(){sky(ist().getUTCHours()<12?'dawn':'dusk');});
+  tapCard(document.getElementById('gwWx'),weatherMoment);
 
   /* ---------- the night sky (11 PM – 3 AM) ---------- */
   function moonPhase(){var syn=29.530588853,ref=Date.UTC(2000,0,6,18,14)/864e5,now=Date.now()/864e5;var p=((now-ref)%syn+syn)%syn/syn;return p;} // 0 new, .5 full
@@ -3329,8 +3375,8 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   if(!pq)setInterval(function(){if(!document.hidden)ambient(phase());},5*60000);
   var q=(location.search.match(/[?&]fx=(\w+)/)||[])[1];
   if(q==='night')ambient('night');
-  if(q==='dusk'||q==='dawn')setTimeout(function(){sky(q);},900);if(q==='thunder')setTimeout(thunder,900);if(q==='rain')setTimeout(rain,900);
-  window.nkFx={sky:sky,thunder:thunder,rain:rain,night:night};
+  if(q==='dusk'||q==='dawn')setTimeout(function(){sky(q);},900);if(q==='thunder')setTimeout(thunder,900);if(q==='rain')setTimeout(rain,900);if(q==='sunny')setTimeout(sunny,900);if(q==='partly')setTimeout(partly,900);if(q==='cloudy')setTimeout(cloudy,900);
+  window.nkFx={sky:sky,thunder:thunder,rain:rain,night:night,sunny:sunny,partly:partly,cloudy:cloudy};
 })();
 </script>
 <script src="pricing.js"></script>
