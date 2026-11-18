@@ -249,26 +249,61 @@ def lotus_badge(cv, cx, cy, s, G, G2, layer='GOLD'):
         a = 2 * math.pi * k / 10
         cv.fill(circle(cx + s * .48 * math.cos(a), cy + s * .48 * math.sin(a), s * .07), '#7a5824', layer)
 
+def small_sun(cv, x, y, r, color, lw, layer):
+    cv.stroke(circle(x, y, r * .45), color, lw, layer)
+    cv.fill(circle(x, y, r * .2), color, layer)
+    for i in range(8):
+        a = math.pi * i / 4
+        r1 = r if i % 2 == 0 else r * .75
+        cv.stroke(poly([(x + r * .6 * math.cos(a), y + r * .6 * math.sin(a)), (x + r1 * math.cos(a), y + r1 * math.sin(a))], False), color, lw, layer)
+
+def sun_mandala(cv, cx, cy, s, G, G2, G3, lw):
+    from designs import ring, dots
+    # outer: twelve small suns, one for each month, with diamonds between
+    R = 20.5 * s
+    for i in range(24):
+        a = math.pi / 2 - 2 * math.pi * i / 24
+        x, y = cx + R * math.cos(a), cy + R * math.sin(a)
+        if i % 2 == 0: small_sun(cv, x, y, 1.25 * s, G3, lw * .6, 'GOLD')
+        else: cv.fill([('M', x + .45 * s * math.cos(a), y + .45 * s * math.sin(a)), ('L', x - .3 * s * math.sin(a), y + .3 * s * math.cos(a)),
+                       ('L', x - .45 * s * math.cos(a), y - .45 * s * math.sin(a)), ('L', x + .3 * s * math.sin(a), y - .3 * s * math.cos(a)), ('Z',)], G, 'GOLD')
+    for rr, w in ((18.4, .9), (22.6, .9), (23.5, 1.5)):
+        ring(cv, cx, cy, rr * s, G, lw * w, 'GOLD')
+    dots(cv, cx, cy, 24.6 * s, 96, .18 * s, G, 'GOLD')
+    # sunburst: 16 flame rays (outlined) with fine straight rays between
+    for i in range(16):
+        a = 2 * math.pi * i / 16
+        def P(r, da): return (cx + r * s * math.cos(a + da), cy + r * s * math.sin(a + da))
+        cv.stroke([('M',) + P(6.6, -.13), ('C',) + P(10, -.11) + P(13.5, -.05) + P(16.8, 0), ('C',) + P(13.5, .05) + P(10, .11) + P(6.6, .13)], G3, lw, 'GOLD')
+        cv.stroke(poly([P(7.6, 0), P(14.6, 0)], False), G2, lw * .5, 'GOLD')
+    for i in range(64):
+        a = 2 * math.pi * (i + .5) / 64
+        r1 = 16.0 if i % 4 == 1 else 13.2 if i % 2 else 11.0
+        cv.stroke(poly([(cx + 6.8 * s * math.cos(a), cy + 6.8 * s * math.sin(a)), (cx + r1 * s * math.cos(a), cy + r1 * s * math.sin(a))], False), G2, lw * .45, 'ENGRAVE')
+    ring(cv, cx, cy, 6.2 * s, G, lw * 1.1, 'GOLD')
+    dots(cv, cx, cy, 5.5 * s, 36, .12 * s, G3, 'GOLD')
+    # the sun at the heart
+    cv.fill(circle(cx, cy, 4.4 * s), ('rad', cx - 1.2 * s, cy + 1.2 * s, 5.2 * s, [(0, '#fff3cf'), (.45, '#f0d38c'), (.8, '#c99a45'), (1, '#9a7230')]), 'GOLD')
+    for rr in (2.4, 3.4):
+        cv.stroke(circle(cx, cy, rr * s), '#b98a3c', lw * .4, 'ENGRAVE')
+
 def plus_front(cv, m, art_only=False):
-    """Platinum Plus 'Noir': smooth matte black metal with a soft sheen, the Nikadi Guest House lockup in 24k gold, nothing else."""
-    full = rect(-3, -3, W + 6, H + 6)
-    cv.fill(full, ('lin', -3, H + 3, W + 3, -3, [(0, '#060607'), (.34, '#121214'), (.5, '#1c1c1f'), (.62, '#131315'), (1, '#050506')]), 'BASE')
-    cx = W / 2
-    GOLD = [(0, '#fbeec4'), (.3, '#e6c67e'), (.55, '#b8904a'), (.8, '#efd697'), (1, '#a07a37')]
-    # the lockup: mark over N-I-K, NIKADI, GUEST HOUSE
-    pt = 15.0; tr = .18; yb = 24.4
-    wd = text_width('gloock', 'NIKADI', pt, tr); x0 = cx - wd / 2
-    cap = pt * PT * .7
-    wnik = text_width('gloock', 'NIK', pt, tr) - tr * pt * PT
-    mh = wnik / .92; mw = mh * 318 / 345
-    shapes, mw = mark_shapes(x0 + (wnik - mw) / 2, yb + cap + 1.2, mh)
-    for t, c in shapes:
-        cv.fill(c, {'dark': ('lin', x0, yb + cap + mh, x0 + wnik, yb + cap, [(0, '#c9a35a'), (.5, '#f0d99a'), (1, '#8d6a2e')]),
-                    'light': ('lin', x0, yb + cap + mh, x0 + wnik, yb + cap, GOLD), 'arc': ('lin', x0, 0, x0 + wnik, 0, GOLD)}[t], 'GOLD')
-    T(cv, 'gloock', 'NIKADI', x0, yb, pt, ('lin', x0, yb + cap, x0 + wd, yb, GOLD), tr, layer='GOLD')
-    gh = 'G U E S T   H O U S E'; gw = text_width('work', gh, 4.2, .28)
-    T(cv, 'work', gh, cx, yb - 4.3, 4.2, ('lin', cx - gw / 2, 0, cx + gw / 2, 0, GOLD), .28, align='center', layer='GOLD')
-    T(cv, 'workb', 'PLATINUM PLUS', 6.5, H - 8.0, 3.6, '#c9cbd0', .5, layer='ENGRAVE')
+    """Platinum Plus 'Surya': black metal and 24k gold. Sister of Gold and Platinum: double frame, brand top-left,
+    a sun medallion (sunburst, twelve small suns for the twelve months) on the right."""
+    G, G2, G3 = '#d4b06a', '#9c7a3c', '#f0d99a'
+    cv.fill(rect(-3, -3, W + 6, H + 6), ('rad', 66, 28, 82, [(0, '#232226'), (.45, '#141416'), (1, '#050506')]), 'BASE')
+    inner = rrect(3.6, 3.6, W - 7.2, H - 7.2, 1.2)
+    clipped(cv, inner, lambda: sun_mandala(cv, 66.5, 27.0, .82, G, G2, G3, .14))
+    cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), G, .3, 'GOLD')
+    cv.stroke(inner, G, .12, 'GOLD')
+    GL = [(0, '#fbeec4'), (.35, '#e6c67e'), (.6, '#b8904a'), (1, '#f0d99a')]
+    tx = brand_row(cv, 7, H - 7 - 7.8, 7.8, {'dark': G3, 'light': G2, 'arc': G}, 'gloock', 13.5, ('lin', 18, H - 8, 50, H - 14, GL), G, layer='GOLD', word_track=.2, sub=False)
+    T(cv, 'work', 'G U E S T   H O U S E', tx + .2, H - 7 - 7.8 - .2, 3.5, G, .3, layer='GOLD')
+    T(cv, 'workb', 'P L A T I N U M   P L U S', 7, H - 21.6, 5.0, G3, .3, layer='GOLD')
+    cv.stroke(poly([(7, H - 23.4), (19, H - 23.4)], False), G, .14, 'GOLD')
+    for x, y, r in ((47.0, 48.2, .7), (31.5, 48.5, .3), (44.5, 23.5, .4), (47.5, 15.5, .6), (36.0, 14.5, .3)):
+        sparkle(cv, x, y, r, G3, 'GOLD')
     if not art_only:
-        T(cv, 'arsenal', m['name'].upper(), 6.5, 7.0, 6.6, '#e2e3e6', .16, layer='PERSONALISE')
-        T(cv, 'plexmono', m['no'], W - 6.5, 7.0, 4.2, '#8f9297', .14, align='right', layer='PERSONALISE')
+        T(cv, 'arsenal', m['name'].upper(), 7, 10.6, 8.4, '#efe6d0', .16, layer='PERSONALISE')
+        T(cv, 'plexmono', m['no'], 7, 6.4, 5.0, '#a7a9ae', .14, layer='PERSONALISE')
+        T(cv, 'work', 'SINCE ' + m['since'], 7 + text_width('plexmono', m['no'], 5.0, .14) + 4, 6.4, 3.6, G, .4, layer='PERSONALISE')
