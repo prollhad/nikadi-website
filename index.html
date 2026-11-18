@@ -2631,8 +2631,10 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:action},data||{}))})
       .then(function(r){return r.json();},function(){throw 'network';}).then(function(j){if(!j||!j.ok)throw (j&&j.error)||'server_error';return j;});
   }
-  var token=store('nk_token');
-  try{var cached=JSON.parse(store('nk_site_member')||'null');if(cached&&token)window.NK_MEMBER=cached;}catch(e){}
+  /* ?guest=1 shows the site as a new visitor sees it (for screenshots and videos); nothing stored is changed */
+  var GUEST=/[?&]guest=1/.test(location.search);
+  var token=GUEST?null:store('nk_token');
+  try{var cached=GUEST?null:JSON.parse(store('nk_site_member')||'null');if(cached&&token)window.NK_MEMBER=cached;}catch(e){}
   paint();
   if(token){api('me',{token:token}).then(function(r){setMember(r.member);},function(c){if(c!=='network'){store('nk_token',null);setMember(null);}});}
 
