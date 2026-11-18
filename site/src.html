@@ -903,29 +903,22 @@ nav.main a{white-space:nowrap}
 .fvd-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}.fvd-acts .btn{margin:0}
 .fv-next .btn{margin:0}
 .fv-src{color:var(--muted);font-size:.78rem;margin-top:16px}
-.fvp{border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 7%,var(--panel)),var(--panel) 140px);padding:22px clamp(14px,3vw,28px) 26px;box-shadow:0 18px 50px rgba(0,0,0,.18)}
-.fvp-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px}
-.fvp-top h3{margin:0;text-align:center;font-family:var(--display);font-size:clamp(1.5rem,3.2vw,2.1rem);font-weight:500;letter-spacing:.01em}
-.fvp-top h3 small{display:block;font-family:var(--body);font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-hi);margin-top:4px}
-.fvp-ar{width:44px;height:44px;border-radius:50%;border:1px solid rgba(217,173,85,.5);background:transparent;color:var(--gold-hi);font-size:1.4rem;line-height:1;cursor:pointer;transition:background .2s}
-.fvp-ar:hover:not(:disabled){background:rgba(217,173,85,.14)}.fvp-ar:disabled{opacity:.3;cursor:default}
-.fvp-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:16px -4px 18px;padding:2px 4px}.fvp-tabs::-webkit-scrollbar{display:none}
-.fvp-tabs button{flex:none;font:inherit;font-size:.78rem;letter-spacing:.06em;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
-.fvp-tabs button[aria-current=true]{color:#151a2c;background:var(--gold-hi);border-color:var(--gold-hi);font-weight:700}
-.fvg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
-.fvg-w{text-align:center;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-bottom:4px}
-.fvg-w.we{color:var(--gold-hi)}
-.fvg-d{position:relative;aspect-ratio:1/.9;display:grid;place-items:center;border-radius:12px;font:inherit;font-size:.95rem;color:var(--ink);background:transparent;border:1px solid transparent}
-.fvg-d.pa{opacity:.32}.fvg-d.td{border-color:var(--gold-hi)}
-.fvg-d.ev{cursor:pointer;background:color-mix(in srgb,var(--fc) 15%,transparent);border-color:color-mix(in srgb,var(--fc) 45%,transparent);font-weight:700;transition:transform .15s,background .15s}
-.fvg-d.ev:hover,.fvg-d.ev:focus-visible{transform:translateY(-1px);background:color-mix(in srgb,var(--fc) 26%,transparent)}
-.fvg-d.ev::after{content:"";position:absolute;bottom:7px;width:6px;height:6px;border-radius:50%;background:var(--fc)}
-.fvg-d.big::before{content:"";position:absolute;top:6px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--gold-hi);box-shadow:0 0 8px var(--gold-hi)}
-.fvp-body{display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:32px;align-items:start}.fvp .fvm-l{grid-template-columns:minmax(0,1fr);align-content:start}.fvp-empty{align-self:center}
-@media (max-width:860px){.fvp-body{grid-template-columns:minmax(0,1fr);gap:22px}}
-.fvp-empty{text-align:center;color:var(--muted);margin:22px 0 0}
-.fvp-hint{text-align:center;color:var(--muted);font-size:.74rem;margin:14px 0 0}
-@media (max-width:520px){.fvg{gap:4px}.fvg-d{font-size:.85rem;border-radius:9px}.fvg-w{font-size:.58rem;letter-spacing:.06em}.fvp-ar{width:38px;height:38px}}
+.fvp{border:1px solid rgba(217,173,85,.28);border-radius:var(--r);background:radial-gradient(120% 80% at 50% 0%,rgba(217,173,85,.1),transparent 60%),var(--panel);padding:26px clamp(16px,3.4vw,34px) 26px;box-shadow:0 18px 50px rgba(0,0,0,.18)}
+.fvp-years{display:flex;justify-content:center;gap:10px;margin-bottom:16px}
+.fvp-years button{font-family:var(--display);font-size:1.35rem;color:var(--muted);background:transparent;border:0;border-bottom:2px solid transparent;padding:2px 10px 6px;cursor:pointer}
+.fvp-years button[aria-current=true]{color:var(--gold-hi);border-bottom-color:var(--gold-hi)}
+.fvp-tabs{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+.fvp-tabs button{font:inherit;font-size:1rem;font-weight:600;letter-spacing:.04em;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:9px 18px;cursor:pointer;transition:border-color .2s,background .2s}
+.fvp-tabs button:hover{border-color:rgba(217,173,85,.6)}
+.fvp-tabs button[aria-current=true]{color:#151a2c;background:var(--gold-grad,var(--gold-hi));border-color:transparent;box-shadow:0 6px 18px rgba(217,173,85,.3)}
+.fvp-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:14px 0 18px;border-top:1px solid var(--line)}
+.fvp-top h3{margin:0;text-align:center;font-family:var(--display);font-size:clamp(1.7rem,3.4vw,2.3rem);font-weight:500}
+.fvp-ar{width:46px;height:46px;border-radius:50%;border:1px solid rgba(217,173,85,.55);background:transparent;color:var(--gold-hi);font-size:1.5rem;line-height:1;cursor:pointer;transition:background .2s}
+.fvp-ar:hover:not(:disabled){background:rgba(217,173,85,.14)}.fvp-ar:disabled{opacity:.25;cursor:default}
+.fvp .fvm-l{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fvp-empty{text-align:center;color:var(--muted);margin:8px 0 0}
+.fvp-hint{text-align:center;color:var(--muted);font-size:.76rem;margin:18px 0 0}
+@media (max-width:760px){.fvp .fvm-l{grid-template-columns:minmax(0,1fr)}.fvp-tabs{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding:2px 4px}.fvp-tabs::-webkit-scrollbar{display:none}.fvp-tabs button{flex:none;font-size:.95rem;padding:8px 16px}.fvp-ar{width:40px;height:40px}}
 
 
 /* staff wall */
@@ -997,10 +990,12 @@ html[data-lang=ru] h1,html[data-lang=ru] h2,html[data-lang=ru] h3{font-weight:60
 .avc-legend{flex:1;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;font-size:.8rem;color:var(--muted)}
 .avc-legend span{display:inline-flex;align-items:center;gap:7px}
 .lg{width:10px;height:10px;border-radius:50%;display:inline-block}
-.lg.free{background:#5fd08a}.lg.few{background:#f0b44c}.lg.full{background:#e07a62}.lg.fill{background:#ffc58f}.lg.busy{background:#ffa35c}
+.lg.free{background:#5fd08a}.lg.few{background:#f0b44c}.lg.full{background:#e07a62}.lg.fill{background:#ffc58f;box-shadow:0 0 6px #ffc58f}.lg.busy{background:#ff9d45;box-shadow:0 0 6px #ff9d45}
 .avd.a-dm-free{background:rgba(70,190,120,.16);border-color:rgba(95,208,138,.45)}.avd.a-dm-free i{background:#5fd08a}.avd.a-dm-free small{color:#a7ecc0}
-.avd.a-dm-fill{background:rgba(255,190,120,.08);border-color:rgba(255,190,120,.38)}.avd.a-dm-fill i{background:#ffc58f}.avd.a-dm-fill small{color:#ffd6ad}
-.avd.a-dm-busy{background:rgba(255,150,70,.18);border-color:rgba(255,160,85,.6);box-shadow:inset 0 0 0 1px rgba(255,170,100,.12)}.avd.a-dm-busy i{background:#ffa35c}.avd.a-dm-busy small{color:#ffc999}.avd.a-dm-busy b{color:#ffe3c9}
+.avd.a-dm-fill{background:linear-gradient(160deg,rgba(255,196,130,.2),rgba(255,170,90,.1));border-color:rgba(255,196,130,.7);box-shadow:0 0 10px rgba(255,180,100,.18)}.avd.a-dm-fill i{background:#ffc58f;box-shadow:0 0 6px #ffc58f}.avd.a-dm-fill b{color:#ffe7cf}.avd.a-dm-fill small{color:#ffd6ad}
+.avd.a-dm-busy{background:linear-gradient(160deg,rgba(255,150,50,.42),rgba(255,115,25,.26));border-color:#ff9d45;box-shadow:0 0 16px rgba(255,140,40,.38),inset 0 0 12px rgba(255,170,80,.22)}.avd.a-dm-busy i{background:#fff1de;box-shadow:0 0 6px #fff1de}.avd.a-dm-busy small{color:#fff0e0}.avd.a-dm-busy b{color:#fff}
+.avc{position:relative;overflow:hidden;isolation:isolate}.avc::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(380px circle at var(--mx,50%) var(--my,-40%),rgba(217,173,85,.16),rgba(217,173,85,.05) 45%,transparent 70%);opacity:0;transition:opacity .35s}.avc.glow::before{opacity:1}
+.avd{transition:border-color .2s,background .2s,box-shadow .2s,transform .15s}.avd:hover:not(.a-full):not(.a-past){box-shadow:0 0 18px rgba(217,173,85,.4);transform:translateY(-1px)}.avd.a-dm-busy:hover{box-shadow:0 0 22px rgba(255,140,40,.6),inset 0 0 12px rgba(255,170,80,.25)}
 .avc-legend .lg{width:11px;height:11px;flex:none}
 .avc-nav{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--gold-hi);font-size:1.4rem;cursor:pointer;flex:none}
 .avc-nav:hover:not(:disabled){border-color:var(--gold)}
@@ -1221,13 +1216,13 @@ html{overflow-x:hidden}
 .mcard.art2 .a-pts b{font-family:var(--display);font-size:1.9rem;font-weight:600;line-height:1}
 .mcard.art2 .a-pts span{font-size:.5rem;letter-spacing:.3em;text-transform:uppercase;opacity:.75}
 .mcard.art2 .a-pts small{font-size:.6rem;opacity:.75}
-.a-silver{--art:url(/app/icons/card-silver.svg);color:#23272c}
-.a-gold{--art:url(/app/icons/card-gold.svg);color:#efd594;padding:0 9% 7.4% 9%!important}
+.a-silver{--art:url(/app/icons/card-silver.svg?v=2);color:#23272c}
+.a-gold{--art:url(/app/icons/card-gold.svg?v=2);color:#efd594;padding:0 9% 7.4% 9%!important}
 .a-gold .a-pts b{color:#f3dda0}
 .a-platinum{--art:url(/app/icons/card-platinum.svg?v=6);color:#e6ebf2;padding:0 7% 5%!important}
 .a-plus{--art:url(/app/icons/card-plus.svg?v=7);color:#d9dadc;padding:0 9% 7.4% 9%!important}
-.mcard.art2.a-plus .a-bot{flex-direction:column-reverse;align-items:flex-start;max-width:46%;gap:8px}
-.mcard.art2.a-plus .a-pts{justify-items:start;text-align:left}
+.mcard.art2 .a-bot{flex-direction:column-reverse;align-items:flex-start;max-width:60%;gap:8px}.mcard.art2.a-plus .a-bot{max-width:46%}
+.mcard.art2 .a-pts{justify-items:start;text-align:left;grid-auto-flow:column;align-items:baseline;gap:6px}.mcard.art2 .a-pts small{display:none}
 .a-plus .a-pts b{background:linear-gradient(180deg,#f3dfa6,#c9a35a 70%,#a9823e);-webkit-background-clip:text;background-clip:text;color:transparent}
 .brand{flex:none}
 .brand-logo{width:auto!important;max-width:none!important;flex:none;object-fit:contain}
@@ -1357,6 +1352,14 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
 .qwa{display:none;position:fixed;right:calc(22px + env(safe-area-inset-right,0px));bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:17;align-items:center;gap:10px;height:46px;padding:0 20px 0 14px;border-radius:999px;background:#25d366;color:#fff;text-decoration:none;font-weight:700;font-size:.82rem;letter-spacing:.04em;box-shadow:0 10px 26px rgba(0,0,0,.45)}
 .qwa svg{width:20px;height:20px}
 .qrail.open~.qwa.qwa{display:none!important}
+@media (min-width:1061px){
+.qrail .qr-toggle,.qwa.qwa{width:196px;height:50px;padding:0 18px;justify-content:center;gap:10px;border-radius:999px;font:inherit;font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;box-shadow:0 10px 26px rgba(0,0,0,.45)}
+.qwa.qwa{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.qwa.qcall{bottom:calc(144px + env(safe-area-inset-bottom,0px));background:var(--band);color:var(--gold-hi);border:1px solid rgba(217,173,85,.55)}
+.qwa.qcall:hover{background:var(--panel)}
+.qrail .qr-list{position:absolute;right:0;bottom:60px;max-height:calc(100vh - 120px);overflow-y:auto}
+.qrail.open~.qwa.qcall{display:none!important}
+}
 .pill-link a{color:inherit;text-decoration:none}.pill-link{cursor:pointer}.pill-link:hover{border-color:var(--gold)}
 
 
@@ -1929,10 +1932,10 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     <div class="fv-next rv" id="fvNext" hidden></div>
     <div class="fvcal rv" id="fvCal">
       <div class="fv-key" role="group" aria-label="Show">
-        <button type="button" data-fvf="all" aria-pressed="true">All dates <small></small></button>
-        <button type="button" data-fvf="f" class="fv-f" aria-pressed="false"><i></i>Mayapur festivals <small></small></button>
-        <button type="button" data-fvf="in" class="fv-in" aria-pressed="false"><i></i>Indian public holidays <small></small></button>
-        <button type="button" data-fvf="x" class="fv-x" aria-pressed="false"><i></i>International holidays <small></small></button>
+        <button type="button" data-fvf="all" aria-pressed="true">All dates</button>
+        <button type="button" data-fvf="f" class="fv-f" aria-pressed="false"><i></i>Mayapur festivals</button>
+        <button type="button" data-fvf="in" class="fv-in" aria-pressed="false"><i></i>Indian public holidays</button>
+        <button type="button" data-fvf="x" class="fv-x" aria-pressed="false"><i></i>International holidays</button>
       </div>
       <div id="fvMonths"></div>
     </div>
@@ -1957,8 +1960,9 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <div class="meet-tx rv">
         <p class="kicker rule">From Sri Dham Mayapur</p>
         <h2>Meet <em class="goldtx">Chandramukhi</em></h2>
-        <p>Chandramukhi Paul is a digital creator and Indian ethnic wear and jewellery model who lives in Sri Dham Mayapur. A western devotee who has made Indian culture her own, she shows how beautifully a saree, a lehenga or temple jewellery can be worn, from Durga Pujo and Diwali looks to everyday life in the Dham.</p>
-        <p>Her fashion and lifestyle posts reach more than a million people every month, and nearly 29,000 followers enjoy her festival outfits, gopi dresses and Bengali traditional looks. For guests coming to Mayapur, her page is a lovely glimpse of the colours, clothes and celebrations of the holy dham.</p>
+        <p>Chandramukhi Paul has lived in Sri Dham Mayapur since she was four years old. She grew up with the temple bells, the kirtans and the festivals of the dham, and she is a devotee at heart, so prayer and temple life are part of her every day.</p>
+        <p>She is also a digital creator and Indian ethnic wear and jewellery model with a love for the luxury lifestyle, and she balances the two beautifully. She has a look for every occasion: a graceful saree for the morning temple program, festive lehengas and gopi dresses for the big temple festivals, and traditional Bengali looks for Durga Pujo, Lakshmi Puja and Diwali.</p>
+        <p>Her posts reach more than a million people every month, and nearly 29,000 followers come to her for festival outfits, temple jewellery and a glimpse of life in Mayapur. Planning what to wear for your visit? Her page is the perfect place to start.</p>
         <ul class="meet-facts"><li><b>29K</b><span>followers</span></li><li><b>1M+</b><span>monthly reach</span></li><li><b>Mayapur</b><span>West Bengal</span></li></ul>
         <a class="ig-follow" href="https://www.instagram.com/chandraamukhi_/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg><span><b>@chandraamukhi_</b><small>Follow on Instagram</small></span><span class="go">Follow</span></a>
       </div>
@@ -3125,6 +3129,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </nav>
 <a class="qwa" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20would%20like%20to%20book%20a%20room%20at%20Nikadi%20Guest%20House." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>WhatsApp us</a>
+<a class="qwa qcall" href="tel:+917501101137" aria-label="Call us, +91 75011 01137"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>Call us</a>
 <a class="fab" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20would%20like%20to%20book%20a%20room%20at%20Nikadi%20Guest%20House.%0ACheck-in%3A%20%0ACheck-out%3A%20%0AGuests%3A%20" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
 </a>
@@ -4204,6 +4209,7 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
       draw();
     }).catch(function(){if(!AV){$('avcNote').textContent='Prices shown for each night. Send us your dates and we will confirm free rooms within minutes on WhatsApp.';draw();}});
   }
+  if(matchMedia('(hover:hover)').matches){box.addEventListener('pointermove',function(e){var r=box.getBoundingClientRect();box.style.setProperty('--mx',(e.clientX-r.left)+'px');box.style.setProperty('--my',(e.clientY-r.top)+'px');box.classList.add('glow');});box.addEventListener('pointerleave',function(){box.classList.remove('glow');});}
   draw();
   if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();load();setInterval(function(){if(!document.hidden)load();},5*60000);}},{rootMargin:'400px 0px'});io.observe(box);}else load();
 })();
@@ -4241,18 +4247,12 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
     var prev=months[mi];months=Object.keys(mm).sort();
     var j=months.indexOf(prev);mi=j>=0?j:Math.min(mi,months.length-1);if(mi<0)mi=0;
     var m=months[mi],y=+m.slice(0,4),mo=+m.slice(5,7)-1,first=new Date(Date.UTC(y,mo,1)),nd=new Date(Date.UTC(y,mo+1,0)).getUTCDate();
-    var ev=list.filter(function(x){return inMonth(x,m);}),byDay={};
-    ev.forEach(function(x){var a=x.d<m+'-01'?1:+x.d.slice(8),z=(x.e||x.d).slice(0,7)>m?nd:+(x.e||x.d).slice(8);for(var d=a;d<=z;d++)(byDay[d]=byDay[d]||[]).push(x);});
-    var off=(first.getUTCDay()+6)%7,WD=[1,2,3,4,5,6,0];
-    var g='<div class="fvg" role="grid">'+WD.map(function(w){return '<span class="fvg-w'+(w===5||w===6?' we':'')+'">'+WS[w]+'</span>';}).join('');
-    for(var i=0;i<off;i++)g+='<span></span>';
-    for(var d=1;d<=nd;d++){var k=m+'-'+(d<10?'0':'')+d,xs=byDay[d],cls='fvg-d'+(k<today?' pa':'')+(k===today?' td':'');
-      if(xs){var x=xs[0];g+='<button type="button" class="'+cls+' ev '+CAT[x.c[0]][0]+(xs.some(function(q){return q.big;})?' big':'')+'" data-fv="'+x.i+'" aria-label="'+d+' · '+esc(xs.map(function(q){return T(q.n);}).join(', '))+'">'+d+'</button>';}
-      else g+='<span class="'+cls+'">'+d+'</span>';}
-    g+='</div>';
-    var tabs='<div class="fvp-tabs" role="tablist">'+months.map(function(q,i){return '<button type="button" data-fvm="'+i+'" aria-current="'+(i===mi)+'">'+MS[+q.slice(5,7)-1]+(q.slice(0,4)!==today.slice(0,4)?' '+q.slice(2,4):'')+'</button>';}).join('')+'</div>';
-    var h='<div class="fvp"><div class="fvp-top"><button type="button" class="fvp-ar" data-fvs="-1" aria-label="'+T('Previous month')+'"'+(mi?'':' disabled')+'>‹</button><h3>'+monthName(m+'-01')+'<small>'+ev.length+' '+T(ev.length===1?'date':'dates')+'</small></h3><button type="button" class="fvp-ar" data-fvs="1" aria-label="'+T('Next month')+'"'+(mi<months.length-1?'':' disabled')+'>›</button></div>'+tabs+'<div class="fvp-body">'+g;
-    h+=(ev.length?'<ul class="fvm-l">'+ev.map(card).join('')+'</ul>':'<p class="fvp-empty">'+T('Nothing in this list for this month.')+'</p>')+'</div>';
+    var ev=list.filter(function(x){return inMonth(x,m);}),yr=m.slice(0,4),years=[];
+    months.forEach(function(q){var Y=q.slice(0,4);if(years.indexOf(Y)<0)years.push(Y);});
+    var yrs='<div class="fvp-years" role="tablist">'+years.map(function(Y){return '<button type="button" data-fvy="'+Y+'" aria-current="'+(Y===yr)+'">'+Y+'</button>';}).join('')+'</div>';
+    var tabs='<div class="fvp-tabs" role="tablist">'+months.map(function(q,i){return q.slice(0,4)!==yr?'':'<button type="button" data-fvm="'+i+'" aria-current="'+(i===mi)+'">'+MS[+q.slice(5,7)-1]+'</button>';}).join('')+'</div>';
+    var h='<div class="fvp">'+yrs+tabs+'<div class="fvp-top"><button type="button" class="fvp-ar" data-fvs="-1" aria-label="'+T('Previous month')+'"'+(mi?'':' disabled')+'>‹</button><h3>'+monthName(m+'-01')+'</h3><button type="button" class="fvp-ar" data-fvs="1" aria-label="'+T('Next month')+'"'+(mi<months.length-1?'':' disabled')+'>›</button></div>';
+    h+=ev.length?'<ul class="fvm-l">'+ev.map(card).join('')+'</ul>':'<p class="fvp-empty">'+T('Nothing in this list for this month.')+'</p>';
     h+='<p class="fvp-hint">'+T('Swipe or use the arrows to see the next months.')+'</p></div>';
     document.getElementById('fvMonths').innerHTML=h;
     var at=box.querySelector('.fvp-tabs [aria-current=true]');if(at){var tb=at.parentNode;tb.scrollLeft=at.offsetLeft-tb.clientWidth/2+at.clientWidth/2;}
@@ -4263,9 +4263,8 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
     el.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
     el.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;sx=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5)go(dx<0?1:-1);},{passive:true});})();
   /* counts on the filter chips */
-  ['all','f','in','x'].forEach(function(k){var el=box.querySelector('[data-fvf="'+k+'"] small');if(el)el.textContent=items.filter(function(x){return k==='all'||x.c.some(function(c){return KIND[c]===k;});}).length;});
   box.addEventListener('click',function(e){var f=e.target.closest('[data-fvf]');if(f){filter=f.getAttribute('data-fvf');show();return;}
-    var sv=e.target.closest('[data-fvs]');if(sv){go(+sv.getAttribute('data-fvs'));return;}var tm=e.target.closest('[data-fvm]');if(tm){mi=+tm.getAttribute('data-fvm');show();return;}
+    var sv=e.target.closest('[data-fvs]');if(sv){go(+sv.getAttribute('data-fvs'));return;}var tm=e.target.closest('[data-fvm]');if(tm){mi=+tm.getAttribute('data-fvm');show();return;}var ty=e.target.closest('[data-fvy]');if(ty){var Y=ty.getAttribute('data-fvy');for(var q=0;q<months.length;q++)if(months[q].slice(0,4)===Y){mi=q;break;}show();return;}
     var b=e.target.closest('[data-fv]');if(b)open(items[+b.getAttribute('data-fv')],b);});
   /* next temple festival countdown */
   function drawNext(){var nx=items.filter(function(x){return x.c[0]==='f';})[0],el=document.getElementById('fvNext');if(!nx||!el)return;

@@ -88,7 +88,8 @@ def silver_front(cv, m, art_only=False):
             y = 4.5 + i * .9
             cv.stroke(poly([(46 + i * 1.2, y), (W - 2 - i * 1.2, y)], False), '#d2d6db', .08, 'INK')
     clipped(cv, rect(-3, -3, W + 6, H + 6), art)
-    brand_row(cv, 6, H - 6 - 7.6, 7.6, {'dark': S['mdark'], 'light': S['mlight'], 'arc': S['mlight']}, 'italiana', 15, S['ink'], S['sub'])
+    tx = brand_row(cv, 6, H - 6 - 7.6, 7.6, {'dark': S['mdark'], 'light': S['mlight'], 'arc': S['mlight']}, 'italiana', 15, S['ink'], S['sub'], sub=False)
+    T(cv, 'work', 'G U E S T   H O U S E', tx + .2, H - 6 - 7.6 - .2, 3.5, S['sub'], .3)
     T(cv, 'italiana', 'S I L V E R   M E M B E R', 6, H - 21.6, 6.2, S['ink'], .18)
     cv.stroke(poly([(6, H - 23.4), (17, H - 23.4)], False), S['sub'], .12)
     if not art_only:
@@ -126,7 +127,8 @@ def gold_front(cv, m, art_only=False):
     clipped(cv, inner, lambda: lotus(cv, 69.5, 27, .74, G['gold2'], .15))
     cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), G['gold'], .3, 'FOIL')
     cv.stroke(inner, G['gold'], .12, 'FOIL')
-    brand_row(cv, 7, H - 7 - 7.8, 7.8, {'dark': G['gold3'], 'light': G['gold2'], 'arc': G['gold']}, 'gloock', 13.5, G['gold3'], G['gold'], layer='FOIL', word_track=.2)
+    tx = brand_row(cv, 7, H - 7 - 7.8, 7.8, {'dark': G['gold3'], 'light': G['gold2'], 'arc': G['gold']}, 'gloock', 13.5, G['gold3'], G['gold'], layer='FOIL', word_track=.2, sub=False)
+    T(cv, 'work', 'G U E S T   H O U S E', tx + .2, H - 7 - 7.8 - .2, 3.5, G['gold'], .3, layer='FOIL')
     T(cv, 'arsenal', 'G O L D   M E M B E R', 7, H - 21.6, 5.0, G['gold3'], .3, layer='FOIL')
     cv.stroke(poly([(7, H - 23.4), (19, H - 23.4)], False), G['gold'], .14, 'FOIL')
     if not art_only:

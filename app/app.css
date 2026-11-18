@@ -158,8 +158,8 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 .mc-ptsr b{font-family:var(--display);font-size:clamp(1.5rem,7vw,2rem);font-weight:500;line-height:1;font-variant-numeric:lining-nums tabular-nums}
 .mc-ptsr span{font-size:.5rem;letter-spacing:.3em;text-transform:uppercase;opacity:.75}
 .mc-ptsr small{font-size:.6rem;opacity:.72;max-width:16ch;line-height:1.3}
-.mcard.tier-silver{--art:url(icons/card-silver.svg);color:#23272c}
-.mcard.tier-gold{--art:url(icons/card-gold.svg);color:#efd594;padding:0 9% 7.4% 9%}
+.mcard.tier-silver{--art:url(icons/card-silver.svg?v=2);color:#23272c}
+.mcard.tier-gold{--art:url(icons/card-gold.svg?v=2);color:#efd594;padding:0 9% 7.4% 9%}
 .mcard.tier-gold .mc-ptsr b{color:#f3dda0}
 .mcard.tier-platinum{--art:url(icons/card-platinum.svg?v=6);color:#e6ebf2;padding:0 7% 5%}
 .mcard.tier-plus{--art:url(icons/card-plus.svg?v=7);color:#d9dadc;padding:0 9% 7.4% 9%}
@@ -308,3 +308,9 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 }
 @media (min-width:1500px){body.wide .home-grid{grid-template-columns:minmax(0,1.9fr) minmax(380px,.8fr)}body.wide .pv-grid{gap:34px 30px}}
 @media (max-width:899px){.home-grid{display:flex;flex-direction:column}.hg-intro{display:contents}.hg-side{order:1}.hg-intro .pv{order:2}}
+
+/* every level: points sit above the name, on the left (same as Platinum Plus) */
+.mcard.art .mc-bot{display:grid;justify-content:start;gap:4px;max-width:60%}
+.mcard.art .mc-ptsr{order:-1;justify-items:start;text-align:left;grid-auto-flow:column;align-items:baseline;gap:6px}
+.mcard.art .mc-ptsr b{font-size:1.45rem}
+.mcard.art .mc-ptsr small{display:none}
