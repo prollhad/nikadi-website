@@ -741,6 +741,7 @@ body{background:radial-gradient(1200px 600px at 80% -10%,rgba(217,173,85,.08),tr
 
 
 /* page banner (sub pages) */
+.hero .slides picture{display:contents}
 nav.main a{white-space:nowrap}
 @media (max-width:1320px){nav.main{gap:18px!important;letter-spacing:.12em}nav.main a:nth-child(6),nav.main a:nth-child(7){display:none}}
 @media (max-width:1140px){nav.main a:nth-child(8){display:none}}
@@ -1088,6 +1089,8 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
   .hero-media::before{display:none}
   .hero .slides{aspect-ratio:auto;height:100%;border-radius:0!important;box-shadow:none}
   .hero .slides img{object-position:center 45%}
+  .hero-media{left:auto;right:0;width:min(100%,1300px);-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22%);mask-image:linear-gradient(90deg,transparent 0,#000 22%)}
+  .hero .slides picture{display:contents}
   .hero .slides::after{inset:0;height:auto;background:linear-gradient(90deg,rgba(5,8,18,.94) 0%,rgba(5,8,18,.82) 32%,rgba(5,8,18,.35) 62%,rgba(5,8,18,.1) 100%),linear-gradient(0deg,rgba(5,8,18,.95) 0%,rgba(5,8,18,.0) 38%)}
   .hero-media{border-radius:0!important;overflow:hidden}
   .hero-cap{left:auto;right:clamp(16px,4vw,72px);bottom:150px;width:min(420px,32vw);text-align:right;justify-content:flex-end;gap:18px}

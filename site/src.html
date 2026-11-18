@@ -768,6 +768,7 @@ body{background:radial-gradient(1200px 600px at 80% -10%,rgba(217,173,85,.08),tr
 
 
 /* page banner (sub pages) */
+.hero .slides picture{display:contents}
 nav.main a{white-space:nowrap}
 @media (max-width:1320px){nav.main{gap:18px!important;letter-spacing:.12em}nav.main a:nth-child(6),nav.main a:nth-child(7){display:none}}
 @media (max-width:1140px){nav.main a:nth-child(8){display:none}}
@@ -1115,6 +1116,8 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
   .hero-media::before{display:none}
   .hero .slides{aspect-ratio:auto;height:100%;border-radius:0!important;box-shadow:none}
   .hero .slides img{object-position:center 45%}
+  .hero-media{left:auto;right:0;width:min(100%,1300px);-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22%);mask-image:linear-gradient(90deg,transparent 0,#000 22%)}
+  .hero .slides picture{display:contents}
   .hero .slides::after{inset:0;height:auto;background:linear-gradient(90deg,rgba(5,8,18,.94) 0%,rgba(5,8,18,.82) 32%,rgba(5,8,18,.35) 62%,rgba(5,8,18,.1) 100%),linear-gradient(0deg,rgba(5,8,18,.95) 0%,rgba(5,8,18,.0) 38%)}
   .hero-media{border-radius:0!important;overflow:hidden}
   .hero-cap{left:auto;right:clamp(16px,4vw,72px);bottom:150px;width:min(420px,32vw);text-align:right;justify-content:flex-end;gap:18px}
@@ -1358,9 +1361,9 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
 
     <figure class="hero-media" aria-label="Photos of Nikadi Guest House">
       <div class="slides" id="heroSlides">
-        <img class="on" src="img/hero/P/double-14.jpg" alt="Deluxe Double room with king bed, cove lighting and floor-length curtains" fetchpriority="high" width="1100" height="1375">
+        <picture><source media="(min-width:1001px)" srcset="img/hero/W/double-04.webp" type="image/webp"><source srcset="img/hero/P/double-04.webp" type="image/webp"><img class="on" style="object-position:62% 74%" src="img/hero/P/double-04.jpg" alt="Deluxe Double room with wide windows, curtains open" fetchpriority="high" width="1200" height="1500"></picture>
       </div>
-      <figcaption class="hero-cap"><span><small id="capKick">Deluxe Double</small><b id="capText">King bed and warm cove lighting</b></span><span class="count"><b id="capNo">01</b> / <span id="capOf">07</span></span></figcaption>
+      <figcaption class="hero-cap"><span><small id="capKick">Deluxe Double</small><b id="capText">Wide windows and soft morning light</b></span><span class="count"><b id="capNo">01</b> / <span id="capOf">07</span></span></figcaption>
       <div class="hero-prog" aria-hidden="true"><i id="heroProg"></i></div>
       <div class="hero-nav"><button type="button" id="heroPrev" aria-label="Previous photo">‹</button><button type="button" id="heroNext" aria-label="Next photo">›</button></div>
     </figure>
@@ -3245,17 +3248,16 @@ var WA = "917501101137";
 (function(){
   var box=document.getElementById('heroSlides'); if(!box) return;
   var S=[
-    ['double-14','Deluxe Double','King bed and warm cove lighting'],
-    ['double-02','Deluxe Double','190 sq ft of calm, with a sofa corner'],
-    ['twin-03','Deluxe Twin','Two single beds, morning light'],
+    ['double-04','Deluxe Double','Wide windows and soft morning light','62% 74%'],
+    ['double-01','Deluxe Double','King bed and warm cove lighting','50% 72%'],
+    ['double-05','Deluxe Double','Deep sleep, soft linen','50% 70%'],
     ['facade-day','Nikadi Guest House','On Bhaktisiddhanta Saraswati Marg'],
-    ['reception','Reception','First floor, open 16 hours a day'],
-    ['double-04','Deluxe Double','Wake up to the window light']
+    ['reception','Reception','First floor, open 16 hours a day']
   ];
-  var ALT={'double-14':'Deluxe Double room with king bed','facade-night':'Nikadi Guest House lit up at night','double-02':'Deluxe Double room with sofa and wardrobe','twin-03':'Deluxe Twin room with two single beds','facade-day':'Nikadi Guest House building by day','reception':'Nikadi reception desk','double-04':'Deluxe Double room by the window'};
+  var ALT={'double-01':'Deluxe Double room with king bed','double-05':'Deluxe Double room with king bed and wardrobe','facade-night':'Nikadi Guest House lit up at night','double-02':'Deluxe Double room with sofa and wardrobe','twin-03':'Deluxe Twin room with two single beds','facade-day':'Nikadi Guest House building by day','reception':'Nikadi reception desk','double-04':'Deluxe Double room by the window'};
   var imgs=[box.querySelector('img')], i=0, timer=null, loaded={0:true};
   for(var k=1;k<S.length;k++){var im=document.createElement('img');im.alt=ALT[S[k][0]]||'';im.decoding='async';im.width=1100;im.height=1375;box.appendChild(im);imgs.push(im);}
-  function load(k){if(loaded[k])return;loaded[k]=true;imgs[k].src='img/hero/P/'+S[k][0]+'.jpg';}
+  function load(k){if(loaded[k])return;loaded[k]=true;imgs[k].src='img/hero/'+(matchMedia('(min-width:1001px)').matches?'W/':'P/')+S[k][0]+'.webp';if(S[k][3])imgs[k].style.objectPosition=S[k][3];}
   function pad(n){return (n<10?'0':'')+n;}
   document.getElementById('capOf').textContent=pad(S.length);
   function show(k){

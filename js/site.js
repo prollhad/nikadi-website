@@ -392,17 +392,16 @@ try{
 (function(){
   var box=document.getElementById('heroSlides'); if(!box) return;
   var S=[
-    ['double-14','Deluxe Double','King bed and warm cove lighting'],
-    ['double-02','Deluxe Double','190 sq ft of calm, with a sofa corner'],
-    ['twin-03','Deluxe Twin','Two single beds, morning light'],
+    ['double-04','Deluxe Double','Wide windows and soft morning light','62% 74%'],
+    ['double-01','Deluxe Double','King bed and warm cove lighting','50% 72%'],
+    ['double-05','Deluxe Double','Deep sleep, soft linen','50% 70%'],
     ['facade-day','Nikadi Guest House','On Bhaktisiddhanta Saraswati Marg'],
-    ['reception','Reception','First floor, open 16 hours a day'],
-    ['double-04','Deluxe Double','Wake up to the window light']
+    ['reception','Reception','First floor, open 16 hours a day']
   ];
-  var ALT={'double-14':'Deluxe Double room with king bed','facade-night':'Nikadi Guest House lit up at night','double-02':'Deluxe Double room with sofa and wardrobe','twin-03':'Deluxe Twin room with two single beds','facade-day':'Nikadi Guest House building by day','reception':'Nikadi reception desk','double-04':'Deluxe Double room by the window'};
+  var ALT={'double-01':'Deluxe Double room with king bed','double-05':'Deluxe Double room with king bed and wardrobe','facade-night':'Nikadi Guest House lit up at night','double-02':'Deluxe Double room with sofa and wardrobe','twin-03':'Deluxe Twin room with two single beds','facade-day':'Nikadi Guest House building by day','reception':'Nikadi reception desk','double-04':'Deluxe Double room by the window'};
   var imgs=[box.querySelector('img')], i=0, timer=null, loaded={0:true};
   for(var k=1;k<S.length;k++){var im=document.createElement('img');im.alt=ALT[S[k][0]]||'';im.decoding='async';im.width=1100;im.height=1375;box.appendChild(im);imgs.push(im);}
-  function load(k){if(loaded[k])return;loaded[k]=true;imgs[k].src='img/hero/P/'+S[k][0]+'.jpg';}
+  function load(k){if(loaded[k])return;loaded[k]=true;imgs[k].src='img/hero/'+(matchMedia('(min-width:1001px)').matches?'W/':'P/')+S[k][0]+'.webp';if(S[k][3])imgs[k].style.objectPosition=S[k][3];}
   function pad(n){return (n<10?'0':'')+n;}
   document.getElementById('capOf').textContent=pad(S.length);
   function show(k){
