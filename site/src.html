@@ -271,8 +271,8 @@ section.alt{background:var(--band)}
 
 
 /* ---- sky & weather moments ---- */
-#fx{position:fixed;inset:0;pointer-events:none;z-index:95;overflow:hidden}
-#fx>*{position:absolute;inset:0}
+#fx,#fxs{position:fixed;inset:0;pointer-events:none;z-index:95;overflow:hidden}#fxs{z-index:94}
+#fx>*,#fxs>*{position:absolute;inset:0}
 .fx-scene canvas{opacity:0;transition:opacity .5s ease}.fx-scene.fx-on canvas{opacity:1}
 .fx-tint{opacity:0;transition:opacity 1.6s ease}
 .fx-on .fx-tint{opacity:1}
@@ -283,8 +283,8 @@ section.alt{background:var(--band)}
 .fx-on .fx-glow{opacity:1}
 .fx-sun{inset:auto!important;left:calc(50% - min(11vw,90px))!important;width:min(22vw,180px);height:min(22vw,180px);border-radius:50%;opacity:0;
   background:radial-gradient(circle,#fff6dc 0 34%,#ffd27a 48%,rgba(255,150,70,.55) 60%,rgba(255,120,60,0) 72%);filter:blur(.4px)}
-.fx-dusk .fx-sun{top:72vh!important;animation:fxSet 7s ease-in forwards}
-.fx-dawn .fx-sun{top:104vh!important;animation:fxRise 7s ease-out forwards}
+.fx-dusk .fx-sun,.fx-dawn .fx-sun{top:100vh!important;animation:fxUp 7.5s cubic-bezier(.35,.1,.45,1) forwards}
+@keyframes fxUp{0%{opacity:0;transform:translateY(0) scale(.3)}10%{opacity:.95}70%{opacity:.95}100%{opacity:0;transform:translateY(calc(-100vh - 100%)) scale(1.9)}}
 @keyframes fxSet{0%{opacity:0;transform:translateY(-6vh)}15%{opacity:.95}80%{opacity:.85}100%{opacity:0;transform:translateY(26vh)}}
 @keyframes fxRise{0%{opacity:0;transform:translateY(0)}20%{opacity:.95}85%{opacity:.85}100%{opacity:0;transform:translateY(-34vh)}}
 .fx-storm .fx-dark{background:rgba(6,10,24,.5);opacity:0;transition:opacity .5s}
@@ -3336,9 +3336,11 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   function cloudy(){scene({sky:GREY,cover:.78,tone:'grey',dur:6500});}
   function rain(){scene({sky:STORM,cover:.92,tone:'dark',rain:1,dur:5500});}
   function thunder(){scene({sky:STORM,cover:.97,tone:'dark',rain:2,storm:1,dur:5800});}
-  function sky(kind){swap(function(id){busy=true;
-    fx.className='fx-'+kind;fx.innerHTML='<div class="fx-tint"></div><div class="fx-glow"></div><div class="fx-sun"></div>';
-    requestAnimationFrame(function(){requestAnimationFrame(function(){fx.classList.add('fx-on');});});done(6200,id);});}
+  var fs=document.createElement('div');fs.id='fxs';fs.setAttribute('aria-hidden','true');document.body.appendChild(fs);var SKY=0;
+  function sky(kind){var id=++SKY,go=function(){if(id!==SKY)return;fs.className='fx-'+kind;fs.innerHTML='<div class="fx-tint"></div><div class="fx-glow"></div><div class="fx-sun"></div>';
+      requestAnimationFrame(function(){requestAnimationFrame(function(){if(id===SKY)fs.classList.add('fx-on');});});
+      setTimeout(function(){if(id!==SKY)return;fs.classList.remove('fx-on');setTimeout(function(){if(id===SKY){fs.className='';fs.innerHTML='';}},1700);},6400);};
+    if(fs.classList.contains('fx-on')){fs.classList.remove('fx-on');setTimeout(go,500);}else go();}
   function weatherMoment(){var w=window.NK_WX,c=w&&w.current?w.current.weather_code:null;
     if(c==null){partly();return;}
     if(c>=95)thunder();else if((c>=51&&c<=67)||(c>=80&&c<=82))rain();else if(c===3||c===45||c===48)cloudy();else if(c===2)partly();else sunny();}

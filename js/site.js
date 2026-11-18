@@ -81,9 +81,11 @@ try{
   function cloudy(){scene({sky:GREY,cover:.78,tone:'grey',dur:6500});}
   function rain(){scene({sky:STORM,cover:.92,tone:'dark',rain:1,dur:5500});}
   function thunder(){scene({sky:STORM,cover:.97,tone:'dark',rain:2,storm:1,dur:5800});}
-  function sky(kind){swap(function(id){busy=true;
-    fx.className='fx-'+kind;fx.innerHTML='<div class="fx-tint"></div><div class="fx-glow"></div><div class="fx-sun"></div>';
-    requestAnimationFrame(function(){requestAnimationFrame(function(){fx.classList.add('fx-on');});});done(6200,id);});}
+  var fs=document.createElement('div');fs.id='fxs';fs.setAttribute('aria-hidden','true');document.body.appendChild(fs);var SKY=0;
+  function sky(kind){var id=++SKY,go=function(){if(id!==SKY)return;fs.className='fx-'+kind;fs.innerHTML='<div class="fx-tint"></div><div class="fx-glow"></div><div class="fx-sun"></div>';
+      requestAnimationFrame(function(){requestAnimationFrame(function(){if(id===SKY)fs.classList.add('fx-on');});});
+      setTimeout(function(){if(id!==SKY)return;fs.classList.remove('fx-on');setTimeout(function(){if(id===SKY){fs.className='';fs.innerHTML='';}},1700);},6400);};
+    if(fs.classList.contains('fx-on')){fs.classList.remove('fx-on');setTimeout(go,500);}else go();}
   function weatherMoment(){var w=window.NK_WX,c=w&&w.current?w.current.weather_code:null;
     if(c==null){partly();return;}
     if(c>=95)thunder();else if((c>=51&&c<=67)||(c>=80&&c<=82))rain();else if(c===3||c===45||c===48)cloudy();else if(c===2)partly();else sunny();}
