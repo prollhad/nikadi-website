@@ -162,7 +162,7 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 .mcard.tier-gold{--art:url(icons/card-gold.svg);color:#efd594;padding:0 9% 7.4% 9%}
 .mcard.tier-gold .mc-ptsr b{color:#f3dda0}
 .mcard.tier-platinum{--art:url(icons/card-platinum.svg?v=4);color:#e6ebf2;padding:0 7% 5%}
-.mcard.tier-plus{--art:url(icons/card-plus.svg?v=4);color:#d9dadc;padding:0 9% 7.4% 9%}
+.mcard.tier-plus{--art:url(icons/card-plus.svg?v=5);color:#d9dadc;padding:0 9% 7.4% 9%}
 .mcard.tier-plus .mc-ptsr b{background:linear-gradient(180deg,#f3dfa6,#c9a35a 70%,#a9823e);-webkit-background-clip:text;background-clip:text;color:transparent}
 .ladder{display:grid;gap:8px}
 .rung{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 14px}

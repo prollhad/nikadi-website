@@ -243,39 +243,25 @@ def lotus_badge(cv, cx, cy, s, G, G2, layer='GOLD'):
         cv.fill(circle(cx + s * .48 * math.cos(a), cy + s * .48 * math.sin(a), s * .07), '#7a5824', layer)
 
 def plus_front(cv, m, art_only=False):
-    """Platinum Plus 'Titan': black titanium, brushed; the Nikadi mark as the hero in brushed 24k gold; faint etched ripples."""
-    import random
-    full = rrect(0, 0, W, H, R)
-    cv.fill(full, ('lin', 0, H, W, 0, [(0, '#0a0a0c'), (.38, '#151518'), (.52, '#1e1e22'), (.66, '#141417'), (1, '#09090b')]), 'BASE')
-    cx, cy = W / 2, 33.0
-    GOLD = [(0, '#fbeec4'), (.28, '#e5c57d'), (.55, '#b88f45'), (.78, '#ecd394'), (1, '#9c7533')]
-    GOLD2 = [(0, '#c9a35a'), (.5, '#f3dfa6'), (1, '#8d6a2e')]
-    def art():
-        rnd = random.Random(11)
-        y = -1.0
-        while y < H + 1:
-            c = rnd.choice(('#18181b', '#1b1b1f', '#202024', '#161619', '#1d1d21'))
-            cv.stroke(poly([(-2, y), (W + 2, y)], False), c, .05 + rnd.random() * .03, 'ENGRAVE'); y += .16 + rnd.random() * .1
-        # etched ripples spreading from the mark, fading out
-        for k in range(1, 26):
-            r = 14 + k * 2.15
-            col = '#2a2a2f' if k % 5 == 0 else '#222226'
-            cv.stroke(ellipse(cx, cy, r * 1.06, r, 0, 160), col, .06 if k % 5 else .08, 'ENGRAVE')
-    clipped(cv, full, art)
-    # a soft pool of light under the mark
-    cv.fill(ellipse(cx, cy - 1, 15.5, 13.5, 0, 120), ('rad', cx, cy - 1, 15.5, [(0, '#25252a'), (1, '#18181b')]), 'BASE')
-    for r, c, w in ((13.2, '#3a3a40', .07), (12.4, '#a8823f', .09)):
-        cv.stroke(ellipse(cx, cy - 1, r * 1.06, r, 0, 160), c, w, 'GOLD' if c == '#a8823f' else 'ENGRAVE')
-    # the Nikadi mark in brushed gold
-    mh = 17.0
-    shapes, mw = mark_shapes(cx - mh * 318 / 345 / 2, cy - mh / 2 - .4, mh)
+    """Platinum Plus 'Noir': smooth matte black metal with a soft sheen, the Nikadi Guest House lockup in 24k gold, nothing else."""
+    full = rect(-3, -3, W + 6, H + 6)
+    cv.fill(full, ('lin', -3, H + 3, W + 3, -3, [(0, '#060607'), (.34, '#121214'), (.5, '#1c1c1f'), (.62, '#131315'), (1, '#050506')]), 'BASE')
+    cx = W / 2
+    GOLD = [(0, '#fbeec4'), (.3, '#e6c67e'), (.55, '#b8904a'), (.8, '#efd697'), (1, '#a07a37')]
+    # the lockup: mark over N-I-K, NIKADI, GUEST HOUSE
+    pt = 15.0; tr = .18; yb = 24.4
+    wd = text_width('gloock', 'NIKADI', pt, tr); x0 = cx - wd / 2
+    cap = pt * PT * .7
+    wnik = text_width('gloock', 'NIK', pt, tr) - tr * pt * PT
+    mh = wnik / .92; mw = mh * 318 / 345
+    shapes, mw = mark_shapes(x0 + (wnik - mw) / 2, yb + cap + 1.2, mh)
     for t, c in shapes:
-        cv.fill(c, {'dark': ('lin', cx - mw / 2, cy + mh / 2, cx + mw / 2, cy - mh / 2, GOLD2), 'light': ('lin', cx - mw / 2, cy + mh / 2, cx + mw / 2, cy - mh / 2, GOLD), 'arc': ('lin', cx - mw / 2, 0, cx + mw / 2, 0, GOLD)}[t], 'GOLD')
-    # wordmark and level
-    T(cv, 'gloock', 'N I K A D I', cx, 15.6, 8.6, ('lin', cx - 14, 18, cx + 14, 15, GOLD), .26, align='center', layer='GOLD')
-    T(cv, 'work', 'PLATINUM  PLUS', 6, H - 7.6, 3.4, '#9a9ca2', .62, layer='ENGRAVE')
-    T(cv, 'work', 'SRI DHAM MAYAPUR', W - 6, H - 7.6, 3.0, '#6f7177', .5, align='right', layer='ENGRAVE')
+        cv.fill(c, {'dark': ('lin', x0, yb + cap + mh, x0 + wnik, yb + cap, [(0, '#c9a35a'), (.5, '#f0d99a'), (1, '#8d6a2e')]),
+                    'light': ('lin', x0, yb + cap + mh, x0 + wnik, yb + cap, GOLD), 'arc': ('lin', x0, 0, x0 + wnik, 0, GOLD)}[t], 'GOLD')
+    T(cv, 'gloock', 'NIKADI', x0, yb, pt, ('lin', x0, yb + cap, x0 + wd, yb, GOLD), tr, layer='GOLD')
+    gh = 'G U E S T   H O U S E'; gw = text_width('work', gh, 4.2, .28)
+    T(cv, 'work', gh, cx, yb - 4.3, 4.2, ('lin', cx - gw / 2, 0, cx + gw / 2, 0, GOLD), .28, align='center', layer='GOLD')
+    T(cv, 'workb', 'PLATINUM PLUS', 6.5, H - 8.0, 3.6, '#c9cbd0', .5, layer='ENGRAVE')
     if not art_only:
-        T(cv, 'arsenal', m['name'].upper(), 6, 7.6, 6.8, '#d9dadc', .16, layer='PERSONALISE')
-        T(cv, 'plexmono', m['no'], W - 6, 7.6, 4.2, '#8f9297', .14, align='right', layer='PERSONALISE')
-        T(cv, 'work', 'MEMBER SINCE ' + m['since'], W - 6, 4.4, 2.8, '#b59050', .42, align='right', layer='PERSONALISE')
+        T(cv, 'arsenal', m['name'].upper(), 6.5, 7.0, 6.6, '#e2e3e6', .16, layer='PERSONALISE')
+        T(cv, 'plexmono', m['no'], W - 6.5, 7.0, 4.2, '#8f9297', .14, align='right', layer='PERSONALISE')
