@@ -48,9 +48,9 @@ var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code
 var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
 var DESK_BILL_PREFIX = 'NGH';
 /* Late check-out: check-out is by 9:00 AM. Prices for staying on (used in the check-out reminder and the bill).
-   If a guest is still in the room at 9:00 AM on check-out day, the timer adds the first step (₹500) to the bill by itself.
+   If a guest is still in the room at 9:30 AM on check-out day, the timer adds the first step (₹500) to the bill by itself.
    The front desk can change it to ₹1,000 / ₹1,500 or any amount, make it free, or remove it (no manager approval needed for this automatic line). */
-var DESK_CHECKOUT_TIME = '09:00';
+var DESK_CHECKOUT_TIME = '09:00', DESK_LATE_GRACE = '09:30'; // check-out by 9:00; ₹500 goes on the bill only after 9:30 (30 minutes' grace)
 var DESK_LATE_OUT = [{ till: '10:00', label: '10 AM', price: 500 }, { till: '11:00', label: '11 AM', price: 1000 }, { till: '12:00', label: '12 noon', price: 1500 }];
 var DESK_LATE_ITEM = 'Late checkout', DESK_LATE_BY = 'Automatic';
 /* Still in the room after 12 noon: the full room price for one more day is added by itself (the ₹500–₹1,500 late check-out line comes off). Editable and removable. */
@@ -649,7 +649,7 @@ function deskCore(db, hooks) {
       if (!o.member) add('membership', 'Membership invite', waHandText('membership', [n]));
     } else {
       if (o.leaving) add('checkout', 'Check-out reminder', n + ', Hare Krishna! A gentle reminder from Nikadi Guest House: check-out is by 9:00 AM on ' + dd(o.checkout) + '.\nIf you would like a late check-out, please reply here and we will check if the room is available:\n' +
-        DESK_LATE_OUT.map(function (x) { return 'Till ' + x.label + ': ' + rupees(x.price); }).join('\n') + '\nAfter 12 noon: full room price for one more day.\nIf you are still in the room after 9:00 AM, ' + rupees(DESK_LATE_OUT[0].price) + ' late check-out is added to your bill. Thank you!');
+        DESK_LATE_OUT.map(function (x) { return 'Till ' + x.label + ': ' + rupees(x.price); }).join('\n') + '\nAfter 12 noon: full room price for one more day.\nIf you are still in the room after 9:30 AM, ' + rupees(DESK_LATE_OUT[0].price) + ' late check-out is added to your bill. Thank you!');
       if (o.bill) add('bill', 'Bill + review', waHandText('bill', [n].concat(o.bill.params.slice(1)), o.bill.link));
       if (o.bill) add('billonly', 'Bill only', n + ', your bill ' + o.bill.params[1] + ' from Nikadi Guest House: total ' + o.bill.params[2] + ' (incl. GST), ' + o.bill.params[3] + '.\n🧾 See or download it here: ' + o.bill.link + '\nThank you for staying with us 🙏');
       add('review', 'Thank you + Google review', n + ', Hare Krishna! Thank you so much for staying with us at Nikadi Guest House. It was a joy to have you.\n⭐ If you enjoyed your stay, a short Google review helps other devotees find us: ' + DESK_WA_REVIEW + '\nWhenever the Dham calls you back, we will be happy to welcome you again.');
@@ -1858,11 +1858,11 @@ function deskCore(db, hooks) {
     var r = archiveOld(); cfgSet('lastArchive', d); return r;
   };
 
-  /* Timer (every 10 minutes): guests still in the room after 9:00 AM on check-out day get ₹500 late check-out on the bill, once.
+  /* Timer (every 10 minutes): guests still in the room after 9:30 AM on check-out day get ₹500 late check-out on the bill, once.
      Never added again for that stay, even if the front desk removed it. Free stays (comp) get nothing; Platinum members get it free (their perk). */
   function lateCheckoutRun() {
     var t = today(), now = stamp(), hm = now.slice(11), out = [];
-    if (hm < DESK_CHECKOUT_TIME) return out;
+    if (hm < DESK_LATE_GRACE) return out;
     var it = find('items', 'item', DESK_LATE_ITEM), full = hm >= DESK_LATE_FULL_TIME;
     db.all('stays').forEach(function (s) {
       if (s.status !== 'In house' || s.checkout !== t || s.comp) return;
@@ -1881,7 +1881,7 @@ function deskCore(db, hooks) {
       var mem = memberOf(s.phone), perk = mem && (mem.tierKey === 'platinum' || mem.tierKey === 'plus');
       var price = DESK_LATE_OUT[0].price;
       db.add('charges', { id: id('C'), at: now, stay: s.id, room: s.room, item: DESK_LATE_ITEM, qty: 1, price: perk ? 0 : price, total: perk ? 0 : price, free: perk ? 'Yes' : 'No',
-        note: 'Till ' + DESK_LATE_OUT[0].label + ' · added automatically, not checked out by 9:00 AM' + (perk ? ' · free for ' + mem.tier + ' member' : ''), by: DESK_LATE_BY, removed: '' });
+        note: 'Till ' + DESK_LATE_OUT[0].label + ' · added automatically, not checked out by 9:30 AM' + (perk ? ' · free for ' + mem.tier + ' member' : ''), by: DESK_LATE_BY, removed: '' });
       recompute(s);
       out.push({ room: s.room, stay: s.id, price: perk ? 0 : price });
     });
