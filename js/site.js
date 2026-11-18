@@ -63,7 +63,10 @@ try{
     (function frame(t){if(id!==SID)return;var k=(t-t0)/dur,dt=Math.min(50,t-last)/16.7;last=t;if(k>1){x.clearRect(0,0,W,H);return;}
       var fa=k<.14?k/.14:k>.8?(1-k)/.2:1;x.clearRect(0,0,W,H);x.globalAlpha=fa;
       var g=x.createLinearGradient(0,0,0,H);(o.sky||[]).forEach(function(q){g.addColorStop(q[0],q[1]);});if(o.sky){x.fillStyle=g;x.fillRect(0,0,W,H);}
-      if(o.sun){var sx=o.sun.x*W,sy=o.sun.y*H,hg=x.createRadialGradient(sx,sy,0,sx,sy,Math.max(W,H)*.6);hg.addColorStop(0,'rgba(255,246,222,.55)');hg.addColorStop(.25,'rgba(255,226,170,.18)');hg.addColorStop(1,'rgba(255,220,170,0)');x.fillStyle=hg;x.fillRect(0,0,W,H);}
+      if(o.sun){var sx=o.sun.x*W,sy=(o.sun.y+.02*Math.sin(k*Math.PI))*H,sr=Math.min(W,H)*.055*(o.sun.big?1.15:1),M=Math.max(W,H);
+        var wash=x.createLinearGradient(sx,sy,W*.1,H*.9);wash.addColorStop(0,'rgba(255,214,120,'+(o.sun.big?.32:.2)+')');wash.addColorStop(.55,'rgba(255,200,110,.06)');wash.addColorStop(1,'rgba(255,200,110,0)');x.fillStyle=wash;x.fillRect(0,0,W,H);
+        var hg=x.createRadialGradient(sx,sy,0,sx,sy,M*.55);hg.addColorStop(0,'rgba(255,240,200,.7)');hg.addColorStop(.12,'rgba(255,214,130,.35)');hg.addColorStop(.4,'rgba(255,200,120,.1)');hg.addColorStop(1,'rgba(255,200,120,0)');x.fillStyle=hg;x.fillRect(0,0,W,H);
+        var dg=x.createRadialGradient(sx,sy,0,sx,sy,sr*1.6);dg.addColorStop(0,'rgba(255,253,244,1)');dg.addColorStop(.55,'rgba(255,238,190,.98)');dg.addColorStop(.75,'rgba(255,214,130,.55)');dg.addColorStop(1,'rgba(255,200,110,0)');x.fillStyle=dg;x.beginPath();x.arc(sx,sy,sr*1.6,0,7);x.fill();}
       if(deck){if('filter' in x)x.filter='blur('+Math.round(1*dpr)+'px)';x.drawImage(deck,-W*.06+k*W*.05,-H*.02,W*1.12,H*1.02);if('filter' in x)x.filter='none';}
       if(drops.length){x.lineCap='round';drops.forEach(function(d){x.strokeStyle='rgba(205,220,240,'+(d.a*fa).toFixed(3)+')';x.lineWidth=dpr*1.1;x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d.x-d.l*.15,d.y+d.l);x.stroke();
           d.y+=d.v*dt;d.x-=d.v*.15*dt;if(d.y>H-4*dpr){if(Math.random()<.22)spl.push({x:d.x,y:H-3*dpr-Math.random()*H*.03,r:1,a:.28});d.y=-d.l-Math.random()*H*.2;d.x=Math.random()*W*1.1;}});
@@ -76,8 +79,8 @@ try{
   var BLUE=[[0,'rgba(92,150,220,.42)'],[.5,'rgba(130,180,235,.16)'],[.85,'rgba(170,210,250,0)']],
       GREY=[[0,'rgba(70,80,100,.4)'],[.45,'rgba(60,70,90,.12)'],[1,'rgba(60,70,90,0)']],
       STORM=[[0,'rgba(14,18,30,.62)'],[.45,'rgba(24,30,46,.3)'],[1,'rgba(24,30,46,.18)']];
-  function sunny(){scene({sky:BLUE,sun:{x:.82,y:-.05},cover:.34,tone:'bright',dur:6000});}
-  function partly(){scene({sky:BLUE,sun:{x:.82,y:-.05},cover:.55,tone:'bright',dur:6500});}
+  function sunny(){scene({sky:BLUE,sun:{x:.84,y:.13,big:1},cover:.26,tone:'bright',dur:6000});}
+  function partly(){scene({sky:BLUE,sun:{x:.84,y:.13},cover:.48,tone:'bright',dur:6500});}
   function cloudy(){scene({sky:GREY,cover:.78,tone:'grey',dur:6500});}
   function rain(){scene({sky:STORM,cover:.92,tone:'dark',rain:1,dur:5500});}
   function thunder(){scene({sky:STORM,cover:.97,tone:'dark',rain:2,storm:1,dur:5800});}
@@ -150,9 +153,106 @@ try{
 }catch(e){console.error("[nikadi part 1]",e);}
 /* part 2 */
 try{
-function nkPh(v){var s=String(v||'').trim(),d=s.replace(/\D/g,'');if(!d)return '';var i=/^(\+|00)/.test(s);if(i&&s.charAt(0)==='0')d=d.slice(2);if(i){if(d.indexOf('91')===0&&/^[6-9]\d{9}$/.test(d.slice(2)))return d.slice(2);return d.length>=8&&d.length<=15&&d.indexOf('91')!==0?d:'';}if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);if(d.length===11&&d.charAt(0)==='0')d=d.slice(1);if(/^[6-9]\d{9}$/.test(d))return d;return d.length>=11&&d.length<=15&&d.charAt(0)!=='0'&&d.indexOf('91')!==0?d:'';}
+
+/* ---- explore the moon: tap the moon in the night sky. A real-looking moon (maria and craters on the near side, roughly where they are),
+   lit as it is tonight; drag to turn, pinch or scroll to zoom ---- */
+(function(){
+  var hit=document.getElementById('moonHit'),box=document.getElementById('moonX');if(!hit||!box)return;
+  var cv=document.getElementById('mxC'),st=document.getElementById('mxS'),x=cv.getContext('2d');
+  var TW=1024,TH=512,ALB=null,HGT=null,R2=Math.PI/180;
+  function phase(){var syn=29.530588853,ref=Date.UTC(2000,0,6,18,14)/864e5,now=Date.now()/864e5;return ((now-ref)%syn+syn)%syn/syn;}
+  /* --- the moon's surface, made once --- */
+  function build(){var A=new Float32Array(TW*TH),H=new Float32Array(TW*TH),G=128,gr=[],i,j;for(i=0;i<(G+1)*(G+1);i++)gr.push(Math.random());
+    function vn(a,b){a=((a%G)+G)%G;b=Math.max(0,Math.min(G-1.001,b));var xi=Math.floor(a),yi=Math.floor(b),xf=a-xi,yf=b-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),x2=(xi+1)%G;
+      var p=gr[yi*(G+1)+xi],q=gr[yi*(G+1)+x2],r=gr[(yi+1)*(G+1)+xi],s=gr[(yi+1)*(G+1)+x2];return p+(q-p)*u+(r-p)*v+(p-q-r+s)*u*v;}
+    function fbm(a,b){var t=0,am=.5,f=1;for(var o=0;o<5;o++){t+=am*vn(a*f,b*f);f*=2;am*=.5;}return t;}
+    /* maria: lat, lon, radius (degrees), darkness */
+    var MA=[[18,-57,22,.55],[32.8,-15.6,10,.62],[28,17.5,6.5,.6],[8.5,31.4,8,.58],[17,59,5,.62],[-7.8,51.3,6.5,.55],[-21,-16.6,7,.5],[-24.4,-38.6,4,.55],[-15.2,35.5,3.2,.5],[56,1,9,.45],[13.3,3.6,3,.45],[7.5,-30.9,4.5,.45],[-2,-20,6,.42]];
+    function gdist(la1,lo1,la2,lo2){var d=Math.sin(la1*R2)*Math.sin(la2*R2)+Math.cos(la1*R2)*Math.cos(la2*R2)*Math.cos((lo1-lo2)*R2);return Math.acos(Math.max(-1,Math.min(1,d)))/R2;}
+    for(j=0;j<TH;j++){var lat=90-(j+.5)/TH*180;for(i=0;i<TW;i++){var lon=(i+.5)/TW*360-180,k=j*TW+i,n=fbm(i/TW*G*.5,j/TH*G*.25);
+      var a=.72+(n-.5)*.26,m=0;
+      if(Math.abs(lon)<110)for(var q=0;q<MA.length;q++){var M=MA[q],d=gdist(lat,lon,M[0],M[1]),edge=M[2]*(1+(fbm(i/TW*G*1.5+q*7,j/TH*G*.75)-.5)*.6);if(d<edge*1.25){var t=Math.max(0,Math.min(1,(edge*1.25-d)/(edge*.45)));m=Math.max(m,t*M[3]);}}
+      A[k]=a*(1-m*.72)+(m?(n-.5)*.04:0);H[k]=(n-.5)*.03*(1-m);}}
+    /* craters: many small, few big; fewer on the smooth maria */
+    function crater(la,lo,rd,depth,bright){var cl=Math.max(.15,Math.cos(la*R2)),rx=rd/360*TW/cl,ry=rd/180*TH,ci=(lo+180)/360*TW,cj=(90-la)/180*TH;
+      for(var y=Math.floor(cj-ry*1.6);y<=cj+ry*1.6;y++){if(y<0||y>=TH)continue;for(var xx=Math.floor(ci-rx*1.6);xx<=ci+rx*1.6;xx++){var X=((xx%TW)+TW)%TW,dx=(xx-ci)/rx,dy=(y-cj)/ry,r=Math.sqrt(dx*dx+dy*dy);if(r>1.6)continue;var k=y*TW+X;
+        if(r<1){H[k]+=depth*(Math.pow(r,3)-1)*.7;A[k]*=1-.04*(1-r);}else{var rim=Math.exp(-Math.pow((r-1)/.35,2));H[k]+=depth*.32*rim;A[k]=Math.min(1,A[k]*(1+.04*rim*bright));}}}}
+    for(i=0;i<3200;i++){var la=Math.asin(Math.random()*2-1)/R2,lo=Math.random()*360-180,rd=.22+Math.pow(Math.random(),4.5)*5,kk=Math.floor((90-la)/180*TH)*TW+Math.floor((lo+180)/360*TW);
+      if(A[kk]<.5&&Math.random()<.85)continue;crater(la,lo,rd,.02+rd*.007,1);}
+    crater(-43.3,-11.4,1.6,.12,3);crater(9.6,-20,1.7,.12,3);crater(8.1,-38,1.2,.1,3);crater(-9,-1.9,2.6,.1,1);crater(-58.4,-14.4,2.5,.09,1);
+    /* Tycho's bright rays */
+    for(j=0;j<TH;j++){var la2=90-(j+.5)/TH*180;for(i=0;i<TW;i++){var lo2=(i+.5)/TW*360-180;if(Math.abs(lo2)>95)continue;var d2=gdist(la2,lo2,-43.3,-11.4);if(d2>55||d2<1.5)continue;
+      var br=Math.atan2(lo2+11.4,la2+43.3),ray=Math.pow(Math.max(0,Math.sin(br*23+Math.sin(br*7)*2)),18)*(1-d2/55);A[j*TW+i]=Math.min(1,A[j*TW+i]+ray*.1);}}
+    ALB=A;HGT=H;}
+  /* --- view --- */
+  var yaw=0,pitch=0,zoom=1,full=false,labels=true,dirty=true,raf=0,open=false,idle=0,S=0,dpr=1;
+  var LAB=[['Sea of Tranquility',8.5,31.4],['Apollo 11 landed here',.67,23.47],['Sea of Rains',32.8,-15.6],['Ocean of Storms',18,-57],['Sea of Serenity',28,17.5],['Sea of Crises',17,59],['Tycho crater',-43.3,-11.4],['Copernicus crater',9.6,-20]];
+  var FACTS=['The moon is 3,474 km across, about a quarter the size of the Earth.','We always see the same side of the moon. The far side was first seen in 1959.','In the Vedas the moon is Chandra, and also Soma.','Gaura Purnima, the appearance day of Sri Chaitanya Mahaprabhu, falls on the full moon of Phalguna.','Moonlight takes about 1.3 seconds to reach you.','The dark patches are old lava plains. Early astronomers thought they were seas, so they are called maria.','Rasa Purnima and Sharad Purnima are full moon nights celebrated in Mayapur.','The bright rays from Tycho crater stretch more than 1,500 km.'];
+  var fi=Math.floor(Math.random()*FACTS.length);
+  function size(){dpr=Math.min(1.5,window.devicePixelRatio||1);var w=innerWidth,h=innerHeight;cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+    S=Math.min(w,h)*(w<640?.36:.33)*dpr;st.width=Math.round(w*dpr);st.height=Math.round(h*dpr);var sx=st.getContext('2d');sx.fillStyle='#02040b';sx.fillRect(0,0,st.width,st.height);
+    for(var i=0;i<w*h/1800;i++){var r=Math.random();sx.fillStyle='rgba(235,240,255,'+(.2+Math.random()*.6).toFixed(2)+')';sx.beginPath();sx.arc(Math.random()*st.width,Math.random()*st.height,(r<.93?.5:1.1)*dpr,0,7);sx.fill();}dirty=true;}
+  function light(){if(full)return [0,0,1];var t=2*Math.PI*phase();return [Math.sin(t),0,-Math.cos(t)];}
+  function render(){var W=cv.width,Hh=cv.height,cx=W/2,cy=Hh*(innerWidth<640?.56:.5),R=S*zoom,im=x.createImageData(W,Hh),D=im.data,L=light();
+    var cyw=Math.cos(yaw),syw=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+    /* light in moon coordinates */
+    var y0=Math.max(0,Math.floor(cy-R)),y1=Math.min(Hh,Math.ceil(cy+R)),x0=Math.max(0,Math.floor(cx-R)),x1=Math.min(W,Math.ceil(cx+R));
+    for(var py=y0;py<y1;py++){var vy=(cy-py)/R;for(var px=x0;px<x1;px++){var vx=(px-cx)/R,r2=vx*vx+vy*vy;if(r2>1)continue;var vz=Math.sqrt(1-r2);
+      /* view -> body: undo pitch (x axis), then yaw (y axis) */
+      var by=vy*cp-vz*sp,bz1=vy*sp+vz*cp,bx=vx*cyw-bz1*syw,bz=vx*syw+bz1*cyw;
+      var lat=Math.asin(Math.max(-1,Math.min(1,by))),lon=Math.atan2(bx,bz),u=(lon/(2*Math.PI)+.5)*TW,v=(.5-lat/Math.PI)*TH;
+      var ui=Math.min(TW-1,u|0),vi=Math.min(TH-2,Math.max(1,v|0)),k=vi*TW+ui,a=ALB[k];
+      var dhu=HGT[vi*TW+((ui+1)%TW)]-HGT[vi*TW+((ui-1+TW)%TW)],dhv=HGT[(vi-1)*TW+ui]-HGT[(vi+1)*TW+ui];
+      /* surface tangents in view space for the bump */
+      var nd=vx*L[0]+vy*L[1]+vz*L[2],b=0;
+      /* east direction ~ perpendicular to normal in the horizontal plane */
+      var hx=vz,hz=-vx,hl=Math.sqrt(hx*hx+hz*hz)||1;hx/=hl;hz/=hl;var nx=-vx*vy,ny=1-vy*vy,nz=-vz*vy,nl=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;nx/=nl;ny/=nl;nz/=nl;
+      b=-(dhu*(hx*L[0]+hz*L[2])+dhv*(nx*L[0]+ny*L[1]+nz*L[2]))*5;
+      var sh=Math.max(0,nd+b*Math.min(1,Math.max(0,nd+.25)*2)),lit=sh>0?Math.pow(sh,.85):0,earth=.035*(1-Math.max(0,nd)),limb=.9+.1*vz;
+      var c=Math.min(1,(a*lit*limb*1.18+a*earth));var o=(py*W+px)*4;D[o]=255*Math.min(1,c*1.0);D[o+1]=255*Math.min(1,c*.985);D[o+2]=255*Math.min(1,c*.95);D[o+3]=255;}}
+    x.clearRect(0,0,W,Hh);x.putImageData(im,0,0);
+    /* soft glow */
+    var g=x.createRadialGradient(cx,cy,R*.98,cx,cy,R*1.25);g.addColorStop(0,'rgba(220,228,255,.12)');g.addColorStop(1,'rgba(220,228,255,0)');x.globalCompositeOperation='destination-over';x.fillStyle=g;x.fillRect(0,0,W,Hh);x.globalCompositeOperation='source-over';
+    if(labels){x.font=(12*dpr)+'px Inter,system-ui,sans-serif';x.textAlign='left';LAB.forEach(function(l){var la=l[1]*R2,lo=l[2]*R2,bx=Math.cos(la)*Math.sin(lo),by=Math.sin(la),bz=Math.cos(la)*Math.cos(lo);
+      var vx2=bx*cyw+bz*syw,bz2=-bx*syw+bz*cyw,vy2=by*cp+bz2*sp,vz2=-by*sp+bz2*cp;if(vz2<.2)return;var X=cx+vx2*R,Y=cy-vy2*R;
+      x.globalAlpha=Math.min(1,(vz2-.2)*3);x.fillStyle='#f4d797';x.beginPath();x.arc(X,Y,3*dpr,0,7);x.fill();x.strokeStyle='rgba(244,215,151,.6)';x.lineWidth=dpr;x.beginPath();x.moveTo(X+4*dpr,Y-4*dpr);x.lineTo(X+18*dpr,Y-16*dpr);x.stroke();
+      x.fillStyle='rgba(8,10,20,.6)';var tw=x.measureText(l[0]).width;x.fillRect(X+18*dpr,Y-30*dpr,tw+12*dpr,20*dpr);x.fillStyle='#f4e7c4';x.fillText(l[0],X+24*dpr,Y-16*dpr);});x.globalAlpha=1;}}
+  function loop(){if(!open)return;idle++;if(idle>90&&!drag){yaw+=.0025;dirty=true;}if(dirty){dirty=false;render();}raf=requestAnimationFrame(loop);}
+  function info(){var p=phase(),ill=Math.round((1-Math.cos(2*Math.PI*p))/2*100),age=p*29.53;
+    var nm=p<.03||p>.97?'New moon':p<.22?'Waxing crescent':p<.28?'First quarter':p<.47?'Waxing gibbous':p<.53?'Full moon':p<.72?'Waning gibbous':p<.78?'Last quarter':'Waning crescent';
+    function when(f){var d=new Date(Date.now()+((f-p+1)%1)*29.530588853*864e5+330*60000);return d.getUTCDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];}
+    document.getElementById('mxPh').textContent=nkT(nm);
+    document.getElementById('mxM').textContent=ill+'% lit · '+age.toFixed(1)+' days old · next Purnima (full moon) '+when(.5)+' · next Amavasya (new moon) '+when(0);
+    document.getElementById('mxFact').textContent=nkT(FACTS[fi]);}
+  function show(){if(!ALB){document.getElementById('mxPh').textContent=nkT('Loading the moon…');}box.hidden=false;document.documentElement.style.overflow='hidden';open=true;
+    setTimeout(function(){if(!ALB)build();size();info();yaw=0;pitch=0;zoom=1;idle=0;dirty=true;loop();document.getElementById('mxExit').focus();},30);}
+  function hide(){open=false;cancelAnimationFrame(raf);box.hidden=true;document.documentElement.style.overflow='';hit.focus();}
+  hit.addEventListener('click',show);
+  document.getElementById('mxExit').addEventListener('click',hide);
+  document.getElementById('mxHome').addEventListener('click',function(e){if(/^\/(index\.html)?$/.test(location.pathname)){e.preventDefault();hide();scrollTo({top:0,behavior:'smooth'});}});
+  document.addEventListener('keydown',function(e){if(open&&e.key==='Escape')hide();});
+  document.getElementById('mxLight').addEventListener('click',function(){full=!full;this.setAttribute('aria-pressed',full);this.textContent=nkT(full?'Tonight’s light':'Full light');dirty=true;});
+  document.getElementById('mxLab').addEventListener('click',function(){labels=!labels;this.setAttribute('aria-pressed',labels);dirty=true;});
+  document.getElementById('mxFactB').addEventListener('click',function(){fi=(fi+1)%FACTS.length;info();});
+  function zm(f){zoom=Math.max(.7,Math.min(4,zoom*f));dirty=true;idle=0;}
+  document.getElementById('mxIn').addEventListener('click',function(){zm(1.25);});document.getElementById('mxOut').addEventListener('click',function(){zm(.8);});
+  cv.addEventListener('wheel',function(e){e.preventDefault();zm(e.deltaY<0?1.1:.91);},{passive:false});
+  var pts={},drag=false,lx=0,ly=0,pd=0;
+  cv.addEventListener('pointerdown',function(e){cv.setPointerCapture(e.pointerId);pts[e.pointerId]=[e.clientX,e.clientY];drag=true;lx=e.clientX;ly=e.clientY;idle=0;var k=Object.keys(pts);if(k.length===2){var a=pts[k[0]],b=pts[k[1]];pd=Math.hypot(a[0]-b[0],a[1]-b[1]);}});
+  cv.addEventListener('pointermove',function(e){if(!pts[e.pointerId])return;pts[e.pointerId]=[e.clientX,e.clientY];var k=Object.keys(pts);idle=0;
+    if(k.length===2){var a=pts[k[0]],b=pts[k[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)zm(d/pd);pd=d;return;}
+    var dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw-=dx*.006/zoom;pitch=Math.max(-1.3,Math.min(1.3,pitch+dy*.006/zoom));dirty=true;});
+  function up(e){delete pts[e.pointerId];if(!Object.keys(pts).length)drag=false;pd=0;}
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  addEventListener('resize',function(){if(open)size();});
+})();
+
 }catch(e){console.error("[nikadi part 2]",e);}
 /* part 3 */
+try{
+function nkPh(v){var s=String(v||'').trim(),d=s.replace(/\D/g,'');if(!d)return '';var i=/^(\+|00)/.test(s);if(i&&s.charAt(0)==='0')d=d.slice(2);if(i){if(d.indexOf('91')===0&&/^[6-9]\d{9}$/.test(d.slice(2)))return d.slice(2);return d.length>=8&&d.length<=15&&d.indexOf('91')!==0?d:'';}if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);if(d.length===11&&d.charAt(0)==='0')d=d.slice(1);if(/^[6-9]\d{9}$/.test(d))return d;return d.length>=11&&d.length<=15&&d.charAt(0)!=='0'&&d.indexOf('91')!==0?d:'';}
+}catch(e){console.error("[nikadi part 3]",e);}
+/* part 4 */
 try{
 
 /* ---- Offer prices (from pricing.js) + member sign-in across the whole website ---- */
@@ -245,8 +345,8 @@ try{
   $('sdLogout').addEventListener('click',function(){var t=store('nk_token');store('nk_token',null);setMember(null);close();});
 })();
 
-}catch(e){console.error("[nikadi part 3]",e);}
-/* part 4 */
+}catch(e){console.error("[nikadi part 4]",e);}
+/* part 5 */
 try{
 
 /* ---- Pay online (Razorpay). Shows only after the Razorpay keys are added in the Apps Script settings. ---- */
@@ -290,8 +390,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 4]",e);}
-/* part 5 */
+}catch(e){console.error("[nikadi part 5]",e);}
+/* part 6 */
 try{
 
 // ---- Settings: update these to change payment details ----
@@ -353,8 +453,8 @@ var WA = "917501101137";
   }
 })();
 
-}catch(e){console.error("[nikadi part 5]",e);}
-/* part 6 */
+}catch(e){console.error("[nikadi part 6]",e);}
+/* part 7 */
 try{
 
 /* ---- Online forms (Advance Booking + Guest Registration) ---- */
@@ -505,8 +605,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 6]",e);}
-/* part 7 */
+}catch(e){console.error("[nikadi part 7]",e);}
+/* part 8 */
 try{
 
 /* ---- Photo lightbox ---- */
@@ -534,8 +634,8 @@ try{
   lb.addEventListener('touchend',function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)show(i+(dx<0?1:-1));sx=null;});
 })();
 
-}catch(e){console.error("[nikadi part 7]",e);}
-/* part 8 */
+}catch(e){console.error("[nikadi part 8]",e);}
+/* part 9 */
 try{
 
 /* ---- Hero: moving photo slideshow, new photo every 5 seconds ---- */
@@ -573,8 +673,8 @@ try{
   load(1); start();
 })();
 
-}catch(e){console.error("[nikadi part 8]",e);}
-/* part 9 */
+}catch(e){console.error("[nikadi part 9]",e);}
+/* part 10 */
 try{
 
 /* ---- Membership pop-up: once, after the visitor starts scrolling ---- */
@@ -601,8 +701,8 @@ try{
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!pop.hidden)close(3);});
 })();
 
-}catch(e){console.error("[nikadi part 9]",e);}
-/* part 10 */
+}catch(e){console.error("[nikadi part 10]",e);}
+/* part 11 */
 try{
 
 /* ---- Room details gallery ---- */
@@ -630,8 +730,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 10]",e);}
-/* part 11 */
+}catch(e){console.error("[nikadi part 11]",e);}
+/* part 12 */
 try{
 
 /* ---- v3: reviews carousel, live gadgets, phone dock + menu, quick message, share, scroll reveal ---- */
@@ -857,8 +957,8 @@ try{
 })();
 
 
-}catch(e){console.error("[nikadi part 11]",e);}
-/* part 12 */
+}catch(e){console.error("[nikadi part 12]",e);}
+/* part 13 */
 try{
 
 /* ---- v4: temple program (live next arati) + Instagram darshan embeds ---- */
@@ -911,8 +1011,8 @@ try{
 })();
 
 
-}catch(e){console.error("[nikadi part 12]",e);}
-/* part 13 */
+}catch(e){console.error("[nikadi part 13]",e);}
+/* part 14 */
 try{
 
 /* ---- v5: membership deck + Instagram loader for all rows ---- */
@@ -941,8 +1041,8 @@ try{
 })();
 
 
-}catch(e){console.error("[nikadi part 13]",e);}
-/* part 14 */
+}catch(e){console.error("[nikadi part 14]",e);}
+/* part 15 */
 try{
 
 (function(){var r=document.getElementById('qrail');if(!r)return;var t=r.querySelector('.qr-toggle');
@@ -950,8 +1050,8 @@ t.addEventListener('click',function(){var o=r.classList.toggle('open');t.setAttr
 r.addEventListener('click',function(e){if(e.target.closest('.qr'))r.classList.remove('open');});
 document.addEventListener('click',function(e){if(!e.target.closest('#qrail'))r.classList.remove('open');});})();
 
-}catch(e){console.error("[nikadi part 14]",e);}
-/* part 15 */
+}catch(e){console.error("[nikadi part 15]",e);}
+/* part 16 */
 try{
 
 /* transport: tabs + live next trains */
@@ -981,8 +1081,8 @@ try{
   upd(); setInterval(upd,30000);
 })();
 
-}catch(e){console.error("[nikadi part 15]",e);}
-/* part 16 */
+}catch(e){console.error("[nikadi part 16]",e);}
+/* part 17 */
 try{
 
 (function(){
@@ -1009,8 +1109,8 @@ try{
   document.querySelectorAll('[data-tp-go]').forEach(function(a){a.addEventListener('click',function(){var b=document.querySelector('#transport [data-tp="'+a.getAttribute('data-tp-go')+'"]');if(b)b.click();else try{sessionStorage.setItem('nk_tp',a.getAttribute('data-tp-go'));}catch(e){}});});
 })();
 
-}catch(e){console.error("[nikadi part 16]",e);}
-/* part 17 */
+}catch(e){console.error("[nikadi part 17]",e);}
+/* part 18 */
 try{
 
 /* train details: tap a train time (exact NTES timetable) */
@@ -1041,8 +1141,8 @@ window.NK_TRAINS={"13103":{"d":"Daily","s":[["Sealdah","18:20"],["Ranaghat Jn","
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dlg.hidden)close();});
 })();
 
-}catch(e){console.error("[nikadi part 17]",e);}
-/* part 18 */
+}catch(e){console.error("[nikadi part 18]",e);}
+/* part 19 */
 try{
 
 (function(){var f=document.getElementById('gtForm');if(!f)return;
@@ -1051,8 +1151,8 @@ f.addEventListener('submit',function(e){e.preventDefault();var x=f.elements,L=['
 if(x.fr.value.trim())L.push('From: '+x.fr.value.trim());if(x.to.value.trim())L.push('To: '+x.to.value.trim());if(x.dt.value)L.push('Date: '+x.dt.value);L.push('Travellers: '+x.px.value);if(x.m.value.trim())L.push(x.m.value.trim());
 window.open('https://wa.me/919933864574?text='+encodeURIComponent(L.join('\n')),'_blank','noopener');});})();
 
-}catch(e){console.error("[nikadi part 18]",e);}
-/* part 19 */
+}catch(e){console.error("[nikadi part 19]",e);}
+/* part 20 */
 try{
 
 (function(){var v=document.getElementById('mvidV'),b=document.getElementById('mvidS');if(!v||!b)return;
@@ -1063,8 +1163,8 @@ document.addEventListener('visibilitychange',function(){if(document.hidden)v.pau
 b.addEventListener('click',function(){var on=v.muted;v.muted=!on;if(on){v.volume=1;play();}b.setAttribute('aria-pressed',on?'true':'false');b.setAttribute('aria-label',on?'Turn sound off':'Turn sound on');b.querySelector('span').textContent=on?'Sound off':'Sound on';});
 })();
 
-}catch(e){console.error("[nikadi part 19]",e);}
-/* part 20 */
+}catch(e){console.error("[nikadi part 20]",e);}
+/* part 21 */
 try{
 
 (function(){var row=document.getElementById('meetIg'),nav=document.getElementById('meetNav');if(!row||!nav)return;
@@ -1078,8 +1178,8 @@ var t;row.addEventListener('scroll',function(){clearTimeout(t);t=setTimeout(mark
 window.addEventListener('resize',mark);mark();
 })();
 
-}catch(e){console.error("[nikadi part 20]",e);}
-/* part 21 */
+}catch(e){console.error("[nikadi part 21]",e);}
+/* part 22 */
 try{
 
 /* phones: Instagram's frames swallow sideways swipes, so a clear layer on top lets the row scroll; a tap still opens the post */
@@ -1087,8 +1187,8 @@ try{
 row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-instgrm-permalink]'),f=c.querySelector('iframe'),h=q?q.getAttribute('data-instgrm-permalink'):f?f.src.replace(/embed.*$/,''):'';if(!h)return;var t=document.createElement('a');t.className='igc-tap';t.href=h.split('?')[0];t.target='_blank';t.rel='noopener';t.setAttribute('aria-label','Open this post on Instagram');c.appendChild(t);});
 })();
 
-}catch(e){console.error("[nikadi part 21]",e);}
-/* part 22 */
+}catch(e){console.error("[nikadi part 22]",e);}
+/* part 23 */
 try{
 
 /* ---- v6: live availability calendar (free / few / full from the front desk, prices from pricing.js) ---- */
@@ -1183,8 +1283,8 @@ try{
   if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();load();setInterval(function(){if(!document.hidden)load();},5*60000);}},{rootMargin:'400px 0px'});io.observe(box);}else load();
 })();
 
-}catch(e){console.error("[nikadi part 22]",e);}
-/* part 23 */
+}catch(e){console.error("[nikadi part 23]",e);}
+/* part 24 */
 try{
 
 /* ---- festival calendar: temple festivals (gold), Indian public holidays (saffron), international days (pale green).
@@ -1267,8 +1367,8 @@ try{
   document.addEventListener('nk:lang',function(){show();drawNext();});
 })();
 
-}catch(e){console.error("[nikadi part 23]",e);}
-/* part 24 */
+}catch(e){console.error("[nikadi part 24]",e);}
+/* part 25 */
 try{
 
 /* ---- v7: festival calendar countdown, staff wall and guest wall (from /data/*.json) ---- */
@@ -1294,8 +1394,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 24]",e);}
-/* part 25 */
+}catch(e){console.error("[nikadi part 25]",e);}
+/* part 26 */
 try{
 
 /* ---- page banner: gentle room photo slideshow ---- */
@@ -1303,8 +1403,8 @@ try{
 if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 setInterval(function(){if(document.hidden)return;im[i].classList.remove('on');i=(i+1)%im.length;im[i].classList.add('on');},4500);})();
 
-}catch(e){console.error("[nikadi part 25]",e);}
-/* part 26 */
+}catch(e){console.error("[nikadi part 26]",e);}
+/* part 27 */
 try{
 
 /* ---- language switch: English, বাংলা, हिन्दी, Русский, 中文, Español ----
@@ -1381,4 +1481,4 @@ try{
   fetch('/data/i18n/'+cur+'.json?v=3').then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(D){try{apply(D);}catch(e){console.error(e);}done();try{document.dispatchEvent(new Event('nk:lang'));}catch(e){}}).catch(done);
 })();
 
-}catch(e){console.error("[nikadi part 26]",e);}
+}catch(e){console.error("[nikadi part 27]",e);}

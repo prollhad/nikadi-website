@@ -1346,6 +1346,25 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
 .ov-t{display:grid;gap:3px;min-width:0}.ov-t b{font-family:var(--display);font-size:1.12rem;font-weight:500;line-height:1.2}.ov-t small{font-size:.78rem;color:var(--muted);line-height:1.35}
 .ov-go{color:var(--gold);font-size:1.3rem;transition:transform .25s}.ov-i:hover .ov-go{transform:translateX(3px)}
 @media (max-width:760px){.ov-i{grid-template-columns:minmax(0,1fr);align-content:start;gap:10px;padding:14px}.ov-go{display:none}.ov-ic{width:40px;height:40px}.ov-t b{font-size:1rem}.ov-t small{font-size:.72rem}}
+/* explore the moon */
+.moon-hit{display:none;position:fixed;top:118px;right:6vw;width:clamp(54px,7vw,96px);aspect-ratio:1;border:0;border-radius:50%;background:transparent;cursor:pointer;z-index:14;padding:0}
+html.sky-night .moon-hit,html.sky-dusk .moon-hit{display:block}
+.moon-hit:hover,.moon-hit:focus-visible{box-shadow:0 0 0 2px rgba(240,236,220,.35),0 0 40px rgba(230,236,255,.35)}
+.mx{position:fixed;inset:0;z-index:120;background:#02040b;color:#eef0f6;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.mx-stars,.mx-c{position:absolute;inset:0;width:100%;height:100%}
+.mx-c{cursor:grab}.mx-c:active{cursor:grabbing}
+.mx-top{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:max(14px,env(safe-area-inset-left,0px));right:max(14px,env(safe-area-inset-right,0px));display:flex;justify-content:space-between;gap:10px;z-index:2}
+.mx-b{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:.82rem;font-weight:700;letter-spacing:.04em;color:#f4e7c4;text-decoration:none;background:rgba(14,18,34,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(217,173,85,.45);border-radius:999px;padding:9px 16px;cursor:pointer}
+.mx-b svg{width:16px;height:16px}.mx-b:hover{background:rgba(217,173,85,.2)}.mx-b[aria-pressed=true]{background:rgba(217,173,85,.28);border-color:#e9c97a}
+.mx-z{width:40px;height:40px;justify-content:center;padding:0;font-size:1.2rem}
+.mx-info{position:absolute;left:max(18px,env(safe-area-inset-left,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));max-width:340px;z-index:2;pointer-events:none}
+.mx-info h3{font-family:var(--display);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:500;margin:4px 0}
+.mx-m{color:#b9bfd0;font-size:.86rem;line-height:1.5}
+.mx-names{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.mx-names span{font-size:.74rem;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);color:#dfe3ee}
+.mx-fact{margin-top:10px;font-size:.82rem;color:#f4e7c4;min-height:2.6em}
+.mx-ctl{position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;flex-wrap:wrap;gap:8px;z-index:2;padding:0 12px}
+.mx-hint{position:absolute;top:calc(66px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;font-size:.76rem;color:#9aa1b5;z-index:2;pointer-events:none;transition:opacity 1s}
+@media (max-width:640px){.mx-info{bottom:auto;top:calc(92px + env(safe-area-inset-top,0px));max-width:none;right:16px}.mx-info h3{font-size:1.4rem}.mx-names{display:none}.mx-hint{top:auto;bottom:calc(70px + env(safe-area-inset-bottom,0px))}}
 /* quick buttons on the right side */
 .fab{display:none!important}
 .qrail{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:17;display:flex;flex-direction:column-reverse;align-items:flex-end;gap:10px}
@@ -3208,6 +3227,30 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     <div class="car-acts"><a class="btn btn-gold" id="trBook" target="_blank" rel="noopener" hidden>Book this train with us</a><a class="btn btn-gold" id="trFull" target="_blank" rel="noopener">Live train status</a><a class="btn btn-line" href="https://enquiry.indianrail.gov.in/mntes/" target="_blank" rel="noopener">NTES timetable</a></div>
   </div>
 </div>
+<button class="moon-hit" id="moonHit" type="button" aria-label="Explore tonight's moon"></button>
+<div class="mx" id="moonX" hidden role="dialog" aria-modal="true" aria-label="Explore the moon">
+  <canvas class="mx-stars" id="mxS" aria-hidden="true"></canvas>
+  <canvas class="mx-c" id="mxC" aria-label="The moon. Drag to turn it, scroll or pinch to zoom."></canvas>
+  <div class="mx-top">
+    <button type="button" class="mx-b" id="mxExit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Exit</span></button>
+    <a class="mx-b" href="/" id="mxHome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"/></svg><span>Back to home</span></a>
+  </div>
+  <div class="mx-info">
+    <p class="kicker">Tonight's moon over Mayapur</p>
+    <h3 id="mxPh">Moon</h3>
+    <p class="mx-m" id="mxM"></p>
+    <p class="mx-names"><span>Chandra</span><span>Soma</span><span>চাঁদ</span><span>चाँद</span><span>Luna</span><span>Selene</span></p>
+    <p class="mx-fact" id="mxFact"></p>
+  </div>
+  <div class="mx-ctl">
+    <button type="button" class="mx-b" id="mxLight" aria-pressed="false">Full light</button>
+    <button type="button" class="mx-b" id="mxLab" aria-pressed="true">Names</button>
+    <button type="button" class="mx-b" id="mxFactB">Fun fact</button>
+    <button type="button" class="mx-b mx-z" id="mxOut" aria-label="Zoom out">−</button>
+    <button type="button" class="mx-b mx-z" id="mxIn" aria-label="Zoom in">+</button>
+  </div>
+  <p class="mx-hint">Drag to turn the moon · scroll or pinch to zoom in</p>
+</div>
 <nav class="qrail" id="qrail" aria-label="Quick buttons">
   <button class="qr-toggle" type="button" aria-expanded="false" aria-label="Quick menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="qt-l">Quick menu</span></button>
   <div class="qr-list">
@@ -3318,7 +3361,10 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     (function frame(t){if(id!==SID)return;var k=(t-t0)/dur,dt=Math.min(50,t-last)/16.7;last=t;if(k>1){x.clearRect(0,0,W,H);return;}
       var fa=k<.14?k/.14:k>.8?(1-k)/.2:1;x.clearRect(0,0,W,H);x.globalAlpha=fa;
       var g=x.createLinearGradient(0,0,0,H);(o.sky||[]).forEach(function(q){g.addColorStop(q[0],q[1]);});if(o.sky){x.fillStyle=g;x.fillRect(0,0,W,H);}
-      if(o.sun){var sx=o.sun.x*W,sy=o.sun.y*H,hg=x.createRadialGradient(sx,sy,0,sx,sy,Math.max(W,H)*.6);hg.addColorStop(0,'rgba(255,246,222,.55)');hg.addColorStop(.25,'rgba(255,226,170,.18)');hg.addColorStop(1,'rgba(255,220,170,0)');x.fillStyle=hg;x.fillRect(0,0,W,H);}
+      if(o.sun){var sx=o.sun.x*W,sy=(o.sun.y+.02*Math.sin(k*Math.PI))*H,sr=Math.min(W,H)*.055*(o.sun.big?1.15:1),M=Math.max(W,H);
+        var wash=x.createLinearGradient(sx,sy,W*.1,H*.9);wash.addColorStop(0,'rgba(255,214,120,'+(o.sun.big?.32:.2)+')');wash.addColorStop(.55,'rgba(255,200,110,.06)');wash.addColorStop(1,'rgba(255,200,110,0)');x.fillStyle=wash;x.fillRect(0,0,W,H);
+        var hg=x.createRadialGradient(sx,sy,0,sx,sy,M*.55);hg.addColorStop(0,'rgba(255,240,200,.7)');hg.addColorStop(.12,'rgba(255,214,130,.35)');hg.addColorStop(.4,'rgba(255,200,120,.1)');hg.addColorStop(1,'rgba(255,200,120,0)');x.fillStyle=hg;x.fillRect(0,0,W,H);
+        var dg=x.createRadialGradient(sx,sy,0,sx,sy,sr*1.6);dg.addColorStop(0,'rgba(255,253,244,1)');dg.addColorStop(.55,'rgba(255,238,190,.98)');dg.addColorStop(.75,'rgba(255,214,130,.55)');dg.addColorStop(1,'rgba(255,200,110,0)');x.fillStyle=dg;x.beginPath();x.arc(sx,sy,sr*1.6,0,7);x.fill();}
       if(deck){if('filter' in x)x.filter='blur('+Math.round(1*dpr)+'px)';x.drawImage(deck,-W*.06+k*W*.05,-H*.02,W*1.12,H*1.02);if('filter' in x)x.filter='none';}
       if(drops.length){x.lineCap='round';drops.forEach(function(d){x.strokeStyle='rgba(205,220,240,'+(d.a*fa).toFixed(3)+')';x.lineWidth=dpr*1.1;x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d.x-d.l*.15,d.y+d.l);x.stroke();
           d.y+=d.v*dt;d.x-=d.v*.15*dt;if(d.y>H-4*dpr){if(Math.random()<.22)spl.push({x:d.x,y:H-3*dpr-Math.random()*H*.03,r:1,a:.28});d.y=-d.l-Math.random()*H*.2;d.x=Math.random()*W*1.1;}});
@@ -3331,8 +3377,8 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   var BLUE=[[0,'rgba(92,150,220,.42)'],[.5,'rgba(130,180,235,.16)'],[.85,'rgba(170,210,250,0)']],
       GREY=[[0,'rgba(70,80,100,.4)'],[.45,'rgba(60,70,90,.12)'],[1,'rgba(60,70,90,0)']],
       STORM=[[0,'rgba(14,18,30,.62)'],[.45,'rgba(24,30,46,.3)'],[1,'rgba(24,30,46,.18)']];
-  function sunny(){scene({sky:BLUE,sun:{x:.82,y:-.05},cover:.34,tone:'bright',dur:6000});}
-  function partly(){scene({sky:BLUE,sun:{x:.82,y:-.05},cover:.55,tone:'bright',dur:6500});}
+  function sunny(){scene({sky:BLUE,sun:{x:.84,y:.13,big:1},cover:.26,tone:'bright',dur:6000});}
+  function partly(){scene({sky:BLUE,sun:{x:.84,y:.13},cover:.48,tone:'bright',dur:6500});}
   function cloudy(){scene({sky:GREY,cover:.78,tone:'grey',dur:6500});}
   function rain(){scene({sky:STORM,cover:.92,tone:'dark',rain:1,dur:5500});}
   function thunder(){scene({sky:STORM,cover:.97,tone:'dark',rain:2,storm:1,dur:5800});}
@@ -3400,6 +3446,100 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   if(q==='night')ambient('night');
   if(q==='dusk'||q==='dawn')setTimeout(function(){sky(q);},900);if(q==='thunder')setTimeout(thunder,900);if(q==='rain')setTimeout(rain,900);if(q==='sunny')setTimeout(sunny,900);if(q==='partly')setTimeout(partly,900);if(q==='cloudy')setTimeout(cloudy,900);
   window.nkFx={play:function(c,d){playCode(c,d);},sky:sky,thunder:thunder,rain:rain,night:night,sunny:sunny,partly:partly,cloudy:cloudy};
+})();
+</script>
+<script>
+/* ---- explore the moon: tap the moon in the night sky. A real-looking moon (maria and craters on the near side, roughly where they are),
+   lit as it is tonight; drag to turn, pinch or scroll to zoom ---- */
+(function(){
+  var hit=document.getElementById('moonHit'),box=document.getElementById('moonX');if(!hit||!box)return;
+  var cv=document.getElementById('mxC'),st=document.getElementById('mxS'),x=cv.getContext('2d');
+  var TW=1024,TH=512,ALB=null,HGT=null,R2=Math.PI/180;
+  function phase(){var syn=29.530588853,ref=Date.UTC(2000,0,6,18,14)/864e5,now=Date.now()/864e5;return ((now-ref)%syn+syn)%syn/syn;}
+  /* --- the moon's surface, made once --- */
+  function build(){var A=new Float32Array(TW*TH),H=new Float32Array(TW*TH),G=128,gr=[],i,j;for(i=0;i<(G+1)*(G+1);i++)gr.push(Math.random());
+    function vn(a,b){a=((a%G)+G)%G;b=Math.max(0,Math.min(G-1.001,b));var xi=Math.floor(a),yi=Math.floor(b),xf=a-xi,yf=b-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),x2=(xi+1)%G;
+      var p=gr[yi*(G+1)+xi],q=gr[yi*(G+1)+x2],r=gr[(yi+1)*(G+1)+xi],s=gr[(yi+1)*(G+1)+x2];return p+(q-p)*u+(r-p)*v+(p-q-r+s)*u*v;}
+    function fbm(a,b){var t=0,am=.5,f=1;for(var o=0;o<5;o++){t+=am*vn(a*f,b*f);f*=2;am*=.5;}return t;}
+    /* maria: lat, lon, radius (degrees), darkness */
+    var MA=[[18,-57,22,.55],[32.8,-15.6,10,.62],[28,17.5,6.5,.6],[8.5,31.4,8,.58],[17,59,5,.62],[-7.8,51.3,6.5,.55],[-21,-16.6,7,.5],[-24.4,-38.6,4,.55],[-15.2,35.5,3.2,.5],[56,1,9,.45],[13.3,3.6,3,.45],[7.5,-30.9,4.5,.45],[-2,-20,6,.42]];
+    function gdist(la1,lo1,la2,lo2){var d=Math.sin(la1*R2)*Math.sin(la2*R2)+Math.cos(la1*R2)*Math.cos(la2*R2)*Math.cos((lo1-lo2)*R2);return Math.acos(Math.max(-1,Math.min(1,d)))/R2;}
+    for(j=0;j<TH;j++){var lat=90-(j+.5)/TH*180;for(i=0;i<TW;i++){var lon=(i+.5)/TW*360-180,k=j*TW+i,n=fbm(i/TW*G*.5,j/TH*G*.25);
+      var a=.72+(n-.5)*.26,m=0;
+      if(Math.abs(lon)<110)for(var q=0;q<MA.length;q++){var M=MA[q],d=gdist(lat,lon,M[0],M[1]),edge=M[2]*(1+(fbm(i/TW*G*1.5+q*7,j/TH*G*.75)-.5)*.6);if(d<edge*1.25){var t=Math.max(0,Math.min(1,(edge*1.25-d)/(edge*.45)));m=Math.max(m,t*M[3]);}}
+      A[k]=a*(1-m*.72)+(m?(n-.5)*.04:0);H[k]=(n-.5)*.03*(1-m);}}
+    /* craters: many small, few big; fewer on the smooth maria */
+    function crater(la,lo,rd,depth,bright){var cl=Math.max(.15,Math.cos(la*R2)),rx=rd/360*TW/cl,ry=rd/180*TH,ci=(lo+180)/360*TW,cj=(90-la)/180*TH;
+      for(var y=Math.floor(cj-ry*1.6);y<=cj+ry*1.6;y++){if(y<0||y>=TH)continue;for(var xx=Math.floor(ci-rx*1.6);xx<=ci+rx*1.6;xx++){var X=((xx%TW)+TW)%TW,dx=(xx-ci)/rx,dy=(y-cj)/ry,r=Math.sqrt(dx*dx+dy*dy);if(r>1.6)continue;var k=y*TW+X;
+        if(r<1){H[k]+=depth*(Math.pow(r,3)-1)*.7;A[k]*=1-.04*(1-r);}else{var rim=Math.exp(-Math.pow((r-1)/.35,2));H[k]+=depth*.32*rim;A[k]=Math.min(1,A[k]*(1+.04*rim*bright));}}}}
+    for(i=0;i<3200;i++){var la=Math.asin(Math.random()*2-1)/R2,lo=Math.random()*360-180,rd=.22+Math.pow(Math.random(),4.5)*5,kk=Math.floor((90-la)/180*TH)*TW+Math.floor((lo+180)/360*TW);
+      if(A[kk]<.5&&Math.random()<.85)continue;crater(la,lo,rd,.02+rd*.007,1);}
+    crater(-43.3,-11.4,1.6,.12,3);crater(9.6,-20,1.7,.12,3);crater(8.1,-38,1.2,.1,3);crater(-9,-1.9,2.6,.1,1);crater(-58.4,-14.4,2.5,.09,1);
+    /* Tycho's bright rays */
+    for(j=0;j<TH;j++){var la2=90-(j+.5)/TH*180;for(i=0;i<TW;i++){var lo2=(i+.5)/TW*360-180;if(Math.abs(lo2)>95)continue;var d2=gdist(la2,lo2,-43.3,-11.4);if(d2>55||d2<1.5)continue;
+      var br=Math.atan2(lo2+11.4,la2+43.3),ray=Math.pow(Math.max(0,Math.sin(br*23+Math.sin(br*7)*2)),18)*(1-d2/55);A[j*TW+i]=Math.min(1,A[j*TW+i]+ray*.1);}}
+    ALB=A;HGT=H;}
+  /* --- view --- */
+  var yaw=0,pitch=0,zoom=1,full=false,labels=true,dirty=true,raf=0,open=false,idle=0,S=0,dpr=1;
+  var LAB=[['Sea of Tranquility',8.5,31.4],['Apollo 11 landed here',.67,23.47],['Sea of Rains',32.8,-15.6],['Ocean of Storms',18,-57],['Sea of Serenity',28,17.5],['Sea of Crises',17,59],['Tycho crater',-43.3,-11.4],['Copernicus crater',9.6,-20]];
+  var FACTS=['The moon is 3,474 km across, about a quarter the size of the Earth.','We always see the same side of the moon. The far side was first seen in 1959.','In the Vedas the moon is Chandra, and also Soma.','Gaura Purnima, the appearance day of Sri Chaitanya Mahaprabhu, falls on the full moon of Phalguna.','Moonlight takes about 1.3 seconds to reach you.','The dark patches are old lava plains. Early astronomers thought they were seas, so they are called maria.','Rasa Purnima and Sharad Purnima are full moon nights celebrated in Mayapur.','The bright rays from Tycho crater stretch more than 1,500 km.'];
+  var fi=Math.floor(Math.random()*FACTS.length);
+  function size(){dpr=Math.min(1.5,window.devicePixelRatio||1);var w=innerWidth,h=innerHeight;cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+    S=Math.min(w,h)*(w<640?.36:.33)*dpr;st.width=Math.round(w*dpr);st.height=Math.round(h*dpr);var sx=st.getContext('2d');sx.fillStyle='#02040b';sx.fillRect(0,0,st.width,st.height);
+    for(var i=0;i<w*h/1800;i++){var r=Math.random();sx.fillStyle='rgba(235,240,255,'+(.2+Math.random()*.6).toFixed(2)+')';sx.beginPath();sx.arc(Math.random()*st.width,Math.random()*st.height,(r<.93?.5:1.1)*dpr,0,7);sx.fill();}dirty=true;}
+  function light(){if(full)return [0,0,1];var t=2*Math.PI*phase();return [Math.sin(t),0,-Math.cos(t)];}
+  function render(){var W=cv.width,Hh=cv.height,cx=W/2,cy=Hh*(innerWidth<640?.56:.5),R=S*zoom,im=x.createImageData(W,Hh),D=im.data,L=light();
+    var cyw=Math.cos(yaw),syw=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+    /* light in moon coordinates */
+    var y0=Math.max(0,Math.floor(cy-R)),y1=Math.min(Hh,Math.ceil(cy+R)),x0=Math.max(0,Math.floor(cx-R)),x1=Math.min(W,Math.ceil(cx+R));
+    for(var py=y0;py<y1;py++){var vy=(cy-py)/R;for(var px=x0;px<x1;px++){var vx=(px-cx)/R,r2=vx*vx+vy*vy;if(r2>1)continue;var vz=Math.sqrt(1-r2);
+      /* view -> body: undo pitch (x axis), then yaw (y axis) */
+      var by=vy*cp-vz*sp,bz1=vy*sp+vz*cp,bx=vx*cyw-bz1*syw,bz=vx*syw+bz1*cyw;
+      var lat=Math.asin(Math.max(-1,Math.min(1,by))),lon=Math.atan2(bx,bz),u=(lon/(2*Math.PI)+.5)*TW,v=(.5-lat/Math.PI)*TH;
+      var ui=Math.min(TW-1,u|0),vi=Math.min(TH-2,Math.max(1,v|0)),k=vi*TW+ui,a=ALB[k];
+      var dhu=HGT[vi*TW+((ui+1)%TW)]-HGT[vi*TW+((ui-1+TW)%TW)],dhv=HGT[(vi-1)*TW+ui]-HGT[(vi+1)*TW+ui];
+      /* surface tangents in view space for the bump */
+      var nd=vx*L[0]+vy*L[1]+vz*L[2],b=0;
+      /* east direction ~ perpendicular to normal in the horizontal plane */
+      var hx=vz,hz=-vx,hl=Math.sqrt(hx*hx+hz*hz)||1;hx/=hl;hz/=hl;var nx=-vx*vy,ny=1-vy*vy,nz=-vz*vy,nl=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;nx/=nl;ny/=nl;nz/=nl;
+      b=-(dhu*(hx*L[0]+hz*L[2])+dhv*(nx*L[0]+ny*L[1]+nz*L[2]))*5;
+      var sh=Math.max(0,nd+b*Math.min(1,Math.max(0,nd+.25)*2)),lit=sh>0?Math.pow(sh,.85):0,earth=.035*(1-Math.max(0,nd)),limb=.9+.1*vz;
+      var c=Math.min(1,(a*lit*limb*1.18+a*earth));var o=(py*W+px)*4;D[o]=255*Math.min(1,c*1.0);D[o+1]=255*Math.min(1,c*.985);D[o+2]=255*Math.min(1,c*.95);D[o+3]=255;}}
+    x.clearRect(0,0,W,Hh);x.putImageData(im,0,0);
+    /* soft glow */
+    var g=x.createRadialGradient(cx,cy,R*.98,cx,cy,R*1.25);g.addColorStop(0,'rgba(220,228,255,.12)');g.addColorStop(1,'rgba(220,228,255,0)');x.globalCompositeOperation='destination-over';x.fillStyle=g;x.fillRect(0,0,W,Hh);x.globalCompositeOperation='source-over';
+    if(labels){x.font=(12*dpr)+'px Inter,system-ui,sans-serif';x.textAlign='left';LAB.forEach(function(l){var la=l[1]*R2,lo=l[2]*R2,bx=Math.cos(la)*Math.sin(lo),by=Math.sin(la),bz=Math.cos(la)*Math.cos(lo);
+      var vx2=bx*cyw+bz*syw,bz2=-bx*syw+bz*cyw,vy2=by*cp+bz2*sp,vz2=-by*sp+bz2*cp;if(vz2<.2)return;var X=cx+vx2*R,Y=cy-vy2*R;
+      x.globalAlpha=Math.min(1,(vz2-.2)*3);x.fillStyle='#f4d797';x.beginPath();x.arc(X,Y,3*dpr,0,7);x.fill();x.strokeStyle='rgba(244,215,151,.6)';x.lineWidth=dpr;x.beginPath();x.moveTo(X+4*dpr,Y-4*dpr);x.lineTo(X+18*dpr,Y-16*dpr);x.stroke();
+      x.fillStyle='rgba(8,10,20,.6)';var tw=x.measureText(l[0]).width;x.fillRect(X+18*dpr,Y-30*dpr,tw+12*dpr,20*dpr);x.fillStyle='#f4e7c4';x.fillText(l[0],X+24*dpr,Y-16*dpr);});x.globalAlpha=1;}}
+  function loop(){if(!open)return;idle++;if(idle>90&&!drag){yaw+=.0025;dirty=true;}if(dirty){dirty=false;render();}raf=requestAnimationFrame(loop);}
+  function info(){var p=phase(),ill=Math.round((1-Math.cos(2*Math.PI*p))/2*100),age=p*29.53;
+    var nm=p<.03||p>.97?'New moon':p<.22?'Waxing crescent':p<.28?'First quarter':p<.47?'Waxing gibbous':p<.53?'Full moon':p<.72?'Waning gibbous':p<.78?'Last quarter':'Waning crescent';
+    function when(f){var d=new Date(Date.now()+((f-p+1)%1)*29.530588853*864e5+330*60000);return d.getUTCDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];}
+    document.getElementById('mxPh').textContent=nkT(nm);
+    document.getElementById('mxM').textContent=ill+'% lit · '+age.toFixed(1)+' days old · next Purnima (full moon) '+when(.5)+' · next Amavasya (new moon) '+when(0);
+    document.getElementById('mxFact').textContent=nkT(FACTS[fi]);}
+  function show(){if(!ALB){document.getElementById('mxPh').textContent=nkT('Loading the moon…');}box.hidden=false;document.documentElement.style.overflow='hidden';open=true;
+    setTimeout(function(){if(!ALB)build();size();info();yaw=0;pitch=0;zoom=1;idle=0;dirty=true;loop();document.getElementById('mxExit').focus();},30);}
+  function hide(){open=false;cancelAnimationFrame(raf);box.hidden=true;document.documentElement.style.overflow='';hit.focus();}
+  hit.addEventListener('click',show);
+  document.getElementById('mxExit').addEventListener('click',hide);
+  document.getElementById('mxHome').addEventListener('click',function(e){if(/^\/(index\.html)?$/.test(location.pathname)){e.preventDefault();hide();scrollTo({top:0,behavior:'smooth'});}});
+  document.addEventListener('keydown',function(e){if(open&&e.key==='Escape')hide();});
+  document.getElementById('mxLight').addEventListener('click',function(){full=!full;this.setAttribute('aria-pressed',full);this.textContent=nkT(full?'Tonight’s light':'Full light');dirty=true;});
+  document.getElementById('mxLab').addEventListener('click',function(){labels=!labels;this.setAttribute('aria-pressed',labels);dirty=true;});
+  document.getElementById('mxFactB').addEventListener('click',function(){fi=(fi+1)%FACTS.length;info();});
+  function zm(f){zoom=Math.max(.7,Math.min(4,zoom*f));dirty=true;idle=0;}
+  document.getElementById('mxIn').addEventListener('click',function(){zm(1.25);});document.getElementById('mxOut').addEventListener('click',function(){zm(.8);});
+  cv.addEventListener('wheel',function(e){e.preventDefault();zm(e.deltaY<0?1.1:.91);},{passive:false});
+  var pts={},drag=false,lx=0,ly=0,pd=0;
+  cv.addEventListener('pointerdown',function(e){cv.setPointerCapture(e.pointerId);pts[e.pointerId]=[e.clientX,e.clientY];drag=true;lx=e.clientX;ly=e.clientY;idle=0;var k=Object.keys(pts);if(k.length===2){var a=pts[k[0]],b=pts[k[1]];pd=Math.hypot(a[0]-b[0],a[1]-b[1]);}});
+  cv.addEventListener('pointermove',function(e){if(!pts[e.pointerId])return;pts[e.pointerId]=[e.clientX,e.clientY];var k=Object.keys(pts);idle=0;
+    if(k.length===2){var a=pts[k[0]],b=pts[k[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)zm(d/pd);pd=d;return;}
+    var dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw-=dx*.006/zoom;pitch=Math.max(-1.3,Math.min(1.3,pitch+dy*.006/zoom));dirty=true;});
+  function up(e){delete pts[e.pointerId];if(!Object.keys(pts).length)drag=false;pd=0;}
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  addEventListener('resize',function(){if(open)size();});
 })();
 </script>
 <script src="pricing.js"></script>
