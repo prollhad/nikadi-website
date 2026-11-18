@@ -479,3 +479,8 @@ def plus_back(cv, m):
     T(cv, 'work', 'Personal and not transferable. Metal card: please do not bend. If found, return to Nikadi Guest House.', (L + W - 7.4) / 2, 4.5, 2.9, X['steel'], .02, align='center', layer='ENGRAVE')
 
 TIERS = {'silver': (silver_front, silver_back), 'gold': (gold_front, gold_back), 'platinum': (platinum_front, platinum_back), 'plus': (plus_front, plus_back)}
+
+# v2 (Nov 2026): Platinum "Padma" and Platinum Plus "Mandir" replace the earlier fronts
+import designs_v2 as _v2
+TIERS['platinum'] = (_v2.platinum_front, platinum_back)
+TIERS['plus'] = (_v2.plus_front, plus_back)

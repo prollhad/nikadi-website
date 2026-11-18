@@ -1,5 +1,5 @@
 /* Nikadi member app — offline shell. Bump VERSION whenever app files change. */
-var VERSION = "nikadi-app-v21";
+var VERSION = "nikadi-app-v22";
 var SHELL = ["./", "index.html", "app.css", "core.js", "demo.js", "manifest.webmanifest", "icons/nikadi-192.png", "icons/nikadi-512.png", "../img/brand/lockup-light.png", "../pricing.js", "icons/mark.svg", "icons/card-silver.svg", "icons/card-gold.svg", "icons/card-platinum.svg", "icons/card-plus.svg"];
 
 self.addEventListener("install", function (e) {
