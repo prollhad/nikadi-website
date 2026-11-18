@@ -288,21 +288,26 @@ def sun_mandala(cv, cx, cy, s, G, G2, G3, lw):
         cv.stroke(circle(cx, cy, rr * s), '#b98a3c', lw * .4, 'ENGRAVE')
 
 def plus_front(cv, m, art_only=False):
-    """Platinum Plus 'Surya': black metal and 24k gold. Sister of Gold and Platinum: double frame, brand top-left,
-    a sun medallion (sunburst, twelve small suns for the twelve months) on the right."""
+    """Platinum Plus 'Monolith': brushed black metal, no frame. The left side is the brand, the level and the member;
+    the right side is one oversized Nikadi mark, engraved in fine gold line, running off the edge of the card."""
     G, G2, G3 = '#d4b06a', '#9c7a3c', '#f0d99a'
-    cv.fill(rect(-3, -3, W + 6, H + 6), ('rad', 66, 28, 82, [(0, '#232226'), (.45, '#141416'), (1, '#050506')]), 'BASE')
-    inner = rrect(3.6, 3.6, W - 7.2, H - 7.2, 1.2)
-    clipped(cv, inner, lambda: sun_mandala(cv, 66.5, 27.0, .82, G, G2, G3, .14))
-    cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), G, .3, 'GOLD')
-    cv.stroke(inner, G, .12, 'GOLD')
+    cv.fill(rect(-3, -3, W + 6, H + 6), ('lin', 0, H, W, 0, [(0, '#1d1d20'), (.5, '#121214'), (1, '#0a0a0b')]), 'BASE')
+    y = .2
+    while y < H:
+        cv.stroke(poly([(-1, y), (W + 1, y)], False), '#19191c' if int(y / .35) % 3 else '#202024', .07, 'ENGRAVE')
+        y += .35
+    def big():
+        shapes, mw = mark_shapes(51.5, 5.0, 45)
+        for t, cm in shapes:
+            cv.fill(cm, {'dark': '#18181b', 'light': '#202024', 'arc': '#1c1c1f'}[t], 'ENGRAVE')
+        for t, cm in shapes:
+            cv.stroke(cm, G if t != 'dark' else G2, .16, 'GOLD')
+    clipped(cv, rect(0, 0, W, H), big)
     GL = [(0, '#fbeec4'), (.35, '#e6c67e'), (.6, '#b8904a'), (1, '#f0d99a')]
     tx = brand_row(cv, 7, H - 7 - 7.8, 7.8, {'dark': G3, 'light': G2, 'arc': G}, 'gloock', 13.5, ('lin', 18, H - 8, 50, H - 14, GL), G, layer='GOLD', word_track=.2, sub=False)
     T(cv, 'work', 'G U E S T   H O U S E', tx + .2, H - 7 - 7.8 - .2, 3.5, G, .3, layer='GOLD')
     T(cv, 'workb', 'P L A T I N U M   P L U S', 7, H - 21.6, 5.0, G3, .3, layer='GOLD')
     cv.stroke(poly([(7, H - 23.4), (19, H - 23.4)], False), G, .14, 'GOLD')
-    for x, y, r in ((47.0, 48.2, .7), (31.5, 48.5, .3), (44.5, 23.5, .4), (47.5, 15.5, .6), (36.0, 14.5, .3)):
-        sparkle(cv, x, y, r, G3, 'GOLD')
     if not art_only:
         T(cv, 'arsenal', m['name'].upper(), 7, 10.6, 8.4, '#efe6d0', .16, layer='PERSONALISE')
         T(cv, 'plexmono', m['no'], 7, 6.4, 5.0, '#a7a9ae', .14, layer='PERSONALISE')
