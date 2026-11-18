@@ -1128,17 +1128,39 @@ try{
   function card(x){var p=x.d.split('-'),k=KIND[x.c[0]],w=D(x.d).getUTCDay();
     var dt=x.e?(+p[2])+'–'+(+x.e.split('-')[2]):(+p[2]);
     return '<li><button type="button" class="fvc '+CAT[x.c[0]][0]+(x.big?' big':'')+'" data-fv="'+x.i+'"><time datetime="'+x.d+'"><span>'+MS[+p[1]-1]+'</span><b>'+dt+'</b><small>'+(x.e?'':WS[w])+'</small></time><span class="fvc-b"><span class="fvc-n">'+esc(T(x.n))+'</span><span class="fvc-a">'+esc(T(x.a))+'</span><span class="fvc-tags">'+tags(x)+'</span></span><span class="fvc-go" aria-hidden="true">›</span></button></li>';}
+  var mi=0,months=[];
+  function inMonth(x,m){return x.d.slice(0,7)<=m&&(x.e||x.d).slice(0,7)>=m;}
   function show(){
     var list=items.filter(function(x){return filter==='all'||x.c.some(function(c){return KIND[c]===filter;});});
-    var h='',cur='';
-    list.forEach(function(x){var m=x.d.slice(0,7);if(m!==cur){if(cur)h+='</ul></div>';cur=m;h+='<div class="fvm"><h3 class="fvm-h">'+monthName(x.d)+'</h3><ul class="fvm-l">';}h+=card(x);});
-    if(cur)h+='</ul></div>';
-    document.getElementById('fvMonths').innerHTML=h||'<p class="fv-src">'+T('Nothing in this list for the coming months.')+'</p>';
+    var t0=today.slice(0,7),mm={};mm[t0]=1;list.forEach(function(x){var m=x.d.slice(0,7);if(m<t0)m=t0;mm[m]=1;});
+    var prev=months[mi];months=Object.keys(mm).sort();
+    var j=months.indexOf(prev);mi=j>=0?j:Math.min(mi,months.length-1);if(mi<0)mi=0;
+    var m=months[mi],y=+m.slice(0,4),mo=+m.slice(5,7)-1,first=new Date(Date.UTC(y,mo,1)),nd=new Date(Date.UTC(y,mo+1,0)).getUTCDate();
+    var ev=list.filter(function(x){return inMonth(x,m);}),byDay={};
+    ev.forEach(function(x){var a=x.d<m+'-01'?1:+x.d.slice(8),z=(x.e||x.d).slice(0,7)>m?nd:+(x.e||x.d).slice(8);for(var d=a;d<=z;d++)(byDay[d]=byDay[d]||[]).push(x);});
+    var off=(first.getUTCDay()+6)%7,WD=[1,2,3,4,5,6,0];
+    var g='<div class="fvg" role="grid">'+WD.map(function(w){return '<span class="fvg-w'+(w===5||w===6?' we':'')+'">'+WS[w]+'</span>';}).join('');
+    for(var i=0;i<off;i++)g+='<span></span>';
+    for(var d=1;d<=nd;d++){var k=m+'-'+(d<10?'0':'')+d,xs=byDay[d],cls='fvg-d'+(k<today?' pa':'')+(k===today?' td':'');
+      if(xs){var x=xs[0];g+='<button type="button" class="'+cls+' ev '+CAT[x.c[0]][0]+(xs.some(function(q){return q.big;})?' big':'')+'" data-fv="'+x.i+'" aria-label="'+d+' · '+esc(xs.map(function(q){return T(q.n);}).join(', '))+'">'+d+'</button>';}
+      else g+='<span class="'+cls+'">'+d+'</span>';}
+    g+='</div>';
+    var tabs='<div class="fvp-tabs" role="tablist">'+months.map(function(q,i){return '<button type="button" data-fvm="'+i+'" aria-current="'+(i===mi)+'">'+MS[+q.slice(5,7)-1]+(q.slice(0,4)!==today.slice(0,4)?' '+q.slice(2,4):'')+'</button>';}).join('')+'</div>';
+    var h='<div class="fvp"><div class="fvp-top"><button type="button" class="fvp-ar" data-fvs="-1" aria-label="'+T('Previous month')+'"'+(mi?'':' disabled')+'>‹</button><h3>'+monthName(m+'-01')+'<small>'+ev.length+' '+T(ev.length===1?'date':'dates')+'</small></h3><button type="button" class="fvp-ar" data-fvs="1" aria-label="'+T('Next month')+'"'+(mi<months.length-1?'':' disabled')+'>›</button></div>'+tabs+'<div class="fvp-body">'+g;
+    h+=(ev.length?'<ul class="fvm-l">'+ev.map(card).join('')+'</ul>':'<p class="fvp-empty">'+T('Nothing in this list for this month.')+'</p>')+'</div>';
+    h+='<p class="fvp-hint">'+T('Swipe or use the arrows to see the next months.')+'</p></div>';
+    document.getElementById('fvMonths').innerHTML=h;
+    var at=box.querySelector('.fvp-tabs [aria-current=true]');if(at){var tb=at.parentNode;tb.scrollLeft=at.offsetLeft-tb.clientWidth/2+at.clientWidth/2;}
     [].forEach.call(box.querySelectorAll('[data-fvf]'),function(b){b.setAttribute('aria-pressed',b.getAttribute('data-fvf')===filter?'true':'false');});
   }
+  function go(n){var k=mi+n;if(k<0||k>=months.length)return;mi=k;show();}
+  (function(){var el=document.getElementById('fvMonths'),sx=null,sy=0;
+    el.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+    el.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;sx=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5)go(dx<0?1:-1);},{passive:true});})();
   /* counts on the filter chips */
   ['all','f','in','x'].forEach(function(k){var el=box.querySelector('[data-fvf="'+k+'"] small');if(el)el.textContent=items.filter(function(x){return k==='all'||x.c.some(function(c){return KIND[c]===k;});}).length;});
   box.addEventListener('click',function(e){var f=e.target.closest('[data-fvf]');if(f){filter=f.getAttribute('data-fvf');show();return;}
+    var sv=e.target.closest('[data-fvs]');if(sv){go(+sv.getAttribute('data-fvs'));return;}var tm=e.target.closest('[data-fvm]');if(tm){mi=+tm.getAttribute('data-fvm');show();return;}
     var b=e.target.closest('[data-fv]');if(b)open(items[+b.getAttribute('data-fv')],b);});
   /* next temple festival countdown */
   function drawNext(){var nx=items.filter(function(x){return x.c[0]==='f';})[0],el=document.getElementById('fvNext');if(!nx||!el)return;
