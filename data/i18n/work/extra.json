@@ -2588,5 +2588,68 @@
 "Закрыть",
 "关闭",
 "Cerrar"
+],
+"International": [
+"আন্তর্জাতিক",
+"अंतरराष्ट्रीय",
+"Международный",
+"国际",
+"Internacional"
+],
+"Then": [
+"তারপর",
+"फिर",
+"Затем",
+"之后",
+"Después"
+],
+"Quick menu": [
+"দ্রুত মেনু",
+"क्विक मेनू",
+"Быстрое меню",
+"快捷菜单",
+"Menú rápido"
+],
+"Places to visit": [
+"দর্শনীয় স্থান",
+"घूमने की जगहें",
+"Что посмотреть",
+"游览景点",
+"Lugares que visitar"
+],
+"Trains, cars & travel desk": [
+"ট্রেন, গাড়ি ও ট্রাভেল ডেস্ক",
+"ट्रेनें, कारें और ट्रैवल डेस्क",
+"Поезда, машины и турбюро",
+"火车、汽车与旅行服务台",
+"Trenes, coches y agencia de viajes"
+],
+"Location & directions": [
+"অবস্থান ও পথনির্দেশ",
+"स्थान और रास्ता",
+"Как нас найти",
+"位置与路线",
+"Ubicación y cómo llegar"
+],
+"Festivals & holidays": [
+"উৎসব ও ছুটি",
+"उत्सव और छुट्टियाँ",
+"Праздники",
+"节日与假日",
+"Festivales y festivos"
+],
+"WhatsApp us": [
+"WhatsApp করুন",
+"WhatsApp करें",
+"Напишите в WhatsApp",
+"WhatsApp 联系我们",
+"Escríbenos por WhatsApp"
+],
+"Sunrise and sunset, open the full forecast": [
+"সূর্যোদয় ও সূর্যাস্ত, পুরো পূর্বাভাস খুলুন",
+"सूर्योदय और सूर्यास्त, पूरा पूर्वानुमान खोलें",
+"Восход и закат — открыть полный прогноз",
+"日出与日落，打开完整预报",
+"Amanecer y atardecer, abrir la previsión completa"
 ]
 }

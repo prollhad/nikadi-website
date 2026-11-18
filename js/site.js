@@ -523,7 +523,7 @@ try{
       if(now<9*60){p.textContent='Check-out by 9:00 AM · in '+dur(9*60-now);p.className='pill';}
       else if(now<11*60){p.textContent='Check-in opens at 11:00 AM · in '+dur(11*60-now);p.className='pill';}
       else if(now<22*60){p.textContent='Check-in is open now · from 11:00 AM';p.className='pill ok';}
-      else{p.textContent='Arriving late tonight? WhatsApp us before you come';p.className='pill';}
+      else{p.innerHTML='<a href="https://wa.me/917501101137?text='+encodeURIComponent('Hare Krishna! I have a booking at Nikadi Guest House and will arrive late tonight. My name: ')+'" target="_blank" rel="noopener">'+nkT('Arriving late tonight? WhatsApp us before you come')+' ›</a>';p.className='pill pill-link';}
     }
     sunDot();
   }
@@ -846,6 +846,7 @@ try{
     var n=nx[0],inm=tm?24*60-now+mins(n.t):mins(n.t)-now;
     document.getElementById('gTrain').textContent=t12(n.t)+(n.ac?' AC':'');
     document.getElementById('gTrainIn').textContent=nkT('Sealdah')+' → '+nkT('Krishnanagar')+' · '+nkT((tm?'tomorrow, ':'')+'in '+dur(inm))+' · '+nkT('arrives '+n.arr);
+    var more=nx.slice(1,3);if(document.getElementById('gTrainMore'))document.getElementById('gTrainMore').textContent=more.length?nkT('Then')+': '+more.map(function(r){return t12(r.t)+(r.ac?' AC':'');}).join(' · '):'';
     var ac=nx.filter(function(r){return r.ac;})[0];
     document.getElementById('gTrainAc').textContent=nkT(ac&&ac!==n?'Next AC local: '+t12(ac.t)+' (arrives '+ac.arr+')':(n.ac?'This one is the AC local':'No more AC locals today'));
   }
