@@ -54,52 +54,41 @@ def padma(cv, cx, by, s, fill_back, fill_front, line, line2, lw, layer='FOIL'):
     cv.stroke([('M', cx - s * 7, by - s * 1.3), ('C', cx - s * 3, by - s * 2.4, cx + s * 3, by - s * 2.4, cx + s * 7, by - s * 1.3)], line, lw * 1.1, layer)
 
 def platinum_front(cv, m, art_only=False):
+    """Platinum 'Udaya': a pink lotus on a calm sea as the sun rises behind it; midnight-to-dawn navy; silver lettering."""
     full = rect(-3, -3, W + 6, H + 6)
-    cv.fill(full, ('rad', W / 2, 26, 64, [(0, '#24457f'), (.55, '#13295a'), (1, '#07122b')]), 'BASE')
-    cx = W / 2
+    hz = 12.6; cx = W / 2
+    cv.fill(full, ('lin', 0, H + 3, 0, hz, [(0, '#0b1734'), (.5, '#15306a'), (.78, '#28468a'), (.92, '#5a5f98'), (1, '#a8869f')]), 'BASE')
     def art():
-        # moonlit halo and fine rays behind the lotus
-        for r, c in ((33, '#17336a'), (26.5, '#1a3972'), (20, '#1d3e7a')):
-            cv.fill(circle(cx, 14, r), c, 'INK')
-        for i in range(48):
-            a = math.pi * i / 47
-            cv.stroke(poly([(cx + 20.5 * math.cos(a), 14 + 20.5 * math.sin(a)), (cx + 33 * math.cos(a), 14 + 33 * math.sin(a))], False), '#254a8b', .07, 'INK')
-        cv.stroke(arc(cx, 14, 33.4, 0, math.pi), P_['plat2'], .14, 'FOIL')
-        cv.stroke(arc(cx, 14, 20.2, 0, math.pi), '#3a5d9c', .1, 'INK')
-        # the Ganga
-        cv.fill(rect(-3, -3, W + 6, 14.6), ('lin', 0, 14.6, 0, -3, [(0, '#10275a'), (1, '#07122b')]), 'INK')
-        waves(cv, 13.4, 7, .55, '#3c5f9f', .11, 'INK')
-        waves(cv, 13.4, 2, .55, P_['plat2'], .12, 'FOIL', x0=cx - 22, x1=cx + 22)
-        padma(cv, cx, 12.8, .32, '#183a76', '#21478a', P_['plat'], P_['plat2'], .14)
-        # reflection
-        for k, wdt in enumerate((10, 7, 4.5)):
-            cv.stroke(poly([(cx - wdt, 10.6 - k * 1.3), (cx + wdt, 10.6 - k * 1.3)], False), '#5878b2', .1, 'INK')
-        # two diyas on the water
-        # a matched pair of diyas, spouts and flames facing the lotus
-        diya(cv, 15.0, 14.0, .9, P_['plat2'], '#f4d58f', '#fff4d6', 'FOIL', 'INK', d=1)
-        diya(cv, W - 15.0, 14.0, .9, P_['plat2'], '#f4d58f', '#fff4d6', 'FOIL', 'INK', d=-1)
-        # small stars
-        for x, y, r in ((9, 46, .16), (16, 50, .1), (24, 44.5, .12), (W - 10, 47, .16), (W - 18, 50.5, .1), (W - 25, 44, .12), (6, 38, .1), (W - 6, 37, .1)):
-            cv.fill(circle(x, y, r), P_['plat'], 'FOIL')
+        # dawn glow on the horizon
+        # sun rays: straight, alternating long and short
+        for i in range(37):
+            a = math.pi * i / 36
+            r0, r1 = 7.3, (9.9 if i % 2 else 11.4)
+            cv.stroke(poly([(cx + r0 * math.cos(a), hz + r0 * math.sin(a)), (cx + r1 * math.cos(a), hz + r1 * math.sin(a))], False), '#e9d7b8' if i % 2 else '#f3e3c4', .1 if i % 2 else .14, 'FOIL')
+        # the sun, half risen
+        cv.begin_clip(rect(-3, hz, W + 6, H))
+        cv.fill(circle(cx, hz, 6.3), ('rad', cx, hz + 2, 7, [(0, '#fff6e2'), (.6, '#f6dcb4'), (1, '#e3b98e')]), 'INK')
+        cv.end_clip()
+        # the sea: calm, with the sun's reflection as straight streaks
+        cv.fill(rect(-3, -3, W + 6, hz + 3), ('lin', 0, hz, 0, -3, [(0, '#1c3772'), (.4, '#122756'), (1, '#091530')]), 'INK')
+        for k, (wd, y) in enumerate(((6.4, hz - 1.1), (4.8, hz - 2.2), (3.4, hz - 3.3), (2.2, hz - 4.4))):
+            cv.stroke(poly([(cx - wd, y), (cx + wd, y)], False), '#e8cfa8', .22 - k * .03, 'INK')
+        # the lotus, in shades of pink
+        BACK = ('lin', 0, hz + 6.5, 0, hz, [(0, '#d9799a'), (.6, '#e9a3b8'), (1, '#f6d3dd')])
+        FRONT = ('lin', 0, hz + 6, 0, hz, [(0, '#e68aa8'), (.55, '#f3bccb'), (1, '#fde9ee')])
+        padma(cv, cx, hz - .2, .26, BACK, FRONT, '#fbe8ee', '#c0587d', .09)
     clipped(cv, full, art)
-    # inset double frame with small lotus-bud corners (silver foil)
-    cv.stroke(rrect(2.6, 2.6, W - 5.2, H - 5.2, 1.9), P_['plat2'], .16, 'FOIL')
-    cv.stroke(rrect(3.5, 3.5, W - 7.0, H - 7.0, 1.4), '#5d77a6', .08, 'FOIL')
-    for (x, y, sx, sy) in ((3.5, 3.5, 1, 1), (W - 3.5, 3.5, -1, 1), (3.5, H - 3.5, 1, -1), (W - 3.5, H - 3.5, -1, -1)):
-        cv.stroke([('M', x + sx * 2.2, y), ('C', x + sx * 1.1, y + sy * .2, x + sx * .2, y + sy * 1.1, x, y + sy * 2.2)], P_['plat'], .14, 'FOIL')
-        cv.fill(circle(x + sx * 1.15, y + sy * 1.15, .28), P_['plat'], 'FOIL')
-    # lockup: NIKADI with the building mark standing over N-I-K, as in the logo; all inside the arch
+    cv.stroke(rect(3.2, 3.2, W - 6.4, H - 6.4), '#8fa2c4', .1, 'FOIL')
+    # lettering: logo centred above NIKADI
     SH = [(0, '#ffffff'), (.35, '#dfe6f0'), (.55, '#9eacc2'), (.75, '#eef2f7'), (1, '#b9c4d4')]
-    pt = 12.5; tr = .2; yb = 29.1
+    pt = 12.5; tr = .2; yb = 32.6
     wd = text_width('gloock', 'NIKADI', pt, tr); x0 = cx - wd / 2
-    cap = pt * PT * .7
-    wnik = text_width('gloock', 'NIK', pt, tr) - tr * pt * PT
-    mh = min(wnik / .92, 11.2); mw = mh * 318 / 345
-    shapes, mw = mark_shapes(x0 + (wnik - mw) / 2, yb + cap + 1.0, mh)
-    for t, c in shapes: cv.fill(c, {'dark': ('lin', 0, yb + cap + 1 + mh, 0, yb + cap + 1, SH), 'light': '#8f9fb8', 'arc': ('lin', x0, 0, x0 + wnik, 0, SH)}[t], 'FOIL')
+    cap = pt * PT * .7; mh = 9.6
+    shapes, mw = mark_shapes(cx - mh * 318 / 345 / 2, yb + cap + 1.2, mh)
+    for t, c in shapes: cv.fill(c, {'dark': ('lin', 0, yb + cap + 1.2 + mh, 0, yb + cap + 1.2, SH), 'light': '#8f9fb8', 'arc': ('lin', cx - mw / 2, 0, cx + mw / 2, 0, SH)}[t], 'FOIL')
     T(cv, 'gloock', 'NIKADI', x0, yb, pt, ('lin', x0, yb + 6, x0 + wd, yb, SH), tr, layer='FOIL')
-    T(cv, 'workb', 'P L A T I N U M', cx, 25.0, 5.4, P_['plat'], .34, align='center', layer='FOIL')
-    sy = 21.6; st = 'SRI DHAM MAYAPUR'; sw = text_width('work', st, 2.9, .42)
+    T(cv, 'workb', 'P L A T I N U M', cx, 28.6, 5.4, P_['plat'], .34, align='center', layer='FOIL')
+    sy = 25.4; st = 'SRI DHAM MAYAPUR'; sw = text_width('work', st, 2.9, .42)
     T(cv, 'work', st, cx, sy, 2.9, P_['sub'], .42, align='center', layer='FOIL')
     mid = sy + 2.9 * PT * .7 / 2
     for sg in (-1, 1):
@@ -109,8 +98,6 @@ def platinum_front(cv, m, art_only=False):
     if not art_only:
         T(cv, 'arsenal', m['name'].upper(), 6, 6.0, 7.0, P_['plat'], .14, layer='FOIL')
         T(cv, 'plexmono', m['no'], W - 6, 6.0, 4.8, P_['plat2'], .12, align='right', layer='FOIL')
-        T(cv, 'work', 'SINCE ' + m['since'], W - 6, 9.6, 3.3, P_['sub'], .4, align='right', layer='FOIL')
-        T(cv, 'work', 'MEMBER', 6, 9.6, 3.3, P_['sub'], .42, layer='FOIL')
 
 # ================================================================ PLATINUM PLUS: Mandir
 GOLDV = [(0, '#f6e4ad'), (.45, '#d8b465'), (1, '#8f6a2c')]
