@@ -1452,7 +1452,7 @@
   function openEditCharge(c, s, parentBody) {
     var body = openSheet(c.item + ' · Room ' + s.room);
     var tiers = c.item === 'Late checkout' && S.st.lateOut ? S.st.lateOut : null;
-    var ask = rcp() && !(c.auto && s.status === 'In house'); // the automatic late check-out line can be changed without approval
+    var ask = rcp() && !(c.deskEdit && s.status === 'In house'); // late check-out and fines: reception sets what was actually paid // the automatic late check-out line can be changed without approval
     body.innerHTML = '<p class="small">Added ' + esc(tShort(c.at)) + ' by ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</p>' +
       (tiers ? '<div class="field"><span>Late check-out till</span><div class="seg" id="f-tier">' + tiers.map(function (x) {
         return '<button type="button" data-p="' + x.price + '" aria-pressed="' + (!c.free && Number(c.price) === x.price) + '">' + esc(x.label) + '<br>' + inr(x.price) + '</button>';

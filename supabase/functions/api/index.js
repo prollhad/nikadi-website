@@ -2337,7 +2337,7 @@ function deskCore(db, hooks) {
     var v = { id: s.id, room: s.room, guest: s.guest, guests: s.guests, waOk: s.waOk === 'Yes', waOffers: s.waOffers === 'Yes', checkin: s.checkin, checkout: s.checkout, nights: s.nights, status: s.status,
       leavesToday: s.status === 'In house' && s.checkout <= today(), inBy: s.inBy, inAt: s.inAt, outBy: s.outBy, outAt: s.outAt };
     v.charges = chargesOf(s.id).map(function (c) {
-      var o = { id: c.id, at: c.at, item: c.item, qty: c.qty, free: c.free === 'Yes', note: c.note, by: c.by, auto: autoLate(c) };
+      var o = { id: c.id, at: c.at, item: c.item, qty: c.qty, free: c.free === 'Yes', note: c.note, by: c.by, auto: autoLate(c), deskEdit: deskEdit(c) };
       if (mgr) { o.price = c.price; o.total = c.total; }
       return o;
     }).reverse();
@@ -3132,7 +3132,7 @@ function deskCore(db, hooks) {
       if (METHODS.indexOf(req.method) < 0) fail('method_required');
       if ((req.method === 'UPI' || req.method === 'Bank transfer') && !text(req.ref, 40)) fail('ref_required');
     }
-    var g = autoLate(c) && s.status === 'In house' && !(back > 0) ? null : gate(me, 'editCharge', req, 'Room ' + c.room + ' · ' + c.item + ' × ' + c.qty + ' (₹' + c.total + '): ' +
+    var g = deskEdit(c) && s.status === 'In house' && !(back > 0) ? null : gate(me, 'editCharge', req, 'Room ' + c.room + ' · ' + c.item + ' × ' + c.qty + ' (₹' + c.total + '): ' +
       (req.remove ? 'remove from the bill' + (back > 0 ? ' and refund ₹' + back + ' by ' + req.method : '') : 'change to ' + req.qty + (req.free ? ' (free)' : req.total != null && req.total !== '' ? ' for ₹' + req.total + ' in total' : ' × ₹' + req.price)));
     if (g) return g;
     if (req.remove) {
@@ -3803,16 +3803,29 @@ function deskCore(db, hooks) {
         return;
       }
       if (!it || !yes(it.active)) return;
-      if (mine.some(function (c) { return c.item === DESK_LATE_ITEM || c.item === DESK_LATE_FULL_ITEM; })) return;
-      var mem = memberOf(s.phone), perk = mem && (mem.tierKey === 'platinum' || mem.tierKey === 'plus');
-      var price = DESK_LATE_OUT[0].price;
-      db.add('charges', { id: id('C'), at: now, stay: s.id, room: s.room, item: DESK_LATE_ITEM, qty: 1, price: perk ? 0 : price, total: perk ? 0 : price, free: perk ? 'Yes' : 'No',
-        note: 'Till ' + DESK_LATE_OUT[0].label + ' · added automatically, not checked out by 9:30 AM' + (perk ? ' · free for ' + mem.tier + ' member' : ''), by: DESK_LATE_BY, removed: '' });
+      if (mine.some(function (c) { return c.item === DESK_LATE_FULL_ITEM; })) return;
+      /* 9:30 → ₹500, 10:00 → ₹1,000, 11:00 → ₹1,500. Platinum: free till 11 AM; Platinum Plus: free till 12 noon. */
+      var step = hm >= DESK_LATE_OUT[1].till ? 2 : hm >= DESK_LATE_OUT[0].till ? 1 : 0, tier = DESK_LATE_OUT[step];
+      var mem = memberOf(s.phone), key = mem && mem.tierKey, perk = key === 'plus' || (key === 'platinum' && step < 2);
+      var price = perk ? 0 : tier.price;
+      var note = 'Till ' + tier.label + ' · added automatically, still in the room' + (perk ? ' · free for ' + mem.tier + ' member' : '');
+      var have = mine.filter(function (c) { return c.item === DESK_LATE_ITEM; });
+      if (!have.length) {
+        db.add('charges', { id: id('C'), at: now, stay: s.id, room: s.room, item: DESK_LATE_ITEM, qty: 1, price: price, total: price, free: perk ? 'Yes' : 'No', note: note, by: DESK_LATE_BY, removed: '' });
+      } else {
+        var c0 = have[have.length - 1];
+        // only move up a line the timer made itself and nobody has changed or removed since
+        if (have.length > 1 || c0.removed || c0.by !== DESK_LATE_BY || /Edited by/.test(String(c0.note || '')) || lateStep(c0) >= step) return;
+        db.set('charges', c0, { price: price, total: price, qty: 1, free: perk ? 'Yes' : 'No', note: note, at: now });
+      }
       recompute(s);
-      out.push({ room: s.room, stay: s.id, price: perk ? 0 : price });
+      out.push({ room: s.room, stay: s.id, price: price });
     });
     return out;
   }
+  /* Late check-out lines and fines: the front desk changes the amount to what the guest actually paid, no manager approval needed (every change is logged). */
+  function lateStep(c) { var n = String(c.note || ''); for (var i = DESK_LATE_OUT.length - 1; i >= 0; i--) if (n.indexOf('Till ' + DESK_LATE_OUT[i].label + ' ') === 0) return i; return 99; }
+  function deskEdit(c) { return c && (c.item === DESK_LATE_ITEM || c.item === DESK_LATE_FULL_ITEM || c.item === DESK_FINE_ITEM); }
   function autoLate(c) { return c && ((c.item === DESK_LATE_ITEM && c.by === DESK_LATE_BY) || (c.item === DESK_LATE_FULL_ITEM && c.by === DESK_LATE_FULL_BY)); }
   /* Fine on a guest's room bill (default ₹2,000). Front desk adds it with a reason; it can be changed or removed like any bill item. */
   api.fine = function (req) {
