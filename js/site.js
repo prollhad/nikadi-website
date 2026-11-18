@@ -1000,3 +1000,45 @@ try{
 })();
 
 }catch(e){console.error("[nikadi part 20]",e);}
+/* part 21 */
+try{
+
+/* ---- v7: festival calendar countdown, staff wall and guest wall (from /data/*.json) ---- */
+(function(){
+  function $(id){return document.getElementById(id);}
+  var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var today=new Date(Date.now()+330*60000).toISOString().slice(0,10);
+  function dn(a,b){var p=a.split('-'),q=b.split('-');return Math.round((Date.UTC(+q[0],+q[1]-1,+q[2])-Date.UTC(+p[0],+p[1]-1,+p[2]))/864e5);}
+  var list=$('fvList');
+  if(list){
+    var next=null;
+    [].forEach.call(list.querySelectorAll('.fv'),function(li){
+      var d=li.getAttribute('data-d'),p=d.split('-'),x=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
+      li.querySelector('time').innerHTML='<span>'+MN[+p[1]-1]+'</span><b>'+(+p[2])+'</b><small>'+WD[x.getUTCDay()]+' '+p[0]+'</small>';
+      if(d<today)li.classList.add('gone');else if(!next)next=li;
+    });
+    if(next){
+      var n=dn(today,next.getAttribute('data-d')),box=$('fvNext'),p=next.getAttribute('data-d').split('-');
+      var wa='https://wa.me/917501101137?text='+encodeURIComponent('Hare Krishna! I would like to book a room at Nikadi Guest House for '+next.querySelector('h3').textContent+'.');
+      box.innerHTML='<div class="cd">'+(n===0?'Today':n)+'<small>'+(n===0?'Happening now':n===1?'day to go':'days to go')+'</small></div><div><p class="kicker">Next festival · '+(+p[2])+' '+MN[+p[1]-1]+' '+p[0]+'</p><h3>'+next.querySelector('h3').textContent+'</h3><p>'+next.querySelector('p').textContent+'</p></div><a class="btn btn-gold" href="'+wa+'" target="_blank" rel="noopener">Book for this festival</a>';
+      box.hidden=false;
+    }
+  }
+  function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function load(url,cb){fetch(url,{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(cb).catch(function(){});}
+  if($('staffGrid'))load('/data/team.json',function(a){
+    a=(a||[]).filter(function(x){return x&&x.name&&x.photo&&x.show!==false;});if(!a.length)return;
+    $('staffGrid').innerHTML=a.map(function(x){
+      var src=esc(x.photo),webp=/\.jpe?g$/i.test(x.photo)?esc(x.photo.replace(/\.jpe?g$/i,'.webp')):'';
+      return '<figure class="staff"><div class="ph"><picture>'+(webp?'<source srcset="'+webp+'" type="image/webp">':'')+'<img src="'+src+'" alt="'+esc(x.name)+', '+esc(x.role||'Nikadi team')+'" loading="lazy" decoding="async"></picture></div><figcaption><b>'+esc(x.name)+'</b><span>'+esc(x.role||'')+'</span>'+(x.id?'<span class="eid">ID '+esc(x.id)+'</span>':'')+'</figcaption></figure>';
+    }).join('');
+    $('team').hidden=false;
+  });
+  if($('guestWall'))load('/data/guests.json',function(a){
+    a=(a||[]).filter(function(x){return x&&x.photo;});if(!a.length)return;
+    $('guestWall').innerHTML=a.map(function(x){return '<figure><img src="'+esc(x.photo)+'" alt="'+esc(x.caption||'Guests at Nikadi Guest House')+'" loading="lazy" decoding="async">'+(x.name||x.caption?'<figcaption>'+(x.name?'<b>'+esc(x.name)+'</b> · ':'')+esc(x.caption||'')+'</figcaption>':'')+'</figure>';}).join('');
+    $('guests').hidden=false;
+  });
+})();
+
+}catch(e){console.error("[nikadi part 21]",e);}
