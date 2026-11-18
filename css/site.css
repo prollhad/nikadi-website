@@ -1478,6 +1478,9 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
   #transport .gtm .btn{width:100%;justify-content:center}
   #transport .tg-i:last-child{grid-column:1/-1}
 }
+.bk-us{font-size:.84rem;color:var(--gold-hi);margin:4px 0 0}.bk-alt{font-size:.76rem;color:var(--muted);margin:6px 0 0}.bk-alt a{color:inherit}
+.bk-train{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px 28px;align-items:center;margin:20px 0 6px;padding:22px;border-radius:var(--r);border:1px solid rgba(217,173,85,.5);background:linear-gradient(160deg,rgba(217,173,85,.12),rgba(10,15,31,.5) 60%)}.bk-train h3{font-family:var(--display);font-size:1.35rem;font-weight:500;margin:4px 0 6px}.bk-train p{color:var(--muted);font-size:.9rem}.bk-train .car-acts{justify-content:flex-end}
+@media (max-width:760px){.bk-train{grid-template-columns:minmax(0,1fr)}.bk-train .car-acts{justify-content:flex-start}}
 .gt{border-radius:28px;overflow:hidden;border:1px solid rgba(217,173,85,.55);background:linear-gradient(160deg,#16224a,#0d1530 55%,#0a0f1f);margin-bottom:34px;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)}
 .gt-top{background:var(--gold-grad);color:var(--gold-ink);padding:26px clamp(20px,3vw,40px);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
 .gt-brand{display:flex;align-items:center;gap:clamp(10px,2vw,22px);flex-wrap:wrap;font-family:var(--display);font-weight:700;line-height:1}

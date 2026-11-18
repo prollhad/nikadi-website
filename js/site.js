@@ -1014,6 +1014,7 @@ window.NK_TRAINS={"13103":{"d":"Daily","s":[["Sealdah","18:20"],["Ranaghat Jn","
     document.getElementById('trRoute').innerHTML=st.map(function(x,i){return '<li class="'+(i===0||i===st.length-1?'end':'')+'"><b>'+x[0]+'</b><span>'+t12(x[1])+'</span></li>';}).join('');
     document.getElementById('trNote').textContent=LAST[T.k]+' Times from the official Indian Railways timetable (NTES / RailOne).';
     document.getElementById('trFull').href='https://www.ixigo.com/trains/'+n;
+    var bk=document.getElementById('trBook'),ex=T.t==='EXP';bk.hidden=!ex;document.getElementById('trFull').className='btn '+(ex?'btn-line':'btn-gold');if(ex)bk.href='https://wa.me/919933864574?text='+encodeURIComponent('Hare Krishna! Please book '+T.n+' (No. '+n+') for me.\nFrom: '+st[0][0]+'\nTo: '+st[st.length-1][0]+'\nDate: \nPassengers: \nClass: ');
     dlg.hidden=false; document.documentElement.style.overflow='hidden'; dlg.querySelector('.trd-x').focus();
   }
   function close(){dlg.hidden=true;document.documentElement.style.overflow='';if(last&&last.focus)last.focus();}
