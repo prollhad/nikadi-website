@@ -28,7 +28,7 @@
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Lato:wght@300;400;700&display=swap">
-<link rel="stylesheet" href="/css/site.css?v=a864e49d">
+<link rel="stylesheet" href="/css/site.css?v=19fea263">
 <script>(function(){var M={"home":"/","heroMember":"/","offerCard":"/","ocTag":"/","ocTitle":"/","ocFoot":"/","heroSlides":"/","capKick":"/","capText":"/","capNo":"/","capOf":"/","heroProg":"/","heroPrev":"/","heroNext":"/","bookForm":"/","rm":"/","gu":"/","bookSum":"/","overview":"/","rooms":"/","avc":"/","avcPrev":"/","avcNext":"/","avcMonths":"/","avcSel":"/","avcClear":"/","avcBook":"/","avcNote":"/","now":"/","gwClock":"/","gClock":"/","gDate":"/","gDesk":"/","gwWx":"/","gTemp":"/","gCond":"/","gWxSub":"/","gFc":"/","gwSun":"/","gSunDot":"/","gRise":"/","gSet":"/","gSunSub":"/","gwPrice":"/","gPrLbl":"/","gPrDs":"/","gPrD":"/","gPrTs":"/","gPrT":"/","gAratiLbl":"/","gArati":"/","gAratiIn":"/","gTrain":"/","gTrainIn":"/","gTrainMore":"/","gTrainAc":"/","gFar":"/","gFarBtn":"/","reviews":"/","revTrack":"/","member-teaser":"/","amenities":"/","gallery":"/","galMore":"/","booking":"/","cancellation":"/","paybox":"/","payOnline":"/","poName":"/","poPhone":"/","poAmt":"/","poNote":"/","poHint":"/","poErr":"/","poGo":"/","poOk":"/","qr":"/","upiId":"/","upiActs":"/","upiLink":"/","upiMsg":"/","accNo":"/","ifsc":"/","bankMsg":"/","forms":"/","faq":"/","phone":"/","email":"/","emailMsg":"/","qForm":"/","cMsg":"/","temple":"/temple.html","prog":"/temple.html","progLive":"/temple.html","progLiveName":"/temple.html","progLiveSub":"/temple.html","progNow":"/temple.html","progNext":"/temple.html","progIn":"/temple.html","igs":"/temple.html","festivals":"/temple.html","fvNext":"/temple.html","fvCal":"/temple.html","fvMonths":"/temple.html","fvDlg":"/temple.html","fvdT":"/temple.html","meet":"/temple.html","meetIg":"/temple.html","mvid":"/temple.html","mvidV":"/temple.html","mvidS":"/temple.html","meetNav":"/temple.html","about":"/about.html","team":"/about.html","staffGrid":"/about.html","guests":"/about.html","guestWall":"/about.html","rules":"/about.html","explore":"/things-to-do.html","views":"/things-to-do.html","membership":"/membership.html","mdeck":"/membership.html"},h=location.hash.slice(1);if(h&&M[h])location.replace(M[h]+"#"+h);})();</script>
 </head>
 <body data-page="travel">
@@ -879,29 +879,18 @@
     <div class="car-acts"><a class="btn btn-gold" id="trBook" target="_blank" rel="noopener" hidden>Book this train with us</a><a class="btn btn-gold" id="trFull" target="_blank" rel="noopener">Live train status</a><a class="btn btn-line" href="https://enquiry.indianrail.gov.in/mntes/" target="_blank" rel="noopener">NTES timetable</a></div>
   </div>
 </div>
-<button class="moon-hit" id="moonHit" type="button" aria-label="Explore tonight's moon"></button>
-<div class="mx" id="moonX" hidden role="dialog" aria-modal="true" aria-label="Explore the moon">
-  <canvas class="mx-stars" id="mxS" aria-hidden="true"></canvas>
-  <canvas class="mx-c" id="mxC" aria-label="The moon. Drag to turn it, scroll or pinch to zoom."></canvas>
-  <div class="mx-top">
-    <button type="button" class="mx-b" id="mxExit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Exit</span></button>
-    <a class="mx-b" href="/" id="mxHome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"/></svg><span>Back to home</span></a>
+<button class="moon-hit" id="moonHit" type="button" aria-label="Walk on the moon"></button>
+<div class="mw" id="moonX" hidden role="dialog" aria-modal="true" aria-label="Walk on the moon">
+  <div class="mw-load" id="mwLoad"><div class="mw-spin"></div><p>Landing on the moon…</p></div>
+  <div class="mw-top">
+    <button type="button" class="mw-b" id="mxExit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Exit</span></button>
+    <a class="mw-b" href="/" id="mxHome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"/></svg><span>Back to home</span></a>
   </div>
-  <div class="mx-info">
-    <p class="kicker">Tonight's moon over Mayapur</p>
-    <h3 id="mxPh">Moon</h3>
-    <p class="mx-m" id="mxM"></p>
-    <p class="mx-names"><span>Chandra</span><span>Soma</span><span>চাঁদ</span><span>चाँद</span><span>Luna</span><span>Selene</span></p>
-    <p class="mx-fact" id="mxFact"></p>
+  <div class="mw-help" id="mwHelp">
+    <p class="kicker">Walk on the moon</p>
+    <ul><li><kbd>↑</kbd><kbd>↓</kbd> walk forward and back</li><li><kbd>←</kbd><kbd>→</kbd> turn left and right</li><li><kbd>Shift</kbd> + arrows to run</li><li><kbd>Space</kbd> to jump · hold it in the air to fly</li><li>Drag the mouse to look around · scroll to zoom</li></ul>
   </div>
-  <div class="mx-ctl">
-    <button type="button" class="mx-b" id="mxLight" aria-pressed="false">Full light</button>
-    <button type="button" class="mx-b" id="mxLab" aria-pressed="true">Names</button>
-    <button type="button" class="mx-b" id="mxFactB">Fun fact</button>
-    <button type="button" class="mx-b mx-z" id="mxOut" aria-label="Zoom out">−</button>
-    <button type="button" class="mx-b mx-z" id="mxIn" aria-label="Zoom in">+</button>
-  </div>
-  <p class="mx-hint">Drag to turn the moon · scroll or pinch to zoom in</p>
+  <div class="mw-hud"><span>Jetpack</span><i><em id="mwFuel"></em></i><b id="mwAlt">0 m</b></div>
 </div>
 <nav class="qrail" id="qrail" aria-label="Quick buttons">
   <button class="qr-toggle" type="button" aria-expanded="false" aria-label="Quick menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="qt-l">Quick menu</span></button>
@@ -971,6 +960,6 @@
 <script src="/pricing.js"></script>
 <script src="/calendar.js?v=2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="/js/site.js?v=06ad4e68"></script>
+<script src="/js/site.js?v=5ab4a340"></script>
 </body>
 </html>

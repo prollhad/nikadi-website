@@ -154,97 +154,131 @@ try{
 /* part 2 */
 try{
 
-/* ---- explore the moon: tap the moon in the night sky. A real-looking moon (maria and craters on the near side, roughly where they are),
-   lit as it is tonight; drag to turn, pinch or scroll to zoom ---- */
+/* ---- walk on the moon (desktop only): tap the moon in the night sky. Three.js loads only when you open it. ---- */
 (function(){
   var hit=document.getElementById('moonHit'),box=document.getElementById('moonX');if(!hit||!box)return;
-  var cv=document.getElementById('mxC'),st=document.getElementById('mxS'),x=cv.getContext('2d');
-  var TW=1024,TH=512,ALB=null,HGT=null,R2=Math.PI/180;
-  function phase(){var syn=29.530588853,ref=Date.UTC(2000,0,6,18,14)/864e5,now=Date.now()/864e5;return ((now-ref)%syn+syn)%syn/syn;}
-  /* --- the moon's surface, made once --- */
-  function build(){var A=new Float32Array(TW*TH),H=new Float32Array(TW*TH),G=128,gr=[],i,j;for(i=0;i<(G+1)*(G+1);i++)gr.push(Math.random());
-    function vn(a,b){a=((a%G)+G)%G;b=Math.max(0,Math.min(G-1.001,b));var xi=Math.floor(a),yi=Math.floor(b),xf=a-xi,yf=b-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),x2=(xi+1)%G;
-      var p=gr[yi*(G+1)+xi],q=gr[yi*(G+1)+x2],r=gr[(yi+1)*(G+1)+xi],s=gr[(yi+1)*(G+1)+x2];return p+(q-p)*u+(r-p)*v+(p-q-r+s)*u*v;}
-    function fbm(a,b){var t=0,am=.5,f=1;for(var o=0;o<5;o++){t+=am*vn(a*f,b*f);f*=2;am*=.5;}return t;}
-    /* maria: lat, lon, radius (degrees), darkness */
-    var MA=[[18,-57,22,.55],[32.8,-15.6,10,.62],[28,17.5,6.5,.6],[8.5,31.4,8,.58],[17,59,5,.62],[-7.8,51.3,6.5,.55],[-21,-16.6,7,.5],[-24.4,-38.6,4,.55],[-15.2,35.5,3.2,.5],[56,1,9,.45],[13.3,3.6,3,.45],[7.5,-30.9,4.5,.45],[-2,-20,6,.42]];
-    function gdist(la1,lo1,la2,lo2){var d=Math.sin(la1*R2)*Math.sin(la2*R2)+Math.cos(la1*R2)*Math.cos(la2*R2)*Math.cos((lo1-lo2)*R2);return Math.acos(Math.max(-1,Math.min(1,d)))/R2;}
-    for(j=0;j<TH;j++){var lat=90-(j+.5)/TH*180;for(i=0;i<TW;i++){var lon=(i+.5)/TW*360-180,k=j*TW+i,n=fbm(i/TW*G*.5,j/TH*G*.25);
-      var a=.72+(n-.5)*.26,m=0;
-      if(Math.abs(lon)<110)for(var q=0;q<MA.length;q++){var M=MA[q],d=gdist(lat,lon,M[0],M[1]),edge=M[2]*(1+(fbm(i/TW*G*1.5+q*7,j/TH*G*.75)-.5)*.6);if(d<edge*1.25){var t=Math.max(0,Math.min(1,(edge*1.25-d)/(edge*.45)));m=Math.max(m,t*M[3]);}}
-      A[k]=a*(1-m*.72)+(m?(n-.5)*.04:0);H[k]=(n-.5)*.03*(1-m);}}
-    /* craters: many small, few big; fewer on the smooth maria */
-    function crater(la,lo,rd,depth,bright){var cl=Math.max(.15,Math.cos(la*R2)),rx=rd/360*TW/cl,ry=rd/180*TH,ci=(lo+180)/360*TW,cj=(90-la)/180*TH;
-      for(var y=Math.floor(cj-ry*1.6);y<=cj+ry*1.6;y++){if(y<0||y>=TH)continue;for(var xx=Math.floor(ci-rx*1.6);xx<=ci+rx*1.6;xx++){var X=((xx%TW)+TW)%TW,dx=(xx-ci)/rx,dy=(y-cj)/ry,r=Math.sqrt(dx*dx+dy*dy);if(r>1.6)continue;var k=y*TW+X;
-        if(r<1){H[k]+=depth*(Math.pow(r,3)-1)*.7;A[k]*=1-.04*(1-r);}else{var rim=Math.exp(-Math.pow((r-1)/.35,2));H[k]+=depth*.32*rim;A[k]=Math.min(1,A[k]*(1+.04*rim*bright));}}}}
-    for(i=0;i<3200;i++){var la=Math.asin(Math.random()*2-1)/R2,lo=Math.random()*360-180,rd=.22+Math.pow(Math.random(),4.5)*5,kk=Math.floor((90-la)/180*TH)*TW+Math.floor((lo+180)/360*TW);
-      if(A[kk]<.5&&Math.random()<.85)continue;crater(la,lo,rd,.02+rd*.007,1);}
-    crater(-43.3,-11.4,1.6,.12,3);crater(9.6,-20,1.7,.12,3);crater(8.1,-38,1.2,.1,3);crater(-9,-1.9,2.6,.1,1);crater(-58.4,-14.4,2.5,.09,1);
-    /* Tycho's bright rays */
-    for(j=0;j<TH;j++){var la2=90-(j+.5)/TH*180;for(i=0;i<TW;i++){var lo2=(i+.5)/TW*360-180;if(Math.abs(lo2)>95)continue;var d2=gdist(la2,lo2,-43.3,-11.4);if(d2>55||d2<1.5)continue;
-      var br=Math.atan2(lo2+11.4,la2+43.3),ray=Math.pow(Math.max(0,Math.sin(br*23+Math.sin(br*7)*2)),18)*(1-d2/55);A[j*TW+i]=Math.min(1,A[j*TW+i]+ray*.1);}}
-    ALB=A;HGT=H;}
-  /* --- view --- */
-  var yaw=0,pitch=0,zoom=1,full=false,labels=true,dirty=true,raf=0,open=false,idle=0,S=0,dpr=1;
-  var LAB=[['Sea of Tranquility',8.5,31.4],['Apollo 11 landed here',.67,23.47],['Sea of Rains',32.8,-15.6],['Ocean of Storms',18,-57],['Sea of Serenity',28,17.5],['Sea of Crises',17,59],['Tycho crater',-43.3,-11.4],['Copernicus crater',9.6,-20]];
-  var FACTS=['The moon is 3,474 km across, about a quarter the size of the Earth.','We always see the same side of the moon. The far side was first seen in 1959.','In the Vedas the moon is Chandra, and also Soma.','Gaura Purnima, the appearance day of Sri Chaitanya Mahaprabhu, falls on the full moon of Phalguna.','Moonlight takes about 1.3 seconds to reach you.','The dark patches are old lava plains. Early astronomers thought they were seas, so they are called maria.','Rasa Purnima and Sharad Purnima are full moon nights celebrated in Mayapur.','The bright rays from Tycho crater stretch more than 1,500 km.'];
-  var fi=Math.floor(Math.random()*FACTS.length);
-  function size(){dpr=Math.min(1.5,window.devicePixelRatio||1);var w=innerWidth,h=innerHeight;cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
-    S=Math.min(w,h)*(w<640?.36:.33)*dpr;st.width=Math.round(w*dpr);st.height=Math.round(h*dpr);var sx=st.getContext('2d');sx.fillStyle='#02040b';sx.fillRect(0,0,st.width,st.height);
-    for(var i=0;i<w*h/1800;i++){var r=Math.random();sx.fillStyle='rgba(235,240,255,'+(.2+Math.random()*.6).toFixed(2)+')';sx.beginPath();sx.arc(Math.random()*st.width,Math.random()*st.height,(r<.93?.5:1.1)*dpr,0,7);sx.fill();}dirty=true;}
-  function light(){if(full)return [0,0,1];var t=2*Math.PI*phase();return [Math.sin(t),0,-Math.cos(t)];}
-  function render(){var W=cv.width,Hh=cv.height,cx=W/2,cy=Hh*(innerWidth<640?.56:.5),R=S*zoom,im=x.createImageData(W,Hh),D=im.data,L=light();
-    var cyw=Math.cos(yaw),syw=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
-    /* light in moon coordinates */
-    var y0=Math.max(0,Math.floor(cy-R)),y1=Math.min(Hh,Math.ceil(cy+R)),x0=Math.max(0,Math.floor(cx-R)),x1=Math.min(W,Math.ceil(cx+R));
-    for(var py=y0;py<y1;py++){var vy=(cy-py)/R;for(var px=x0;px<x1;px++){var vx=(px-cx)/R,r2=vx*vx+vy*vy;if(r2>1)continue;var vz=Math.sqrt(1-r2);
-      /* view -> body: undo pitch (x axis), then yaw (y axis) */
-      var by=vy*cp-vz*sp,bz1=vy*sp+vz*cp,bx=vx*cyw-bz1*syw,bz=vx*syw+bz1*cyw;
-      var lat=Math.asin(Math.max(-1,Math.min(1,by))),lon=Math.atan2(bx,bz),u=(lon/(2*Math.PI)+.5)*TW,v=(.5-lat/Math.PI)*TH;
-      var ui=Math.min(TW-1,u|0),vi=Math.min(TH-2,Math.max(1,v|0)),k=vi*TW+ui,a=ALB[k];
-      var dhu=HGT[vi*TW+((ui+1)%TW)]-HGT[vi*TW+((ui-1+TW)%TW)],dhv=HGT[(vi-1)*TW+ui]-HGT[(vi+1)*TW+ui];
-      /* surface tangents in view space for the bump */
-      var nd=vx*L[0]+vy*L[1]+vz*L[2],b=0;
-      /* east direction ~ perpendicular to normal in the horizontal plane */
-      var hx=vz,hz=-vx,hl=Math.sqrt(hx*hx+hz*hz)||1;hx/=hl;hz/=hl;var nx=-vx*vy,ny=1-vy*vy,nz=-vz*vy,nl=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;nx/=nl;ny/=nl;nz/=nl;
-      b=-(dhu*(hx*L[0]+hz*L[2])+dhv*(nx*L[0]+ny*L[1]+nz*L[2]))*5;
-      var sh=Math.max(0,nd+b*Math.min(1,Math.max(0,nd+.25)*2)),lit=sh>0?Math.pow(sh,.85):0,earth=.035*(1-Math.max(0,nd)),limb=.9+.1*vz;
-      var c=Math.min(1,(a*lit*limb*1.18+a*earth));var o=(py*W+px)*4;D[o]=255*Math.min(1,c*1.0);D[o+1]=255*Math.min(1,c*.985);D[o+2]=255*Math.min(1,c*.95);D[o+3]=255;}}
-    x.clearRect(0,0,W,Hh);x.putImageData(im,0,0);
-    /* soft glow */
-    var g=x.createRadialGradient(cx,cy,R*.98,cx,cy,R*1.25);g.addColorStop(0,'rgba(220,228,255,.12)');g.addColorStop(1,'rgba(220,228,255,0)');x.globalCompositeOperation='destination-over';x.fillStyle=g;x.fillRect(0,0,W,Hh);x.globalCompositeOperation='source-over';
-    if(labels){x.font=(12*dpr)+'px Inter,system-ui,sans-serif';x.textAlign='left';LAB.forEach(function(l){var la=l[1]*R2,lo=l[2]*R2,bx=Math.cos(la)*Math.sin(lo),by=Math.sin(la),bz=Math.cos(la)*Math.cos(lo);
-      var vx2=bx*cyw+bz*syw,bz2=-bx*syw+bz*cyw,vy2=by*cp+bz2*sp,vz2=-by*sp+bz2*cp;if(vz2<.2)return;var X=cx+vx2*R,Y=cy-vy2*R;
-      x.globalAlpha=Math.min(1,(vz2-.2)*3);x.fillStyle='#f4d797';x.beginPath();x.arc(X,Y,3*dpr,0,7);x.fill();x.strokeStyle='rgba(244,215,151,.6)';x.lineWidth=dpr;x.beginPath();x.moveTo(X+4*dpr,Y-4*dpr);x.lineTo(X+18*dpr,Y-16*dpr);x.stroke();
-      x.fillStyle='rgba(8,10,20,.6)';var tw=x.measureText(l[0]).width;x.fillRect(X+18*dpr,Y-30*dpr,tw+12*dpr,20*dpr);x.fillStyle='#f4e7c4';x.fillText(l[0],X+24*dpr,Y-16*dpr);});x.globalAlpha=1;}}
-  function loop(){if(!open)return;idle++;if(idle>90&&!drag){yaw+=.0025;dirty=true;}if(dirty){dirty=false;render();}raf=requestAnimationFrame(loop);}
-  function info(){var p=phase(),ill=Math.round((1-Math.cos(2*Math.PI*p))/2*100),age=p*29.53;
-    var nm=p<.03||p>.97?'New moon':p<.22?'Waxing crescent':p<.28?'First quarter':p<.47?'Waxing gibbous':p<.53?'Full moon':p<.72?'Waning gibbous':p<.78?'Last quarter':'Waning crescent';
-    function when(f){var d=new Date(Date.now()+((f-p+1)%1)*29.530588853*864e5+330*60000);return d.getUTCDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()];}
-    document.getElementById('mxPh').textContent=nkT(nm);
-    document.getElementById('mxM').textContent=ill+'% lit · '+age.toFixed(1)+' days old · next Purnima (full moon) '+when(.5)+' · next Amavasya (new moon) '+when(0);
-    document.getElementById('mxFact').textContent=nkT(FACTS[fi]);}
-  function show(){if(!ALB){document.getElementById('mxPh').textContent=nkT('Loading the moon…');}box.hidden=false;document.documentElement.style.overflow='hidden';open=true;
-    setTimeout(function(){if(!ALB)build();size();info();yaw=0;pitch=0;zoom=1;idle=0;dirty=true;loop();document.getElementById('mxExit').focus();},30);}
-  function hide(){open=false;cancelAnimationFrame(raf);box.hidden=true;document.documentElement.style.overflow='';hit.focus();}
+  var THREE_URL='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  var G=null,open=false,raf=0;
+  function loadThree(cb){if(window.THREE)return cb();var s=document.createElement('script');s.src=THREE_URL;s.onload=cb;s.onerror=function(){document.querySelector('#mwLoad p').textContent='The moon could not load. Please check your connection and try again.';};document.head.appendChild(s);}
+
+  function build(){
+    var T=window.THREE,W=innerWidth,H=innerHeight;
+    var R=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});R.setPixelRatio(Math.min(1.5,devicePixelRatio||1));R.setSize(W,H);
+    R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=1.05;
+    box.insertBefore(R.domElement,box.firstChild);
+    var S=new T.Scene();S.background=new T.Color(0x000000);
+    var cam=new T.PerspectiveCamera(55,W/H,.1,4000);
+
+    /* ---- noise ---- */
+    var P=[];for(var i=0;i<512;i++)P.push(Math.floor(Math.random()*256));
+    function hs(x,y){var n=(x*374761393+y*668265263)|0;n=(n^(n>>13))*1274126177|0;return ((n^(n>>16))&0xffff)/0xffff;}
+    function vn(x,y){var xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),a=hs(xi,yi),b=hs(xi+1,yi),c=hs(xi,yi+1),d=hs(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+    function fbm(x,y,o){var t=0,am=1,f=1,s=0;for(var k=0;k<o;k++){t+=am*vn(x*f,y*f);s+=am;f*=2.03;am*=.5;}return t/s;}
+    var SIZE=420,HALF=SIZE/2,CR=[];
+    for(i=0;i<70;i++){var r=Math.random()<.12?14+Math.random()*16:2+Math.pow(Math.random(),2)*9;CR.push([Math.random()*SIZE-HALF,Math.random()*SIZE-HALF,r,r*(.18+Math.random()*.1)]);}
+    CR.push([0,-40,22,4.5]);
+    function height(x,z){var h=(fbm(x*.012,z*.012,5)-.5)*14+(fbm(x*.09,z*.09,3)-.5)*1.3;
+      for(var k=0;k<CR.length;k++){var c=CR[k],dx=x-c[0],dz=z-c[1],d2=dx*dx+dz*dz,rr=c[2]*1.8;if(d2>rr*rr)continue;var d=Math.sqrt(d2)/c[2];
+        if(d<1)h+=c[3]*(d*d-1);h+=c[3]*.38*Math.exp(-Math.pow((d-1)/.28,2));}
+      var e=Math.max(Math.abs(x),Math.abs(z))-HALF*.82;if(e>0)h+=e*e*.02;return h;}
+    /* ---- ground ---- */
+    var N=260,geo=new T.PlaneGeometry(SIZE,SIZE,N,N);geo.rotateX(-Math.PI/2);var pa=geo.attributes.position,col=new Float32Array(pa.count*3);
+    for(i=0;i<pa.count;i++){var x=pa.getX(i),z=pa.getZ(i),y=height(x,z);pa.setY(i,y);var g=.42+(fbm(x*.05+9,z*.05+3,3)-.5)*.22+(fbm(x*.4,z*.4,2)-.5)*.08,m=fbm(x*.006+40,z*.006,3)<.42?.72:1;col[i*3]=g*m;col[i*3+1]=g*m*.985;col[i*3+2]=g*m*.96;}
+    geo.setAttribute('color',new T.BufferAttribute(col,3));geo.computeVertexNormals();
+    /* fine regolith grain */
+    var gc=document.createElement('canvas');gc.width=gc.height=256;var gx=gc.getContext('2d'),gi=gx.createImageData(256,256);for(i=0;i<256*256;i++){var q=200+Math.random()*55;gi.data[i*4]=gi.data[i*4+1]=gi.data[i*4+2]=q;gi.data[i*4+3]=255;}gx.putImageData(gi,0,0);
+    var gt=new T.CanvasTexture(gc);gt.wrapS=gt.wrapT=T.RepeatWrapping;gt.repeat.set(140,140);
+    var ground=new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,map:gt,roughness:1,metalness:0}));ground.receiveShadow=true;S.add(ground);
+    /* ---- rocks: on the ground, and floating ---- */
+    function rockGeo(seed){var g=new T.IcosahedronGeometry(1,2),p=g.attributes.position;for(var k=0;k<p.count;k++){var v=new T.Vector3(p.getX(k),p.getY(k),p.getZ(k)),n=.75+.5*vn(v.x*2+seed,v.y*2+v.z*2+seed*3);v.multiplyScalar(n);v.y*=.7;p.setXYZ(k,v.x,v.y,v.z);}g.computeVertexNormals();return g;}
+    var rm=new T.MeshStandardMaterial({color:0x8a8783,roughness:1,flatShading:true}),dummy=new T.Object3D();
+    for(var v=0;v<3;v++){var im=new T.InstancedMesh(rockGeo(v*7.3),rm,170);im.castShadow=im.receiveShadow=true;
+      for(i=0;i<170;i++){var rx=Math.random()*SIZE*.8-SIZE*.4,rz=Math.random()*SIZE*.8-SIZE*.4,s=Math.random()<.08?1.5+Math.random()*2.5:.15+Math.pow(Math.random(),2)*.9;
+        dummy.position.set(rx,height(rx,rz)+s*.25,rz);dummy.rotation.set(Math.random()*3,Math.random()*6,Math.random()*3);dummy.scale.set(s,s*(.6+Math.random()*.6),s);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix);}S.add(im);}
+    var floaters=[],fg=rockGeo(11);
+    for(i=0;i<70;i++){var fm=new T.Mesh(fg,rm);var fs=.2+Math.pow(Math.random(),2)*1.6;fm.scale.setScalar(fs);var fx=Math.random()*240-120,fz=Math.random()*240-120;
+      fm.position.set(fx,height(fx,fz)+3+Math.random()*28,fz);fm.castShadow=true;fm.userData={b:fm.position.y,ph:Math.random()*6,rs:new T.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(.4),sp:.2+Math.random()*.5};S.add(fm);floaters.push(fm);}
+    /* floating moon dust */
+    var dN=1600,dp=new Float32Array(dN*3);for(i=0;i<dN;i++){dp[i*3]=Math.random()*200-100;dp[i*3+1]=Math.random()*30;dp[i*3+2]=Math.random()*200-100;}
+    var dg=new T.BufferGeometry();dg.setAttribute('position',new T.BufferAttribute(dp,3));var dust=new T.Points(dg,new T.PointsMaterial({color:0xd8d4cc,size:.08,transparent:true,opacity:.55,depthWrite:false}));S.add(dust);
+    /* ---- sky: stars, the Earth, the sun ---- */
+    var sN=5000,sp=new Float32Array(sN*3);for(i=0;i<sN;i++){var th=Math.random()*Math.PI*2,ph=Math.acos(Math.random()*2-1),rr2=1800;sp[i*3]=rr2*Math.sin(ph)*Math.cos(th);sp[i*3+1]=Math.abs(rr2*Math.cos(ph))*.9+20;sp[i*3+2]=rr2*Math.sin(ph)*Math.sin(th);}
+    var sg=new T.BufferGeometry();sg.setAttribute('position',new T.BufferAttribute(sp,3));S.add(new T.Points(sg,new T.PointsMaterial({color:0xffffff,size:1.6,sizeAttenuation:false})));
+    var ec=document.createElement('canvas');ec.width=1024;ec.height=512;var ex=ec.getContext('2d');ex.fillStyle='#1d4f9a';ex.fillRect(0,0,1024,512);
+    for(i=0;i<1024*512/40;i++){var ux=Math.random()*1024,uy=Math.random()*512;if(fbm(ux*.006,uy*.01,4)>.55){ex.fillStyle='rgba(70,110,60,.9)';ex.fillRect(ux,uy,4,4);}}
+    for(i=0;i<9000;i++){var cx2=Math.random()*1024,cy2=Math.random()*512;if(fbm(cx2*.01+20,cy2*.02,4)>.56){ex.fillStyle='rgba(255,255,255,.35)';ex.beginPath();ex.arc(cx2,cy2,3,0,7);ex.fill();}}
+    var earth=new T.Mesh(new T.SphereGeometry(55,64,48),new T.MeshStandardMaterial({map:new T.CanvasTexture(ec),roughness:.8}));earth.position.set(-700,420,-1100);S.add(earth);
+    var atm=new T.Mesh(new T.SphereGeometry(58,48,32),new T.MeshBasicMaterial({color:0x6fa8ff,transparent:true,opacity:.18,side:T.BackSide}));atm.position.copy(earth.position);S.add(atm);
+    var sun=new T.DirectionalLight(0xfff6e8,3.1);sun.position.set(120,70,60);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);var sc=sun.shadow.camera;sc.left=sc.bottom=-60;sc.right=sc.top=60;sc.near=1;sc.far=400;sun.shadow.bias=-.0006;S.add(sun);S.add(sun.target);
+    S.add(new T.HemisphereLight(0x7f9cff,0x222222,.14));
+    var sunDisc=new T.Mesh(new T.SphereGeometry(18,24,16),new T.MeshBasicMaterial({color:0xfffbf0}));sunDisc.position.set(1200,700,600);S.add(sunDisc);
+    earth.material.emissive=new T.Color(0x0a1a3a);
+    /* ---- the astronaut ---- */
+    var A=new T.Group(),white=new T.MeshStandardMaterial({color:0xf2f2ee,roughness:.7}),grey=new T.MeshStandardMaterial({color:0x8c8f96,roughness:.6}),visor=new T.MeshStandardMaterial({color:0xd9a441,metalness:1,roughness:.15,emissive:0x2a1a04});
+    function part(g,m,x,y,z,par){var o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;(par||A).add(o);return o;}
+    var torso=part(new T.BoxGeometry(.62,.72,.38),white,0,1.18,0);
+    var pack=part(new T.BoxGeometry(.56,.66,.26),grey,0,1.22,-.31);
+    var helm=part(new T.SphereGeometry(.27,24,18),white,0,1.75,0);part(new T.SphereGeometry(.2,24,16,0,Math.PI*2,0,Math.PI*.55),visor,0,1.76,.12).rotation.x=Math.PI/2.4;
+    function limb(x,y,len,w){var g=new T.Group();g.position.set(x,y,0);var m=new T.Mesh(new T.CylinderGeometry(w,w*.9,len,10),white);m.position.y=-len/2;m.castShadow=true;g.add(m);var b=new T.Mesh(new T.SphereGeometry(w*1.15,10,8),grey);b.position.y=-len;b.castShadow=true;g.add(b);A.add(g);return g;}
+    var armL=limb(-.4,1.48,.62,.1),armR=limb(.4,1.48,.62,.1),legL=limb(-.17,.84,.78,.13),legR=limb(.17,.84,.78,.13);
+    var flame=new T.Mesh(new T.ConeGeometry(.12,.7,12),new T.MeshBasicMaterial({color:0xffb04a,transparent:true,opacity:.85}));flame.rotation.x=Math.PI;flame.position.set(0,.6,-.33);flame.visible=false;A.add(flame);
+    var plight=new T.PointLight(0xffa050,0,8);plight.position.set(0,.5,-.4);A.add(plight);
+    S.add(A);A.position.set(0,height(0,0),8);
+    /* footprints and dust puffs */
+    var puffs=[],pm=new T.MeshBasicMaterial({color:0xcfc9bf,transparent:true,opacity:.5,depthWrite:false}),pg=new T.SphereGeometry(.25,8,6);
+    function puff(x,z,n){for(var k=0;k<n;k++){var o=new T.Mesh(pg,pm.clone());o.position.set(x+(Math.random()-.5)*.4,height(x,z)+.1,z+(Math.random()-.5)*.4);o.userData={v:new T.Vector3((Math.random()-.5)*1.2,.4+Math.random()*.8,(Math.random()-.5)*1.2),t:0};S.add(o);puffs.push(o);}}
+    /* ---- input ---- */
+    var K={},yawOff=0,pitch=.32,dist=7.5,drag=null,heading=0,vel=new T.Vector3(),onGround=true,fuel=1,t=0,step=0,last=performance.now();
+    function key(e,d){var k=e.key;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Shift','w','a','s','d','W','A','S','D'].indexOf(k)<0)return;if(!open)return;e.preventDefault();K[k.length===1?k.toLowerCase():k]=d;}
+    addEventListener('keydown',function(e){key(e,true);});addEventListener('keyup',function(e){key(e,false);});addEventListener('blur',function(){K={};});
+    var cv=R.domElement;cv.addEventListener('pointerdown',function(e){drag=[e.clientX,e.clientY];cv.setPointerCapture(e.pointerId);});
+    cv.addEventListener('pointermove',function(e){if(!drag)return;yawOff-=(e.clientX-drag[0])*.005;pitch=Math.max(.02,Math.min(1.25,pitch+(e.clientY-drag[1])*.004));drag=[e.clientX,e.clientY];});
+    cv.addEventListener('pointerup',function(){drag=null;});cv.addEventListener('wheel',function(e){e.preventDefault();dist=Math.max(3,Math.min(26,dist*(e.deltaY>0?1.1:.9)));},{passive:false});
+    addEventListener('resize',function(){if(!open)return;cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight);});
+    var fuelEl=document.getElementById('mwFuel'),altEl=document.getElementById('mwAlt'),help=document.getElementById('mwHelp'),moved=0;
+    var camPos=new T.Vector3(),look=new T.Vector3();
+    function frame(now){if(!open)return;raf=requestAnimationFrame(frame);var dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;
+      var fw=(K.ArrowUp||K.w?1:0)-(K.ArrowDown||K.s?1:0),tn=(K.ArrowLeft||K.a?1:0)-(K.ArrowRight||K.d?1:0),run=K.Shift,speed=run?9:4;
+      heading+=tn*dt*(run?2.2:2.6);
+      var tx=Math.sin(heading)*fw*speed,tz=Math.cos(heading)*fw*speed,ctl=onGround?10:2.2;
+      vel.x+=(tx-vel.x)*Math.min(1,ctl*dt);vel.z+=(tz-vel.z)*Math.min(1,ctl*dt);
+      if(K[' ']){if(onGround){vel.y=5.2;onGround=false;puff(A.position.x,A.position.z,6);}else if(fuel>0&&vel.y<6){vel.y+=7.2*dt;fuel=Math.max(0,fuel-dt*.22);}}
+      vel.y-=1.62*1.9*dt;A.position.addScaledVector(vel,dt);
+      var lim=HALF*.86;A.position.x=Math.max(-lim,Math.min(lim,A.position.x));A.position.z=Math.max(-lim,Math.min(lim,A.position.z));
+      var gh=height(A.position.x,A.position.z);
+      if(A.position.y<=gh){if(!onGround&&vel.y<-2)puff(A.position.x,A.position.z,10);A.position.y=gh;vel.y=0;onGround=true;}
+      if(onGround)fuel=Math.min(1,fuel+dt*.25);
+      var thr=!onGround&&K[' ']&&fuel>0;flame.visible=thr;plight.intensity=thr?2.5:0;if(thr){flame.scale.y=.8+Math.random()*.5;}
+      A.rotation.y+=((heading-A.rotation.y+Math.PI*3)%(Math.PI*2)-Math.PI)*Math.min(1,dt*12);
+      /* walk / run animation */
+      var hv=Math.hypot(vel.x,vel.z);if(onGround&&hv>.3){step+=dt*hv*1.6;var sw=Math.sin(step)*Math.min(.9,hv*.12);legL.rotation.x=sw;legR.rotation.x=-sw;armL.rotation.x=-sw*.8;armR.rotation.x=sw*.8;
+          if(Math.sin(step)*Math.sin(step-dt*hv*1.6)<0&&hv>5)puff(A.position.x,A.position.z,2);}
+        else{var air=!onGround;legL.rotation.x+=((air?.35:0)-legL.rotation.x)*dt*5;legR.rotation.x+=((air?-.2:0)-legR.rotation.x)*dt*5;armL.rotation.x+=((air?-.5:0)-armL.rotation.x)*dt*5;armR.rotation.x+=((air?-.5:0)-armR.rotation.x)*dt*5;}
+      armL.rotation.z=onGround?.08:.5;armR.rotation.z=onGround?-.08:-.5;torso.position.y=1.18+(onGround?Math.abs(Math.sin(step))*.04:0);
+      /* floating rocks and dust */
+      floaters.forEach(function(f){var u=f.userData;f.position.y=u.b+Math.sin(t*u.sp+u.ph)*1.2;f.rotation.x+=u.rs.x*dt;f.rotation.y+=u.rs.y*dt;f.rotation.z+=u.rs.z*dt;});
+      dust.position.y=Math.sin(t*.2)*.5;dust.rotation.y=t*.01;
+      puffs=puffs.filter(function(o){var u=o.userData;u.t+=dt;o.position.addScaledVector(u.v,dt);u.v.y-=.5*dt;o.scale.setScalar(1+u.t*2);o.material.opacity=.45*(1-u.t/1.6);if(u.t>1.6){S.remove(o);o.material.dispose();return false;}return true;});
+      /* camera */
+      var cy=A.rotation.y+Math.PI+yawOff,off=new T.Vector3(Math.sin(cy)*Math.cos(pitch)*dist,Math.sin(pitch)*dist+1.6,Math.cos(cy)*Math.cos(pitch)*dist);
+      var want=A.position.clone().add(off);var ch=height(want.x,want.z)+.6;if(want.y<ch)want.y=ch;
+      camPos.lerp(want,1-Math.pow(.0015,dt));if(!camPos.lengthSq())camPos.copy(want);cam.position.copy(camPos);look.copy(A.position).y+=1.3;cam.lookAt(look);
+      sun.position.set(A.position.x+120,A.position.y+70,A.position.z+60);sun.target.position.copy(A.position);
+      earth.rotation.y+=dt*.01;
+      fuelEl.style.width=(fuel*100).toFixed(0)+'%';altEl.textContent=Math.max(0,A.position.y-gh).toFixed(1)+' m';
+      if(fw||tn||K[' ']){moved+=dt;if(moved>6)help.classList.add('dim');}
+      R.render(S,cam);}
+    return {start:function(){last=performance.now();cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight);raf=requestAnimationFrame(frame);},stop:function(){cancelAnimationFrame(raf);K={};}};
+  }
+  function show(){box.hidden=false;document.documentElement.style.overflow='hidden';open=true;
+    if(G){G.start();return;}document.getElementById('mwLoad').hidden=false;
+    loadThree(function(){setTimeout(function(){try{G=build();document.getElementById('mwLoad').hidden=true;if(open)G.start();}catch(e){document.querySelector('#mwLoad p').textContent='Your browser could not start the moon walk.';}},30);});}
+  function hide(){open=false;if(G)G.stop();box.hidden=true;document.documentElement.style.overflow='';hit.focus();}
   hit.addEventListener('click',show);
   document.getElementById('mxExit').addEventListener('click',hide);
   document.getElementById('mxHome').addEventListener('click',function(e){if(/^\/(index\.html)?$/.test(location.pathname)){e.preventDefault();hide();scrollTo({top:0,behavior:'smooth'});}});
-  document.addEventListener('keydown',function(e){if(open&&e.key==='Escape')hide();});
-  document.getElementById('mxLight').addEventListener('click',function(){full=!full;this.setAttribute('aria-pressed',full);this.textContent=nkT(full?'Tonight’s light':'Full light');dirty=true;});
-  document.getElementById('mxLab').addEventListener('click',function(){labels=!labels;this.setAttribute('aria-pressed',labels);dirty=true;});
-  document.getElementById('mxFactB').addEventListener('click',function(){fi=(fi+1)%FACTS.length;info();});
-  function zm(f){zoom=Math.max(.7,Math.min(4,zoom*f));dirty=true;idle=0;}
-  document.getElementById('mxIn').addEventListener('click',function(){zm(1.25);});document.getElementById('mxOut').addEventListener('click',function(){zm(.8);});
-  cv.addEventListener('wheel',function(e){e.preventDefault();zm(e.deltaY<0?1.1:.91);},{passive:false});
-  var pts={},drag=false,lx=0,ly=0,pd=0;
-  cv.addEventListener('pointerdown',function(e){cv.setPointerCapture(e.pointerId);pts[e.pointerId]=[e.clientX,e.clientY];drag=true;lx=e.clientX;ly=e.clientY;idle=0;var k=Object.keys(pts);if(k.length===2){var a=pts[k[0]],b=pts[k[1]];pd=Math.hypot(a[0]-b[0],a[1]-b[1]);}});
-  cv.addEventListener('pointermove',function(e){if(!pts[e.pointerId])return;pts[e.pointerId]=[e.clientX,e.clientY];var k=Object.keys(pts);idle=0;
-    if(k.length===2){var a=pts[k[0]],b=pts[k[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)zm(d/pd);pd=d;return;}
-    var dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw-=dx*.006/zoom;pitch=Math.max(-1.3,Math.min(1.3,pitch+dy*.006/zoom));dirty=true;});
-  function up(e){delete pts[e.pointerId];if(!Object.keys(pts).length)drag=false;pd=0;}
-  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-  addEventListener('resize',function(){if(open)size();});
+  addEventListener('keydown',function(e){if(open&&e.key==='Escape')hide();});
+  if(/[?&]moonwalk=1/.test(location.search))setTimeout(show,600);
 })();
 
 }catch(e){console.error("[nikadi part 2]",e);}
