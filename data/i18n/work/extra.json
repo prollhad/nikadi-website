@@ -2651,5 +2651,26 @@
 "Восход и закат — открыть полный прогноз",
 "日出与日落，打开完整预报",
 "Amanecer y atardecer, abrir la previsión completa"
+],
+"Directions": [
+"পথ দেখুন",
+"रास्ता देखें",
+"Маршрут",
+"路线",
+"Cómo llegar"
+],
+"Show on map": [
+"ম্যাপে দেখুন",
+"मैप पर देखें",
+"На карте",
+"在地图上查看",
+"Ver en el mapa"
+],
+"Every route starts at Nikadi Guest House.": [
+"প্রতিটি পথ শুরু হয় নিকাডি গেস্ট হাউস থেকে।",
+"हर रास्ता निकाडी गेस्ट हाउस से शुरू होता है।",
+"Все маршруты начинаются от Nikadi Guest House.",
+"所有路线均从 Nikadi 宾馆出发。",
+"Todas las rutas salen de Nikadi Guest House."
 ]
 }

@@ -319,6 +319,13 @@ section.alt{background:var(--band)}
 .dist li > span:first-child{min-width:0}
 .dist .t{white-space:nowrap;color:var(--gold-hi);font-variant-numeric:tabular-nums}
 .dist .t small{color:var(--muted);font-size:.8rem;margin-left:4px}
+.dist li{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px 14px}
+.dir-go{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid rgba(217,173,85,.5);color:var(--gold-hi);text-decoration:none;font-size:.74rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:background .2s,border-color .2s}
+.dir-go svg{width:14px;height:14px}.dir-go:hover,.dir-go:focus-visible{background:rgba(217,173,85,.14);border-color:var(--gold)}
+.dir-two{display:inline-flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.dist-note{color:var(--muted);font-size:.82rem;margin-top:10px}
+@media (max-width:420px){.dir-go span{display:none}.dir-go{padding:7px 9px}.dir-two .dir-go span{display:inline}}
+
 .addr{display:grid;gap:18px;align-content:start}
 .addr address{font-style:normal;font-family:var(--display);font-size:1.6rem;line-height:1.35}
 
