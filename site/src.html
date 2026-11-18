@@ -3509,7 +3509,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     function vn(x,y){var xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),a=hs(xi,yi),b=hs(xi+1,yi),c=hs(xi,yi+1),d=hs(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
     function fbm(x,y,o){var t=0,am=1,f=1,s=0;for(var k=0;k<o;k++){t+=am*vn(x*f,y*f);s+=am;f*=2.03;am*=.5;}return t/s;}
     var SIZE=900,HALF=SIZE/2,CR=[],i,HA=14,HO=0,HS=.012,FEAT=[],HEART=0;
-    function craters(n,big){CR=[];for(var k=0;k<n*2.5;k++){var r=Math.random()<.12?14+Math.random()*16:2+Math.pow(Math.random(),2)*9;CR.push([Math.random()*SIZE-HALF,Math.random()*SIZE-HALF,r,r*(.18+Math.random()*.1)*(big||1)]);}if(n)CR.push([0,-40,22,4.5*(big||1)]);}
+    function craters(n,big){CR=[];for(var k=0;k<n*2.5;k++){var r=Math.random()<.12?14+Math.random()*16:2+Math.pow(Math.random(),2)*9;var cx0=Math.random()*SIZE-HALF,cz0=Math.random()*SIZE-HALF;if(Math.hypot(cx0-7,cz0-15)<r*1.8+26)continue;CR.push([cx0,cz0,r,r*(.18+Math.random()*.1)*(big||1)]);}if(n)CR.push([0,-40,22,4.5*(big||1)]);}
     craters(70);
     /* heightA is the exact formula; height() reads the same grid the ground mesh is drawn from, so feet always touch the ground */
     var N=360,HG=new Float32Array((N+1)*(N+1));
@@ -3776,7 +3776,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
          Airavata, Indra's white elephant ............. (-34, -306)
          Vaijayanta palace, Sudharma court, throne .... centre (0, -400); Indradev at (0, -428)
        ===================================================================== */
-    var SWR=700,SW=null,SWC=[],SWPOI=[],swDancers=[],swMusic=[],swPetals=null,swFount=[],swLamps=[],INDRA=null,AIR=null,PR={on:false,t:0},seen={};
+    var SWDOT=null,SWR=700,SW=null,SWC=[],SWPOI=[],swDancers=[],swMusic=[],swPetals=null,swFount=[],swLamps=[],INDRA=null,AIR=null,PR={on:false,t:0},seen={};
     var PAL={x:0,z:-400},PRANAM={x:0,z:-408};
     function swBase(x,z){var d=Math.hypot(x,z),h=(fbm(x*.006+50,z*.006,3)-.5)*5+Math.sin(x*.02)*Math.cos(z*.017)*.6;
       if(Math.abs(x)<12)h*=Math.abs(x)/12;var dg=Math.hypot(x,z-560);if(dg<40)h*=dg/40;
@@ -3813,12 +3813,12 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       /* sky dome: deep blue to rose to gold, with a soft sun */
       var dome=new T.Mesh(new T.SphereGeometry(6000,48,32),new T.MeshBasicMaterial({side:T.BackSide,fog:false,depthWrite:false,map:canvasTex(16,512,function(x,w,h){var g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#2a3f8f');g.addColorStop(.32,'#6f78c8');g.addColorStop(.44,'#f2b6c6');g.addColorStop(.5,'#ffe0a8');g.addColorStop(.56,'#fff2d6');g.addColorStop(1,'#fff6e8');x.fillStyle=g;x.fillRect(0,0,w,h);})}));SW.add(dome);
       var sunG=glowSprite(0xfff1c8,1400);sunG.position.set(1800,900,-3200);sunG.material.fog=false;SW.add(sunG);var sunD=glowSprite(0xffffff,260);sunD.position.copy(sunG.position);sunD.material.fog=false;SW.add(sunD);
-      var hemi=new T.HemisphereLight(0xffe6f0,0xfff4dc,.9);SW.add(hemi);
+      var hemi=new T.HemisphereLight(0xfff0e6,0xa89a84,.5);var DOT=SWDOT=canvasTex(64,64,function(x){x.fillStyle='#fff';x.beginPath();x.arc(32,32,30,0,7);x.fill();});SW.add(hemi);
       /* ground: cloud-soft meadow, marble where people walk */
       var gg=new T.PlaneGeometry(SWR*2+200,SWR*2+200,220,220);gg.rotateX(-Math.PI/2);var gp=gg.attributes.position,gcl=new Float32Array(gp.count*3);
       for(i=0;i<gp.count;i++){var x=gp.getX(i),z=gp.getZ(i),y=swBase(x,z);gp.setY(i,y);var n=fbm(x*.03,z*.03,3),c;
         var d=Math.hypot(x,z),path=Math.abs(x)<9&&z<545&&z>-300,plaza=Math.hypot(x,z-560)<30||Math.abs(x)<95&&z<-280&&z>-500;
-        if(path||plaza)c=[.97,.93,.86];else if(d>SWR-60)c=[.98,.96,.96];else c=[.28+n*.12,.52+n*.14,.22+n*.08];
+        if(path||plaza)c=[.97,.93,.86];else if(d>SWR-60)c=[.98,.96,.96];else c=[.16+n*.1,.46+n*.16,.14+n*.06];
         if(Math.abs(x)>9&&Math.abs(x)<11&&path)c=[.92,.72,.28];
         gcl[i*3]=c[0];gcl[i*3+1]=c[1];gcl[i*3+2]=c[2];}
       gg.setAttribute('color',new T.BufferAttribute(gcl,3));gg.computeVertexNormals();var gm=new T.Mesh(gg,new T.MeshStandardMaterial({vertexColors:true,roughness:.85}));gm.receiveShadow=true;SW.add(gm);
@@ -3854,7 +3854,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       for(var z2=520;z2>-290;z2-=2){[-17,-19,17,19].forEach(function(x){var col3=FLC[(r()*FLC.length)|0];fp.push(x+(r()-.5),swH(x,z2)+.35,z2+(r()-.5));fc.push(col3[0],col3[1],col3[2]);});bush.push([z2%4?-18:18,swH(18,z2)+.25,z2,.55,0,0,0,.6]);}
       inst(new T.IcosahedronGeometry(1,1),LEAF2,bush,1);
       var fg2=new T.BufferGeometry();fg2.setAttribute('position',new T.Float32BufferAttribute(fp,3));fg2.setAttribute('color',new T.Float32BufferAttribute(fc,3));
-      SW.add(new T.Points(fg2,new T.PointsMaterial({size:.42,vertexColors:true})));
+      SW.add(new T.Points(fg2,new T.PointsMaterial({size:.5,vertexColors:true,map:DOT,alphaTest:.4,transparent:true})));
       /* lotus ponds */
       [[110,180,46],[-130,260,32]].forEach(function(P){var wtr=M(new T.CircleGeometry(P[2],48),new T.MeshStandardMaterial({color:0x5fb8d8,roughness:.08,metalness:.3,transparent:true,opacity:.88}),P[0],-.35,P[1],SW,1);wtr.rotation.x=-Math.PI/2;
         M(new T.TorusGeometry(P[2],.8,8,64),MARBLE,P[0],-.1,P[1]).rotation.x=Math.PI/2;
@@ -3873,7 +3873,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       var kc=[];for(k=0;k<26;k++){var ca=r()*Math.PI*2,cr=r()*10,cy2=ky+20+r()*10;kc.push([KT.x+Math.cos(ca)*cr,cy2,KT.z+Math.sin(ca)*cr,3+r()*3]);}
       inst(new T.IcosahedronGeometry(1,1),mat(0x6fbf4a,{emissive:0x1a3a0a,roughness:.7}),kc,1);
       var gem=[],gcol2=[];for(k=0;k<500;k++){var ga=r()*Math.PI*2,gr2=r()*13,gy2=ky+14+r()*18;gem.push(KT.x+Math.cos(ga)*gr2,gy2,KT.z+Math.sin(ga)*gr2);var gc=[[1,.85,.3],[1,.3,.4],[.5,.8,1],[1,1,1],[.7,1,.5]][k%5];gcol2.push(gc[0],gc[1],gc[2]);}
-      var gg2=new T.BufferGeometry();gg2.setAttribute('position',new T.Float32BufferAttribute(gem,3));gg2.setAttribute('color',new T.Float32BufferAttribute(gcol2,3));SW.add(new T.Points(gg2,new T.PointsMaterial({size:.6,vertexColors:true,transparent:true,opacity:.95,blending:T.AdditiveBlending,depthWrite:false})));
+      var gg2=new T.BufferGeometry();gg2.setAttribute('position',new T.Float32BufferAttribute(gem,3));gg2.setAttribute('color',new T.Float32BufferAttribute(gcol2,3));SW.add(new T.Points(gg2,new T.PointsMaterial({size:.6,vertexColors:true,map:DOT,transparent:true,opacity:.95,blending:T.AdditiveBlending,depthWrite:false})));
       var kgl=glowSprite(0xfff0a0,70);kgl.position.set(KT.x,ky+24,KT.z);SW.add(kgl);SWC.push({x:KT.x,z:KT.z,r:3.4});
       SWPOI.push({x:KT.x,z:KT.z,r:34,t:'Kalpavriksha',s:'The wish-fulfilling tree that arose from the churning of the ocean, planted by Indra in Svarga.'});
       /* dance mandapa for the apsaras */
@@ -3943,7 +3943,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       for(k=0;k<4;k++){var ap2=person({sari:SARI[(k+3)%6],top:SARI[k%6],skin:0xdba57e});SW.add(ap2.g);swDancers.push({p:ap2,c:{x:k<2?-26:26,z:PAL.z-6},r:3,a:k*Math.PI,y:PY,sp:.5});}
       /* falling petals around you */
       var PN=1600,pp2=new Float32Array(PN*3),pc2=new Float32Array(PN*3);for(k=0;k<PN;k++){pp2[k*3]=(Math.random()-.5)*160;pp2[k*3+1]=Math.random()*40;pp2[k*3+2]=(Math.random()-.5)*160;var pk=Math.random()<.5;pc2[k*3]=1;pc2[k*3+1]=pk?.62:.92;pc2[k*3+2]=pk?.74:.86;}
-      var pg3=new T.BufferGeometry();pg3.setAttribute('position',new T.BufferAttribute(pp2,3));pg3.setAttribute('color',new T.BufferAttribute(pc2,3));swPetals=new T.Points(pg3,new T.PointsMaterial({size:.3,vertexColors:true,transparent:true,opacity:.9,depthWrite:false}));SW.add(swPetals);
+      var pg3=new T.BufferGeometry();pg3.setAttribute('position',new T.BufferAttribute(pp2,3));pg3.setAttribute('color',new T.BufferAttribute(pc2,3));swPetals=new T.Points(pg3,new T.PointsMaterial({size:.16,vertexColors:true,map:DOT,alphaTest:.4,transparent:true,opacity:.9,depthWrite:false}));SW.add(swPetals);
       SWPOI.push({x:0,z:560,r:34,t:'Your NIKADI ship',s:'Parked at the landing ghat. Press E beside it to fly back to space.'});
       SW.visible=false;}
     /* ---- the golden gate to Swarga Loka, high above the planets ---- */
@@ -3957,7 +3957,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     function swargBits(on){[ground,moonBall,ACT,dust,sky,halo,ringSky,portal,moonLbl].forEach(function(o){if(o)o.visible=!on&&(o!==ringSky||(WORLDS[cur]||{}).ring)&&o!==moonLbl;});
       ROCKS.forEach(function(o){o.visible=!on;});floaters.forEach(function(f){f.visible=!on&&!!(WORLDS[cur]||{}).float;});bodies.forEach(function(B){B.m.visible=!on;B.lb.visible=!on;});if(SW)SW.visible=on;}
     function enterSwarg(){if(busyW)return;busyW=true;veil.classList.add('on','gold');setTimeout(function(){
-      if(!SW)buildSwarg();cur='Swarg';swargBits(true);clearActs();S.background=new T.Color(0xffe8d6);S.fog=new T.Fog(0xffe9e0,260,1500);sun.color.setHex(0xfff0d8);sun.intensity=2.2;
+      if(!SW)buildSwarg();cur='Swarg';swargBits(true);clearActs();S.background=new T.Color(0xffe8d6);S.fog=new T.Fog(0xfbe3da,600,3200);sun.color.setHex(0xfff0d8);sun.intensity=1.45;
       /* the ship parks itself on the landing ghat and you step out in kurta and dhoti */
       SH.position.set(0,swH(0,560)+.05,560);shipYaw=Math.PI;SH.rotation.set(0,shipYaw,0);shipV=0;shipVy=0;shipRoll=0;seen={};
       mode='walk';A.visible=true;useBody(BODY_HUM);help.classList.remove('ship');setHud();heading=Math.PI;A.rotation.y=heading;A.position.set(7,swH(7,548),548);vel.set(0,0,0);onGround=true;dist=8;yawOff=0;pitch=.14;camPos.set(0,0,0);
@@ -3976,7 +3976,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       if(k>8.3){PR.on=false;HUM.rotation.x=0;HUM.position.y=0;}}
     var shower=null;
     function petalShower(){var N3=700,pp3=new Float32Array(N3*3),cc=new Float32Array(N3*3),vv2=[];for(var k=0;k<N3;k++){pp3[k*3]=A.position.x+(Math.random()-.5)*10;pp3[k*3+1]=A.position.y+12+Math.random()*12;pp3[k*3+2]=A.position.z+(Math.random()-.5)*10;var c=[[1,.5,.7],[1,.85,.3],[1,1,1],[1,.35,.35]][k%4];cc[k*3]=c[0];cc[k*3+1]=c[1];cc[k*3+2]=c[2];vv2.push(1.2+Math.random()*1.6);}
-      if(shower)SW.remove(shower);var g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pp3,3));g.setAttribute('color',new T.BufferAttribute(cc,3));shower=new T.Points(g,new T.PointsMaterial({size:.32,vertexColors:true,transparent:true,depthWrite:false}));shower.userData.v=vv2;shower.userData.t=0;SW.add(shower);}
+      if(shower)SW.remove(shower);var g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pp3,3));g.setAttribute('color',new T.BufferAttribute(cc,3));shower=new T.Points(g,new T.PointsMaterial({size:.2,vertexColors:true,map:SWDOT,alphaTest:.4,transparent:true,depthWrite:false}));shower.userData.v=vv2;shower.userData.t=0;SW.add(shower);}
     /* ---- every frame in Swarga Loka ---- */
     function swargAnim(dt){if(cur!=='Swarg'||!SW)return;
       swDancers.forEach(function(d,k){d.a+=dt*d.sp;var g=d.p.g;g.position.set(d.c.x+Math.cos(d.a)*d.r,d.y,d.c.z+Math.sin(d.a)*d.r);g.rotation.y=-d.a+(Math.sin(t*1.3+k)*.6);
@@ -4096,6 +4096,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       var baseYaw=(mode==='ship'?shipYaw:A.rotation.y)+Math.PI+yawOff,dd2=mode==='ship'?dist*(1+Math.min(1.2,Math.abs(shipV)/1500)):dist;
       var off=new T.Vector3(Math.sin(baseYaw)*Math.cos(pitch)*dd2,Math.sin(pitch)*dd2+(mode==='ship'?3:1.6),Math.cos(baseYaw)*Math.cos(pitch)*dd2);
       var want=focus.clone().add(off);if(cur==='Swarg'){var ch2=swH(want.x,want.z)+.6;if(want.y<ch2)want.y=ch2;}else if(Math.abs(want.x)<HALF&&Math.abs(want.z)<HALF){var ch=height(want.x,want.z)+.6;if(want.y<ch)want.y=ch;}
+      if(cur==='Swarg'||(Math.abs(focus.x)<HALF&&Math.abs(focus.z)<HALF&&focus.y<400)){for(var lk=1;lk<4;lk++){var lf=lk/4,lg=(cur==='Swarg'?swH(want.x+(focus.x-want.x)*lf,want.z+(focus.z-want.z)*lf):height(want.x+(focus.x-want.x)*lf,want.z+(focus.z-want.z)*lf))+.5,need=(lg-(focus.y+1.2)*lf)/(1-lf);if(want.y<need)want.y=need;}}
       if(!camPos.lengthSq()||camPos.distanceTo(want)>3000)camPos.copy(want);camPos.lerp(want,1-Math.pow(mode==='ship'?.0005:.0015,dt));cam.position.copy(camPos);look.copy(focus).y+=mode==='ship'?2:2.2;cam.lookAt(look);
       sky.position.copy(cam.position);
       sun.position.copy(focus).addScaledVector(SUND,150);sun.target.position.copy(focus);
