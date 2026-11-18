@@ -766,6 +766,53 @@ body{background:radial-gradient(1200px 600px at 80% -10%,rgba(217,173,85,.08),tr
 .gw .pill.live{border-color:rgba(110,231,150,.6);color:#a7f3c0;background:rgba(74,222,128,.12);animation:liveRow 2.4s ease-in-out infinite}
 @media (prefers-reduced-motion: reduce){.prog-live,.prog-live .lbl i,.prog li.live,.gw .pill.live{animation:none}}
 
+/* live availability calendar */
+.avc{margin-top:48px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(217,173,85,.05),transparent 140px),var(--panel);border-radius:var(--r);padding:26px;display:grid;gap:18px}
+.avc-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}
+.avc-head h3{font-size:clamp(1.6rem,4vw,2.1rem);margin-top:8px}
+.avc-lead{color:var(--muted);font-size:.92rem;margin-top:6px;max-width:52ch}
+.avc-tabs{display:flex;gap:6px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--bg)}
+.avc-tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:.86rem;padding:9px 16px;border-radius:999px;cursor:pointer;letter-spacing:.02em}
+.avc-tabs button[aria-selected=true]{background:var(--gold-grad);color:var(--gold-ink);font-weight:700}
+.avc-bar{display:flex;align-items:center;gap:12px}
+.avc-legend{flex:1;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;font-size:.8rem;color:var(--muted)}
+.avc-legend span{display:inline-flex;align-items:center;gap:7px}
+.lg{width:10px;height:10px;border-radius:50%;display:inline-block}
+.lg.free{background:#5fd08a}.lg.few{background:#f0b44c}.lg.full{background:#e07a62}
+.avc-nav{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--gold-hi);font-size:1.4rem;cursor:pointer;flex:none}
+.avc-nav:hover:not(:disabled){border-color:var(--gold)}
+.avc-nav:disabled{opacity:.3;cursor:default}
+.avc-months{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px}
+@media (max-width:760px){.avc-months{grid-template-columns:minmax(0,1fr)}.avc-months .avm:nth-child(2){display:none}.avc{padding:18px 14px}}
+.avm h4{font-family:var(--display);font-weight:600;font-size:1.15rem;text-align:center;margin:0 0 10px;letter-spacing:.04em}
+.avm-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.avm-g .wd{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:center;padding:4px 0}
+.avd{position:relative;aspect-ratio:1/1.02;min-width:0;border:1px solid transparent;border-radius:10px;background:rgba(255,255,255,.02);color:var(--ink);font:inherit;cursor:pointer;display:grid;align-content:center;justify-items:center;gap:1px;padding:2px;transition:border-color .2s,background .2s}
+.avd b{font-size:.98rem;font-weight:700;line-height:1}
+.avd small{font-size:.6rem;color:var(--muted);line-height:1.1;white-space:nowrap}
+.avd i{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%}
+.avd.a-free i{background:#5fd08a}.avd.a-few i{background:#f0b44c}
+.avd.a-few small{color:#f6c977}
+.avd.a-full{cursor:not-allowed;background:rgba(224,122,98,.06)}
+.avd.a-full b{color:#a9b0c6;text-decoration:line-through;text-decoration-color:rgba(224,122,98,.8)}
+.avd.a-full small{color:#e9967f}
+.avd.a-past,.avd.a-blank{visibility:hidden;pointer-events:none}
+.avd.a-past{visibility:visible;opacity:.22;cursor:default}
+.avd:hover:not(.a-full):not(.a-past){border-color:rgba(217,173,85,.6)}
+.avd.a-today b{color:var(--gold-hi)}
+.avd.a-in{background:rgba(217,173,85,.16)}
+.avd.a-sel{background:var(--gold-grad);color:var(--gold-ink)}
+.avd.a-sel small{color:var(--gold-ink)}
+.avd.a-sel b{color:var(--gold-ink)}
+.avd.a-offer:not(.a-full):not(.a-sel) small{color:#9fe0b4}
+.avc-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:16px}
+.avc-foot p{font-size:.95rem}
+.avc-foot p b{color:var(--gold-hi)}
+.avc-acts{display:flex;gap:10px;flex-wrap:wrap}
+.avc-acts .btn{padding:12px 20px}
+.avc-note{color:var(--muted);font-size:.78rem}
+.avc.offline .lg,.avc.offline .avd i{display:none}
+
 /* weather gadget opens the full forecast */
 a.gw-wx{text-decoration:none;color:inherit;cursor:pointer;transition:border-color .25s,transform .25s}
 a.gw-wx:hover{border-color:rgba(217,173,85,.6);transform:translateY(-2px)}
@@ -1455,6 +1502,27 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         <div class="room-btns"><a class="btn btn-gold" href="#room-deluxe-twin">View room</a><a class="btn btn-line" href="#home" data-room="1">Book this room</a></div>
       </div>
     </article>
+    </div>
+
+    <div class="avc rv" id="avc">
+      <div class="avc-head">
+        <div><p class="kicker rule">Live availability</p><h3>Which nights are free</h3><p class="avc-lead">Tap your check-in date, then your check-out date. Prices shown are per room, per night.</p></div>
+        <div class="avc-tabs" role="tablist" aria-label="Room type">
+          <button type="button" role="tab" aria-selected="true" data-avt="Deluxe Double">Deluxe Double</button>
+          <button type="button" role="tab" aria-selected="false" data-avt="Deluxe Twin">Deluxe Twin</button>
+        </div>
+      </div>
+      <div class="avc-bar">
+        <button type="button" class="avc-nav" id="avcPrev" aria-label="Previous month">‹</button>
+        <div class="avc-legend"><span><i class="lg free"></i>Available</span><span><i class="lg few"></i>Only a few left</span><span><i class="lg full"></i>Sold out</span></div>
+        <button type="button" class="avc-nav" id="avcNext" aria-label="Next month">›</button>
+      </div>
+      <div class="avc-months" id="avcMonths"></div>
+      <div class="avc-foot">
+        <p id="avcSel" aria-live="polite">Pick your check-in date.</p>
+        <div class="avc-acts"><button type="button" class="btn btn-line" id="avcClear" hidden>Clear dates</button><a class="btn btn-gold" id="avcBook" href="#home" hidden>Book these dates</a></div>
+      </div>
+      <p class="avc-note" id="avcNote">Live from our front desk, updated every few minutes. Your booking is confirmed once we reply on WhatsApp.</p>
     </div>
 
     <div class="times">
@@ -3518,6 +3586,87 @@ window.addEventListener('resize',mark);mark();
 /* phones: Instagram's frames swallow sideways swipes, so a clear layer on top lets the row scroll; a tap still opens the post */
 (function(){var row=document.getElementById('meetIg');if(!row)return;
 row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-instgrm-permalink]'),f=c.querySelector('iframe'),h=q?q.getAttribute('data-instgrm-permalink'):f?f.src.replace(/embed.*$/,''):'';if(!h)return;var t=document.createElement('a');t.className='igc-tap';t.href=h.split('?')[0];t.target='_blank';t.rel='noopener';t.setAttribute('aria-label','Open this post on Instagram');c.appendChild(t);});
+})();
+</script>
+<script>
+/* ---- v6: live availability calendar (free / few / full from the front desk, prices from pricing.js) ---- */
+(function(){
+  var box=document.getElementById('avc');if(!box)return;
+  var API="https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api",R=window.NikadiRates;
+  function $(id){return document.getElementById(id);}
+  function pad(n){return (n<10?'0':'')+n;}
+  function ymd(y,m,d){var x=new Date(Date.UTC(y,m,d));return x.getUTCFullYear()+'-'+pad(x.getUTCMonth()+1)+'-'+pad(x.getUTCDate());}
+  function addDay(s,n){var p=s.split('-');return ymd(+p[0],+p[1]-1,+p[2]+n);}
+  var MN=['January','February','March','April','May','June','July','August','September','October','November','December'],WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var today=R?R.today():new Date(Date.now()+330*60000).toISOString().slice(0,10);
+  var ty=+today.slice(0,4),tm=+today.slice(5,7)-1,off=0,MAXOFF=5,type='Deluxe Double',AV=null,ci=null,co=null,state='loading';
+  function stat(d){
+    if(!AV)return '';var row=AV[d];if(!row)return '';
+    var re=type==='Deluxe Twin'?/twin/i:/double/i,best='';
+    Object.keys(row).forEach(function(k){if(!re.test(k))return;var v=row[k];if(v==='free'||(v==='few'&&best!=='free')||(v==='full'&&!best))best=v;});
+    return best;
+  }
+  function price(d){if(!R)return '';var r=R.rate(type,d);return '₹'+r.toLocaleString('en-IN');}
+  function fullBetween(a,b){for(var d=a;d<b;d=addDay(d,1))if(stat(d)==='full')return d;return null;}
+  function nice(d){var p=d.split('-'),x=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));return WD[x.getUTCDay()]+' '+(+p[2])+' '+MN[+p[1]-1].slice(0,3);}
+  function month(y,m){
+    var first=new Date(Date.UTC(y,m,1)).getUTCDay(),days=new Date(Date.UTC(y,m+1,0)).getUTCDate(),h='<div class="avm"><h4>'+MN[m]+' '+y+'</h4><div class="avm-g">';
+    WD.forEach(function(w){h+='<span class="wd">'+w.slice(0,2)+'</span>';});
+    for(var i=0;i<first;i++)h+='<span class="avd a-blank"></span>';
+    for(var d=1;d<=days;d++){
+      var k=ymd(y,m,d),c=['avd'],st=stat(k),lbl=price(k),past=k<today;
+      if(past)c.push('a-past');else{if(st)c.push('a-'+st);if(st==='few')lbl='Few left';if(st==='full')lbl='Sold out';if(R&&R.period(k).offer)c.push('a-offer');}
+      if(k===today)c.push('a-today');
+      if(ci&&(k===ci||k===co))c.push('a-sel');else if(ci&&co&&k>ci&&k<co)c.push('a-in');
+      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+k+'"'+(past?' disabled':'')+' aria-label="'+nice(k)+(st?', '+(st==='free'?'available':st==='few'?'only a few rooms left':'sold out'):'')+'"><b>'+d+'</b><small>'+(past?'&nbsp;':lbl)+'</small><i></i></button>';
+    }
+    return h+'</div></div>';
+  }
+  function draw(){
+    var y=ty,m=tm+off;y+=Math.floor(m/12);m=((m%12)+12)%12;var y2=y,m2=m+1;if(m2>11){m2=0;y2++;}
+    $('avcMonths').innerHTML=month(y,m)+month(y2,m2);
+    $('avcPrev').disabled=off<=0;$('avcNext').disabled=off>=MAXOFF;
+    box.classList.toggle('offline',!AV);
+    var sel=$('avcSel');
+    if(!ci)sel.textContent='Pick your check-in date.';
+    else if(!co)sel.innerHTML='Check-in <b>'+nice(ci)+'</b>. Now pick your check-out date.';
+    else{var n=0;for(var d=ci;d<co;d=addDay(d,1))n++;var q=R?R.quote(type,ci,co,1,0):null;sel.innerHTML='<b>'+nice(ci)+'</b> to <b>'+nice(co)+'</b> · '+n+' night'+(n>1?'s':'')+(q&&q.total?' · <b>₹'+q.total.toLocaleString('en-IN')+'</b> for one '+type+' room':'');}
+    $('avcBook').hidden=!(ci&&co);$('avcClear').hidden=!ci;
+  }
+  box.addEventListener('click',function(e){
+    var t=e.target.closest('[data-avt]');
+    if(t){type=t.getAttribute('data-avt');[].forEach.call(box.querySelectorAll('[data-avt]'),function(b){b.setAttribute('aria-selected',b===t?'true':'false');});
+      if(ci&&co&&fullBetween(ci,co)){co=null;}draw();return;}
+    var b=e.target.closest('.avd');if(!b||b.disabled)return;
+    var d=b.getAttribute('data-d'),st=stat(d);
+    if(!ci||co||d<=ci){if(st==='full'){$('avcSel').textContent='That night is sold out for the '+type+'. Try the other room type, or another date.';return;}ci=d;co=null;}
+    else{var f=fullBetween(ci,d);if(f){$('avcSel').textContent='The night of '+nice(f)+' is sold out, so those dates are not free together. Pick an earlier check-out, or another check-in.';return;}co=d;}
+    draw();
+  });
+  $('avcPrev').addEventListener('click',function(){if(off>0){off--;draw();}});
+  $('avcNext').addEventListener('click',function(){if(off<MAXOFF){off++;draw();}});
+  $('avcClear').addEventListener('click',function(){ci=co=null;draw();});
+  /* fill the booking bar, then the normal Book handler scrolls to it */
+  $('avcBook').setAttribute('data-focus-book','');
+  $('avcBook').addEventListener('click',function(){
+    var a=$('ci'),b=$('co'),r=$('rm');if(!a||!b)return;
+    a.value=ci;b.value=co;if(r)r.selectedIndex=type==='Deluxe Twin'?1:0;
+    [a,b,r].forEach(function(el){if(!el)return;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));});
+  });
+  function load(){
+    var cached=null;try{cached=JSON.parse(sessionStorage.getItem('nk_av')||'null');}catch(e){}
+    if(cached&&Date.now()-cached.at<4*60000&&cached.from===today){AV=cached.map;draw();return;}
+    fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deskSiteAvailability',days:180})})
+    .then(function(r){return r.json();}).then(function(j){
+      if(!j||!j.ok||!j.days)throw 0;
+      var map={};j.days.forEach(function(x){map[x.d]=x.t;});AV=map;
+      try{sessionStorage.setItem('nk_av',JSON.stringify({at:Date.now(),from:today,map:map}));}catch(e){}
+      $('avcNote').textContent='Live from our front desk, updated every few minutes. Your booking is confirmed once we reply on WhatsApp.';
+      draw();
+    }).catch(function(){if(!AV){$('avcNote').textContent='Prices shown for each night. Send us your dates and we will confirm free rooms within minutes on WhatsApp.';draw();}});
+  }
+  draw();
+  if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();load();setInterval(function(){if(!document.hidden)load();},5*60000);}},{rootMargin:'400px 0px'});io.observe(box);}else load();
 })();
 </script>
 </body>
