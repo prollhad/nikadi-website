@@ -1344,7 +1344,7 @@ try{
   function tags(x){return x.c.map(function(c){return '<span class="fv-t '+CAT[c][0]+'">'+T(CAT[c][1])+'</span>';}).join('')+(x.big?'<span class="fv-t fv-busy">'+T('Busy · book early')+'</span>':'');}
   function card(x){var p=x.d.split('-'),k=KIND[x.c[0]],w=D(x.d).getUTCDay();
     var dt=x.e?(+p[2])+'–'+(+x.e.split('-')[2]):(+p[2]);
-    return '<li><button type="button" class="fvc '+CAT[x.c[0]][0]+(x.big?' big':'')+'" data-fv="'+x.i+'"><time datetime="'+x.d+'"><span>'+MS[+p[1]-1]+'</span><b>'+dt+'</b><small>'+(x.e?'':WS[w])+'</small></time><span class="fvc-b"><span class="fvc-n">'+esc(T(x.n))+'</span><span class="fvc-a">'+esc(T(x.a))+'</span><span class="fvc-tags">'+tags(x)+'</span></span><span class="fvc-go" aria-hidden="true">›</span></button></li>';}
+    return '<li><button type="button" class="fvc '+CAT[x.c[0]][0]+(x.big?' big':'')+(/Gaura Purnima/.test(x.n)?' gpc':'')+'" data-fv="'+x.i+'"><time datetime="'+x.d+'"><span>'+MS[+p[1]-1]+'</span><b>'+dt+'</b><small>'+(x.e?'':WS[w])+'</small></time><span class="fvc-b"><span class="fvc-n">'+esc(T(x.n))+'</span><span class="fvc-a">'+esc(T(x.a))+'</span><span class="fvc-tags">'+tags(x)+'</span></span><span class="fvc-go" aria-hidden="true">›</span></button></li>';}
   var mi=0,months=[];
   function inMonth(x,m){return x.d.slice(0,7)<=m&&(x.e||x.d).slice(0,7)>=m;}
   function show(){

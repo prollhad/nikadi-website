@@ -918,6 +918,21 @@ nav.main a{white-space:nowrap}
 .fvd-sec{display:grid;gap:4px}.fvd-sec .kicker{margin:0}.fvd-sec p:last-child{color:var(--ink);line-height:1.6}
 .fvd-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}.fvd-acts .btn{margin:0}
 .fv-next .btn{margin:0}
+.gp{margin:0 0 26px;border:1px solid rgba(217,173,85,.6);border-radius:var(--r);background:linear-gradient(160deg,rgba(217,173,85,.16),rgba(10,15,31,.55) 60%);overflow:hidden}
+.gp>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:18px 22px}.gp>summary::-webkit-details-marker{display:none}
+.gp-ic{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--gold-ink);background:var(--gold-grad,var(--gold-hi));font-size:1.1rem}
+.gp-t{display:grid;gap:3px;min-width:0}.gp-t b{font-family:var(--display);font-size:clamp(1.2rem,2.2vw,1.55rem);font-weight:700;color:var(--gold-hi)}.gp-t small{color:var(--muted);font-size:.8rem}
+.gp>summary i{font-style:normal;font-size:1.6rem;color:var(--gold-hi);transition:transform .2s}.gp[open]>summary i{transform:rotate(45deg)}
+.gp-body{padding:0 22px 22px;display:grid;gap:18px}
+.gp-l{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 24px}
+@media (max-width:760px){.gp-l{grid-template-columns:minmax(0,1fr)}.gp>summary{padding:16px}.gp-body{padding:0 16px 18px}}
+.gp-l li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.9rem;line-height:1.45}
+.gp-l time{font-weight:700;color:var(--gold-hi);white-space:nowrap}.gp-l time small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+.gp-l li.gp-main{background:rgba(217,173,85,.14);border-radius:12px;padding:12px;border-bottom:0}.gp-l li.gp-main span{font-weight:700}
+.gp-tovp{border:1px solid rgba(217,173,85,.4);border-radius:var(--r-sm);padding:16px 18px;background:rgba(10,15,31,.4)}.gp-tovp h4{font-family:var(--display);font-size:1.2rem;font-weight:600;margin:4px 0 6px}.gp-tovp p:last-child{color:var(--muted);font-size:.88rem}
+.gp-src{color:var(--muted);font-size:.78rem}
+.fvc.gpc{border-color:rgba(217,173,85,.7);background:linear-gradient(160deg,rgba(217,173,85,.14),var(--panel) 70%)}.fvc.gpc .fvc-n{color:var(--gold-hi);font-weight:800}
+
 .fv-src{color:var(--muted);font-size:.78rem;margin-top:16px}
 .fvp{border:1px solid rgba(217,173,85,.28);border-radius:var(--r);background:radial-gradient(120% 80% at 50% 0%,rgba(217,173,85,.1),transparent 60%),var(--panel);padding:26px clamp(16px,3.4vw,34px) 26px;box-shadow:0 18px 50px rgba(0,0,0,.18)}
 .fvp-years{display:flex;justify-content:center;gap:10px;margin-bottom:16px}
@@ -2047,6 +2062,15 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <p>The big days at the Mayapur temple, Indian public holidays and international holidays for the coming year, so you can plan your stay. Tap any date to see what it is and what to expect here. Festival and holiday weeks are our busiest, so book early.</p>
     </div>
     <div class="fv-next rv" id="fvNext" hidden></div>
+    <details class="gp rv" id="gaura-purnima">
+      <summary><span class="gp-ic" aria-hidden="true">✦</span><span class="gp-t"><b>Gaura Purnima Festival 2027 · Mayapur</b><small>19 February – 24 March 2027 · the full official program from ISKCON Mayapur · tap to see every date</small></span><i aria-hidden="true">+</i></summary>
+      <div class="gp-body">
+        <ol class="gp-l"><li><time>19 Feb<small>Fri</small></time><span>Sri Nityananda Trayodashi · festival season begins</span></li><li><time>21–24 Feb</time><span>GBC Plenary meetings (part 1)</span></li><li><time>25 Feb<small>Thu</small></time><span>153rd appearance day of Srila Bhaktisiddhanta Sarasvati Thakura Prabhupada</span></li><li><time>25–28 Feb</time><span>ILS (ISKCON Leadership Sanga)</span></li><li><time>28 Feb<small>Sun</small></time><span>Devotees arrive</span></li><li><time>1 Mar<small>Mon</small></time><span>Srila Prabhupada Connect Day (English / Russian)</span></li><li><time>1–3 Mar</time><span>GBC Plenary meetings (part 2)</span></li><li><time>2–4 Mar</time><span>Shravana Utsava · three days of hearing</span></li><li><time>5 Mar<small>Fri</small></time><span>Festival inauguration · Garuda-dhvaja flag hoisting · morning deity report · GBC Ishtagoshthi · Kirtan Mela adhivasa</span></li><li><time>6–10 Mar</time><span>Kirtan Mela</span></li><li><time>6 Mar<small>Sat</small></time><span>SGGS and Mayapur Sankirtan book distribution awards</span></li><li><time>7 Mar<small>Sun</small></time><span>Sri Shivaratri at ISKCON Rajapur, Sri Jagannatha temple · World Sankirtan book distribution awards</span></li><li><time>8–9 Mar</time><span>Sri Sri Radha-Madhava Jhulan Yatra</span></li><li><time>10 Mar<small>Wed</small></time><span>Navadvipa Mandala Parikrama adhivasa</span></li><li><time>11–17 Mar</time><span>Navadvipa Mandala Parikrama</span></li><li><time>18 Mar<small>Thu</small></time><span>Parikrama Mahamilana</span></li><li><time>18–21 Mar</time><span>Cultural programs</span></li><li><time>19 Mar<small>Fri</small></time><span>Ekadashi · Srimad-Bhagavatam and Sri Chaitanya-charitamrita yajna · Sri Sri Radha-Madhava Boat Festival</span></li><li><time>20 Mar<small>Sat</small></time><span>Shantipur festival · Sri Sri Radha-Madhava procession</span></li><li><time>21 Mar<small>Sun</small></time><span>Ganga Puja · immersion of ashes · Gaura Purnima adhivasa · Srila Prabhupada Connect Day (Bengali)</span></li><li class="gp-main"><time>22 Mar<small>Mon</small></time><span>GAURA PURNIMA · appearance day of Sri Chaitanya Mahaprabhu · abhisheka · Ekadashi feast at moonrise</span></li><li><time>23 Mar<small>Tue</small></time><span>Sri Jagannatha Mishra festival feast</span></li><li><time>24 Mar<small>Wed</small></time><span>Garuda-dhvaja flag lowering · festival ends</span></li></ol>
+        <div class="gp-tovp"><p class="kicker">Also in 2027</p><h4>TOVP grand opening · from 1 November 2027</h4><p>The Temple of the Vedic Planetarium begins its grand opening on 1 November 2027, planned to run for six months with cultural programs, yajnas, kirtans and parikramas. Exact dates and registration will be announced by the TOVP.</p></div>
+        <p class="gp-src">Program as published by ISKCON Mayapur (Sri Mayapur Chandrodaya Mandir). Dates can change; the temple confirms each program nearer the time. These are the busiest weeks of the year in Mayapur, so please book your room early.</p>
+        <div class="car-acts"><a class="btn btn-gold" href="https://wa.me/917501101137?text=Hare%20Krishna%21%20I%20would%20like%20to%20book%20a%20room%20for%20the%20Gaura%20Purnima%20festival%202027.%0ACheck-in%3A%20%0ACheck-out%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">Book a room for the festival</a><a class="btn btn-line" href="https://mayapur.com/en/blog/gaura-purnima-festival-schedule-2026" target="_blank" rel="noopener">Official schedule</a></div>
+      </div>
+    </details>
     <div class="fvcal rv" id="fvCal">
       <div class="fv-key" role="group" aria-label="Show">
         <button type="button" data-fvf="all" aria-pressed="true">All dates</button>
@@ -4579,7 +4603,7 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
   function tags(x){return x.c.map(function(c){return '<span class="fv-t '+CAT[c][0]+'">'+T(CAT[c][1])+'</span>';}).join('')+(x.big?'<span class="fv-t fv-busy">'+T('Busy · book early')+'</span>':'');}
   function card(x){var p=x.d.split('-'),k=KIND[x.c[0]],w=D(x.d).getUTCDay();
     var dt=x.e?(+p[2])+'–'+(+x.e.split('-')[2]):(+p[2]);
-    return '<li><button type="button" class="fvc '+CAT[x.c[0]][0]+(x.big?' big':'')+'" data-fv="'+x.i+'"><time datetime="'+x.d+'"><span>'+MS[+p[1]-1]+'</span><b>'+dt+'</b><small>'+(x.e?'':WS[w])+'</small></time><span class="fvc-b"><span class="fvc-n">'+esc(T(x.n))+'</span><span class="fvc-a">'+esc(T(x.a))+'</span><span class="fvc-tags">'+tags(x)+'</span></span><span class="fvc-go" aria-hidden="true">›</span></button></li>';}
+    return '<li><button type="button" class="fvc '+CAT[x.c[0]][0]+(x.big?' big':'')+(/Gaura Purnima/.test(x.n)?' gpc':'')+'" data-fv="'+x.i+'"><time datetime="'+x.d+'"><span>'+MS[+p[1]-1]+'</span><b>'+dt+'</b><small>'+(x.e?'':WS[w])+'</small></time><span class="fvc-b"><span class="fvc-n">'+esc(T(x.n))+'</span><span class="fvc-a">'+esc(T(x.a))+'</span><span class="fvc-tags">'+tags(x)+'</span></span><span class="fvc-go" aria-hidden="true">›</span></button></li>';}
   var mi=0,months=[];
   function inMonth(x,m){return x.d.slice(0,7)<=m&&(x.e||x.d).slice(0,7)>=m;}
   function show(){
