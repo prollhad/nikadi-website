@@ -1,8 +1,12 @@
 /* part 0 */
 try{
-function nkPh(v){var s=String(v||'').trim(),d=s.replace(/\D/g,'');if(!d)return '';var i=/^(\+|00)/.test(s);if(i&&s.charAt(0)==='0')d=d.slice(2);if(i){if(d.indexOf('91')===0&&/^[6-9]\d{9}$/.test(d.slice(2)))return d.slice(2);return d.length>=8&&d.length<=15&&d.indexOf('91')!==0?d:'';}if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);if(d.length===11&&d.charAt(0)==='0')d=d.slice(1);if(/^[6-9]\d{9}$/.test(d))return d;return d.length>=11&&d.length<=15&&d.charAt(0)!=='0'&&d.indexOf('91')!==0?d:'';}
+(function(){var b=document.getElementById('galMore');if(b)b.addEventListener('click',function(){var g=document.querySelector('.gal');g.classList.add('all');});})();
 }catch(e){console.error("[nikadi part 0]",e);}
 /* part 1 */
+try{
+function nkPh(v){var s=String(v||'').trim(),d=s.replace(/\D/g,'');if(!d)return '';var i=/^(\+|00)/.test(s);if(i&&s.charAt(0)==='0')d=d.slice(2);if(i){if(d.indexOf('91')===0&&/^[6-9]\d{9}$/.test(d.slice(2)))return d.slice(2);return d.length>=8&&d.length<=15&&d.indexOf('91')!==0?d:'';}if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);if(d.length===11&&d.charAt(0)==='0')d=d.slice(1);if(/^[6-9]\d{9}$/.test(d))return d;return d.length>=11&&d.length<=15&&d.charAt(0)!=='0'&&d.indexOf('91')!==0?d:'';}
+}catch(e){console.error("[nikadi part 1]",e);}
+/* part 2 */
 try{
 
 /* ---- Offer prices (from pricing.js) + member sign-in across the whole website ---- */
@@ -95,8 +99,8 @@ try{
   $('sdLogout').addEventListener('click',function(){var t=store('nk_token');store('nk_token',null);setMember(null);close();});
 })();
 
-}catch(e){console.error("[nikadi part 1]",e);}
-/* part 2 */
+}catch(e){console.error("[nikadi part 2]",e);}
+/* part 3 */
 try{
 
 /* ---- Pay online (Razorpay). Shows only after the Razorpay keys are added in the Apps Script settings. ---- */
@@ -140,8 +144,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 2]",e);}
-/* part 3 */
+}catch(e){console.error("[nikadi part 3]",e);}
+/* part 4 */
 try{
 
 // ---- Settings: update these to change payment details ----
@@ -203,8 +207,8 @@ var WA = "917501101137";
   }
 })();
 
-}catch(e){console.error("[nikadi part 3]",e);}
-/* part 4 */
+}catch(e){console.error("[nikadi part 4]",e);}
+/* part 5 */
 try{
 
 /* ---- Online forms (Advance Booking + Guest Registration) ---- */
@@ -355,8 +359,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 4]",e);}
-/* part 5 */
+}catch(e){console.error("[nikadi part 5]",e);}
+/* part 6 */
 try{
 
 /* ---- Photo lightbox ---- */
@@ -384,8 +388,8 @@ try{
   lb.addEventListener('touchend',function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)show(i+(dx<0?1:-1));sx=null;});
 })();
 
-}catch(e){console.error("[nikadi part 5]",e);}
-/* part 6 */
+}catch(e){console.error("[nikadi part 6]",e);}
+/* part 7 */
 try{
 
 /* ---- Hero: moving photo slideshow, new photo every 5 seconds ---- */
@@ -423,8 +427,8 @@ try{
   load(1); start();
 })();
 
-}catch(e){console.error("[nikadi part 6]",e);}
-/* part 7 */
+}catch(e){console.error("[nikadi part 7]",e);}
+/* part 8 */
 try{
 
 /* ---- Membership pop-up: once, after the visitor starts scrolling ---- */
@@ -451,8 +455,8 @@ try{
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!pop.hidden)close(3);});
 })();
 
-}catch(e){console.error("[nikadi part 7]",e);}
-/* part 8 */
+}catch(e){console.error("[nikadi part 8]",e);}
+/* part 9 */
 try{
 
 /* ---- Room details gallery ---- */
@@ -480,8 +484,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 8]",e);}
-/* part 9 */
+}catch(e){console.error("[nikadi part 9]",e);}
+/* part 10 */
 try{
 
 /* ---- v3: reviews carousel, live gadgets, phone dock + menu, quick message, share, scroll reveal ---- */
@@ -701,8 +705,8 @@ try{
 })();
 
 
-}catch(e){console.error("[nikadi part 9]",e);}
-/* part 10 */
+}catch(e){console.error("[nikadi part 10]",e);}
+/* part 11 */
 try{
 
 /* ---- v4: temple program (live next arati) + Instagram darshan embeds ---- */
@@ -711,6 +715,10 @@ try{
   var rows=[].slice.call(document.querySelectorAll('#prog li'));
   var CL=rows.filter(function(li){return li.classList.contains('closed');});rows=rows.filter(function(li){return !li.classList.contains('closed');});
   var P=rows.map(function(li){var t=li.getAttribute('data-t').split(':');return {li:li,m:+t[0]*60+(+t[1]),get name(){return li.querySelector('.nm').textContent;},time:li.querySelector('.tm').textContent.replace(/\s+/g,' ').trim()};});
+  /* same timings as the list on the Temple page (keep both in step) */
+  if(!P.length)P=[['04:30','Mangal Arati'],['07:00','Darshan Arati'],['08:00','Bhagavatam Lecture'],['08:30','Dhupa Arati'],['11:45','Bhoga Offering'],['12:00','Bhoga Arati'],['16:00','Dhupa Arati'],['18:00','Sandhya Arati'],['19:30','Bhagavad Gita Lecture'],['20:15','Shayan Arati']].map(function(x){var t=x[0].split(':'),h=+t[0];
+    return {li:null,m:h*60+(+t[1]),n:x[1],get name(){return nkT(this.n);},time:(h%12||12)+':'+t[1]+(h<12?' AM':' PM')};});
+  var dummy={classList:{toggle:function(){}}};P.forEach(function(p){if(!p.li)p.li=dummy;});
   function dur(min){var h=Math.floor(min/60),m=min%60;return h?(h+' h'+(m?' '+m+' min':'')):m+' min';}
   function at(n,t){return nkT('{0} at {1}').replace('{0}',n).replace('{1}',t);}
   function upd(){
@@ -751,8 +759,8 @@ try{
 })();
 
 
-}catch(e){console.error("[nikadi part 10]",e);}
-/* part 11 */
+}catch(e){console.error("[nikadi part 11]",e);}
+/* part 12 */
 try{
 
 /* ---- v5: membership deck + Instagram loader for all rows ---- */
@@ -781,8 +789,8 @@ try{
 })();
 
 
-}catch(e){console.error("[nikadi part 11]",e);}
-/* part 12 */
+}catch(e){console.error("[nikadi part 12]",e);}
+/* part 13 */
 try{
 
 (function(){var r=document.getElementById('qrail');if(!r)return;var t=r.querySelector('.qr-toggle');
@@ -790,8 +798,8 @@ t.addEventListener('click',function(){var o=r.classList.toggle('open');t.setAttr
 r.addEventListener('click',function(e){if(e.target.closest('.qr'))r.classList.remove('open');});
 document.addEventListener('click',function(e){if(!e.target.closest('#qrail'))r.classList.remove('open');});})();
 
-}catch(e){console.error("[nikadi part 12]",e);}
-/* part 13 */
+}catch(e){console.error("[nikadi part 13]",e);}
+/* part 14 */
 try{
 
 /* transport: tabs + live next trains */
@@ -801,14 +809,16 @@ try{
   function show(k){tabs.forEach(function(t){t.setAttribute('aria-selected',t.getAttribute('data-tp')===k?'true':'false');});panes.forEach(function(p){p.hidden=p.getAttribute('data-pane')!==k;});}
   tabs.forEach(function(t){t.addEventListener('click',function(){show(t.getAttribute('data-tp'));});});
   if(location.hash==='#trains')show('train');
+  try{var go=sessionStorage.getItem('nk_tp');if(go){sessionStorage.removeItem('nk_tp');show(go);}}catch(e){}
   function mins(t){var a=t.split(':');return +a[0]*60+(+a[1]);}
   function t12(t){var a=t.split(':'),h=+a[0];return (h%12||12)+':'+a[1]+(h<12?' AM':' PM');}
   function upd(){
     var d=new Date(Date.now()+330*60000),now=d.getUTCHours()*60+d.getUTCMinutes();
     sec.querySelectorAll('.nxt').forEach(function(box){
       var list=box.nextElementSibling.querySelectorAll('.tr'),up=[];
-      var wd=d.getUTCDay();list.forEach(function(li){var ds=li.getAttribute('data-days')||'Daily',runs=ds==='Daily'||(ds.indexOf('only')>0?wd===0:wd!==0);li.classList.toggle('off',!runs);var m=mins(li.getAttribute('data-d'));li.classList.toggle('gone',m<now);li.classList.remove('soon');if(m>=now&&runs)up.push(li);});
+      var wd=d.getUTCDay();list.forEach(function(li){var ds=li.getAttribute('data-days')||'Daily',runs=ds==='Daily'||(ds.indexOf('only')>0?wd===0:wd!==0);li.classList.toggle('off',!runs);var m=mins(li.getAttribute('data-d'));li.classList.toggle('gone',false);li._gone=m<now;li.classList.remove('soon');if(m>=now&&runs)up.push(li);});
       var tomorrow=false; if(!up.length){up=[].slice.call(list).filter(function(li){return (li.getAttribute('data-days')||'Daily')==='Daily';});tomorrow=true;}
+      if(!tomorrow)list.forEach(function(li){li.classList.toggle('gone',li._gone);});
       up=up.slice(0,3); if(up[0])up[0].classList.add('soon');
       var dl=box.nextElementSibling.querySelector('.dl').textContent;
       box.innerHTML='<span class="nl">Next trains · '+dl+(tomorrow?' · tomorrow':'')+'</span>'+up.map(function(li){var m=mins(li.getAttribute('data-d')),inm=tomorrow?(24*60-now+m):(m-now),h=Math.floor(inm/60);return '<span class="nc'+(li.classList.contains('ac')?' ac':'')+'"><b>'+t12(li.getAttribute('data-d'))+'</b>'+(li.classList.contains('ac')?' AC':'')+' <small>'+(inm<1?'now':'in '+(h?h+' h':'')+(inm%60?(h?' ':'')+(inm%60)+' min':''))+'</small></span>';}).join('');
@@ -817,31 +827,35 @@ try{
   upd(); setInterval(upd,30000);
 })();
 
-}catch(e){console.error("[nikadi part 13]",e);}
-/* part 14 */
+}catch(e){console.error("[nikadi part 14]",e);}
+/* part 15 */
 try{
 
 (function(){
-  var sk=[].slice.call(document.querySelectorAll('#transport .dir'))[0]; if(!sk||!document.getElementById('gTrain'))return;
+  var sk=[].slice.call(document.querySelectorAll('#transport .dir'))[0]; if(!document.getElementById('gTrain'))return;
   function mins(t){var a=t.split(':');return +a[0]*60+(+a[1]);}
   function t12(t){var a=t.split(':'),h=+a[0];return (h%12||12)+':'+a[1]+(h<12?' AM':' PM');}
   function dur(m){var h=Math.floor(m/60),r=m%60;return m<1?'a moment':(h?h+' h':'')+(r?(h?' ':'')+r+' min':'');}
   function upd(){
     var d=new Date(Date.now()+330*60000),now=d.getUTCHours()*60+d.getUTCMinutes();
-    var wd=d.getUTCDay();var rows=[].slice.call(sk.querySelectorAll('.tr')).filter(function(li){var ds=li.getAttribute('data-days')||'Daily';return ds==='Daily'||(ds.indexOf('only')>0?wd===0:wd!==0);}).map(function(li){return {t:li.getAttribute('data-d'),ac:li.classList.contains('ac'),arr:li.querySelector('span').textContent.replace('→ ','')};});
+    var wd=d.getUTCDay(),runs=function(ds){ds=ds||'Daily';return ds==='Daily'||(ds.indexOf('only')>0?wd===0:wd!==0);},rows;
+    if(sk)rows=[].slice.call(sk.querySelectorAll('.tr')).filter(function(li){return runs(li.getAttribute('data-days'));}).map(function(li){return {t:li.getAttribute('data-d'),ac:li.classList.contains('ac'),arr:li.querySelector('span').textContent.replace('→ ','')};});
+    else{var T=window.NK_TRAINS||{};rows=Object.keys(T).filter(function(k){return T[k].k==='sk'&&runs(T[k].d);}).map(function(k){var s=T[k].s;return {t:s[0][1],ac:T[k].t==='AC',arr:t12(s[s.length-1][1])};}).sort(function(a,b){return mins(a.t)-mins(b.t);});}
+    if(!rows.length)return;
     var nx=rows.filter(function(r){return mins(r.t)>=now;}),tm=!nx.length; if(tm)nx=rows;
     var n=nx[0],inm=tm?24*60-now+mins(n.t):mins(n.t)-now;
     document.getElementById('gTrain').textContent=t12(n.t)+(n.ac?' AC':'');
-    document.getElementById('gTrainIn').textContent='Sealdah → Krishnanagar · '+(tm?'tomorrow, ':'')+'in '+dur(inm)+' · arrives '+n.arr;
+    document.getElementById('gTrainIn').textContent=nkT('Sealdah')+' → '+nkT('Krishnanagar')+' · '+nkT((tm?'tomorrow, ':'')+'in '+dur(inm))+' · '+nkT('arrives '+n.arr);
     var ac=nx.filter(function(r){return r.ac;})[0];
-    document.getElementById('gTrainAc').textContent=ac&&ac!==n?'Next AC local: '+t12(ac.t)+' (arrives '+ac.arr+')':(n.ac?'This one is the AC local':'No more AC locals today');
+    document.getElementById('gTrainAc').textContent=nkT(ac&&ac!==n?'Next AC local: '+t12(ac.t)+' (arrives '+ac.arr+')':(n.ac?'This one is the AC local':'No more AC locals today'));
   }
-  upd();setInterval(upd,30000);
-  document.querySelectorAll('[data-tp-go]').forEach(function(a){a.addEventListener('click',function(){var b=document.querySelector('#transport [data-tp="'+a.getAttribute('data-tp-go')+'"]');if(b)b.click();});});
+  /* the timetable data is defined further down, so start once the page has loaded */
+  setTimeout(upd,0);setInterval(upd,30000);document.addEventListener('nk:lang',upd);
+  document.querySelectorAll('[data-tp-go]').forEach(function(a){a.addEventListener('click',function(){var b=document.querySelector('#transport [data-tp="'+a.getAttribute('data-tp-go')+'"]');if(b)b.click();else try{sessionStorage.setItem('nk_tp',a.getAttribute('data-tp-go'));}catch(e){}});});
 })();
 
-}catch(e){console.error("[nikadi part 14]",e);}
-/* part 15 */
+}catch(e){console.error("[nikadi part 15]",e);}
+/* part 16 */
 try{
 
 /* train details: tap a train time (exact NTES timetable) */
@@ -871,8 +885,8 @@ window.NK_TRAINS={"13103":{"d":"Daily","s":[["Sealdah","18:20"],["Ranaghat Jn","
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dlg.hidden)close();});
 })();
 
-}catch(e){console.error("[nikadi part 15]",e);}
-/* part 16 */
+}catch(e){console.error("[nikadi part 16]",e);}
+/* part 17 */
 try{
 
 (function(){var f=document.getElementById('gtForm');if(!f)return;
@@ -881,8 +895,8 @@ f.addEventListener('submit',function(e){e.preventDefault();var x=f.elements,L=['
 if(x.fr.value.trim())L.push('From: '+x.fr.value.trim());if(x.to.value.trim())L.push('To: '+x.to.value.trim());if(x.dt.value)L.push('Date: '+x.dt.value);L.push('Travellers: '+x.px.value);if(x.m.value.trim())L.push(x.m.value.trim());
 window.open('https://wa.me/919933864574?text='+encodeURIComponent(L.join('\n')),'_blank','noopener');});})();
 
-}catch(e){console.error("[nikadi part 16]",e);}
-/* part 17 */
+}catch(e){console.error("[nikadi part 17]",e);}
+/* part 18 */
 try{
 
 (function(){var v=document.getElementById('mvidV'),b=document.getElementById('mvidS');if(!v||!b)return;
@@ -893,8 +907,8 @@ document.addEventListener('visibilitychange',function(){if(document.hidden)v.pau
 b.addEventListener('click',function(){var on=v.muted;v.muted=!on;if(on){v.volume=1;play();}b.setAttribute('aria-pressed',on?'true':'false');b.setAttribute('aria-label',on?'Turn sound off':'Turn sound on');b.querySelector('span').textContent=on?'Sound off':'Sound on';});
 })();
 
-}catch(e){console.error("[nikadi part 17]",e);}
-/* part 18 */
+}catch(e){console.error("[nikadi part 18]",e);}
+/* part 19 */
 try{
 
 (function(){var row=document.getElementById('meetIg'),nav=document.getElementById('meetNav');if(!row||!nav)return;
@@ -908,8 +922,8 @@ var t;row.addEventListener('scroll',function(){clearTimeout(t);t=setTimeout(mark
 window.addEventListener('resize',mark);mark();
 })();
 
-}catch(e){console.error("[nikadi part 18]",e);}
-/* part 19 */
+}catch(e){console.error("[nikadi part 19]",e);}
+/* part 20 */
 try{
 
 /* phones: Instagram's frames swallow sideways swipes, so a clear layer on top lets the row scroll; a tap still opens the post */
@@ -917,8 +931,8 @@ try{
 row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-instgrm-permalink]'),f=c.querySelector('iframe'),h=q?q.getAttribute('data-instgrm-permalink'):f?f.src.replace(/embed.*$/,''):'';if(!h)return;var t=document.createElement('a');t.className='igc-tap';t.href=h.split('?')[0];t.target='_blank';t.rel='noopener';t.setAttribute('aria-label','Open this post on Instagram');c.appendChild(t);});
 })();
 
-}catch(e){console.error("[nikadi part 19]",e);}
-/* part 20 */
+}catch(e){console.error("[nikadi part 20]",e);}
+/* part 21 */
 try{
 
 /* ---- v6: live availability calendar (free / few / full from the front desk, prices from pricing.js) ---- */
@@ -1001,8 +1015,77 @@ try{
   if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();load();setInterval(function(){if(!document.hidden)load();},5*60000);}},{rootMargin:'400px 0px'});io.observe(box);}else load();
 })();
 
-}catch(e){console.error("[nikadi part 20]",e);}
-/* part 21 */
+}catch(e){console.error("[nikadi part 21]",e);}
+/* part 22 */
+try{
+
+/* ---- festival calendar: temple festivals (gold), Indian public holidays (saffron), international days (pale green).
+   Tap any date for what it is and what to expect in Mayapur. Holiday dates: Government of India 2027 gazetted list
+   and West Bengal 2027 list; temple dates: ISKCON Gaurabda calendar. Add next year's dates here. ---- */
+(function(){
+  var box=document.getElementById('fvCal');if(!box)return;
+  var F=window.NK_CAL||[];
+  var CAT={f:['fv-f','Mayapur festival'],in:['fv-in','National holiday'],wb:['fv-in','West Bengal holiday'],x:['fv-x','International']};
+  var KIND={f:'f',in:'in',wb:'in',x:'x'};
+  function T(s){return nkT(s);}
+  function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function D(s){var p=s.split('-');return new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));}
+  var today=new Date(Date.now()+330*60000).toISOString().slice(0,10);
+  function days(a,b){return Math.round((D(b)-D(a))/864e5);}
+  var MS=nkNames('m','short',['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']),WS=nkNames('d','short',['Sun','Mon','Tue','Wed','Thu','Fri','Sat']);
+  var ML=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function longDate(s){var x=D(s);return nkFmt(x,{weekday:'long',day:'numeric',month:'long',year:'numeric'})||(['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][x.getUTCDay()]+', '+x.getUTCDate()+' '+ML[x.getUTCMonth()]+' '+x.getUTCFullYear());}
+  function monthName(s){var x=D(s);return nkFmt(x,{month:'long',year:'numeric'})||(ML[x.getUTCMonth()]+' '+x.getUTCFullYear());}
+  var items=F.filter(function(x){return (x.e||x.d)>=today;});
+  items.forEach(function(x,i){x.i=i;});
+  var filter='all';
+  function tags(x){return x.c.map(function(c){return '<span class="fv-t '+CAT[c][0]+'">'+T(CAT[c][1])+'</span>';}).join('')+(x.big?'<span class="fv-t fv-busy">'+T('Busy · book early')+'</span>':'');}
+  function card(x){var p=x.d.split('-'),k=KIND[x.c[0]],w=D(x.d).getUTCDay();
+    var dt=x.e?(+p[2])+'–'+(+x.e.split('-')[2]):(+p[2]);
+    return '<li><button type="button" class="fvc '+CAT[x.c[0]][0]+(x.big?' big':'')+'" data-fv="'+x.i+'"><time datetime="'+x.d+'"><span>'+MS[+p[1]-1]+'</span><b>'+dt+'</b><small>'+(x.e?'':WS[w])+'</small></time><span class="fvc-b"><span class="fvc-n">'+esc(T(x.n))+'</span><span class="fvc-a">'+esc(T(x.a))+'</span><span class="fvc-tags">'+tags(x)+'</span></span><span class="fvc-go" aria-hidden="true">›</span></button></li>';}
+  function show(){
+    var list=items.filter(function(x){return filter==='all'||x.c.some(function(c){return KIND[c]===filter;});});
+    var h='',cur='';
+    list.forEach(function(x){var m=x.d.slice(0,7);if(m!==cur){if(cur)h+='</ul></div>';cur=m;h+='<div class="fvm"><h3 class="fvm-h">'+monthName(x.d)+'</h3><ul class="fvm-l">';}h+=card(x);});
+    if(cur)h+='</ul></div>';
+    document.getElementById('fvMonths').innerHTML=h||'<p class="fv-src">'+T('Nothing in this list for the coming months.')+'</p>';
+    [].forEach.call(box.querySelectorAll('[data-fvf]'),function(b){b.setAttribute('aria-pressed',b.getAttribute('data-fvf')===filter?'true':'false');});
+  }
+  /* counts on the filter chips */
+  ['all','f','in','x'].forEach(function(k){var el=box.querySelector('[data-fvf="'+k+'"] small');if(el)el.textContent=items.filter(function(x){return k==='all'||x.c.some(function(c){return KIND[c]===k;});}).length;});
+  box.addEventListener('click',function(e){var f=e.target.closest('[data-fvf]');if(f){filter=f.getAttribute('data-fvf');show();return;}
+    var b=e.target.closest('[data-fv]');if(b)open(items[+b.getAttribute('data-fv')],b);});
+  /* next temple festival countdown */
+  function drawNext(){var nx=items.filter(function(x){return x.c[0]==='f';})[0],el=document.getElementById('fvNext');if(!nx||!el)return;
+    var n=days(today,nx.d);
+    el.innerHTML='<div class="cd">'+(n<=0?T('Today'):n)+'<small>'+T(n<=0?'Happening now':n===1?'day to go':'days to go')+'</small></div><div><p class="kicker">'+T('Next festival')+' · '+longDate(nx.d)+'</p><h3>'+esc(T(nx.n))+'</h3><p>'+esc(T(nx.a))+'</p></div><button type="button" class="btn btn-gold" data-fv="'+nx.i+'">'+T('Details')+'</button>';
+    el.hidden=false;}
+  /* details window */
+  var dlg=document.getElementById('fvDlg'),last=null;
+  function gcal(x){var a=x.d.replace(/-/g,''),b=(x.e?D(x.e):D(x.d));b=new Date(b.getTime()+864e5).toISOString().slice(0,10).replace(/-/g,'');
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(x.n+' · Mayapur')+'&dates='+a+'/'+b+'&details='+encodeURIComponent(x.a+'\n\nNikadi Guest House, opposite ISKCON Gate No. 4, Mayapur · +91 75011 01137');}
+  function open(x,from){if(!dlg||!x)return;last=from||null;
+    var n=days(today,x.d),when=n<=0?T('Today'):n===1?T('Tomorrow'):T('in '+n+' days');
+    var range=x.e?longDate(x.d)+' – '+longDate(x.e):longDate(x.d);
+    var wa='https://wa.me/917501101137?text='+encodeURIComponent('Hare Krishna! I would like to book a room at Nikadi Guest House around '+x.n+' ('+x.d+').');
+    dlg.querySelector('.fvd-tags').innerHTML=tags(x);
+    dlg.querySelector('#fvdT').textContent=T(x.n);
+    dlg.querySelector('.fvd-when').innerHTML='<b>'+range+'</b><span>'+when+'</span>';
+    dlg.querySelector('.fvd-a').textContent=T(x.a);
+    dlg.querySelector('.fvd-m').textContent=T(x.m);
+    dlg.querySelector('.fvd-wa').href=wa;dlg.querySelector('.fvd-cal').href=gcal(x);
+    dlg.querySelector('.trd-card').className='trd-card fvd '+CAT[x.c[0]][0];
+    dlg.hidden=false;document.documentElement.style.overflow='hidden';dlg.querySelector('.trd-x').focus();}
+  function close(){if(!dlg)return;dlg.hidden=true;document.documentElement.style.overflow='';if(last&&last.focus)last.focus();}
+  if(dlg){dlg.addEventListener('click',function(e){if(e.target===dlg||e.target.closest('.trd-x'))close();});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dlg.hidden)close();});}
+  document.getElementById('fvNext').addEventListener('click',function(e){var b=e.target.closest('[data-fv]');if(b)open(items[+b.getAttribute('data-fv')],b);});
+  show();drawNext();
+  document.addEventListener('nk:lang',function(){show();drawNext();});
+})();
+
+}catch(e){console.error("[nikadi part 22]",e);}
+/* part 23 */
 try{
 
 /* ---- v7: festival calendar countdown, staff wall and guest wall (from /data/*.json) ---- */
@@ -1011,22 +1094,6 @@ try{
   var MN=nkNames('m','short',['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']),WD=nkNames('d','short',['Sun','Mon','Tue','Wed','Thu','Fri','Sat']);
   var today=new Date(Date.now()+330*60000).toISOString().slice(0,10);
   function dn(a,b){var p=a.split('-'),q=b.split('-');return Math.round((Date.UTC(+q[0],+q[1]-1,+q[2])-Date.UTC(+p[0],+p[1]-1,+p[2]))/864e5);}
-  var list=$('fvList');
-  if(list){
-    var next=null;
-    [].forEach.call(list.querySelectorAll('.fv'),function(li){
-      var d=li.getAttribute('data-d'),p=d.split('-'),x=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
-      li.querySelector('time').innerHTML='<span>'+MN[+p[1]-1]+'</span><b>'+(+p[2])+'</b><small>'+WD[x.getUTCDay()]+' '+p[0]+'</small>';
-      if(d<today)li.classList.add('gone');else if(!next)next=li;
-    });
-    function drawNext(){if(!next)return;
-      var n=dn(today,next.getAttribute('data-d')),box=$('fvNext'),p=next.getAttribute('data-d').split('-');
-      var wa='https://wa.me/917501101137?text='+encodeURIComponent('Hare Krishna! I would like to book a room at Nikadi Guest House for '+next.querySelector('h3').textContent+'.');
-      box.innerHTML='<div class="cd">'+(n===0?'Today':n)+'<small>'+(n===0?'Happening now':n===1?'day to go':'days to go')+'</small></div><div><p class="kicker">Next festival · '+(nkFmt(new Date(Date.UTC(+p[0],+p[1]-1,+p[2])),{day:'numeric',month:'short',year:'numeric'})||((+p[2])+' '+MN[+p[1]-1]+' '+p[0]))+'</p><h3>'+next.querySelector('h3').textContent+'</h3><p>'+next.querySelector('p').textContent+'</p></div><a class="btn btn-gold" href="'+wa+'" target="_blank" rel="noopener">Book for this festival</a>';
-      box.hidden=false;
-    }
-    drawNext();document.addEventListener('nk:lang',drawNext);
-  }
   function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function load(url,cb){fetch(url,{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(cb).catch(function(){});}
   if($('staffGrid'))load('/data/team.json',function(a){
@@ -1044,8 +1111,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 21]",e);}
-/* part 22 */
+}catch(e){console.error("[nikadi part 23]",e);}
+/* part 24 */
 try{
 
 /* ---- page banner: gentle room photo slideshow ---- */
@@ -1053,8 +1120,8 @@ try{
 if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 setInterval(function(){if(document.hidden)return;im[i].classList.remove('on');i=(i+1)%im.length;im[i].classList.add('on');},4500);})();
 
-}catch(e){console.error("[nikadi part 22]",e);}
-/* part 23 */
+}catch(e){console.error("[nikadi part 24]",e);}
+/* part 25 */
 try{
 
 /* ---- language switch: English, বাংলা, हिन्दी, Русский, 中文, Español ----
@@ -1128,7 +1195,7 @@ try{
   if(cur!=='en')document.addEventListener('click',function(e){var a=e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href');if(/^\/(?:[\w-]+\.html)?(?:#.*)?$/.test(h)){var u=new URL(h,location.href);u.searchParams.set('lang',cur);a.href=u.pathname+u.search+u.hash;}},true);
   if(cur==='en')return;
   var done=function(){document.documentElement.classList.remove('i18n-wait');};
-  fetch('/data/i18n/'+cur+'.json?v=2').then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(D){try{apply(D);}catch(e){console.error(e);}done();try{document.dispatchEvent(new Event('nk:lang'));}catch(e){}}).catch(done);
+  fetch('/data/i18n/'+cur+'.json?v=3').then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(D){try{apply(D);}catch(e){console.error(e);}done();try{document.dispatchEvent(new Event('nk:lang'));}catch(e){}}).catch(done);
 })();
 
-}catch(e){console.error("[nikadi part 23]",e);}
+}catch(e){console.error("[nikadi part 25]",e);}

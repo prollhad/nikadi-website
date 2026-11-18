@@ -1,0 +1,67 @@
+/* Nikadi calendar: temple festivals (f), Indian national holidays (in), West Bengal holidays (wb), international days (x).
+   Used by the website festival calendar and the staff app. d = date, e = last day (optional), big = busy, book early.
+   Holiday dates: Government of India 2027 gazetted list and West Bengal 2027 list. Temple dates: ISKCON Gaurabda calendar.
+   Add next year's dates at the end. */
+(function(){
+  var NAT='A national holiday: banks and government offices close. The temple and our guest house are open as usual.';
+  var WB='A West Bengal holiday: banks and state offices close. The temple and our guest house are open as usual.';
+  var XX='Not a public holiday in India. Shops, banks and the temple are open as usual.';
+  window.NK_CAL=[
+  {d:'2026-11-24',c:['f','in'],big:1,n:'Rasa Purnima · end of Kartik',a:'The full moon of Kartik, remembering Krishna’s rasa dance. The holy month of Damodara ends with lamps and kirtan.',m:'Nabadwip across the river holds its famous Rash Yatra with huge decorated idols, and the same day is Guru Nanak Jayanti, a national holiday. Expect crowds.'},
+  {d:'2026-11-24',c:['in'],n:'Guru Nanak Jayanti',a:'Birthday of Guru Nanak, the founder of Sikhism, marked with prayers and community meals at gurdwaras.',m:NAT},
+  {d:'2026-12-20',c:['f'],n:'Gita Jayanti',a:'The day Lord Krishna spoke the Bhagavad Gita. Gita recitation and a special program at the temple.',m:'Devotees recite the whole Gita together, and Gita books are given out. A calm, uplifting day to visit.'},
+  {d:'2026-12-25',c:['x','in'],big:1,n:'Christmas Day',a:'The birth of Jesus Christ, celebrated around the world, and a national holiday in India.',m:'Mayapur is busy from Christmas to New Year with families on holiday from Kolkata. Book early.'},
+  {d:'2026-12-31',c:['x'],big:1,n:'New Year’s Eve',a:'The last night of the year.',m:'Many guests spend the night at the temple with kirtan into the New Year instead of a party. Rooms are in high demand.'},
+  {d:'2027-01-01',c:['x','wb'],big:1,n:'New Year’s Day',a:'The first day of the year, a holiday in West Bengal.',m:'One of the busiest days of the winter. The temple is full from Mangal Arati onwards.'},
+  {d:'2027-01-06',c:['x'],n:'Three Kings’ Day',a:'Epiphany, the visit of the Magi. A big family day in Spain and Latin America.',m:XX},
+  {d:'2027-01-07',c:['x'],n:'Orthodox Christmas',a:'Christmas for Orthodox Christians, celebrated in Russia, Ukraine and other countries.',m:XX},
+  {d:'2027-01-12',c:['wb'],n:'Swami Vivekananda’s Birthday',a:'Birthday of Swami Vivekananda, the great Bengali monk and teacher. Also National Youth Day.',m:WB},
+  {d:'2027-01-23',c:['wb'],n:'Netaji Jayanti',a:'Birthday of Netaji Subhas Chandra Bose, the freedom fighter from Bengal.',m:WB},
+  {d:'2027-01-26',c:['in'],n:'Republic Day',a:'The day India’s Constitution came into force in 1950, with flag hoisting and parades.',m:NAT},
+  {d:'2027-02-06',c:['x'],n:'Lunar New Year',a:'Chinese New Year, the start of the Year of the Goat, celebrated across East Asia.',m:XX},
+  {d:'2027-02-10',e:'2027-02-12',c:['wb'],big:1,n:'Saraswati Puja',a:'Worship of Goddess Saraswati, giver of learning and music, on Vasant Panchami (11 February). Students in Bengal dress in yellow and offer their books to the Goddess.',m:'The official holiday is 11 February, with a half day on the 10th, and many schools and offices close for two or three days. Bengali families often travel, so Mayapur gets busy.'},
+  {d:'2027-02-19',c:['f'],n:'Nityananda Trayodashi',a:'Appearance day of Lord Nityananda. Fasting till noon, then a feast.',m:'Lord Nityananda is Sri Chaitanya’s closest companion. Many pilgrims also visit His birthplace at Ekachakra.'},
+  {d:'2027-03-06',c:['wb'],n:'Maha Shivaratri',a:'The great night of Lord Shiva, with fasting and night-long worship.',m:'A West Bengal holiday. Lord Shiva’s temples in Nabadwip and Mayapur are busy through the night.'},
+  {d:'2027-03-08',c:['x'],n:'International Women’s Day',a:'A worldwide day honouring women.',m:XX},
+  {d:'2027-03-10',c:['in'],n:'Id-ul-Fitr',a:'Eid at the end of Ramadan, the month of fasting, with prayers and festive meals.',m:NAT},
+  {d:'2027-03-22',c:['f','wb'],big:1,n:'Gaura Purnima',a:'Appearance of Sri Chaitanya Mahaprabhu in Sri Dham Mayapur. The biggest festival of the year, with the Navadvip Mandala Parikrama in the days before. Rooms fill months ahead.',m:'Also Dol Jatra, the festival of colours in Bengal. Tens of thousands of pilgrims come; book as early as you can.'},
+  {d:'2027-03-23',c:['in'],n:'Holi',a:'The festival of colours across India, the day after Dol Jatra in Bengal.',m:NAT+' Expect coloured powder in the streets.'},
+  {d:'2027-03-26',c:['x','in'],n:'Good Friday',a:'The day Christians remember the crucifixion of Jesus. A national holiday in India.',m:NAT},
+  {d:'2027-03-28',c:['x'],n:'Easter Sunday',a:'The resurrection of Jesus, the most important Christian feast.',m:XX},
+  {d:'2027-04-14',c:['wb'],n:'Ambedkar Jayanti',a:'Birthday of Dr B. R. Ambedkar, the chief architect of India’s Constitution.',m:WB},
+  {d:'2027-04-15',c:['f','in'],n:'Rama Navami',a:'Appearance day of Lord Ramachandra.',m:'Fasting till sunset and a special abhishek at the temple. Also a national holiday.'},
+  {d:'2027-04-15',c:['wb'],n:'Poila Baisakh',a:'Bengali New Year, with new clothes, sweets and fresh account books in every shop.',m:WB},
+  {d:'2027-04-19',c:['in'],n:'Mahavir Jayanti',a:'Birthday of Lord Mahavira, the great teacher of Jainism.',m:NAT},
+  {d:'2027-05-02',c:['x'],n:'Orthodox Easter',a:'Easter for Orthodox Christians, the biggest feast of the year in Russia.',m:XX},
+  {d:'2027-05-09',c:['wb'],n:'Rabindra Jayanti',a:'Birthday of Rabindranath Tagore, Bengal’s Nobel-winning poet, with songs and recitals.',m:WB},
+  {d:'2027-05-17',c:['in'],n:'Id-ul-Zuha (Bakrid)',a:'The festival of sacrifice, with prayers and sharing food with family and the poor.',m:NAT},
+  {d:'2027-05-19',c:['f'],big:1,n:'Narasimha Chaturdashi',a:'Appearance of Lord Nrisimhadev, very dear to Mayapur. Grand abhishek at His altar.',m:'Lord Narasimha protects the Mayapur temple. The abhishek and fire sacrifice draw big crowds; book early.'},
+  {d:'2027-05-20',c:['in'],n:'Buddha Purnima',a:'The birth, enlightenment and passing of the Buddha, on the full moon of Vaishakha.',m:NAT},
+  {d:'2027-06-16',c:['in'],n:'Muharram',a:'The Islamic new year and a day of remembrance.',m:NAT},
+  {d:'2027-06-18',c:['f'],n:'Snana Yatra',a:'The bathing ceremony of Lord Jagannath, Baladeva and Subhadra.',m:'The deities are bathed in front of everyone with 108 pots of water, then rest for two weeks before Ratha Yatra.'},
+  {d:'2027-06-21',c:['x'],n:'International Day of Yoga',a:'A UN day celebrating yoga, which began in India.',m:XX},
+  {d:'2027-07-05',c:['f','wb'],big:1,n:'Ratha Yatra',a:'The Lord rides out on His chariot. Kirtan in the streets of Mayapur.',m:'Anyone can help pull the huge chariot ropes. The streets are full all day; book early.'},
+  {d:'2027-08-12',c:['f'],n:'Jhulan Yatra begins',a:'Five evenings of swing festival for Sri Sri Radha Madhava.',m:'The deities sit on a flower-decorated swing each evening and devotees take turns gently swinging Them.'},
+  {d:'2027-08-15',c:['in'],n:'Independence Day',a:'India’s independence in 1947, with flags and celebrations everywhere. Milad-un-Nabi is on the same day this year.',m:NAT},
+  {d:'2027-08-17',c:['f'],n:'Balarama Jayanti',a:'Appearance day of Lord Balarama.',m:'Fasting till noon, then a feast. Also Raksha Bandhan in much of India.'},
+  {d:'2027-08-25',c:['f','in'],big:1,n:'Sri Krishna Janmashtami',a:'Appearance of Lord Krishna. Midnight arati, kirtan all day. Very busy.',m:'Devotees fast until midnight, when Krishna appeared. Also a national holiday; rooms go quickly.'},
+  {d:'2027-08-26',c:['f'],n:'Srila Prabhupada Appearance',a:'Vyasa Puja of the founder-acharya of ISKCON, with Nandotsava.',m:'Disciples read offerings to Srila Prabhupada, followed by a large feast for everyone.'},
+  {d:'2027-09-08',c:['f'],big:1,n:'Radhashtami',a:'Appearance day of Srimati Radharani. Abhishek of Sri Radha Madhava.',m:'One of the most beautiful days of the year in Mayapur. Fasting till noon; very busy.'},
+  {d:'2027-09-29',c:['wb'],n:'Mahalaya',a:'The new moon that opens Devi Paksha, when Bengal wakes before dawn to the radio recital of Mahishasura Mardini and offers tarpan to the ancestors at the Ganga.',m:'A West Bengal holiday. Before sunrise, the ghats along the Ganga fill with people offering tarpan. Durga Puja is one week later.'},
+  {d:'2027-10-02',c:['in'],n:'Gandhi Jayanti',a:'Birthday of Mahatma Gandhi, the father of the nation.',m:NAT},
+  {d:'2027-10-06',e:'2027-10-09',c:['wb','in'],big:1,n:'Durga Puja & Dussehra',a:'Bengal’s biggest festival: four days of worship of Goddess Durga in grand pandals, ending on Vijaya Dashami (Dussehra), a national holiday.',m:'All of West Bengal is on holiday and travel is very busy. Trains from Kolkata are crowded, so book rooms and travel early.'},
+  {d:'2027-10-14',c:['wb'],n:'Lakshmi Puja',a:'Kojagari Lakshmi Puja on the full moon after Durga Puja, when Bengali homes worship Goddess Lakshmi for prosperity and stay awake through the night.',m:'Families keep the night awake with alpana on the floor and sweets. A West Bengal holiday.'},
+  {d:'2027-10-15',c:['f'],big:1,n:'Kartik month begins',a:'The holy month of Damodara: daily Damodarashtakam and lamp offering. A favourite time for pilgrims.',m:'Each evening everyone offers a small ghee lamp to Krishna. Many pilgrims stay the whole month.'},
+  {d:'2027-10-29',c:['in','f'],big:1,n:'Diwali & Kali Puja',a:'The festival of lights across India. In Bengal the same new-moon night is Kali Puja, the worship of Goddess Kali. The temple celebrates with lamps all around.',m:NAT+' The whole Dham is lit with lamps and fireworks.'},
+  {d:'2027-10-30',c:['f'],n:'Govardhan Puja',a:'The Govardhan hill of prasadam, and Go Puja at the Goshala.',m:'A hill made of sweets and food is offered to Krishna and then shared with everyone.'},
+  {d:'2027-10-31',c:['wb'],n:'Bhai Phonta',a:'Bhai Dooj in Bengal: sisters put a sandalwood mark on their brothers\u2019 foreheads and pray for their long life, followed by a family feast.',m:'A family day, and a West Bengal holiday. Many people travel home.'},
+  {d:'2027-11-02',c:['f'],n:'Srila Prabhupada Disappearance',a:'Remembrance day of Srila Prabhupada.',m:'A quiet day of glorification at his samadhi, with kirtan and a feast.'},
+  {d:'2027-11-04',c:['wb'],n:'Chhath Puja',a:'Worship of the Sun God by people from Bihar and eastern India, with fasting and offerings at sunset and sunrise while standing in the river.',m:'A West Bengal holiday. The Ganga ghats in Mayapur and Nabadwip are full of devotees at sunset and again at dawn.'},
+  {d:'2027-11-07',c:['wb'],big:1,n:'Jagaddhatri Puja',a:'Worship of Goddess Jagaddhatri, the protector of the world, a week after Kali Puja. Krishnanagar, our nearest town, is famous for it.',m:'Krishnanagar, 40 minutes away, holds one of Bengal\u2019s grandest Jagaddhatri Pujas, with huge idols and processions. Roads and trains are busy; the date can differ by a day.'},
+  {d:'2027-11-14',c:['f','in'],big:1,n:'Rasa Purnima · end of Kartik',a:'The full moon of Kartik, remembering Krishna’s rasa dance. The holy month of Damodara ends with lamps and kirtan.',m:'Nabadwip across the river holds its famous Rash Yatra with huge decorated idols, and the same day is Guru Nanak Jayanti, a national holiday. Expect crowds.'},
+  {d:'2027-11-25',c:['x'],n:'Thanksgiving',a:'A harvest and family holiday in the United States.',m:XX},
+  {d:'2027-12-09',c:['f'],n:'Gita Jayanti',a:'The day Lord Krishna spoke the Bhagavad Gita.',m:'Devotees recite the whole Gita together, and Gita books are given out. A calm, uplifting day to visit.'},
+  {d:'2027-12-25',c:['x','in'],big:1,n:'Christmas Day',a:'The birth of Jesus Christ, celebrated around the world, and a national holiday in India.',m:'Mayapur is busy from Christmas to New Year with families on holiday from Kolkata. Book early.'},
+  {d:'2027-12-31',c:['x'],big:1,n:'New Year’s Eve',a:'The last night of the year.',m:'Many guests spend the night at the temple with kirtan into the New Year instead of a party. Rooms are in high demand.'}
+  ];
+})();

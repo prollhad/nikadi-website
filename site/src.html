@@ -255,6 +255,19 @@ section.alt{background:var(--band)}
 .gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:240px;gap:10px}
 .gal figure,.views figure{margin:0;position:relative;overflow:hidden;background:var(--panel)}
 .gal figure:first-child{grid-column:1/-1;grid-row:span 2}
+/* phones: swipe sideways through rooms and the live boxes instead of a long stack */
+@media (max-width:760px){
+.room-grid{display:grid!important;grid-auto-flow:column;grid-template-columns:none!important;grid-auto-columns:86%;overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:4px max(16px,env(safe-area-inset-left,0px)) 14px;scrollbar-width:none}
+.room-grid::-webkit-scrollbar,.gad::-webkit-scrollbar{display:none}
+.room-grid>*{scroll-snap-align:center;min-width:0}.room-grid .room-large{grid-column:auto!important}
+.gad,.gad.gad2{display:grid!important;grid-auto-flow:column;grid-template-columns:none!important;grid-auto-columns:80%;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:4px max(16px,env(safe-area-inset-left,0px)) 12px;scrollbar-width:none}
+.gad>*{scroll-snap-align:center;min-width:0}
+.swipe-hint{display:flex;align-items:center;gap:8px;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:-6px 0 10px}
+.amen{grid-template-columns:repeat(3,minmax(0,1fr))!important}.amen li{padding:14px 10px;gap:8px;justify-items:center;text-align:center}.amen span{font-size:.78rem;line-height:1.3}.amen svg{width:22px;height:22px}
+}
+@media (min-width:761px){.swipe-hint{display:none}}
+.gal figure[data-more]{display:none}.gal.all figure[data-more]{display:block}.paybox{grid-column:1/-1;border:1px solid rgba(217,173,85,.45);border-radius:var(--r);background:var(--panel);overflow:hidden}.paybox>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px}.paybox>summary::-webkit-details-marker{display:none}.paybox>summary span{display:grid;gap:4px}.paybox>summary b{font-size:1.1rem}.paybox>summary small{color:var(--muted);font-size:.84rem}.paybox>summary i{font-style:normal;font-size:1.6rem;color:var(--gold-hi);transition:transform .2s}.paybox[open]>summary i{transform:rotate(45deg)}.paybox>.upi{margin:0 24px 24px}
+.gal-more{display:flex;justify-content:center;margin-top:18px}.gal.all+.gal-more{display:none}
 .gal img,.views img{width:100%;height:100%;max-width:100%;object-fit:cover;display:block;transition:transform .6s ease}
 .zoom{cursor:zoom-in}
 .zoom:hover img{transform:scale(1.03)}
@@ -816,19 +829,35 @@ nav.main a{white-space:nowrap}
 .fv-next .cd small{display:block;font-family:var(--body);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-hi);-webkit-text-fill-color:var(--gold-hi);margin-top:6px}
 .fv-next h3{font-size:clamp(1.6rem,4vw,2.2rem)}
 .fv-next p{color:var(--muted);margin-top:6px}
-.fv-list{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-@media (max-width:760px){.fv-list{grid-template-columns:minmax(0,1fr)}}
-.fv{display:grid;grid-template-columns:76px minmax(0,1fr);gap:16px;align-items:start;border:1px solid var(--line);background:var(--panel);border-radius:var(--r-sm);padding:16px}
-.fv time{display:grid;justify-items:center;border-radius:12px;padding:8px 4px;background:var(--bg);border:1px solid var(--line)}
-.fv time b{font-family:var(--display);font-size:1.7rem;font-weight:600;line-height:1}
-.fv time span{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-hi)}
-.fv time small{font-size:.66rem;color:var(--muted)}
-.fv h3{font-size:1.15rem;font-family:var(--body);font-weight:700;letter-spacing:.01em}
-.fv p{color:var(--muted);font-size:.88rem;margin-top:4px}
-.fv-big{border-color:rgba(217,173,85,.45);background:linear-gradient(135deg,rgba(217,173,85,.08),transparent 60%),var(--panel)}
-.fv-big time{border-color:rgba(217,173,85,.5)}
-.fv-tag{display:inline-block;margin-top:8px;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--gold-ink);background:var(--gold-grad);padding:4px 10px;border-radius:999px}
-.fv.gone{display:none}
+.fvcal{--fvf:#d9ad55;--fvi:#f3a35f;--fvx:#a9dcb8;margin-top:8px}
+.fv-f{--fc:var(--fvf)}.fv-in{--fc:var(--fvi)}.fv-x{--fc:var(--fvx)}
+.fv-key{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 22px}
+.fv-key button{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:.84rem;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:9px 14px;cursor:pointer}
+.fv-key button i{width:10px;height:10px;border-radius:50%;background:var(--fc)}
+.fv-key button small{font-size:.72rem;color:var(--muted);min-width:1.2em}
+.fv-key button[aria-pressed=true]{border-color:var(--fc,var(--gold));background:color-mix(in srgb,var(--fc,var(--gold)) 16%,var(--panel))}
+.fvm{margin-top:22px}.fvm-h{font-family:var(--body);font-size:.78rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-hi);margin:0 0 10px}
+.fvm-l{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.fvm-l{grid-template-columns:minmax(0,1fr)}}
+.fvc{width:100%;height:100%;display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center;text-align:left;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--fc);border-radius:var(--r-sm);padding:12px 14px 12px 12px;cursor:pointer;transition:border-color .2s,transform .2s,background .2s}
+.fvc:hover,.fvc:focus-visible{background:color-mix(in srgb,var(--fc) 9%,var(--panel));transform:translateY(-1px)}
+.fvc time{display:grid;justify-items:center;border-radius:12px;padding:7px 2px;background:var(--bg);border:1px solid color-mix(in srgb,var(--fc) 45%,transparent)}
+.fvc time b{font-family:var(--display);font-size:1.5rem;font-weight:600;line-height:1.05;white-space:nowrap}
+.fvc time span{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fc)}
+.fvc time small{font-size:.62rem;color:var(--muted)}
+.fvc-b{display:grid;gap:4px;min-width:0}
+.fvc-n{font-weight:700;font-size:1.02rem}
+.fvc-a{color:var(--muted);font-size:.84rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fvc-tags,.fvd-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.fv-t{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;color:#151a2c;background:var(--fc)}
+.fv-t.fv-busy{background:transparent;color:var(--gold-hi);border:1px solid rgba(217,173,85,.55)}
+.fvc-go{font-size:1.4rem;color:var(--muted)}
+.fvd{border-color:color-mix(in srgb,var(--fc) 60%,transparent);--fvf:#d9ad55;--fvi:#f3a35f;--fvx:#a9dcb8}
+.fvd h3{font-size:1.7rem}
+.fvd-when{display:grid;gap:2px}.fvd-when b{color:var(--fc);font-weight:600}.fvd-when span{color:var(--muted);font-size:.86rem}
+.fvd-sec{display:grid;gap:4px}.fvd-sec .kicker{margin:0}.fvd-sec p:last-child{color:var(--ink);line-height:1.6}
+.fvd-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}.fvd-acts .btn{margin:0}
+.fv-next .btn{margin:0}
 .fv-src{color:var(--muted);font-size:.78rem;margin-top:16px}
 
 /* staff wall */
@@ -1120,11 +1149,11 @@ html{overflow-x:hidden}
 .mcard.art2 .a-pts b{font-family:var(--display);font-size:1.9rem;font-weight:600;line-height:1}
 .mcard.art2 .a-pts span{font-size:.5rem;letter-spacing:.3em;text-transform:uppercase;opacity:.75}
 .mcard.art2 .a-pts small{font-size:.6rem;opacity:.75}
-.a-silver{--art:url(app/icons/card-silver.svg);color:#23272c}
-.a-gold{--art:url(app/icons/card-gold.svg);color:#efd594;padding:0 9% 7.4% 9%!important}
+.a-silver{--art:url(/app/icons/card-silver.svg);color:#23272c}
+.a-gold{--art:url(/app/icons/card-gold.svg);color:#efd594;padding:0 9% 7.4% 9%!important}
 .a-gold .a-pts b{color:#f3dda0}
-.a-platinum{--art:url(app/icons/card-platinum.svg);color:#e6ebf2;padding:0 7% 5%!important}
-.a-plus{--art:url(app/icons/card-plus.svg);color:#d9dadc;padding:0 9% 7.4% 9%!important}
+.a-platinum{--art:url(/app/icons/card-platinum.svg);color:#e6ebf2;padding:0 7% 5%!important}
+.a-plus{--art:url(/app/icons/card-plus.svg);color:#d9dadc;padding:0 9% 7.4% 9%!important}
 .mcard.art2.a-plus .a-bot{flex-direction:column-reverse;align-items:flex-start;max-width:46%;gap:8px}
 .mcard.art2.a-plus .a-pts{justify-items:start;text-align:left}
 .a-plus .a-pts b{background:linear-gradient(180deg,#f3dfa6,#c9a35a 70%,#a9823e);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -1443,6 +1472,7 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
       <h2>Plan your day in the Dham</h2>
       <p>Live time, weather and sun for Sri Dham Mayapur, the next temple program, the next train from Kolkata, tonight's room price, and how far you are from us.</p>
     </div>
+    <p class="swipe-hint" aria-hidden="true">Swipe for more <span>→</span></p>
     <div class="gad">
       <div class="gw rv" id="gwClock">
         <span class="lbl">Time in Mayapur</span>
@@ -1619,6 +1649,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <p>Each room has a 10 inch mattress, attached bathroom with geyser and western toilet, television, wardrobe and round-the-clock Wi-Fi.</p>
     </div>
 
+    <p class="swipe-hint" aria-hidden="true">Swipe for more <span>→</span></p>
     <div class="room-grid">
     <article class="room">
       <a class="ph" href="#room-deluxe-double" aria-label="View Deluxe Double room photos and details"><img src="img/rooms/double-01.jpg" alt="Deluxe Double room with king bed and warm cove lighting" loading="lazy" style="object-position:50% 70%"><span class="ph-tag">19 photos</span></a>
@@ -1799,30 +1830,32 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 <section class="s alt" id="festivals">
   <div class="wrap">
     <div class="head rv">
-      <p class="kicker rule">Festival calendar</p>
+      <p class="kicker rule">Festival and holiday calendar</p>
       <h2>Festivals in Sri Dham <em class="goldtx">Mayapur</em></h2>
-      <p>The big days at the Mayapur temple for the coming year. Festival weeks are our busiest, so book early. Dates follow the Gaurabda calendar and can differ by a day; the temple announces the final program closer to each festival.</p>
+      <p>The big days at the Mayapur temple, Indian public holidays and international holidays for the coming year, so you can plan your stay. Tap any date to see what it is and what to expect here. Festival and holiday weeks are our busiest, so book early.</p>
     </div>
     <div class="fv-next rv" id="fvNext" hidden></div>
-    <ol class="fv-list rv" id="fvList">
-<li class="fv" data-d="2026-12-20"><time datetime="2026-12-20"></time><div><h3>Gita Jayanti</h3><p>The day Lord Krishna spoke the Bhagavad Gita. Gita recitation and a special program at the temple.</p></div></li>
-<li class="fv" data-d="2027-02-19"><time datetime="2027-02-19"></time><div><h3>Nityananda Trayodashi</h3><p>Appearance day of Lord Nityananda. Fasting till noon, then a feast.</p></div></li>
-<li class="fv fv-big" data-d="2027-03-22"><time datetime="2027-03-22"></time><div><h3>Gaura Purnima</h3><p>Appearance of Sri Chaitanya Mahaprabhu in Sri Dham Mayapur. The biggest festival of the year, with the Navadvip Mandala Parikrama in the days before. Rooms fill months ahead.</p><span class="fv-tag">Busy season · book early</span></div></li>
-<li class="fv" data-d="2027-04-15"><time datetime="2027-04-15"></time><div><h3>Rama Navami</h3><p>Appearance day of Lord Ramachandra.</p></div></li>
-<li class="fv fv-big" data-d="2027-05-19"><time datetime="2027-05-19"></time><div><h3>Narasimha Chaturdashi</h3><p>Appearance of Lord Nrisimhadev, very dear to Mayapur. Grand abhishek at His altar.</p><span class="fv-tag">Busy season · book early</span></div></li>
-<li class="fv" data-d="2027-06-18"><time datetime="2027-06-18"></time><div><h3>Snana Yatra</h3><p>The bathing ceremony of Lord Jagannath, Baladeva and Subhadra.</p></div></li>
-<li class="fv fv-big" data-d="2027-07-05"><time datetime="2027-07-05"></time><div><h3>Ratha Yatra</h3><p>The Lord rides out on His chariot. Kirtan in the streets of Mayapur.</p><span class="fv-tag">Busy season · book early</span></div></li>
-<li class="fv" data-d="2027-08-12"><time datetime="2027-08-12"></time><div><h3>Jhulan Yatra begins</h3><p>Five evenings of swing festival for Sri Sri Radha Madhava.</p></div></li>
-<li class="fv" data-d="2027-08-17"><time datetime="2027-08-17"></time><div><h3>Balarama Jayanti</h3><p>Appearance day of Lord Balarama.</p></div></li>
-<li class="fv fv-big" data-d="2027-08-25"><time datetime="2027-08-25"></time><div><h3>Sri Krishna Janmashtami</h3><p>Appearance of Lord Krishna. Midnight arati, kirtan all day. Very busy.</p><span class="fv-tag">Busy season · book early</span></div></li>
-<li class="fv" data-d="2027-08-26"><time datetime="2027-08-26"></time><div><h3>Srila Prabhupada Appearance</h3><p>Vyasa Puja of the founder-acharya of ISKCON, with Nandotsava.</p></div></li>
-<li class="fv fv-big" data-d="2027-09-08"><time datetime="2027-09-08"></time><div><h3>Radhashtami</h3><p>Appearance day of Srimati Radharani. Abhishek of Sri Radha Madhava.</p><span class="fv-tag">Busy season · book early</span></div></li>
-<li class="fv fv-big" data-d="2027-10-15"><time datetime="2027-10-15"></time><div><h3>Kartik month begins</h3><p>The holy month of Damodara: daily Damodarashtakam and lamp offering. A favourite time for pilgrims.</p><span class="fv-tag">Busy season · book early</span></div></li>
-<li class="fv" data-d="2027-10-30"><time datetime="2027-10-30"></time><div><h3>Govardhan Puja</h3><p>The Govardhan hill of prasadam, and Go Puja at the Goshala.</p></div></li>
-<li class="fv" data-d="2027-11-02"><time datetime="2027-11-02"></time><div><h3>Srila Prabhupada Disappearance</h3><p>Remembrance day of Srila Prabhupada.</p></div></li>
-<li class="fv" data-d="2027-12-09"><time datetime="2027-12-09"></time><div><h3>Gita Jayanti</h3><p>The day Lord Krishna spoke the Bhagavad Gita.</p></div></li>
-    </ol>
-    <p class="fv-src">Dates from the ISKCON (Gaurabda) calendar, worked out for India. Please check with us before you travel.</p>
+    <div class="fvcal rv" id="fvCal">
+      <div class="fv-key" role="group" aria-label="Show">
+        <button type="button" data-fvf="all" aria-pressed="true">All dates <small></small></button>
+        <button type="button" data-fvf="f" class="fv-f" aria-pressed="false"><i></i>Mayapur festivals <small></small></button>
+        <button type="button" data-fvf="in" class="fv-in" aria-pressed="false"><i></i>Indian public holidays <small></small></button>
+        <button type="button" data-fvf="x" class="fv-x" aria-pressed="false"><i></i>International holidays <small></small></button>
+      </div>
+      <div id="fvMonths"></div>
+    </div>
+    <p class="fv-src">Temple dates follow the ISKCON (Gaurabda) calendar and can differ by a day; the temple confirms each program nearer the time. Holidays are from the Government of India 2027 list and the West Bengal list. Please check with us before you travel.</p>
+  </div>
+  <div class="trdlg" id="fvDlg" hidden role="dialog" aria-modal="true" aria-labelledby="fvdT">
+    <div class="trd-card fvd">
+      <button class="trd-x" type="button" aria-label="Close">&times;</button>
+      <div class="fvd-tags"></div>
+      <h3 id="fvdT">&nbsp;</h3>
+      <p class="fvd-when"></p>
+      <div class="fvd-sec"><p class="kicker">What it is</p><p class="fvd-a"></p></div>
+      <div class="fvd-sec"><p class="kicker">In Mayapur</p><p class="fvd-m"></p></div>
+      <div class="fvd-acts"><a class="btn btn-gold fvd-wa" href="#" target="_blank" rel="noopener">Book a room for these dates</a><a class="btn btn-line fvd-cal" href="#" target="_blank" rel="noopener">Add to Google Calendar</a></div>
+    </div>
   </div>
 </section>
 
@@ -1895,10 +1928,92 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 <section class="s" id="transport">
   <div class="wrap">
     <div class="head rv">
-      <p class="kicker rule">Travel desk · Nikadi × Gourdham Travels</p>
+      <p class="kicker rule">Getting to Mayapur</p>
       <h2>Travel made <em class="goldtx">easy</em></h2>
-      <p>Flights in India and abroad, trains, cars, buses, boats and tour packages, booked by our travel partner Gourdham Travels. Below that: car service, local and AC trains from Kolkata, and buses, with live departure times.</p>
+      <p>Live train times from Kolkata, our own cars and the buses to Mayapur. Further down, our travel partner Gourdham Travels books flights, trains, cars, boats and tour packages for you.</p>
     </div>
+    <div class="tp-tabs rv" role="tablist">
+      <button type="button" role="tab" data-tp="train" aria-selected="true">Trains</button>
+      <button type="button" role="tab" data-tp="car" aria-selected="false">Car service</button>
+      <button type="button" role="tab" data-tp="bus" aria-selected="false">Buses</button>
+    </div>
+
+    <div class="tp-pane" data-pane="car" hidden>
+      <div class="carg">
+      <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Mayapur ⇄ Kolkata Airport</h3><p>Netaji Subhas Chandra Bose International Airport (CCU). About 3 hours each way. Pick-up from the airport or drop for your flight, timed to your schedule.</p><span class="car-t">About 3 hr</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/919933864574?text=Hare%20Krishna%21%20I%20need%20a%20car%20between%20Nikadi%20Guest%20House%20and%20Kolkata%20Airport.%20Date%3A%20%0ATime%20/%20flight%3A%20%0AGuests%3A%20%0ALuggage%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+919933864574">Call</a></div></article>
+      <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Mayapur ⇄ Kolkata city</h3><p>Howrah, Sealdah and Kolkata Station, hotels or any address in Kolkata. About 3½ hours each way.</p><span class="car-t">About 3.5 hr</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/919933864574?text=Hare%20Krishna%21%20I%20need%20a%20car%20between%20Nikadi%20Guest%20House%20and%20Kolkata.%20Pick-up%20/%20drop%20address%3A%20%0ADate%20and%20time%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+919933864574">Call</a></div></article>
+      <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Travel around Kolkata</h3><p>A car with driver for a half day or full day in Kolkata: Kalighat, Dakshineswar, Belur Math, ISKCON Kolkata, Victoria Memorial, shopping and more.</p><span class="car-t">Half or full day</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/919933864574?text=Hare%20Krishna%21%20I%20would%20like%20a%20car%20for%20travelling%20around%20Kolkata.%20Date%3A%20%0AHalf%20day%20/%20full%20day%3A%20%0APlaces%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+919933864574">Call</a></div></article>
+    </div>
+    </div>
+
+    <div class="tp-pane" data-pane="train">
+      <div class="acbox rv">
+        <div class="acb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4 6l16 12M20 6L4 18M9 3l3 2 3-2M9 21l3-2 3 2"/></svg></div>
+        <div class="acb-tx">
+          <p class="kicker">AC local train · Galloping AC EMU</p>
+          <h3>Sealdah ⇄ Krishnanagar City in air-conditioned comfort</h3>
+          <div class="acb-grid">
+            <div><b>9:48 AM → 12:07 PM</b><span>Sealdah to Krishnanagar · 31845 · Mon–Sat</span></div>
+            <div><b>11:55 AM → 2:11 PM</b><span>Sealdah to Krishnanagar · 31847 · Sundays</span></div>
+            <div><b>1:30 PM → 3:40 PM</b><span>Krishnanagar to Sealdah · 31846 · Mon–Sat</span></div>
+            <div><b>4:05 PM → 6:20 PM</b><span>Krishnanagar to Sealdah · 31848 · Sundays</span></div>
+          </div>
+          <p class="acb-note">Stops at Bidhannagar Road, Dum Dum, Belgharia, Sodepur, Khardaha, Barrackpore, Shyamnagar, Naihati, Kanchrapara, Kalyani, Chakdaha and Ranaghat. About 2 hours 20 minutes. Tap any time below for the full timetable. AC local tickets cost more than the ordinary local; buy at the counter or in the RailOne app.</p>
+        </div>
+      </div>
+
+      <div class="tr-grid">
+        <div class="trc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 10h14M9 20l-2 2M15 20l2 2M8 16l-1 4h10l-1-4"/><circle cx="9" cy="13" r=".7"/><circle cx="15" cy="13" r=".7"/></svg><div><h3>Kolkata (Sealdah) ⇄ Krishnanagar</h3><p>Sealdah main line · about 2 hr 20 min · then about 40 minutes by bus, auto or car from Krishnanagar to Mayapur.</p></div></div>
+          <div class="nxt" data-k="sk"></div>
+          <div class="dir"><p class="dl">Sealdah → Krishnanagar City</p><ol class="ttab"><li class="tr" data-d="03:20" data-n="31811" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31811 details"><b>3:20 AM</b><span>→ 5:48 AM</span></button></li><li class="tr" data-d="05:37" data-n="31813" data-k="sk" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31813 details"><b>5:37 AM</b><span>→ 8:00 AM</span><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="06:10" data-n="31815" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31815 details"><b>6:10 AM</b><span>→ 8:34 AM</span></button></li><li class="tr" data-d="06:55" data-n="31817" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31817 details"><b>6:55 AM</b><span>→ 9:22 AM</span></button></li><li class="tr" data-d="07:52" data-n="31819" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31819 details"><b>7:52 AM</b><span>→ 10:10 AM</span></button></li><li class="tr" data-d="09:34" data-n="31821" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31821 details"><b>9:34 AM</b><span>→ 11:50 AM</span></button></li><li class="tr ac" data-d="09:48" data-n="31845" data-k="sk" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31845 details"><b>9:48 AM</b><span>→ 12:07 PM</span><em>AC</em><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="10:28" data-n="63107" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 63107 details"><b>10:28 AM</b><span>→ 12:35 PM</span></button></li><li class="tr" data-d="10:52" data-n="31825" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31825 details"><b>10:52 AM</b><span>→ 1:18 PM</span></button></li><li class="tr ac" data-d="11:55" data-n="31847" data-k="sk" data-days="Sundays only"><button type="button" class="trb" aria-label="Train 31847 details"><b>11:55 AM</b><span>→ 2:11 PM</span><em>AC</em><em class="dd">Sun</em></button></li><li class="tr" data-d="12:05" data-n="31827" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31827 details"><b>12:05 PM</b><span>→ 2:26 PM</span></button></li><li class="tr" data-d="13:15" data-n="31829" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31829 details"><b>1:15 PM</b><span>→ 3:35 PM</span></button></li><li class="tr" data-d="15:25" data-n="31831" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31831 details"><b>3:25 PM</b><span>→ 5:50 PM</span></button></li><li class="tr" data-d="16:08" data-n="31833" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31833 details"><b>4:08 PM</b><span>→ 6:35 PM</span></button></li><li class="tr" data-d="17:05" data-n="31801" data-k="sk" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31801 details"><b>5:05 PM</b><span>→ 7:29 PM</span><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="17:34" data-n="31835" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31835 details"><b>5:34 PM</b><span>→ 7:49 PM</span></button></li><li class="tr ex" data-d="18:20" data-n="13103" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 13103 details"><b>6:20 PM</b><span>→ 8:12 PM</span><em class="x">Express</em></button></li><li class="tr" data-d="18:43" data-n="31837" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31837 details"><b>6:43 PM</b><span>→ 8:59 PM</span></button></li><li class="tr" data-d="19:15" data-n="63103" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 63103 details"><b>7:15 PM</b><span>→ 9:30 PM</span></button></li><li class="tr" data-d="19:35" data-n="31841" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31841 details"><b>7:35 PM</b><span>→ 9:57 PM</span></button></li><li class="tr" data-d="21:00" data-n="31843" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31843 details"><b>9:00 PM</b><span>→ 11:22 PM</span></button></li></ol></div>
+          <div class="nxt" data-k="ks"></div>
+          <div class="dir"><p class="dl">Krishnanagar City → Sealdah</p><ol class="ttab"><li class="tr" data-d="04:20" data-n="31812" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31812 details"><b>4:20 AM</b><span>→ 6:46 AM</span></button></li><li class="tr" data-d="05:00" data-n="31814" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31814 details"><b>5:00 AM</b><span>→ 7:12 AM</span></button></li><li class="tr" data-d="06:07" data-n="31816" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31816 details"><b>6:07 AM</b><span>→ 8:27 AM</span></button></li><li class="tr" data-d="07:04" data-n="31818" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31818 details"><b>7:04 AM</b><span>→ 9:22 AM</span></button></li><li class="tr ex" data-d="08:02" data-n="13104" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 13104 details"><b>8:02 AM</b><span>→ 10:25 AM</span><em class="x">Express</em></button></li><li class="tr" data-d="08:40" data-n="31802" data-k="ks" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31802 details"><b>8:40 AM</b><span>→ 11:00 AM</span><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="09:00" data-n="31820" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31820 details"><b>9:00 AM</b><span>→ 11:22 AM</span></button></li><li class="tr" data-d="09:50" data-n="31822" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31822 details"><b>9:50 AM</b><span>→ 12:10 PM</span></button></li><li class="tr" data-d="12:12" data-n="31824" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31824 details"><b>12:12 PM</b><span>→ 2:30 PM</span></button></li><li class="tr ac" data-d="13:30" data-n="31846" data-k="ks" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31846 details"><b>1:30 PM</b><span>→ 3:40 PM</span><em>AC</em><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="13:48" data-n="63104" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 63104 details"><b>1:48 PM</b><span>→ 4:00 PM</span></button></li><li class="tr" data-d="14:15" data-n="31828" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31828 details"><b>2:15 PM</b><span>→ 4:15 PM</span></button></li><li class="tr" data-d="15:20" data-n="31830" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31830 details"><b>3:20 PM</b><span>→ 5:37 PM</span></button></li><li class="tr ac" data-d="16:05" data-n="31848" data-k="ks" data-days="Sundays only"><button type="button" class="trb" aria-label="Train 31848 details"><b>4:05 PM</b><span>→ 6:20 PM</span><em>AC</em><em class="dd">Sun</em></button></li><li class="tr" data-d="16:20" data-n="31832" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31832 details"><b>4:20 PM</b><span>→ 6:40 PM</span></button></li><li class="tr" data-d="18:32" data-n="31834" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31834 details"><b>6:32 PM</b><span>→ 8:58 PM</span></button></li><li class="tr" data-d="19:24" data-n="31836" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31836 details"><b>7:24 PM</b><span>→ 9:43 PM</span></button></li><li class="tr" data-d="20:00" data-n="31838" data-k="ks" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31838 details"><b>8:00 PM</b><span>→ 10:25 PM</span><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="20:25" data-n="31840" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31840 details"><b>8:25 PM</b><span>→ 10:55 PM</span></button></li><li class="tr" data-d="21:09" data-n="63106" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 63106 details"><b>9:09 PM</b><span>→ 11:25 PM</span></button></li><li class="tr" data-d="22:22" data-n="31844" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31844 details"><b>10:22 PM</b><span>→ 12:40 AM</span></button></li></ol></div>
+        </div>
+        <div class="trc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 10h14M9 20l-2 2M15 20l2 2M8 16l-1 4h10l-1-4"/><circle cx="9" cy="13" r=".7"/><circle cx="15" cy="13" r=".7"/></svg><div><h3>Howrah ⇄ Nabadwip Dham</h3><p>Howrah–Katwa line · about 2 hr 10 min · then a toto to the Nabadwip ghat and the ferry across the Ganga to Mayapur.</p></div></div>
+          <div class="nxt" data-k="hn"></div>
+          <div class="dir"><p class="dl">Howrah → Nabadwip Dham</p><ol class="ttab"><li class="tr" data-d="05:22" data-n="37911" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37911 details"><b>5:22 AM</b><span>→ 7:32 AM</span></button></li><li class="tr" data-d="08:00" data-n="37913" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37913 details"><b>8:00 AM</b><span>→ 10:10 AM</span></button></li><li class="tr" data-d="10:00" data-n="37915" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37915 details"><b>10:00 AM</b><span>→ 12:12 PM</span></button></li><li class="tr" data-d="12:10" data-n="37917" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37917 details"><b>12:10 PM</b><span>→ 2:22 PM</span></button></li><li class="tr ex" data-d="14:00" data-n="13465" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 13465 details"><b>2:00 PM</b><span>→ 3:45 PM</span><em class="x">Express</em></button></li><li class="tr" data-d="14:30" data-n="37919" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37919 details"><b>2:30 PM</b><span>→ 4:35 PM</span></button></li><li class="tr" data-d="17:05" data-n="37921" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37921 details"><b>5:05 PM</b><span>→ 7:20 PM</span></button></li><li class="tr" data-d="18:00" data-n="37923" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37923 details"><b>6:00 PM</b><span>→ 8:05 PM</span></button></li><li class="tr" data-d="19:25" data-n="37925" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37925 details"><b>7:25 PM</b><span>→ 9:29 PM</span></button></li><li class="tr" data-d="20:30" data-n="37927" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37927 details"><b>8:30 PM</b><span>→ 11:02 PM</span></button></li></ol></div>
+          <div class="nxt" data-k="nh"></div>
+          <div class="dir"><p class="dl">Nabadwip Dham → Howrah</p><ol class="ttab"><li class="tr" data-d="04:26" data-n="37912" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37912 details"><b>4:26 AM</b><span>→ 6:57 AM</span></button></li><li class="tr" data-d="06:17" data-n="37914" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37914 details"><b>6:17 AM</b><span>→ 8:55 AM</span></button></li><li class="tr" data-d="07:05" data-n="37916" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37916 details"><b>7:05 AM</b><span>→ 9:30 AM</span></button></li><li class="tr" data-d="07:39" data-n="37918" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37918 details"><b>7:39 AM</b><span>→ 10:18 AM</span></button></li><li class="tr" data-d="08:28" data-n="37920" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37920 details"><b>8:28 AM</b><span>→ 10:55 AM</span></button></li><li class="tr ex" data-d="10:03" data-n="13466" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 13466 details"><b>10:03 AM</b><span>→ 12:40 PM</span><em class="x">Express</em></button></li><li class="tr" data-d="11:36" data-n="37922" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37922 details"><b>11:36 AM</b><span>→ 2:22 PM</span></button></li><li class="tr" data-d="15:29" data-n="37924" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37924 details"><b>3:29 PM</b><span>→ 6:00 PM</span></button></li><li class="tr" data-d="16:14" data-n="37926" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37926 details"><b>4:14 PM</b><span>→ 6:45 PM</span></button></li><li class="tr" data-d="20:08" data-n="37928" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37928 details"><b>8:08 PM</b><span>→ 10:44 PM</span></button></li></ol></div>
+        </div>
+      </div>
+      <p class="credits">Train times and stops from the official Indian Railways timetable (NTES, the same data as the RailOne app), checked 18 November 2026. Timetables can change, so please confirm in <a href="https://enquiry.indianrail.gov.in/mntes/" target="_blank" rel="noopener">NTES</a> or the RailOne app before you travel.</p>
+    </div>
+
+    <div class="tp-pane" data-pane="bus" hidden>
+      <div class="bus-grid">
+        <article class="busc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/></svg><div><h3>Kolkata ⇄ Mayapur · WBTC government bus</h3><p>Non-AC, every day. Via Ultadanga, Airport, Barasat, Ranaghat, Shantipur and Krishnanagar.</p></div></div>
+          <ul class="bus-t">
+            <li><span>From Kolkata (Esplanade)</span><b>6:15 AM · 3:00 PM</b></li>
+            <li><span>From ISKCON Mayapur (Vamsi Bhavan)</span><b>6:15 AM · 3:30 PM</b></li>
+            <li><span>Fare</span><b>about ₹108</b></li>
+          </ul>
+          <div class="car-acts"><a class="btn btn-line" href="https://wbtconline.in/home" target="_blank" rel="noopener">Book on WBTC</a><a class="btn btn-line" href="tel:+918697733469">Call WBTC</a></div>
+        </article>
+        <article class="busc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/></svg><div><h3>Kolkata ⇄ Mayapur · AC Volvo</h3><p>Friday, Saturday and Sunday. Kolkata – Krishnanagar – Mayapur.</p></div></div>
+          <ul class="bus-t">
+            <li><span>From Kolkata (Esplanade)</span><b>7:00 AM</b></li>
+            <li><span>From ISKCON Mayapur (Vamsi Bhavan)</span><b>4:00 PM</b></li>
+            <li><span>More buses and seats</span><b>redBus · MakeMyTrip</b></li>
+          </ul>
+          <div class="car-acts"><a class="btn btn-line" href="https://www.redbus.in/bus-tickets/kolkata-to-mayapur-iskcon" target="_blank" rel="noopener">Kolkata → Mayapur buses</a><a class="btn btn-line" href="https://www.redbus.in/bus-tickets/mayapur-iskcon-to-kolkata" target="_blank" rel="noopener">Mayapur → Kolkata buses</a></div>
+        </article>
+        <article class="busc rv">
+          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/></svg><div><h3>Mayapur → Bhubaneswar</h3><p>Overnight bus to Odisha (Padhi Travels), via Kharagpur, Balasore, Bhadrak and Chandikhol. OSRTC buses are also listed on AbhiBus.</p></div></div>
+          <ul class="bus-t">
+            <li><span>Leaves Mayapur</span><b>6:00 PM</b></li>
+            <li><span>Reaches Bhubaneswar</span><b>5:55 AM · about 12 hr</b></li>
+            <li><span>Fare</span><b>from about ₹1,200</b></li>
+          </ul>
+          <div class="car-acts"><a class="btn btn-line" href="https://www.abhibus.com/buses/1266933/Mayapur-West-Bengal-Bhubaneswar" target="_blank" rel="noopener">See seats on AbhiBus</a><a class="btn btn-line" href="https://wa.me/919933864574?text=Hare%20Krishna!%20Can%20you%20help%20me%20with%20the%20bus%20from%20Mayapur%20to%20Bhubaneswar%3F" target="_blank" rel="noopener">Ask us</a></div>
+        </article>
+      </div>
+      <p class="credits">Bus times from ISKCON Mayapur (srimayapurdhama.com) and AbhiBus, November 2026. Please confirm before you travel; our reception is happy to help.</p>
+    </div>
+
     <div class="gt rv" id="gourdham">
       <div class="gt-top">
         <div class="gt-brand"><span class="gt-n">NIKADI</span><span class="gt-x">×</span><span class="gt-g">GOURDHAM<small>TRAVELS</small></span></div>
@@ -1965,89 +2080,6 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           </article>
         </div>
       </div>
-    </div>
-
-
-    <div class="tp-tabs rv" role="tablist">
-      <button type="button" role="tab" data-tp="car" aria-selected="true">Car service</button>
-      <button type="button" role="tab" data-tp="train" aria-selected="false">Trains</button>
-      <button type="button" role="tab" data-tp="bus" aria-selected="false">Buses</button>
-    </div>
-
-    <div class="tp-pane" data-pane="car">
-      <div class="carg">
-      <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Mayapur ⇄ Kolkata Airport</h3><p>Netaji Subhas Chandra Bose International Airport (CCU). About 3 hours each way. Pick-up from the airport or drop for your flight, timed to your schedule.</p><span class="car-t">About 3 hr</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/919933864574?text=Hare%20Krishna%21%20I%20need%20a%20car%20between%20Nikadi%20Guest%20House%20and%20Kolkata%20Airport.%20Date%3A%20%0ATime%20/%20flight%3A%20%0AGuests%3A%20%0ALuggage%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+919933864574">Call</a></div></article>
-      <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Mayapur ⇄ Kolkata city</h3><p>Howrah, Sealdah and Kolkata Station, hotels or any address in Kolkata. About 3½ hours each way.</p><span class="car-t">About 3.5 hr</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/919933864574?text=Hare%20Krishna%21%20I%20need%20a%20car%20between%20Nikadi%20Guest%20House%20and%20Kolkata.%20Pick-up%20/%20drop%20address%3A%20%0ADate%20and%20time%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+919933864574">Call</a></div></article>
-      <article class="car rv"><div class="car-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg></div><h3>Travel around Kolkata</h3><p>A car with driver for a half day or full day in Kolkata: Kalighat, Dakshineswar, Belur Math, ISKCON Kolkata, Victoria Memorial, shopping and more.</p><span class="car-t">Half or full day</span><div class="car-acts"><a class="btn btn-gold" href="https://wa.me/919933864574?text=Hare%20Krishna%21%20I%20would%20like%20a%20car%20for%20travelling%20around%20Kolkata.%20Date%3A%20%0AHalf%20day%20/%20full%20day%3A%20%0APlaces%3A%20%0AGuests%3A%20" target="_blank" rel="noopener">Ask price on WhatsApp</a><a class="btn btn-line" href="tel:+919933864574">Call</a></div></article>
-    </div>
-    </div>
-
-    <div class="tp-pane" data-pane="train" hidden>
-      <div class="acbox rv">
-        <div class="acb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4 6l16 12M20 6L4 18M9 3l3 2 3-2M9 21l3-2 3 2"/></svg></div>
-        <div class="acb-tx">
-          <p class="kicker">AC local train · Galloping AC EMU</p>
-          <h3>Sealdah ⇄ Krishnanagar City in air-conditioned comfort</h3>
-          <div class="acb-grid">
-            <div><b>9:48 AM → 12:07 PM</b><span>Sealdah to Krishnanagar · 31845 · Mon–Sat</span></div>
-            <div><b>11:55 AM → 2:11 PM</b><span>Sealdah to Krishnanagar · 31847 · Sundays</span></div>
-            <div><b>1:30 PM → 3:40 PM</b><span>Krishnanagar to Sealdah · 31846 · Mon–Sat</span></div>
-            <div><b>4:05 PM → 6:20 PM</b><span>Krishnanagar to Sealdah · 31848 · Sundays</span></div>
-          </div>
-          <p class="acb-note">Stops at Bidhannagar Road, Dum Dum, Belgharia, Sodepur, Khardaha, Barrackpore, Shyamnagar, Naihati, Kanchrapara, Kalyani, Chakdaha and Ranaghat. About 2 hours 20 minutes. Tap any time below for the full timetable. AC local tickets cost more than the ordinary local; buy at the counter or in the RailOne app.</p>
-        </div>
-      </div>
-
-      <div class="tr-grid">
-        <div class="trc rv">
-          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 10h14M9 20l-2 2M15 20l2 2M8 16l-1 4h10l-1-4"/><circle cx="9" cy="13" r=".7"/><circle cx="15" cy="13" r=".7"/></svg><div><h3>Kolkata (Sealdah) ⇄ Krishnanagar</h3><p>Sealdah main line · about 2 hr 20 min · then about 40 minutes by bus, auto or car from Krishnanagar to Mayapur.</p></div></div>
-          <div class="nxt" data-k="sk"></div>
-          <div class="dir"><p class="dl">Sealdah → Krishnanagar City</p><ol class="ttab"><li class="tr" data-d="03:20" data-n="31811" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31811 details"><b>3:20 AM</b><span>→ 5:48 AM</span></button></li><li class="tr" data-d="05:37" data-n="31813" data-k="sk" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31813 details"><b>5:37 AM</b><span>→ 8:00 AM</span><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="06:10" data-n="31815" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31815 details"><b>6:10 AM</b><span>→ 8:34 AM</span></button></li><li class="tr" data-d="06:55" data-n="31817" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31817 details"><b>6:55 AM</b><span>→ 9:22 AM</span></button></li><li class="tr" data-d="07:52" data-n="31819" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31819 details"><b>7:52 AM</b><span>→ 10:10 AM</span></button></li><li class="tr" data-d="09:34" data-n="31821" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31821 details"><b>9:34 AM</b><span>→ 11:50 AM</span></button></li><li class="tr ac" data-d="09:48" data-n="31845" data-k="sk" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31845 details"><b>9:48 AM</b><span>→ 12:07 PM</span><em>AC</em><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="10:28" data-n="63107" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 63107 details"><b>10:28 AM</b><span>→ 12:35 PM</span></button></li><li class="tr" data-d="10:52" data-n="31825" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31825 details"><b>10:52 AM</b><span>→ 1:18 PM</span></button></li><li class="tr ac" data-d="11:55" data-n="31847" data-k="sk" data-days="Sundays only"><button type="button" class="trb" aria-label="Train 31847 details"><b>11:55 AM</b><span>→ 2:11 PM</span><em>AC</em><em class="dd">Sun</em></button></li><li class="tr" data-d="12:05" data-n="31827" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31827 details"><b>12:05 PM</b><span>→ 2:26 PM</span></button></li><li class="tr" data-d="13:15" data-n="31829" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31829 details"><b>1:15 PM</b><span>→ 3:35 PM</span></button></li><li class="tr" data-d="15:25" data-n="31831" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31831 details"><b>3:25 PM</b><span>→ 5:50 PM</span></button></li><li class="tr" data-d="16:08" data-n="31833" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31833 details"><b>4:08 PM</b><span>→ 6:35 PM</span></button></li><li class="tr" data-d="17:05" data-n="31801" data-k="sk" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31801 details"><b>5:05 PM</b><span>→ 7:29 PM</span><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="17:34" data-n="31835" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31835 details"><b>5:34 PM</b><span>→ 7:49 PM</span></button></li><li class="tr ex" data-d="18:20" data-n="13103" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 13103 details"><b>6:20 PM</b><span>→ 8:12 PM</span><em class="x">Express</em></button></li><li class="tr" data-d="18:43" data-n="31837" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31837 details"><b>6:43 PM</b><span>→ 8:59 PM</span></button></li><li class="tr" data-d="19:15" data-n="63103" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 63103 details"><b>7:15 PM</b><span>→ 9:30 PM</span></button></li><li class="tr" data-d="19:35" data-n="31841" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31841 details"><b>7:35 PM</b><span>→ 9:57 PM</span></button></li><li class="tr" data-d="21:00" data-n="31843" data-k="sk" data-days="Daily"><button type="button" class="trb" aria-label="Train 31843 details"><b>9:00 PM</b><span>→ 11:22 PM</span></button></li></ol></div>
-          <div class="nxt" data-k="ks"></div>
-          <div class="dir"><p class="dl">Krishnanagar City → Sealdah</p><ol class="ttab"><li class="tr" data-d="04:20" data-n="31812" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31812 details"><b>4:20 AM</b><span>→ 6:46 AM</span></button></li><li class="tr" data-d="05:00" data-n="31814" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31814 details"><b>5:00 AM</b><span>→ 7:12 AM</span></button></li><li class="tr" data-d="06:07" data-n="31816" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31816 details"><b>6:07 AM</b><span>→ 8:27 AM</span></button></li><li class="tr" data-d="07:04" data-n="31818" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31818 details"><b>7:04 AM</b><span>→ 9:22 AM</span></button></li><li class="tr ex" data-d="08:02" data-n="13104" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 13104 details"><b>8:02 AM</b><span>→ 10:25 AM</span><em class="x">Express</em></button></li><li class="tr" data-d="08:40" data-n="31802" data-k="ks" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31802 details"><b>8:40 AM</b><span>→ 11:00 AM</span><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="09:00" data-n="31820" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31820 details"><b>9:00 AM</b><span>→ 11:22 AM</span></button></li><li class="tr" data-d="09:50" data-n="31822" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31822 details"><b>9:50 AM</b><span>→ 12:10 PM</span></button></li><li class="tr" data-d="12:12" data-n="31824" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31824 details"><b>12:12 PM</b><span>→ 2:30 PM</span></button></li><li class="tr ac" data-d="13:30" data-n="31846" data-k="ks" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31846 details"><b>1:30 PM</b><span>→ 3:40 PM</span><em>AC</em><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="13:48" data-n="63104" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 63104 details"><b>1:48 PM</b><span>→ 4:00 PM</span></button></li><li class="tr" data-d="14:15" data-n="31828" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31828 details"><b>2:15 PM</b><span>→ 4:15 PM</span></button></li><li class="tr" data-d="15:20" data-n="31830" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31830 details"><b>3:20 PM</b><span>→ 5:37 PM</span></button></li><li class="tr ac" data-d="16:05" data-n="31848" data-k="ks" data-days="Sundays only"><button type="button" class="trb" aria-label="Train 31848 details"><b>4:05 PM</b><span>→ 6:20 PM</span><em>AC</em><em class="dd">Sun</em></button></li><li class="tr" data-d="16:20" data-n="31832" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31832 details"><b>4:20 PM</b><span>→ 6:40 PM</span></button></li><li class="tr" data-d="18:32" data-n="31834" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31834 details"><b>6:32 PM</b><span>→ 8:58 PM</span></button></li><li class="tr" data-d="19:24" data-n="31836" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31836 details"><b>7:24 PM</b><span>→ 9:43 PM</span></button></li><li class="tr" data-d="20:00" data-n="31838" data-k="ks" data-days="Mon–Sat (not Sunday)"><button type="button" class="trb" aria-label="Train 31838 details"><b>8:00 PM</b><span>→ 10:25 PM</span><em class="dd">Mon–Sat</em></button></li><li class="tr" data-d="20:25" data-n="31840" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31840 details"><b>8:25 PM</b><span>→ 10:55 PM</span></button></li><li class="tr" data-d="21:09" data-n="63106" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 63106 details"><b>9:09 PM</b><span>→ 11:25 PM</span></button></li><li class="tr" data-d="22:22" data-n="31844" data-k="ks" data-days="Daily"><button type="button" class="trb" aria-label="Train 31844 details"><b>10:22 PM</b><span>→ 12:40 AM</span></button></li></ol></div>
-        </div>
-        <div class="trc rv">
-          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 10h14M9 20l-2 2M15 20l2 2M8 16l-1 4h10l-1-4"/><circle cx="9" cy="13" r=".7"/><circle cx="15" cy="13" r=".7"/></svg><div><h3>Howrah ⇄ Nabadwip Dham</h3><p>Howrah–Katwa line · about 2 hr 10 min · then a toto to the Nabadwip ghat and the ferry across the Ganga to Mayapur.</p></div></div>
-          <div class="nxt" data-k="hn"></div>
-          <div class="dir"><p class="dl">Howrah → Nabadwip Dham</p><ol class="ttab"><li class="tr" data-d="05:22" data-n="37911" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37911 details"><b>5:22 AM</b><span>→ 7:32 AM</span></button></li><li class="tr" data-d="08:00" data-n="37913" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37913 details"><b>8:00 AM</b><span>→ 10:10 AM</span></button></li><li class="tr" data-d="10:00" data-n="37915" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37915 details"><b>10:00 AM</b><span>→ 12:12 PM</span></button></li><li class="tr" data-d="12:10" data-n="37917" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37917 details"><b>12:10 PM</b><span>→ 2:22 PM</span></button></li><li class="tr ex" data-d="14:00" data-n="13465" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 13465 details"><b>2:00 PM</b><span>→ 3:45 PM</span><em class="x">Express</em></button></li><li class="tr" data-d="14:30" data-n="37919" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37919 details"><b>2:30 PM</b><span>→ 4:35 PM</span></button></li><li class="tr" data-d="17:05" data-n="37921" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37921 details"><b>5:05 PM</b><span>→ 7:20 PM</span></button></li><li class="tr" data-d="18:00" data-n="37923" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37923 details"><b>6:00 PM</b><span>→ 8:05 PM</span></button></li><li class="tr" data-d="19:25" data-n="37925" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37925 details"><b>7:25 PM</b><span>→ 9:29 PM</span></button></li><li class="tr" data-d="20:30" data-n="37927" data-k="hn" data-days="Daily"><button type="button" class="trb" aria-label="Train 37927 details"><b>8:30 PM</b><span>→ 11:02 PM</span></button></li></ol></div>
-          <div class="nxt" data-k="nh"></div>
-          <div class="dir"><p class="dl">Nabadwip Dham → Howrah</p><ol class="ttab"><li class="tr" data-d="04:26" data-n="37912" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37912 details"><b>4:26 AM</b><span>→ 6:57 AM</span></button></li><li class="tr" data-d="06:17" data-n="37914" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37914 details"><b>6:17 AM</b><span>→ 8:55 AM</span></button></li><li class="tr" data-d="07:05" data-n="37916" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37916 details"><b>7:05 AM</b><span>→ 9:30 AM</span></button></li><li class="tr" data-d="07:39" data-n="37918" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37918 details"><b>7:39 AM</b><span>→ 10:18 AM</span></button></li><li class="tr" data-d="08:28" data-n="37920" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37920 details"><b>8:28 AM</b><span>→ 10:55 AM</span></button></li><li class="tr ex" data-d="10:03" data-n="13466" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 13466 details"><b>10:03 AM</b><span>→ 12:40 PM</span><em class="x">Express</em></button></li><li class="tr" data-d="11:36" data-n="37922" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37922 details"><b>11:36 AM</b><span>→ 2:22 PM</span></button></li><li class="tr" data-d="15:29" data-n="37924" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37924 details"><b>3:29 PM</b><span>→ 6:00 PM</span></button></li><li class="tr" data-d="16:14" data-n="37926" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37926 details"><b>4:14 PM</b><span>→ 6:45 PM</span></button></li><li class="tr" data-d="20:08" data-n="37928" data-k="nh" data-days="Daily"><button type="button" class="trb" aria-label="Train 37928 details"><b>8:08 PM</b><span>→ 10:44 PM</span></button></li></ol></div>
-        </div>
-      </div>
-      <p class="credits">Train times and stops from the official Indian Railways timetable (NTES, the same data as the RailOne app), checked 18 November 2026. Timetables can change, so please confirm in <a href="https://enquiry.indianrail.gov.in/mntes/" target="_blank" rel="noopener">NTES</a> or the RailOne app before you travel.</p>
-    </div>
-
-    <div class="tp-pane" data-pane="bus" hidden>
-      <div class="bus-grid">
-        <article class="busc rv">
-          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/></svg><div><h3>Kolkata ⇄ Mayapur · WBTC government bus</h3><p>Non-AC, every day. Via Ultadanga, Airport, Barasat, Ranaghat, Shantipur and Krishnanagar.</p></div></div>
-          <ul class="bus-t">
-            <li><span>From Kolkata (Esplanade)</span><b>6:15 AM · 3:00 PM</b></li>
-            <li><span>From ISKCON Mayapur (Vamsi Bhavan)</span><b>6:15 AM · 3:30 PM</b></li>
-            <li><span>Fare</span><b>about ₹108</b></li>
-          </ul>
-          <div class="car-acts"><a class="btn btn-line" href="https://wbtconline.in/home" target="_blank" rel="noopener">Book on WBTC</a><a class="btn btn-line" href="tel:+918697733469">Call WBTC</a></div>
-        </article>
-        <article class="busc rv">
-          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/></svg><div><h3>Kolkata ⇄ Mayapur · AC Volvo</h3><p>Friday, Saturday and Sunday. Kolkata – Krishnanagar – Mayapur.</p></div></div>
-          <ul class="bus-t">
-            <li><span>From Kolkata (Esplanade)</span><b>7:00 AM</b></li>
-            <li><span>From ISKCON Mayapur (Vamsi Bhavan)</span><b>4:00 PM</b></li>
-            <li><span>More buses and seats</span><b>redBus · MakeMyTrip</b></li>
-          </ul>
-          <div class="car-acts"><a class="btn btn-line" href="https://www.redbus.in/bus-tickets/kolkata-to-mayapur-iskcon" target="_blank" rel="noopener">Kolkata → Mayapur buses</a><a class="btn btn-line" href="https://www.redbus.in/bus-tickets/mayapur-iskcon-to-kolkata" target="_blank" rel="noopener">Mayapur → Kolkata buses</a></div>
-        </article>
-        <article class="busc rv">
-          <div class="trc-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".7"/><circle cx="16" cy="14.5" r=".7"/></svg><div><h3>Mayapur → Bhubaneswar</h3><p>Overnight bus to Odisha (Padhi Travels), via Kharagpur, Balasore, Bhadrak and Chandikhol. OSRTC buses are also listed on AbhiBus.</p></div></div>
-          <ul class="bus-t">
-            <li><span>Leaves Mayapur</span><b>6:00 PM</b></li>
-            <li><span>Reaches Bhubaneswar</span><b>5:55 AM · about 12 hr</b></li>
-            <li><span>Fare</span><b>from about ₹1,200</b></li>
-          </ul>
-          <div class="car-acts"><a class="btn btn-line" href="https://www.abhibus.com/buses/1266933/Mayapur-West-Bengal-Bhubaneswar" target="_blank" rel="noopener">See seats on AbhiBus</a><a class="btn btn-line" href="https://wa.me/919933864574?text=Hare%20Krishna!%20Can%20you%20help%20me%20with%20the%20bus%20from%20Mayapur%20to%20Bhubaneswar%3F" target="_blank" rel="noopener">Ask us</a></div>
-        </article>
-      </div>
-      <p class="credits">Bus times from ISKCON Mayapur (srimayapurdhama.com) and AbhiBus, November 2026. Please confirm before you travel; our reception is happy to help.</p>
     </div>
   </div>
 </section>
@@ -2118,21 +2150,22 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <figure class="zoom"><img src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds and sofa" loading="lazy"><figcaption>Deluxe Twin room</figcaption></figure>
       <figure class="zoom"><img src="img/hotel-reception-desk.jpg" alt="Staff member at the reception desk" loading="lazy" style="object-position:50% 35%"><figcaption>Front desk</figcaption></figure>
       <figure class="zoom"><img src="img/hotel-reception-wide.jpg" alt="Reception counter with backlit marble front" loading="lazy"><figcaption>Reception counter</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-reception-stairs.jpg" alt="Reception seen from the staircase" loading="lazy"><figcaption>Reception from the stairs</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/twin-02.jpg" alt="Single beds in the Deluxe Twin room" loading="lazy"><figcaption>Twin beds</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-04.jpg" alt="Deluxe Double room window with full-length curtains" loading="lazy"><figcaption>Window and curtains</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-stairs.jpg" alt="Staircase with steel railings leading to the rooms" loading="lazy"><figcaption>Staircase to the rooms</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-stairs-landing.jpg" alt="Staircase landing with window and fire extinguisher" loading="lazy"><figcaption>Staircase landing</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-corridor.jpg" alt="Long corridor with marble floor and cove lighting" loading="lazy"><figcaption>Room corridor</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-12.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"><figcaption>Bathroom</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/twin-04.jpg" alt="Smart TV unit with desk, kettle and wardrobe in the Deluxe Twin room" loading="lazy"><figcaption>Smart TV and work desk</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-10.jpg" alt="Nikadi morning kit with bamboo toothbrushes, toiletries and wooden comb" loading="lazy"><figcaption>Morning kit</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-fire-safety.jpg" alt="Fire extinguisher and CCTV camera on the staircase wall" loading="lazy" style="object-position:50% 55%"><figcaption>Fire safety and CCTV</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-security.jpg" alt="CCTV monitor and biometric attendance device at reception" loading="lazy"><figcaption>Security at reception</figcaption></figure>
-      <figure class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Entrance sign</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-first-aid.jpg" alt="Reception corner with a picture of Lord Narasimha and the first aid kit" loading="lazy" style="object-position:50% 30%"><figcaption>Reception corner</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-14.jpg" alt="Deluxe Double room with curtains drawn" loading="lazy"><figcaption>Restful evenings</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-reception-stairs.jpg" alt="Reception seen from the staircase" loading="lazy"><figcaption>Reception from the stairs</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/twin-02.jpg" alt="Single beds in the Deluxe Twin room" loading="lazy"><figcaption>Twin beds</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/double-04.jpg" alt="Deluxe Double room window with full-length curtains" loading="lazy"><figcaption>Window and curtains</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-stairs.jpg" alt="Staircase with steel railings leading to the rooms" loading="lazy"><figcaption>Staircase to the rooms</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-stairs-landing.jpg" alt="Staircase landing with window and fire extinguisher" loading="lazy"><figcaption>Staircase landing</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-corridor.jpg" alt="Long corridor with marble floor and cove lighting" loading="lazy"><figcaption>Room corridor</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/double-12.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"><figcaption>Bathroom</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/twin-04.jpg" alt="Smart TV unit with desk, kettle and wardrobe in the Deluxe Twin room" loading="lazy"><figcaption>Smart TV and work desk</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/double-10.jpg" alt="Nikadi morning kit with bamboo toothbrushes, toiletries and wooden comb" loading="lazy"><figcaption>Morning kit</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-fire-safety.jpg" alt="Fire extinguisher and CCTV camera on the staircase wall" loading="lazy" style="object-position:50% 55%"><figcaption>Fire safety and CCTV</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-security.jpg" alt="CCTV monitor and biometric attendance device at reception" loading="lazy"><figcaption>Security at reception</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Entrance sign</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-first-aid.jpg" alt="Reception corner with a picture of Lord Narasimha and the first aid kit" loading="lazy" style="object-position:50% 30%"><figcaption>Reception corner</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/double-14.jpg" alt="Deluxe Double room with curtains drawn" loading="lazy"><figcaption>Restful evenings</figcaption></figure>
     </div>
+    <div class="gal-more"><button type="button" class="btn btn-line" id="galMore">See all 21 photos</button></div>
   </div>
 </section>
 
@@ -2164,6 +2197,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           <div><dt>If we have to cancel</dt><dd>In the rare case that we cannot give you the room, we refund your full advance.</dd></div>
         </dl>
       </div>
+      <details class="paybox" id="paybox"><summary><span><b>Pay your advance</b><small>UPI, card or bank transfer · after we confirm your room on WhatsApp</small></span><i aria-hidden="true">+</i></summary>
       <div class="upi">
         <form class="payon" id="payOnline" hidden novalidate>
           <p class="kicker">Pay online · secure</p>
@@ -2201,6 +2235,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           <span class="msg" id="bankMsg" aria-live="polite"></span>
         </div>
       </div>
+      </details>
     </div>
     <div class="forms" id="forms">
       <div class="fcard">
@@ -3027,7 +3062,9 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     </div>
   </div>
 </div>
+<script>(function(){var b=document.getElementById('galMore');if(b)b.addEventListener('click',function(){var g=document.querySelector('.gal');g.classList.add('all');});})();</script>
 <script src="pricing.js"></script>
+<script src="calendar.js"></script>
 <script>function nkPh(v){var s=String(v||'').trim(),d=s.replace(/\D/g,'');if(!d)return '';var i=/^(\+|00)/.test(s);if(i&&s.charAt(0)==='0')d=d.slice(2);if(i){if(d.indexOf('91')===0&&/^[6-9]\d{9}$/.test(d.slice(2)))return d.slice(2);return d.length>=8&&d.length<=15&&d.indexOf('91')!==0?d:'';}if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);if(d.length===11&&d.charAt(0)==='0')d=d.slice(1);if(/^[6-9]\d{9}$/.test(d))return d;return d.length>=11&&d.length<=15&&d.charAt(0)!=='0'&&d.indexOf('91')!==0?d:'';}</script>
 <script>
 /* ---- Offer prices (from pricing.js) + member sign-in across the whole website ---- */
@@ -3725,6 +3762,10 @@ var WA = "917501101137";
   var rows=[].slice.call(document.querySelectorAll('#prog li'));
   var CL=rows.filter(function(li){return li.classList.contains('closed');});rows=rows.filter(function(li){return !li.classList.contains('closed');});
   var P=rows.map(function(li){var t=li.getAttribute('data-t').split(':');return {li:li,m:+t[0]*60+(+t[1]),get name(){return li.querySelector('.nm').textContent;},time:li.querySelector('.tm').textContent.replace(/\s+/g,' ').trim()};});
+  /* same timings as the list on the Temple page (keep both in step) */
+  if(!P.length)P=[['04:30','Mangal Arati'],['07:00','Darshan Arati'],['08:00','Bhagavatam Lecture'],['08:30','Dhupa Arati'],['11:45','Bhoga Offering'],['12:00','Bhoga Arati'],['16:00','Dhupa Arati'],['18:00','Sandhya Arati'],['19:30','Bhagavad Gita Lecture'],['20:15','Shayan Arati']].map(function(x){var t=x[0].split(':'),h=+t[0];
+    return {li:null,m:h*60+(+t[1]),n:x[1],get name(){return nkT(this.n);},time:(h%12||12)+':'+t[1]+(h<12?' AM':' PM')};});
+  var dummy={classList:{toggle:function(){}}};P.forEach(function(p){if(!p.li)p.li=dummy;});
   function dur(min){var h=Math.floor(min/60),m=min%60;return h?(h+' h'+(m?' '+m+' min':'')):m+' min';}
   function at(n,t){return nkT('{0} at {1}').replace('{0}',n).replace('{1}',t);}
   function upd(){
@@ -3806,14 +3847,16 @@ document.addEventListener('click',function(e){if(!e.target.closest('#qrail'))r.c
   function show(k){tabs.forEach(function(t){t.setAttribute('aria-selected',t.getAttribute('data-tp')===k?'true':'false');});panes.forEach(function(p){p.hidden=p.getAttribute('data-pane')!==k;});}
   tabs.forEach(function(t){t.addEventListener('click',function(){show(t.getAttribute('data-tp'));});});
   if(location.hash==='#trains')show('train');
+  try{var go=sessionStorage.getItem('nk_tp');if(go){sessionStorage.removeItem('nk_tp');show(go);}}catch(e){}
   function mins(t){var a=t.split(':');return +a[0]*60+(+a[1]);}
   function t12(t){var a=t.split(':'),h=+a[0];return (h%12||12)+':'+a[1]+(h<12?' AM':' PM');}
   function upd(){
     var d=new Date(Date.now()+330*60000),now=d.getUTCHours()*60+d.getUTCMinutes();
     sec.querySelectorAll('.nxt').forEach(function(box){
       var list=box.nextElementSibling.querySelectorAll('.tr'),up=[];
-      var wd=d.getUTCDay();list.forEach(function(li){var ds=li.getAttribute('data-days')||'Daily',runs=ds==='Daily'||(ds.indexOf('only')>0?wd===0:wd!==0);li.classList.toggle('off',!runs);var m=mins(li.getAttribute('data-d'));li.classList.toggle('gone',m<now);li.classList.remove('soon');if(m>=now&&runs)up.push(li);});
+      var wd=d.getUTCDay();list.forEach(function(li){var ds=li.getAttribute('data-days')||'Daily',runs=ds==='Daily'||(ds.indexOf('only')>0?wd===0:wd!==0);li.classList.toggle('off',!runs);var m=mins(li.getAttribute('data-d'));li.classList.toggle('gone',false);li._gone=m<now;li.classList.remove('soon');if(m>=now&&runs)up.push(li);});
       var tomorrow=false; if(!up.length){up=[].slice.call(list).filter(function(li){return (li.getAttribute('data-days')||'Daily')==='Daily';});tomorrow=true;}
+      if(!tomorrow)list.forEach(function(li){li.classList.toggle('gone',li._gone);});
       up=up.slice(0,3); if(up[0])up[0].classList.add('soon');
       var dl=box.nextElementSibling.querySelector('.dl').textContent;
       box.innerHTML='<span class="nl">Next trains · '+dl+(tomorrow?' · tomorrow':'')+'</span>'+up.map(function(li){var m=mins(li.getAttribute('data-d')),inm=tomorrow?(24*60-now+m):(m-now),h=Math.floor(inm/60);return '<span class="nc'+(li.classList.contains('ac')?' ac':'')+'"><b>'+t12(li.getAttribute('data-d'))+'</b>'+(li.classList.contains('ac')?' AC':'')+' <small>'+(inm<1?'now':'in '+(h?h+' h':'')+(inm%60?(h?' ':'')+(inm%60)+' min':''))+'</small></span>';}).join('');
@@ -3824,22 +3867,26 @@ document.addEventListener('click',function(e){if(!e.target.closest('#qrail'))r.c
 </script>
 <script>
 (function(){
-  var sk=[].slice.call(document.querySelectorAll('#transport .dir'))[0]; if(!sk||!document.getElementById('gTrain'))return;
+  var sk=[].slice.call(document.querySelectorAll('#transport .dir'))[0]; if(!document.getElementById('gTrain'))return;
   function mins(t){var a=t.split(':');return +a[0]*60+(+a[1]);}
   function t12(t){var a=t.split(':'),h=+a[0];return (h%12||12)+':'+a[1]+(h<12?' AM':' PM');}
   function dur(m){var h=Math.floor(m/60),r=m%60;return m<1?'a moment':(h?h+' h':'')+(r?(h?' ':'')+r+' min':'');}
   function upd(){
     var d=new Date(Date.now()+330*60000),now=d.getUTCHours()*60+d.getUTCMinutes();
-    var wd=d.getUTCDay();var rows=[].slice.call(sk.querySelectorAll('.tr')).filter(function(li){var ds=li.getAttribute('data-days')||'Daily';return ds==='Daily'||(ds.indexOf('only')>0?wd===0:wd!==0);}).map(function(li){return {t:li.getAttribute('data-d'),ac:li.classList.contains('ac'),arr:li.querySelector('span').textContent.replace('→ ','')};});
+    var wd=d.getUTCDay(),runs=function(ds){ds=ds||'Daily';return ds==='Daily'||(ds.indexOf('only')>0?wd===0:wd!==0);},rows;
+    if(sk)rows=[].slice.call(sk.querySelectorAll('.tr')).filter(function(li){return runs(li.getAttribute('data-days'));}).map(function(li){return {t:li.getAttribute('data-d'),ac:li.classList.contains('ac'),arr:li.querySelector('span').textContent.replace('→ ','')};});
+    else{var T=window.NK_TRAINS||{};rows=Object.keys(T).filter(function(k){return T[k].k==='sk'&&runs(T[k].d);}).map(function(k){var s=T[k].s;return {t:s[0][1],ac:T[k].t==='AC',arr:t12(s[s.length-1][1])};}).sort(function(a,b){return mins(a.t)-mins(b.t);});}
+    if(!rows.length)return;
     var nx=rows.filter(function(r){return mins(r.t)>=now;}),tm=!nx.length; if(tm)nx=rows;
     var n=nx[0],inm=tm?24*60-now+mins(n.t):mins(n.t)-now;
     document.getElementById('gTrain').textContent=t12(n.t)+(n.ac?' AC':'');
-    document.getElementById('gTrainIn').textContent='Sealdah → Krishnanagar · '+(tm?'tomorrow, ':'')+'in '+dur(inm)+' · arrives '+n.arr;
+    document.getElementById('gTrainIn').textContent=nkT('Sealdah')+' → '+nkT('Krishnanagar')+' · '+nkT((tm?'tomorrow, ':'')+'in '+dur(inm))+' · '+nkT('arrives '+n.arr);
     var ac=nx.filter(function(r){return r.ac;})[0];
-    document.getElementById('gTrainAc').textContent=ac&&ac!==n?'Next AC local: '+t12(ac.t)+' (arrives '+ac.arr+')':(n.ac?'This one is the AC local':'No more AC locals today');
+    document.getElementById('gTrainAc').textContent=nkT(ac&&ac!==n?'Next AC local: '+t12(ac.t)+' (arrives '+ac.arr+')':(n.ac?'This one is the AC local':'No more AC locals today'));
   }
-  upd();setInterval(upd,30000);
-  document.querySelectorAll('[data-tp-go]').forEach(function(a){a.addEventListener('click',function(){var b=document.querySelector('#transport [data-tp="'+a.getAttribute('data-tp-go')+'"]');if(b)b.click();});});
+  /* the timetable data is defined further down, so start once the page has loaded */
+  setTimeout(upd,0);setInterval(upd,30000);document.addEventListener('nk:lang',upd);
+  document.querySelectorAll('[data-tp-go]').forEach(function(a){a.addEventListener('click',function(){var b=document.querySelector('#transport [data-tp="'+a.getAttribute('data-tp-go')+'"]');if(b)b.click();else try{sessionStorage.setItem('nk_tp',a.getAttribute('data-tp-go'));}catch(e){}});});
 })();
 </script>
 <script>
@@ -3986,28 +4033,78 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
 })();
 </script>
 <script>
+/* ---- festival calendar: temple festivals (gold), Indian public holidays (saffron), international days (pale green).
+   Tap any date for what it is and what to expect in Mayapur. Holiday dates: Government of India 2027 gazetted list
+   and West Bengal 2027 list; temple dates: ISKCON Gaurabda calendar. Add next year's dates here. ---- */
+(function(){
+  var box=document.getElementById('fvCal');if(!box)return;
+  var F=window.NK_CAL||[];
+  var CAT={f:['fv-f','Mayapur festival'],in:['fv-in','National holiday'],wb:['fv-in','West Bengal holiday'],x:['fv-x','International']};
+  var KIND={f:'f',in:'in',wb:'in',x:'x'};
+  function T(s){return nkT(s);}
+  function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function D(s){var p=s.split('-');return new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));}
+  var today=new Date(Date.now()+330*60000).toISOString().slice(0,10);
+  function days(a,b){return Math.round((D(b)-D(a))/864e5);}
+  var MS=nkNames('m','short',['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']),WS=nkNames('d','short',['Sun','Mon','Tue','Wed','Thu','Fri','Sat']);
+  var ML=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function longDate(s){var x=D(s);return nkFmt(x,{weekday:'long',day:'numeric',month:'long',year:'numeric'})||(['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][x.getUTCDay()]+', '+x.getUTCDate()+' '+ML[x.getUTCMonth()]+' '+x.getUTCFullYear());}
+  function monthName(s){var x=D(s);return nkFmt(x,{month:'long',year:'numeric'})||(ML[x.getUTCMonth()]+' '+x.getUTCFullYear());}
+  var items=F.filter(function(x){return (x.e||x.d)>=today;});
+  items.forEach(function(x,i){x.i=i;});
+  var filter='all';
+  function tags(x){return x.c.map(function(c){return '<span class="fv-t '+CAT[c][0]+'">'+T(CAT[c][1])+'</span>';}).join('')+(x.big?'<span class="fv-t fv-busy">'+T('Busy · book early')+'</span>':'');}
+  function card(x){var p=x.d.split('-'),k=KIND[x.c[0]],w=D(x.d).getUTCDay();
+    var dt=x.e?(+p[2])+'–'+(+x.e.split('-')[2]):(+p[2]);
+    return '<li><button type="button" class="fvc '+CAT[x.c[0]][0]+(x.big?' big':'')+'" data-fv="'+x.i+'"><time datetime="'+x.d+'"><span>'+MS[+p[1]-1]+'</span><b>'+dt+'</b><small>'+(x.e?'':WS[w])+'</small></time><span class="fvc-b"><span class="fvc-n">'+esc(T(x.n))+'</span><span class="fvc-a">'+esc(T(x.a))+'</span><span class="fvc-tags">'+tags(x)+'</span></span><span class="fvc-go" aria-hidden="true">›</span></button></li>';}
+  function show(){
+    var list=items.filter(function(x){return filter==='all'||x.c.some(function(c){return KIND[c]===filter;});});
+    var h='',cur='';
+    list.forEach(function(x){var m=x.d.slice(0,7);if(m!==cur){if(cur)h+='</ul></div>';cur=m;h+='<div class="fvm"><h3 class="fvm-h">'+monthName(x.d)+'</h3><ul class="fvm-l">';}h+=card(x);});
+    if(cur)h+='</ul></div>';
+    document.getElementById('fvMonths').innerHTML=h||'<p class="fv-src">'+T('Nothing in this list for the coming months.')+'</p>';
+    [].forEach.call(box.querySelectorAll('[data-fvf]'),function(b){b.setAttribute('aria-pressed',b.getAttribute('data-fvf')===filter?'true':'false');});
+  }
+  /* counts on the filter chips */
+  ['all','f','in','x'].forEach(function(k){var el=box.querySelector('[data-fvf="'+k+'"] small');if(el)el.textContent=items.filter(function(x){return k==='all'||x.c.some(function(c){return KIND[c]===k;});}).length;});
+  box.addEventListener('click',function(e){var f=e.target.closest('[data-fvf]');if(f){filter=f.getAttribute('data-fvf');show();return;}
+    var b=e.target.closest('[data-fv]');if(b)open(items[+b.getAttribute('data-fv')],b);});
+  /* next temple festival countdown */
+  function drawNext(){var nx=items.filter(function(x){return x.c[0]==='f';})[0],el=document.getElementById('fvNext');if(!nx||!el)return;
+    var n=days(today,nx.d);
+    el.innerHTML='<div class="cd">'+(n<=0?T('Today'):n)+'<small>'+T(n<=0?'Happening now':n===1?'day to go':'days to go')+'</small></div><div><p class="kicker">'+T('Next festival')+' · '+longDate(nx.d)+'</p><h3>'+esc(T(nx.n))+'</h3><p>'+esc(T(nx.a))+'</p></div><button type="button" class="btn btn-gold" data-fv="'+nx.i+'">'+T('Details')+'</button>';
+    el.hidden=false;}
+  /* details window */
+  var dlg=document.getElementById('fvDlg'),last=null;
+  function gcal(x){var a=x.d.replace(/-/g,''),b=(x.e?D(x.e):D(x.d));b=new Date(b.getTime()+864e5).toISOString().slice(0,10).replace(/-/g,'');
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(x.n+' · Mayapur')+'&dates='+a+'/'+b+'&details='+encodeURIComponent(x.a+'\n\nNikadi Guest House, opposite ISKCON Gate No. 4, Mayapur · +91 75011 01137');}
+  function open(x,from){if(!dlg||!x)return;last=from||null;
+    var n=days(today,x.d),when=n<=0?T('Today'):n===1?T('Tomorrow'):T('in '+n+' days');
+    var range=x.e?longDate(x.d)+' – '+longDate(x.e):longDate(x.d);
+    var wa='https://wa.me/917501101137?text='+encodeURIComponent('Hare Krishna! I would like to book a room at Nikadi Guest House around '+x.n+' ('+x.d+').');
+    dlg.querySelector('.fvd-tags').innerHTML=tags(x);
+    dlg.querySelector('#fvdT').textContent=T(x.n);
+    dlg.querySelector('.fvd-when').innerHTML='<b>'+range+'</b><span>'+when+'</span>';
+    dlg.querySelector('.fvd-a').textContent=T(x.a);
+    dlg.querySelector('.fvd-m').textContent=T(x.m);
+    dlg.querySelector('.fvd-wa').href=wa;dlg.querySelector('.fvd-cal').href=gcal(x);
+    dlg.querySelector('.trd-card').className='trd-card fvd '+CAT[x.c[0]][0];
+    dlg.hidden=false;document.documentElement.style.overflow='hidden';dlg.querySelector('.trd-x').focus();}
+  function close(){if(!dlg)return;dlg.hidden=true;document.documentElement.style.overflow='';if(last&&last.focus)last.focus();}
+  if(dlg){dlg.addEventListener('click',function(e){if(e.target===dlg||e.target.closest('.trd-x'))close();});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dlg.hidden)close();});}
+  document.getElementById('fvNext').addEventListener('click',function(e){var b=e.target.closest('[data-fv]');if(b)open(items[+b.getAttribute('data-fv')],b);});
+  show();drawNext();
+  document.addEventListener('nk:lang',function(){show();drawNext();});
+})();
+</script>
+<script>
 /* ---- v7: festival calendar countdown, staff wall and guest wall (from /data/*.json) ---- */
 (function(){
   function $(id){return document.getElementById(id);}
   var MN=nkNames('m','short',['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']),WD=nkNames('d','short',['Sun','Mon','Tue','Wed','Thu','Fri','Sat']);
   var today=new Date(Date.now()+330*60000).toISOString().slice(0,10);
   function dn(a,b){var p=a.split('-'),q=b.split('-');return Math.round((Date.UTC(+q[0],+q[1]-1,+q[2])-Date.UTC(+p[0],+p[1]-1,+p[2]))/864e5);}
-  var list=$('fvList');
-  if(list){
-    var next=null;
-    [].forEach.call(list.querySelectorAll('.fv'),function(li){
-      var d=li.getAttribute('data-d'),p=d.split('-'),x=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
-      li.querySelector('time').innerHTML='<span>'+MN[+p[1]-1]+'</span><b>'+(+p[2])+'</b><small>'+WD[x.getUTCDay()]+' '+p[0]+'</small>';
-      if(d<today)li.classList.add('gone');else if(!next)next=li;
-    });
-    function drawNext(){if(!next)return;
-      var n=dn(today,next.getAttribute('data-d')),box=$('fvNext'),p=next.getAttribute('data-d').split('-');
-      var wa='https://wa.me/917501101137?text='+encodeURIComponent('Hare Krishna! I would like to book a room at Nikadi Guest House for '+next.querySelector('h3').textContent+'.');
-      box.innerHTML='<div class="cd">'+(n===0?'Today':n)+'<small>'+(n===0?'Happening now':n===1?'day to go':'days to go')+'</small></div><div><p class="kicker">Next festival · '+(nkFmt(new Date(Date.UTC(+p[0],+p[1]-1,+p[2])),{day:'numeric',month:'short',year:'numeric'})||((+p[2])+' '+MN[+p[1]-1]+' '+p[0]))+'</p><h3>'+next.querySelector('h3').textContent+'</h3><p>'+next.querySelector('p').textContent+'</p></div><a class="btn btn-gold" href="'+wa+'" target="_blank" rel="noopener">Book for this festival</a>';
-      box.hidden=false;
-    }
-    drawNext();document.addEventListener('nk:lang',drawNext);
-  }
   function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function load(url,cb){fetch(url,{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(cb).catch(function(){});}
   if($('staffGrid'))load('/data/team.json',function(a){
@@ -4103,7 +4200,7 @@ setInterval(function(){if(document.hidden)return;im[i].classList.remove('on');i=
   if(cur!=='en')document.addEventListener('click',function(e){var a=e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href');if(/^\/(?:[\w-]+\.html)?(?:#.*)?$/.test(h)){var u=new URL(h,location.href);u.searchParams.set('lang',cur);a.href=u.pathname+u.search+u.hash;}},true);
   if(cur==='en')return;
   var done=function(){document.documentElement.classList.remove('i18n-wait');};
-  fetch('/data/i18n/'+cur+'.json?v=2').then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(D){try{apply(D);}catch(e){console.error(e);}done();try{document.dispatchEvent(new Event('nk:lang'));}catch(e){}}).catch(done);
+  fetch('/data/i18n/'+cur+'.json?v=3').then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(D){try{apply(D);}catch(e){console.error(e);}done();try{document.dispatchEvent(new Event('nk:lang'));}catch(e){}}).catch(done);
 })();
 </script>
 </body>

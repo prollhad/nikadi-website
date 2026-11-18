@@ -28,8 +28,8 @@
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Lato:wght@300;400;700&display=swap">
-<link rel="stylesheet" href="/css/site.css?v=acaaff28">
-<script>(function(){var M={"temple":"/temple.html","prog":"/temple.html","progLive":"/temple.html","progLiveName":"/temple.html","progLiveSub":"/temple.html","progNow":"/temple.html","progNext":"/temple.html","progIn":"/temple.html","igs":"/temple.html","festivals":"/temple.html","fvNext":"/temple.html","fvList":"/temple.html","meet":"/temple.html","meetIg":"/temple.html","mvid":"/temple.html","mvidV":"/temple.html","mvidS":"/temple.html","meetNav":"/temple.html","transport":"/travel.html","gourdham":"/travel.html","gtForm":"/travel.html","explore":"/things-to-do.html","views":"/things-to-do.html","membership":"/membership.html","mdeck":"/membership.html"},h=location.hash.slice(1);if(h&&M[h])location.replace(M[h]+"#"+h);})();</script>
+<link rel="stylesheet" href="/css/site.css?v=86a636e0">
+<script>(function(){var M={"temple":"/temple.html","prog":"/temple.html","progLive":"/temple.html","progLiveName":"/temple.html","progLiveSub":"/temple.html","progNow":"/temple.html","progNext":"/temple.html","progIn":"/temple.html","igs":"/temple.html","festivals":"/temple.html","fvNext":"/temple.html","fvCal":"/temple.html","fvMonths":"/temple.html","fvDlg":"/temple.html","fvdT":"/temple.html","meet":"/temple.html","meetIg":"/temple.html","mvid":"/temple.html","mvidV":"/temple.html","mvidS":"/temple.html","meetNav":"/temple.html","location":"/travel.html","transport":"/travel.html","gourdham":"/travel.html","gtForm":"/travel.html","about":"/about.html","team":"/about.html","staffGrid":"/about.html","guests":"/about.html","guestWall":"/about.html","rules":"/about.html","explore":"/things-to-do.html","views":"/things-to-do.html","membership":"/membership.html","mdeck":"/membership.html"},h=location.hash.slice(1);if(h&&M[h])location.replace(M[h]+"#"+h);})();</script>
 </head>
 <body data-page="index">
 
@@ -38,7 +38,7 @@
   <div class="wrap">
     <a class="brand" href="/"><img class="brand-logo" src="img/brand/lockup-light.png" alt="Nikadi Guest House" width="476" height="150"></a>
     <nav class="main" aria-label="Sections">
-      <a href="/#rooms">Rooms</a><a href="/temple.html">Temple</a><a href="/things-to-do.html">Things to do</a><a href="/travel.html">Travel</a><a href="/membership.html">Membership</a><a href="/#reviews">Reviews</a><a href="/#location">Location</a><a href="/#contact">Contact</a>
+      <a href="/#rooms">Rooms</a><a href="/temple.html">Temple</a><a href="/things-to-do.html">Things to do</a><a href="/travel.html">Getting here</a><a href="/membership.html">Membership</a><a href="/#reviews">Reviews</a><a href="/about.html">About</a><a href="/#contact">Contact</a>
     </nav>
     <div class="top-acts">
       <div class="lang" data-noi18n><button class="lang-btn" type="button" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9S14.5 18.3 12 21c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg><span id="langCode">EN</span></button><div class="lang-list" id="langList" hidden></div></div>
@@ -91,52 +91,6 @@
     <p class="book-sum" id="bookSum" aria-live="polite"></p>
   </div>
 </section>
-<section class="s" id="now">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="kicker rule">Mayapur right now</p>
-      <h2>Plan your day in the Dham</h2>
-      <p>Live time, weather and sun for Sri Dham Mayapur, the next temple program, the next train from Kolkata, tonight's room price, and how far you are from us.</p>
-    </div>
-    <div class="gad">
-      <div class="gw rv" id="gwClock">
-        <span class="lbl">Time in Mayapur</span>
-        <span class="big" id="gClock">--:--</span>
-        <span class="sub" id="gDate">&nbsp;</span>
-        <span class="pill" id="gDesk">Check-in from 11:00 AM · check-out by 9:00 AM</span>
-      </div>
-      <a class="gw rv gw-wx" id="gwWx" href="#weather" aria-label="Weather in Mayapur, open the full forecast">
-        <span class="lbl">Weather</span>
-        <span class="big" id="gTemp">--°<small id="gCond">Loading</small></span>
-        <span class="sub" id="gWxSub">&nbsp;</span>
-        <div class="fc" id="gFc"></div>
-        <span class="sub" style="color:var(--gold-hi);margin-top:auto">Hourly and 7-day forecast ›</span>
-      </a>
-      <div class="gw rv" id="gwSun">
-        <span class="lbl">Sunrise and sunset</span>
-        <div class="sunbar"><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><path d="M4 44 Q100 -30 196 44" fill="none" stroke="#26315a" stroke-width="1.5" stroke-dasharray="3 4"/><circle id="gSunDot" cx="4" cy="44" r="6" fill="#f4d797"/></svg></div>
-        <div class="sunrow"><span>Sunrise<b id="gRise">--:--</b></span><span style="text-align:right">Sunset<b id="gSet">--:--</b></span></div>
-        <span class="sub" id="gSunSub">Mangala arati is before sunrise. Bring a shawl in winter.</span>
-      </div>
-      <div class="gw rv" id="gwPrice">
-        <span class="lbl" id="gPrLbl">Tonight's price</span>
-        <div class="pr-row"><span>Deluxe Double</span><span><s id="gPrDs"></s><b id="gPrD">--</b></span></div>
-        <div class="pr-row"><span>Deluxe Twin</span><span><s id="gPrTs"></s><b id="gPrT">--</b></span></div>
-        <span class="sub">Per room, per night. Members save 5–20% more.</span>
-        <a class="btn btn-gold" href="#home" data-focus-book>Check my dates</a>
-      </div>
-    </div>
-    <div class="gad gad2" style="margin-top:18px">
-      <a class="gw rv gw-arati" href="/temple.html#temple"><span class="lbl" id="gAratiLbl">Next at the temple</span><span class="big" id="gArati" style="font-size:2.2rem">&nbsp;</span><span class="sub" id="gAratiIn">&nbsp;</span><span class="sub" style="color:var(--gold-hi)">See all temple timings ›</span></a>
-      <a class="gw rv gw-arati" href="/travel.html#transport" data-tp-go="train"><span class="lbl">Next train to Mayapur</span><span class="big" id="gTrain" style="font-size:2.2rem">&nbsp;</span><span class="sub" id="gTrainIn">&nbsp;</span><span class="sub" id="gTrainAc" style="color:#9fd0ff">&nbsp;</span><span class="sub" style="color:var(--gold-hi)">All trains and buses ›</span></a>
-      <div class="gw rv" style="flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 22px">
-        <div style="display:grid;gap:4px;flex:1 1 260px;min-width:0"><span class="lbl">How far am I?</span><span class="sub" id="gFar">Tap the button and we show how far you are from Nikadi, and the way here.</span></div>
-        <button class="btn btn-line" type="button" id="gFarBtn" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg> Find my distance</button>
-        <a class="btn btn-gold" href="https://www.google.com/maps/dir/?api=1&destination=Nikadi+Guest+House,+Mayapur,+West+Bengal" target="_blank" rel="noopener" style="margin:0">Directions to Nikadi</a>
-      </div>
-    </div>
-  </div>
-</section>
 <section class="s alt" id="rooms">
   <div class="wrap">
     <div class="head rv">
@@ -145,6 +99,7 @@
       <p>Each room has a 10 inch mattress, attached bathroom with geyser and western toilet, television, wardrobe and round-the-clock Wi-Fi.</p>
     </div>
 
+    <p class="swipe-hint" aria-hidden="true">Swipe for more <span>→</span></p>
     <div class="room-grid">
     <article class="room">
       <a class="ph" href="#room-deluxe-double" aria-label="View Deluxe Double room photos and details"><img src="img/rooms/double-01.jpg" alt="Deluxe Double room with king bed and warm cove lighting" loading="lazy" style="object-position:50% 70%"><span class="ph-tag">19 photos</span></a>
@@ -216,6 +171,53 @@
     </div>
   </div>
 </section>
+<section class="s" id="now">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="kicker rule">Mayapur right now</p>
+      <h2>Plan your day in the Dham</h2>
+      <p>Live time, weather and sun for Sri Dham Mayapur, the next temple program, the next train from Kolkata, tonight's room price, and how far you are from us.</p>
+    </div>
+    <p class="swipe-hint" aria-hidden="true">Swipe for more <span>→</span></p>
+    <div class="gad">
+      <div class="gw rv" id="gwClock">
+        <span class="lbl">Time in Mayapur</span>
+        <span class="big" id="gClock">--:--</span>
+        <span class="sub" id="gDate">&nbsp;</span>
+        <span class="pill" id="gDesk">Check-in from 11:00 AM · check-out by 9:00 AM</span>
+      </div>
+      <a class="gw rv gw-wx" id="gwWx" href="#weather" aria-label="Weather in Mayapur, open the full forecast">
+        <span class="lbl">Weather</span>
+        <span class="big" id="gTemp">--°<small id="gCond">Loading</small></span>
+        <span class="sub" id="gWxSub">&nbsp;</span>
+        <div class="fc" id="gFc"></div>
+        <span class="sub" style="color:var(--gold-hi);margin-top:auto">Hourly and 7-day forecast ›</span>
+      </a>
+      <div class="gw rv" id="gwSun">
+        <span class="lbl">Sunrise and sunset</span>
+        <div class="sunbar"><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><path d="M4 44 Q100 -30 196 44" fill="none" stroke="#26315a" stroke-width="1.5" stroke-dasharray="3 4"/><circle id="gSunDot" cx="4" cy="44" r="6" fill="#f4d797"/></svg></div>
+        <div class="sunrow"><span>Sunrise<b id="gRise">--:--</b></span><span style="text-align:right">Sunset<b id="gSet">--:--</b></span></div>
+        <span class="sub" id="gSunSub">Mangala arati is before sunrise. Bring a shawl in winter.</span>
+      </div>
+      <div class="gw rv" id="gwPrice">
+        <span class="lbl" id="gPrLbl">Tonight's price</span>
+        <div class="pr-row"><span>Deluxe Double</span><span><s id="gPrDs"></s><b id="gPrD">--</b></span></div>
+        <div class="pr-row"><span>Deluxe Twin</span><span><s id="gPrTs"></s><b id="gPrT">--</b></span></div>
+        <span class="sub">Per room, per night. Members save 5–20% more.</span>
+        <a class="btn btn-gold" href="#home" data-focus-book>Check my dates</a>
+      </div>
+    </div>
+    <div class="gad gad2" style="margin-top:18px">
+      <a class="gw rv gw-arati" href="/temple.html#temple"><span class="lbl" id="gAratiLbl">Next at the temple</span><span class="big" id="gArati" style="font-size:2.2rem">&nbsp;</span><span class="sub" id="gAratiIn">&nbsp;</span><span class="sub" style="color:var(--gold-hi)">See all temple timings ›</span></a>
+      <a class="gw rv gw-arati" href="/travel.html#transport" data-tp-go="train"><span class="lbl">Next train to Mayapur</span><span class="big" id="gTrain" style="font-size:2.2rem">&nbsp;</span><span class="sub" id="gTrainIn">&nbsp;</span><span class="sub" id="gTrainAc" style="color:#9fd0ff">&nbsp;</span><span class="sub" style="color:var(--gold-hi)">All trains and buses ›</span></a>
+      <div class="gw rv" style="flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 22px">
+        <div style="display:grid;gap:4px;flex:1 1 260px;min-width:0"><span class="lbl">How far am I?</span><span class="sub" id="gFar">Tap the button and we show how far you are from Nikadi, and the way here.</span></div>
+        <button class="btn btn-line" type="button" id="gFarBtn" style="margin:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg> Find my distance</button>
+        <a class="btn btn-gold" href="https://www.google.com/maps/dir/?api=1&destination=Nikadi+Guest+House,+Mayapur,+West+Bengal" target="_blank" rel="noopener" style="margin:0">Directions to Nikadi</a>
+      </div>
+    </div>
+  </div>
+</section>
 <section class="s alt" id="reviews">
   <div class="wrap">
     <div class="rev-top">
@@ -276,56 +278,6 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     </div>
   </div>
 </section>
-<section class="s" id="location">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="kicker rule">Location</p>
-      <h2>Across from Gate No. 4</h2>
-      <p>The temple, prasadam halls and banks are all a short walk from our door.</p>
-    </div>
-    <div class="loc">
-      <div class="dist">
-        <h3>On foot</h3>
-        <ul>
-          <li><span>Main ISKCON Temple</span><span class="t">8<small>min</small></span></li>
-          <li><span>Govinda's Restaurant</span><span class="t">10<small>min</small></span></li>
-          <li><span>Gita Bhavan</span><span class="t">5<small>min</small></span></li>
-          <li><span>Gada Bhavan</span><span class="t">2<small>min</small></span></li>
-          <li><span>Radha Rasamrita (prasadam)</span><span class="t">3<small>min</small></span></li>
-          <li><span>Govinda's Prasadam</span><span class="t">5<small>min</small></span></li>
-          <li><span>Punjab National Bank</span><span class="t">1<small>min</small></span></li>
-          <li><span>Indian Overseas Bank</span><span class="t">1<small>min</small></span></li>
-          <li><span>SBI ATM</span><span class="t">1<small>min</small></span></li>
-          <li><span>Mobile and Xerox shop</span><span class="t">1<small>min</small></span></li>
-          <li><span>Namahatta Bhavan (prasadam)</span><span class="t">1<small>min</small></span></li>
-          <li><span>Restaurants for lunch</span><span class="t">4–5<small>min</small></span></li>
-        </ul>
-        <h3 style="margin-top:32px">By road</h3>
-        <ul>
-          <li><span>Vrinda's Pizzeria</span><span class="t">3<small>min</small></span></li>
-          <li><span>Kolkata Airport</span><span class="t">~3<small>hr</small></span></li>
-          <li><span>Sealdah / Howrah Station</span><span class="t">~3.5<small>hr</small></span></li>
-        </ul>
-      </div>
-      <div class="addr">
-        <p class="kicker">Address</p>
-        <address>Nikadi Guest House<br>Bhaktisiddhanta Saraswati Marg<br>Opp. ISKCON Gate No. 4 (Namahatta Bhavan)<br>Mayapur, Nadia, West Bengal 741313</address>
-        <p><strong>Reception: first floor. Enter at the left corner of the building and take the stairs up.</strong></p>
-        <div class="btns-row"><a class="btn btn-line" href="https://maps.google.com/?cid=4814848157732686064" target="_blank" rel="noopener">Open in Google Maps</a> <a class="btn btn-line" href="https://g.page/r/CfDIGanjxtFCEAE/review" target="_blank" rel="noopener">★ Review us on Google</a></div>
-      </div>
-    </div>
-    <div class="findus">
-      <div class="fu-head">
-        <p class="kicker">How to find us</p>
-        <h3>Look for the lit sign opposite Gate No. 4</h3>
-        <p class="fu-way"><strong>Reception is on the first floor. Enter at the left corner of the building, by the picture of Sri Chaitanya Mahaprabhu, and walk up the stairs to the first floor.</strong></p>
-        <p>We are under the NIKADI GUEST HOUSE sign on Bhaktisiddhanta Saraswati Marg. Watch the short walk-up video to see the way in.</p>
-        <a class="btn btn-line" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20am%20on%20my%20way%20to%20Nikadi%20Guest%20House.%20Please%20guide%20me." target="_blank" rel="noopener">Ask for directions on WhatsApp</a>
-      </div>
-      <figure class="fu-video"><video controls preload="metadata" playsinline muted poster="img/walkup-original-poster.jpg"><source src="img/walkup-original.mp4" type="video/mp4"></video><figcaption>Walk-up video</figcaption></figure>
-    </div>
-  </div>
-</section>
 <section class="s alt" id="amenities">
   <div class="wrap">
     <div class="head rv">
@@ -372,21 +324,22 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <figure class="zoom"><img src="img/rooms/twin-01.jpg" alt="Deluxe Twin room with two single beds and sofa" loading="lazy"><figcaption>Deluxe Twin room</figcaption></figure>
       <figure class="zoom"><img src="img/hotel-reception-desk.jpg" alt="Staff member at the reception desk" loading="lazy" style="object-position:50% 35%"><figcaption>Front desk</figcaption></figure>
       <figure class="zoom"><img src="img/hotel-reception-wide.jpg" alt="Reception counter with backlit marble front" loading="lazy"><figcaption>Reception counter</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-reception-stairs.jpg" alt="Reception seen from the staircase" loading="lazy"><figcaption>Reception from the stairs</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/twin-02.jpg" alt="Single beds in the Deluxe Twin room" loading="lazy"><figcaption>Twin beds</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-04.jpg" alt="Deluxe Double room window with full-length curtains" loading="lazy"><figcaption>Window and curtains</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-stairs.jpg" alt="Staircase with steel railings leading to the rooms" loading="lazy"><figcaption>Staircase to the rooms</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-stairs-landing.jpg" alt="Staircase landing with window and fire extinguisher" loading="lazy"><figcaption>Staircase landing</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-corridor.jpg" alt="Long corridor with marble floor and cove lighting" loading="lazy"><figcaption>Room corridor</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-12.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"><figcaption>Bathroom</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/twin-04.jpg" alt="Smart TV unit with desk, kettle and wardrobe in the Deluxe Twin room" loading="lazy"><figcaption>Smart TV and work desk</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-10.jpg" alt="Nikadi morning kit with bamboo toothbrushes, toiletries and wooden comb" loading="lazy"><figcaption>Morning kit</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-fire-safety.jpg" alt="Fire extinguisher and CCTV camera on the staircase wall" loading="lazy" style="object-position:50% 55%"><figcaption>Fire safety and CCTV</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-security.jpg" alt="CCTV monitor and biometric attendance device at reception" loading="lazy"><figcaption>Security at reception</figcaption></figure>
-      <figure class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Entrance sign</figcaption></figure>
-      <figure class="zoom"><img src="img/hotel-first-aid.jpg" alt="Reception corner with a picture of Lord Narasimha and the first aid kit" loading="lazy" style="object-position:50% 30%"><figcaption>Reception corner</figcaption></figure>
-      <figure class="zoom"><img src="img/rooms/double-14.jpg" alt="Deluxe Double room with curtains drawn" loading="lazy"><figcaption>Restful evenings</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-reception-stairs.jpg" alt="Reception seen from the staircase" loading="lazy"><figcaption>Reception from the stairs</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/twin-02.jpg" alt="Single beds in the Deluxe Twin room" loading="lazy"><figcaption>Twin beds</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/double-04.jpg" alt="Deluxe Double room window with full-length curtains" loading="lazy"><figcaption>Window and curtains</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-stairs.jpg" alt="Staircase with steel railings leading to the rooms" loading="lazy"><figcaption>Staircase to the rooms</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-stairs-landing.jpg" alt="Staircase landing with window and fire extinguisher" loading="lazy"><figcaption>Staircase landing</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-corridor.jpg" alt="Long corridor with marble floor and cove lighting" loading="lazy"><figcaption>Room corridor</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/double-12.jpg" alt="Bathroom with rain shower and western toilet" loading="lazy"><figcaption>Bathroom</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/twin-04.jpg" alt="Smart TV unit with desk, kettle and wardrobe in the Deluxe Twin room" loading="lazy"><figcaption>Smart TV and work desk</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/double-10.jpg" alt="Nikadi morning kit with bamboo toothbrushes, toiletries and wooden comb" loading="lazy"><figcaption>Morning kit</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-fire-safety.jpg" alt="Fire extinguisher and CCTV camera on the staircase wall" loading="lazy" style="object-position:50% 55%"><figcaption>Fire safety and CCTV</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-security.jpg" alt="CCTV monitor and biometric attendance device at reception" loading="lazy"><figcaption>Security at reception</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/reception.jpg" alt="Nikadi Guest House reception sign at the entrance" loading="lazy"><figcaption>Entrance sign</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/hotel-first-aid.jpg" alt="Reception corner with a picture of Lord Narasimha and the first aid kit" loading="lazy" style="object-position:50% 30%"><figcaption>Reception corner</figcaption></figure>
+      <figure data-more class="zoom"><img src="img/rooms/double-14.jpg" alt="Deluxe Double room with curtains drawn" loading="lazy"><figcaption>Restful evenings</figcaption></figure>
     </div>
+    <div class="gal-more"><button type="button" class="btn btn-line" id="galMore">See all 21 photos</button></div>
   </div>
 </section>
 <section class="s" id="booking">
@@ -417,6 +370,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           <div><dt>If we have to cancel</dt><dd>In the rare case that we cannot give you the room, we refund your full advance.</dd></div>
         </dl>
       </div>
+      <details class="paybox" id="paybox"><summary><span><b>Pay your advance</b><small>UPI, card or bank transfer · after we confirm your room on WhatsApp</small></span><i aria-hidden="true">+</i></summary>
       <div class="upi">
         <form class="payon" id="payOnline" hidden novalidate>
           <p class="kicker">Pay online · secure</p>
@@ -454,6 +408,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           <span class="msg" id="bankMsg" aria-live="polite"></span>
         </div>
       </div>
+      </details>
     </div>
     <div class="forms" id="forms">
       <div class="fcard">
@@ -471,59 +426,6 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     </div>
   </div>
 </section>
-<section class="s alt" id="rules">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="kicker rule">House rules</p>
-      <h2>A sattvic home in the holy dham</h2>
-    </div>
-    <div class="rules">
-      <div><h3>Pure vegetarian</h3><p>Out of respect for Sri Dham Mayapur, no non-veg food and no eggs on the premises.</p></div>
-      <div><h3>No intoxication</h3><p>No smoking, tobacco, gutka, pan or alcohol anywhere on the premises. ₹2,000 fine for any violation.</p></div>
-      <div><h3>Timings</h3><p>Check-in from 11:00 AM. Check-out by 9:00 AM.</p></div>
-      <div><h3>Room only</h3><p>Meals are not served. Govinda's is a 10 minute walk.</p></div>
-      <div class="wide"><h3>Advance and cancellation</h3><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b class="nref">not refunded</b>, and the advance cannot be moved to another date. <a href="#cancellation" style="color:var(--gold-hi)">Full policy</a></p></div>
-    </div>
-  </div>
-</section>
-<section class="s" id="about">
-  <div class="wrap about">
-    <figure class="rv"><img src="img/hero/P/facade-day.jpg" alt="Nikadi Guest House by day, opposite ISKCON Gate No. 4" loading="lazy"><figcaption>Nikadi Guest House, opposite ISKCON Gate No. 4</figcaption></figure>
-    <div class="tx rv">
-      <p class="kicker rule">About us</p>
-      <h2 style="font-size:clamp(2.2rem,5vw,3.4rem)">A quiet home for pilgrims, right at the temple gate</h2>
-      <p class="lead">Nikadi Guest House was made for devotees and families who want to stay close to the Mayapur ISKCON Temple and come back to a clean, cool and peaceful room after darshan.</p>
-      <p>We are a small guest house on Bhaktisiddhanta Saraswati Marg, across the road from ISKCON Gate No. 4. Our home follows the rhythm of the Dham: pure vegetarian, free of intoxication, early mornings and quiet nights. Our team is happy to guide you to darshan, prasadam and the holy places, and to help with e-rickshaws, luggage and anything you need.</p>
-      <div class="pillars">
-        <div><b>Close</b><span>8 minutes on foot to the Main Temple, 10 to Govinda's.</span></div>
-        <div><b>Clean</b><span>Daily housekeeping, fresh linen and hot water in every room.</span></div>
-        <div><b>Caring</b><span>A warm welcome and help whenever you need it.</span></div>
-      </div>
-      <div class="team"><span>Reception 16 hours a day</span><span>Housekeeping team</span><span>Bell boy 8 AM – 4 PM</span><span>Security round the clock</span></div>
-      <p style="font-size:.82rem">Nikadi Guest House is a unit of Nikadi Projects Pvt. Ltd.</p>
-    </div>
-  </div>
-</section>
-<section class="s" id="team" hidden>
-  <div class="wrap">
-    <div class="head rv">
-      <p class="kicker rule">Our team</p>
-      <h2>The people who look after <em class="goldtx">you</em></h2>
-      <p>Every member of our team carries a Nikadi Employee ID. If anyone says they are from Nikadi, you can check their name and ID here.</p>
-    </div>
-    <div class="staff-grid" id="staffGrid"></div>
-  </div>
-</section>
-<section class="s alt" id="guests" hidden>
-  <div class="wrap">
-    <div class="head rv">
-      <p class="kicker rule">Our guests</p>
-      <h2>Moments from guests who stayed with us</h2>
-      <p>Shared with us by our guests, with their kind permission.</p>
-    </div>
-    <div class="guest-wall" id="guestWall"></div>
-  </div>
-</section>
 <section class="s alt" id="faq">
   <div class="wrap">
     <div class="head rv">
@@ -537,7 +439,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <details><summary>Do you serve food?</summary><div class="a">We are room only, so meals are not served. Govinda's in the ISKCON campus is a 10 minute walk, and there are prasadam stalls right outside our door. Drinking water is provided.</div></details>
       <details><summary>How many guests can stay in a room?</summary><div class="a">Each Deluxe Double and Deluxe Twin room takes up to 3 guests. For groups and festival dates, message us and we will plan the rooms for you.</div></details>
       <details><summary>Is the guest house vegetarian?</summary><div class="a">Yes. Out of respect for Sri Dham Mayapur, no non-veg food, eggs, smoking, tobacco or alcohol are allowed on the premises. There is a ₹2,000 fine for any violation.</div></details>
-      <details><summary>Where exactly is the reception?</summary><div class="a">On the first floor. Enter at the left corner of the building, by the picture of Sri Chaitanya Mahaprabhu, and take the stairs up. <a href="#location">Watch the walk-up video</a>.</div></details>
+      <details><summary>Where exactly is the reception?</summary><div class="a">On the first floor. Enter at the left corner of the building, by the picture of Sri Chaitanya Mahaprabhu, and take the stairs up. <a href="/travel.html#location">Watch the walk-up video</a>.</div></details>
       <details><summary>What is Nikadi Membership?</summary><div class="a">A free membership for guests who come back. You get 100 welcome points, 5–20% off every booking, and free nights with your points. <a href="/membership.html#membership">See the levels</a>.</div></details>
     </div>
   </div>
@@ -1198,11 +1100,11 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <a href="/temple.html#temple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v3M8 9a4 4 0 0 1 8 0M5 21V12h14v9M3 21h18M9 21v-5h6v5M7 12V9h10v3"/></svg><span>Temple</span></a>
       <a href="/things-to-do.html#explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Things to do</span></a>
       <a href="#gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>Gallery</span></a>
-      <a href="#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Location</span></a>
+      <a href="/travel.html#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Location</span></a>
       <a href="/travel.html#transport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg><span>Travel</span></a>
       <a href="#booking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="1"/><path d="M3 10h18M7 15h4"/></svg><span>Pay advance</span></a>
       <a href="#forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Forms</span></a>
-      <a href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About us</span></a>
+      <a href="/about.html#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About us</span></a>
       <a href="#faq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17v.01"/></svg><span>FAQ</span></a>
       <a href="#contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg><span>Contact</span></a>
       <a class="hot" href="app/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg><span>Member login</span></a>
@@ -1237,9 +1139,9 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     <a class="qr qr-today" href="#now"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Mayapur today</span></a>
     <a class="qr qr-temple" href="/temple.html#temple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v3M8 9a4 4 0 0 1 8 0M5 21V12h14v9M3 21h18M9 21v-5h6v5M7 12V9h10v3"/></svg><span>Temple programs</span></a>
     <a class="qr qr-sites" href="/things-to-do.html#explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Mayapur site scene</span></a>
-    <a class="qr qr-loc" href="#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3zM9 7v13M15 4v13"/></svg><span>Location</span></a>
+    <a class="qr qr-loc" href="/travel.html#location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3zM9 7v13M15 4v13"/></svg><span>Location</span></a>
     <a class="qr qr-car" href="/travel.html#transport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4M3 16h18M3 16v2h3v-2M18 16v2h3v-2M6 12h12"/><circle cx="7.5" cy="14" r=".6"/><circle cx="16.5" cy="14" r=".6"/></svg><span>Travel desk · Nikadi × Gourdham</span></a>
-    <a class="qr qr-about" href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About us</span></a>
+    <a class="qr qr-about" href="/about.html#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About us</span></a>
   </div>
 </nav>
 <a class="fab" href="https://wa.me/917501101137?text=Hare%20Krishna!%20I%20would%20like%20to%20book%20a%20room%20at%20Nikadi%20Guest%20House.%0ACheck-in%3A%20%0ACheck-out%3A%20%0AGuests%3A%20" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
@@ -1289,7 +1191,8 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 </div>
 
 <script src="/pricing.js"></script>
+<script src="/calendar.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="/js/site.js?v=6fb80ed3"></script>
+<script src="/js/site.js?v=8cb18cee"></script>
 </body>
 </html>

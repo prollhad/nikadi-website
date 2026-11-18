@@ -82,6 +82,37 @@
   var esc = nkEsc, inr = nkInr;
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  /* Holidays and festivals from /calendar.js (the same list as the website calendar) */
+  var HKIND = { f: 'h-f', in: 'h-in', wb: 'h-in', x: 'h-x' }, HLBL = { f: 'Mayapur festival', in: 'National holiday', wb: 'West Bengal holiday', x: 'International' };
+  function hols(d) { return (window.NK_CAL || []).filter(function (x) { return x.d <= d && d <= (x.e || x.d); }); }
+  function holsIn(a, b) { return (window.NK_CAL || []).filter(function (x) { return x.d < b && (x.e || x.d) >= a; }); }
+  function holDot(d) { var h = hols(d); return h.length ? '<em class="hdot ' + HKIND[h[0].c[0]] + '" title="' + esc(h.map(function (x) { return x.n; }).join(' · ')) + '"></em>' : ''; }
+  function isFS(d) { var w = new Date(d + 'T00:00:00Z').getUTCDay(); return w === 5 || w === 6; }
+  function holTags(x) { return x.c.map(function (c) { return '<span class="htag ' + HKIND[c] + '">' + HLBL[c] + '</span>'; }).join('') + (x.big ? '<span class="htag h-busy">Busy · expect calls</span>' : ''); }
+  function holBox(list, title) {
+    if (!list.length) return '';
+    return '<div class="holbox"><p class="kicker">' + title + '</p>' + list.map(function (x) {
+      return '<div class="holrow"><div class="holtop"><b>' + esc(x.n) + '</b><span class="small">' + esc(dShort(x.d)) + (x.e ? ' to ' + esc(dShort(x.e)) : '') + '</span></div><div class="htags">' + holTags(x) + '</div><p class="small">' + esc(x.m) + '</p></div>';
+    }).join('') + '</div>';
+  }
+  /* any check-in / check-out pair: show the holidays that fall in those dates under the fields */
+  var HPAIRS = { 'q-in': 'q-out', 'f-in': 'f-out', 'b-in': 'b-out', 'o-in': 'o-out' };
+  function holNote(inId) {
+    var a = document.getElementById(inId), b = document.getElementById(HPAIRS[inId]); if (!a || !b || !a.value) return;
+    var host = a.closest('.grid2') || a.parentNode, el = host.nextElementSibling && host.nextElementSibling.classList.contains('holnote') ? host.nextElementSibling : null;
+    var to = b.value && b.value > a.value ? b.value : addDays(a.value, 1), list = holsIn(a.value, to);
+    var fs = 0; for (var d = a.value; d < to; d = addDays(d, 1)) if (isFS(d)) fs++;
+    var h = (list.length ? '<b>Holidays in these dates:</b> ' + list.map(function (x) { return '<span class="htag ' + HKIND[x.c[0]] + '">' + esc(x.n) + ' · ' + esc(dShort(x.d)) + '</span>'; }).join(' ') : '') +
+      (fs ? '<span class="small">' + fs + (fs > 1 ? ' Friday/Saturday nights' : ' Friday/Saturday night') + ' in this stay</span>' : '');
+    if (!h) { if (el) el.remove(); return; }
+    h = h.replace(/&#39;/g, "'");
+    if (!el) { el = document.createElement('div'); el.className = 'holnote'; host.parentNode.insertBefore(el, host.nextSibling); }
+    if (el.innerHTML !== h) el.innerHTML = h;
+  }
+  function holScan() { Object.keys(HPAIRS).forEach(function (k) { if (document.getElementById(k)) holNote(k); }); }
+  document.addEventListener('input', function (e) { var id = e.target && e.target.id; if (HPAIRS[id]) holNote(id); else for (var k in HPAIRS) if (HPAIRS[k] === id) holNote(k); });
+  document.addEventListener('change', function (e) { var id = e.target && e.target.id; if (HPAIRS[id]) holNote(id); else for (var k in HPAIRS) if (HPAIRS[k] === id) holNote(k); });
+  new MutationObserver(function () { clearTimeout(holScan.t); holScan.t = setTimeout(holScan, 60); }).observe(document.documentElement, { childList: true, subtree: true });
   function wd(ymd) { return WD[new Date(String(ymd).slice(0, 10) + 'T00:00:00Z').getUTCDay()]; }
   function dLong(ymd) { return ymd ? wd(ymd) + ' ' + dShort(ymd) : ''; }
   function isDesk() { return window.matchMedia('(min-width: 1000px)').matches; }
@@ -1861,6 +1892,7 @@
       }).join('') : '<div class="bl"><span class="d">None yet</span></div>') + '</div></div>';
     v.innerHTML = '<div class="hrow"><div><p class="kicker">' + esc(dLong(st.today)) + '</p><h1>Today</h1></div><div class="upd"><button class="refresh" id="rf" type="button">Refresh</button>' +
       '<button class="refresh gold" id="nb" type="button">+ New booking</button></div></div>' +
+      holBox(hols(st.today), 'Today') + holBox(holsIn(addDays(st.today, 1), addDays(st.today, 15)).filter(function (x) { return x.d > st.today; }), 'Coming up in the next two weeks') +
       '<div class="kpis">' +
       '<div class="kpi c-occ"><span>Occupied</span><b>' + inHouse.length + '<small>/' + st.rooms.length + '</small></b><small>' + sm.guests + ' guests in house</small></div>' +
       '<div class="kpi c-arr"><span>Arriving</span><b>' + st.arrivals.length + '</b><small>booked arrivals</small></div>' +
@@ -1965,7 +1997,7 @@
     var head = '<div class="hrow"><div><p class="kicker">Availability · ' + mm + '</p><h1>Calendar</h1></div><div class="upd">' +
       '<button class="refresh" type="button" id="cp" aria-label="Earlier dates">‹' + (isDesk() ? ' Earlier' : '') + '</button><button class="refresh" type="button" id="ct">Today</button><button class="refresh" type="button" id="cn" aria-label="Later dates">' + (isDesk() ? 'Later ' : '') + '›</button>' +
       (mgr() ? '<button class="refresh gold" type="button" id="cb">+ ' + (isDesk() ? 'New booking' : 'Book') + '</button>' : '') + '</div></div>' +
-      '<div class="legend"><span class="k-occ"><i></i>Guest staying</span><span class="k-arr"><i></i>Booked (advance paid)</span><span class="k-past"><i></i>Stayed</span><span><i style="background:transparent;border:1px solid var(--line)"></i>Free</span></div>';
+      '<div class="legend"><span class="k-occ"><i></i>Guest staying</span><span class="k-arr"><i></i>Booked (advance paid)</span><span class="k-past"><i></i>Stayed</span><span><i style="background:transparent;border:1px solid var(--line)"></i>Free</span><span class="k-fs"><i></i>Friday / Saturday</span><span class="k-hf"><i></i>Mayapur festival</span><span class="k-hin"><i></i>Indian holiday</span><span class="k-hx"><i></i>International</span></div>';
     var pend = c.pending.length ? '<div class="panel"><div class="sec-h"><h2>Waiting for payment</h2><span class="small">not on the calendar yet</span></div><div class="list">' + c.pending.map(function (b) {
       return '<div class="bl tap" data-booking="' + esc(b.id) + '"><span class="t">' + esc(b.guest) + '</span><span class="d">' + esc(dShort(b.checkin)) + ' to ' + esc(dShort(b.checkout)) + ' · ' + b.guests + ' guests · ' + b.roomsNeeded + (b.roomsNeeded > 1 ? ' rooms' : ' room') + '</span><span class="a"><span class="pill">Pending</span></span></div>';
     }).join('') + '</div></div>' : '';
@@ -1973,13 +2005,13 @@
     if (isDesk()) {
       var cols = 'grid-template-columns:132px repeat(' + c.days + ',minmax(30px,1fr))';
       var g = '<div class="cal" style="' + cols + '"><div class="cal-corner">Room</div>' + days.map(function (d, j) {
-        var dd = new Date(d + 'T00:00:00Z'), we = dd.getUTCDay() === 0 || dd.getUTCDay() === 6;
-        return '<button type="button" class="cal-h' + (d === c.today ? ' today' : '') + (we ? ' we' : '') + (d === X.day ? ' sel' : '') + '" data-day="' + d + '" style="grid-column:' + (j + 2) + '"><span>' + WD[dd.getUTCDay()].charAt(0) + '</span><b>' + dd.getUTCDate() + '</b>' + (dd.getUTCDate() === 1 ? '<i>' + MON[dd.getUTCMonth()] + '</i>' : '') + '</button>';
+        var dd = new Date(d + 'T00:00:00Z'), we = isFS(d);
+        return '<button type="button" class="cal-h' + (d === c.today ? ' today' : '') + (we ? ' fs' : '') + (hols(d).length ? ' hol ' + HKIND[hols(d)[0].c[0]] : '') + (d === X.day ? ' sel' : '') + '" data-day="' + d + '" style="grid-column:' + (j + 2) + '"' + (hols(d).length ? ' title="' + esc(hols(d).map(function (x) { return x.n; }).join(' · ')) + '"' : '') + '><span>' + (dd.getUTCDate() === 1 ? '<i>' + MON[dd.getUTCMonth()] + '</i>' : WD[dd.getUTCDay()].slice(0, 2)) + '</span><b>' + dd.getUTCDate() + '</b>' + holDot(d) + '</button>';
       }).join('');
       c.rooms.forEach(function (r, ri) {
         var row = ri + 2;
         g += '<div class="cal-room" style="grid-row:' + row + '"><b>' + r.room + '</b><span>' + esc(r.type.replace('Deluxe ', '')) + '</span></div>';
-        days.forEach(function (d, j) { g += '<button type="button" class="cal-cell' + (d === c.today ? ' today' : '') + '" style="grid-row:' + row + ';grid-column:' + (j + 2) + '" data-room="' + r.room + '" data-day="' + d + '" aria-label="Room ' + r.room + ', ' + dLong(d) + '"></button>'; });
+        days.forEach(function (d, j) { g += '<button type="button" class="cal-cell' + (d === c.today ? ' today' : '') + (isFS(d) ? ' fs' : '') + '" style="grid-row:' + row + ';grid-column:' + (j + 2) + '" data-room="' + r.room + '" data-day="' + d + '" aria-label="Room ' + r.room + ', ' + dLong(d) + '"></button>'; });
         c.bars.filter(function (b) { return b.room === r.room; }).forEach(function (b) {
           var s0 = Math.max(0, nights(c.from, b.from)), e0 = Math.min(c.days, nights(c.from, b.to));
           if (e0 <= s0) return;
@@ -1995,7 +2027,8 @@
     } else {
       body = '<div class="daystrip" id="ds">' + days.map(function (d) {
         var dd = new Date(d + 'T00:00:00Z'), n = c.rooms.filter(function (r) { return !nightOf(c, r.room, d); }).length;
-        return '<button type="button" data-day="' + d + '" aria-pressed="' + (d === X.day) + '"' + (d === c.today ? ' class="today"' : '') + '><span>' + WD[dd.getUTCDay()] + '</span><b>' + dd.getUTCDate() + '</b><small>' + n + ' free</small></button>';
+        var cl = (d === c.today ? 'today ' : '') + (isFS(d) ? 'fs' : '');
+        return '<button type="button" data-day="' + d + '" aria-pressed="' + (d === X.day) + '"' + (cl ? ' class="' + cl.trim() + '"' : '') + '><span>' + WD[dd.getUTCDay()] + '</span><b>' + dd.getUTCDate() + '</b><small>' + n + ' free</small>' + holDot(d) + '</button>';
       }).join('') + '</div>' + dayPanel(c, X.day) + pend;
     }
     v.innerHTML = head + body;
@@ -2016,7 +2049,7 @@
   function dayPanel(c, d) {
     var rows = c.rooms.map(function (r) { return { r: r, x: nightOf(c, r.room, d) }; });
     var occ = rows.filter(function (o) { return o.x && o.x.kind !== 'booked'; }).length, bk = rows.filter(function (o) { return o.x && o.x.kind === 'booked'; }).length, fr = rows.length - occ - bk;
-    return '<div class="panel" id="daypanel"><div class="sec-h"><h2>Night of ' + esc(dLong(d)) + '</h2><span class="small">' + (d === c.today ? 'tonight' : '') + '</span></div>' +
+    return '<div class="panel' + (isFS(d) ? ' fs-panel' : '') + '" id="daypanel"><div class="sec-h"><h2>Night of ' + esc(dLong(d)) + '</h2><span class="small">' + (d === c.today ? 'tonight' : '') + (isFS(d) ? (d === c.today ? ' · ' : '') + '<span class="htag h-fs">' + WD[new Date(d + 'T00:00:00Z').getUTCDay()] + ' night</span>' : '') + '</span></div>' + holBox(hols(d), 'On this date') +
       '<div class="counts"><div class="count c-ready"><b>' + fr + '</b><span>Free</span></div><div class="count c-arr"><b>' + bk + '</b><span>Booked</span></div><div class="count c-occ"><b>' + occ + '</b><span>' + (d < c.today ? 'Stayed' : 'Occupied') + '</span></div><div class="count"><b>' + rows.length + '</b><span>Rooms</span></div></div>' +
       '<div class="list daylist">' + rows.map(function (o) {
         var x = o.x, k = x ? (x.kind === 'booked' ? 'arr' : x.kind === 'past' ? 'past' : 'occ') : (d === c.today && o.r.status === 'Needs cleaning' ? 'dirty' : 'ready');

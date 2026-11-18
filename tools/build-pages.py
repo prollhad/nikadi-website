@@ -8,17 +8,21 @@ src = (root / 'site/src.html').read_text(encoding='utf-8')
 BASE = 'https://www.nikadiguesthouse.com'
 
 PAGES = {
-  'index.html': {'url': '/', 'sections': ['home', 'now', 'rooms', 'reviews', 'member-teaser', 'location', 'amenities', 'gallery', 'booking', 'rules', 'about', 'team', 'guests', 'faq', 'contact'],
+  'index.html': {'url': '/', 'sections': ['home', 'rooms', 'now', 'reviews', 'member-teaser', 'amenities', 'gallery', 'booking', 'faq', 'contact'],
     'title': 'Nikadi Guest House · Deluxe rooms opposite ISKCON Mayapur',
     'desc': 'Nikadi Guest House, Mayapur. Premium AC deluxe rooms opposite ISKCON Gate No. 4, an 8 minute walk from the Main ISKCON Temple. Live availability, member rates and our own cars.'},
   'temple.html': {'url': '/temple.html', 'sections': ['temple', 'festivals', 'meet'],
     'title': 'ISKCON Mayapur temple timings, live darshan & festivals · Nikadi Guest House',
     'desc': 'Daily ISKCON Mayapur temple program with what is happening now, darshan photos of Sri Sri Radha Madhava, and the festival calendar. From Nikadi Guest House, 8 minutes from the temple.',
     'banner': ('Sri Dham Mayapur', 'Temple & Darshan', 'Live temple timings, daily darshan and the festival calendar of Sri Mayapur Chandrodaya Mandir.', 'img/view-temple.jpg')},
-  'travel.html': {'url': '/travel.html', 'sections': ['transport'],
-    'title': 'Kolkata to Mayapur: trains, buses, cars & travel desk · Nikadi Guest House',
+  'travel.html': {'url': '/travel.html', 'sections': ['location', 'transport'],
+    'title': 'Location & travel: find us, trains, buses and cars from Kolkata · Nikadi Guest House',
     'desc': 'Every train and bus from Howrah and Sealdah to Mayapur, our own cars for airport and station pickups, and the Gourdham Travels desk: tickets, money exchange, Western Union and MoneyGram.',
-    'banner': ('Getting here', 'Travel to Mayapur', 'Trains and buses from Kolkata with live timings, our own cars, and a full travel desk at the guest house.', 'img/view-street.jpg')},
+    'banner': ('Getting here', 'Location & travel', 'Where we are, the way in, live train times from Kolkata, our own cars and a full travel desk at the guest house.', 'img/view-street.jpg')},
+  'about.html': {'url': '/about.html', 'sections': ['about', 'team', 'guests', 'rules'],
+    'title': 'About Nikadi Guest House: our story, our team & house rules · Mayapur',
+    'desc': 'Nikadi Guest House is a small, pure vegetarian guest house opposite ISKCON Gate No. 4 in Sri Dham Mayapur. Our story, the people who look after you, and the house rules.',
+    'banner': ('Our home in the Dham', 'About Nikadi', 'A small, pure vegetarian guest house opposite ISKCON Gate No. 4, the people who look after you, and our house rules.', 'img/facade-night-wide.jpg')},
   'things-to-do.html': {'url': '/things-to-do.html', 'sections': ['explore', 'views'],
     'title': 'Things to do in Mayapur: holy places, ghats & prasadam · Nikadi Guest House',
     'desc': 'The holy places of Sri Dham Mayapur with walking and toto times from Nikadi Guest House: temples, Ganga ghats, the Goshala and the best prasadam.',
@@ -29,8 +33,8 @@ PAGES = {
     'banner': ('Members save up to 20%', 'Nikadi Membership', 'Four levels, member rates up to 20% off every night, and points on every stay. Free to join.', None)},
 }
 NAV = [('/#rooms', 'Rooms', None), ('/temple.html', 'Temple', 'temple.html'), ('/things-to-do.html', 'Things to do', 'things-to-do.html'),
-       ('/travel.html', 'Travel', 'travel.html'), ('/membership.html', 'Membership', 'membership.html'), ('/#reviews', 'Reviews', None),
-       ('/#location', 'Location', None), ('/#contact', 'Contact', None)]
+       ('/travel.html', 'Getting here', 'travel.html'), ('/membership.html', 'Membership', 'membership.html'), ('/#reviews', 'Reviews', None),
+       ('/about.html', 'About', 'about.html'), ('/#contact', 'Contact', None)]
 
 # ---- split the master file ----
 hdr_at = src.index('<div class="offerbar"')
