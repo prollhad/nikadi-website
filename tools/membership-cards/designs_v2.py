@@ -53,51 +53,71 @@ def padma(cv, cx, by, s, fill_back, fill_front, line, line2, lw, layer='FOIL'):
         cv.fill(p, fill_front, 'INK'); cv.stroke(p, line, lw * .9, layer)
     cv.stroke([('M', cx - s * 7, by - s * 1.3), ('C', cx - s * 3, by - s * 2.4, cx + s * 3, by - s * 2.4, cx + s * 7, by - s * 1.3)], line, lw * 1.1, layer)
 
+def phase_shape(cx, cy, r, p, n=40):
+    """Lit part of the moon at phase p (0 new, .5 full), as a polygon. Waxing = right side lit."""
+    k = math.cos(2 * math.pi * p)          # terminator half-width factor
+    wax = p < .5
+    pts = []
+    for i in range(n + 1):                # limb: the lit half circle
+        t = -math.pi / 2 + math.pi * i / n
+        x = r * math.cos(t); y = r * math.sin(t)
+        pts.append((cx + (x if wax else -x), cy + y))
+    for i in range(n + 1):                # terminator back down
+        t = math.pi / 2 - math.pi * i / n
+        x = k * r * math.cos(t); y = r * math.sin(t)
+        pts.append((cx + (x if wax else -x), cy + y))
+    return poly(pts)
+
+def moon_mandala(cv, cx, cy, s, color, color2, lw):
+    from designs import petal_ring, ring, dots
+    # outer: the 28 nights of the moon, a phase for each
+    R = 20.2 * s
+    for i in range(28):
+        a = math.pi / 2 - 2 * math.pi * i / 28
+        x, y = cx + R * math.cos(a), cy + R * math.sin(a); r = .95 * s
+        cv.stroke(circle(x, y, r), color2, lw * .6, 'FOIL')
+        p = i / 28
+        if .02 < p < .98: cv.fill(phase_shape(x, y, r, p), color, 'FOIL')
+    for rr, w in ((18.3, .9), (22.1, .9), (23.0, 1.4)):
+        ring(cv, cx, cy, rr * s, color, lw * w, 'FOIL')
+    dots(cv, cx, cy, 24.1 * s, 84, .2 * s, color, 'FOIL')
+    # inner lotus: 16 long petals, 8 short, all fine line
+    petal_ring(cv, cx, cy, s, 16, 5.6, 16.6, .30, color2, lw, 'FOIL', rot=math.pi / 16)
+    petal_ring(cv, cx, cy, s, 8, 4.4, 11.2, .46, color, lw, 'FOIL')
+    ring(cv, cx, cy, 4.3 * s, color, lw * 1.1, 'FOIL')
+    dots(cv, cx, cy, 5.0 * s, 32, .12 * s, color2, 'FOIL')
+    # the full moon at the heart
+    cv.fill(circle(cx, cy, 3.3 * s), ('rad', cx - s, cy + s, 3.8 * s, [(0, '#fbfaf4'), (.6, '#e5e9f1'), (1, '#b9c3d6')]), 'FOIL')
+    for dx, dy, rr in ((-.9, .5, .9), (.6, 1.0, .6), (.8, -.5, .95), (-.3, -1.1, .6)):
+        cv.fill(circle(cx + dx * s, cy + dy * s, rr * s), '#cdd3df', 'INK')
+
+def sparkle(cv, x, y, r, color, layer='FOIL'):
+    cv.fill([('M', x, y + r), ('C', x + r * .12, y + r * .12, x + r * .12, y + r * .12, x + r, y), ('C', x + r * .12, y - r * .12, x + r * .12, y - r * .12, x, y - r),
+             ('C', x - r * .12, y - r * .12, x - r * .12, y - r * .12, x - r, y), ('C', x - r * .12, y + r * .12, x - r * .12, y + r * .12, x, y + r), ('Z',)], color, layer)
+
 def platinum_front(cv, m, art_only=False):
-    """Platinum 'Udaya': a pink lotus on a calm sea as the sun rises behind it; midnight-to-dawn navy; silver lettering."""
-    full = rect(-3, -3, W + 6, H + 6)
-    hz = 12.6; cx = W / 2
-    cv.fill(full, ('lin', 0, H + 3, 0, hz, [(0, '#0b1734'), (.5, '#15306a'), (.78, '#28468a'), (.92, '#5a5f98'), (1, '#a8869f')]), 'BASE')
+    """Platinum 'Chandra': sister of the Gold card. Midnight blue, a platinum moon mandala (28 phases around a lotus and a full moon), stars."""
+    cv.fill(rect(-3, -3, W + 6, H + 6), ('rad', 66, 28, 80, [(0, '#24467f'), (.45, '#15305f'), (1, '#071230')]), 'BASE')
+    inner = rrect(3.6, 3.6, W - 7.2, H - 7.2, 1.2)
     def art():
-        # dawn glow on the horizon
-        # sun rays: straight, alternating long and short
-        for i in range(37):
-            a = math.pi * i / 36
-            r0, r1 = 7.3, (9.9 if i % 2 else 11.4)
-            cv.stroke(poly([(cx + r0 * math.cos(a), hz + r0 * math.sin(a)), (cx + r1 * math.cos(a), hz + r1 * math.sin(a))], False), '#e9d7b8' if i % 2 else '#f3e3c4', .1 if i % 2 else .14, 'FOIL')
-        # the sun, half risen
-        cv.begin_clip(rect(-3, hz, W + 6, H))
-        cv.fill(circle(cx, hz, 6.3), ('rad', cx, hz + 2, 7, [(0, '#fff6e2'), (.6, '#f6dcb4'), (1, '#e3b98e')]), 'INK')
-        cv.end_clip()
-        # the sea: calm, with the sun's reflection as straight streaks
-        cv.fill(rect(-3, -3, W + 6, hz + 3), ('lin', 0, hz, 0, -3, [(0, '#1c3772'), (.4, '#122756'), (1, '#091530')]), 'INK')
-        for k, (wd, y) in enumerate(((6.4, hz - 1.1), (4.8, hz - 2.2), (3.4, hz - 3.3), (2.2, hz - 4.4))):
-            cv.stroke(poly([(cx - wd, y), (cx + wd, y)], False), '#e8cfa8', .22 - k * .03, 'INK')
-        # the lotus, in shades of pink
-        BACK = ('lin', 0, hz + 6.5, 0, hz, [(0, '#d9799a'), (.6, '#e9a3b8'), (1, '#f6d3dd')])
-        FRONT = ('lin', 0, hz + 6, 0, hz, [(0, '#e68aa8'), (.55, '#f3bccb'), (1, '#fde9ee')])
-        padma(cv, cx, hz - .2, .26, BACK, FRONT, '#fbe8ee', '#c0587d', .09)
-    clipped(cv, full, art)
-    cv.stroke(rect(3.2, 3.2, W - 6.4, H - 6.4), '#8fa2c4', .1, 'FOIL')
-    # lettering: logo centred above NIKADI
-    SH = [(0, '#ffffff'), (.35, '#dfe6f0'), (.55, '#9eacc2'), (.75, '#eef2f7'), (1, '#b9c4d4')]
-    pt = 12.5; tr = .2; yb = 32.6
-    wd = text_width('gloock', 'NIKADI', pt, tr); x0 = cx - wd / 2
-    cap = pt * PT * .7; mh = 9.6
-    shapes, mw = mark_shapes(cx - mh * 318 / 345 / 2, yb + cap + 1.2, mh)
-    for t, c in shapes: cv.fill(c, {'dark': ('lin', 0, yb + cap + 1.2 + mh, 0, yb + cap + 1.2, SH), 'light': '#8f9fb8', 'arc': ('lin', cx - mw / 2, 0, cx + mw / 2, 0, SH)}[t], 'FOIL')
-    T(cv, 'gloock', 'NIKADI', x0, yb, pt, ('lin', x0, yb + 6, x0 + wd, yb, SH), tr, layer='FOIL')
-    T(cv, 'workb', 'P L A T I N U M', cx, 28.6, 5.4, P_['plat'], .34, align='center', layer='FOIL')
-    sy = 25.4; st = 'SRI DHAM MAYAPUR'; sw = text_width('work', st, 2.9, .42)
-    T(cv, 'work', st, cx, sy, 2.9, P_['sub'], .42, align='center', layer='FOIL')
-    mid = sy + 2.9 * PT * .7 / 2
-    for sg in (-1, 1):
-        g0 = sw / 2 + 1.8
-        cv.stroke(poly([(cx + sg * (g0 + 1.2), mid), (cx + sg * (g0 + 7.5), mid)], False), P_['plat2'], .1, 'FOIL')
-        cv.fill([('M', cx + sg * g0, mid + .42), ('L', cx + sg * (g0 + .42), mid), ('L', cx + sg * g0, mid - .42), ('L', cx + sg * (g0 - .42), mid), ('Z',)], P_['plat'], 'FOIL')
+        moon_mandala(cv, 66.5, 27.0, .82, '#c9d3e3', '#8c9cba', .14)
+        for x, y, r in ((47.0, 48.2, .75), (31.0, 48.5, .35), (41.0, 26.0, .45), (47.5, 17.5, .75), (35.5, 15.0, .35), (79.5, 49.0, .45)):
+            sparkle(cv, x, y, r, '#e8eef8')
+        for x, y in ((37.0, 48.3), (44.0, 23.0), (31.0, 20.5), (50.5, 27.5), (42.0, 9.5), (26.5, 26.5)):
+            cv.fill(circle(x, y, .14), '#b9c6dc', 'FOIL')
+    clipped(cv, inner, art)
+    cv.stroke(rrect(2.7, 2.7, W - 5.4, H - 5.4, 1.8), '#c9d3e3', .3, 'FOIL')
+    cv.stroke(inner, '#c9d3e3', .12, 'FOIL')
+    SH = [(0, '#ffffff'), (.4, '#dfe6f0'), (.6, '#a4b2c8'), (1, '#eef2f7')]
+    tx = brand_row(cv, 7, H - 7 - 7.8, 7.8, {'dark': '#eef2f7', 'light': '#a4b2c8', 'arc': '#c9d3e3'}, 'gloock', 13.5, ('lin', 18, H - 8, 50, H - 14, SH), '#a9b7cf', layer='FOIL', word_track=.2, sub=False)
+    T(cv, 'work', 'G U E S T   H O U S E', tx + .2, H - 7 - 7.8 - .2, 3.5, '#a9b7cf', .3, layer='FOIL')
+    T(cv, 'workb', 'P L A T I N U M', 7, H - 21.6, 5.0, '#eef2f7', .3, layer='FOIL')
+    T(cv, 'arsenal', 'M E M B E R', 7 + text_width('workb', 'P L A T I N U M', 5.0, .3) + 2.4, H - 21.6, 5.0, '#c9d3e3', .3, layer='FOIL')
+    cv.stroke(poly([(7, H - 23.4), (19, H - 23.4)], False), '#c9d3e3', .14, 'FOIL')
     if not art_only:
-        T(cv, 'arsenal', m['name'].upper(), 6, 6.0, 7.0, P_['plat'], .14, layer='FOIL')
-        T(cv, 'plexmono', m['no'], W - 6, 6.0, 4.8, P_['plat2'], .12, align='right', layer='FOIL')
+        T(cv, 'arsenal', m['name'].upper(), 7, 10.6, 8.4, '#eef2f7', .16, layer='FOIL')
+        T(cv, 'plexmono', m['no'], 7, 6.4, 5.0, '#a9b7cf', .14, layer='FOIL')
+        T(cv, 'work', 'SINCE ' + m['since'], 7 + text_width('plexmono', m['no'], 5.0, .14) + 4, 6.4, 3.6, '#a9b7cf', .4, layer='FOIL')
 
 # ================================================================ PLATINUM PLUS: Mandir
 GOLDV = [(0, '#f6e4ad'), (.45, '#d8b465'), (1, '#8f6a2c')]

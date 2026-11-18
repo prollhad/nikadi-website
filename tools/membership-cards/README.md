@@ -3,7 +3,7 @@
 Four designs, the same in print and in the member app:
 - Silver "Pearl": pearl silver with an embossed line drawing of the Nikadi building.
 - Gold "Lotus": temple maroon with a gold lotus mandala and a double gold frame (gold hot-foil).
-- Platinum "Udaya": midnight-to-dawn navy, a small sun rising from a calm sea with straight rays, a pink lotus in front of it, logo centred over NIKADI, bold PLATINUM (silver hot-foil lettering).
+- Platinum "Chandra": sister of the Gold card. Midnight blue, double platinum frame, a moon mandala (the 28 phases of the moon around a fine-line lotus and a full moon) and a few stars (silver hot-foil).
 - Platinum Plus "Noir": smooth matte black metal with a soft sheen, the Nikadi Guest House lockup in 24k gold, PLATINUM PLUS engraved; no lines or patterns.
 
 Files:
