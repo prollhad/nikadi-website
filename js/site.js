@@ -406,7 +406,7 @@ try{
       if(fw||tn||K[' ']){moved+=dt;if(moved>6)help.classList.add('dim');}
       R.render(S,cam);}
     reset();
-    if(/[?&]moonwalk=1/.test(location.search))window.__mw={tp:function(x,z){A.position.set(x,height(x,z),z);},ship:function(){return SH.position.toArray();},to:function(n){var B=bodies.filter(function(b){return b.name===n;})[0];SH.position.copy(B.m.position).add(new T.Vector3(0,0,B.r*1.6));shipYaw=Math.PI;}};
+    if(/[?&]moonwalk=1/.test(location.search))window.__mw={R:R,S:S,cam:cam,tp:function(x,z){A.position.set(x,height(x,z),z);},ship:function(){return SH.position.toArray();},to:function(n){var B=bodies.filter(function(b){return b.name===n;})[0];SH.position.copy(B.m.position).add(new T.Vector3(0,0,B.r*1.6));shipYaw=Math.PI;}};
     return {start:function(){last=performance.now();cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight);raf=requestAnimationFrame(frame);},stop:function(){cancelAnimationFrame(raf);K={};}};
   }
   function show(){box.hidden=false;document.documentElement.style.overflow='hidden';open=true;
