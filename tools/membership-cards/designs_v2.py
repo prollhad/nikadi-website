@@ -24,12 +24,13 @@ def waves(cv, y0, n, amp, color, lw, layer, x0=-3, x1=W + 3, step=.9, gap=1.25, 
             x += step
         cv.stroke(poly(pts, False), color, lw * (1 - k * .1), layer)
 
-def diya(cv, cx, cy, s, body, flame, flame2, layer_b, layer_f):
-    cv.fill([('M', cx - s * 1.6, cy), ('C', cx - s * 1.2, cy - s * 1.1, cx + s * 1.2, cy - s * 1.1, cx + s * 1.6, cy),
-             ('L', cx + s * 2.1, cy + s * .25), ('C', cx + s * .8, cy + s * .05, cx - s * .8, cy + s * .05, cx - s * 1.6, cy), ('Z',)], body, layer_b)
-    cv.fill([('M', cx + s * 1.25, cy + s * .25), ('C', cx + s * .55, cy + s * 1.0, cx + s * 1.0, cy + s * 2.2, cx + s * 1.35, cy + s * 3.0),
-             ('C', cx + s * 1.75, cy + s * 2.2, cx + s * 2.0, cy + s * 1.0, cx + s * 1.25, cy + s * .25), ('Z',)], flame, layer_f)
-    cv.fill(ellipse(cx + s * 1.33, cy + s * .95, s * .22, s * .45, 0), flame2, layer_f)
+def diya(cv, cx, cy, s, body, flame, flame2, layer_b, layer_f, d=1):
+    X = lambda u: cx + d * u
+    cv.fill([('M', X(-s * 1.6), cy), ('C', X(-s * 1.2), cy - s * 1.1, X(s * 1.2), cy - s * 1.1, X(s * 1.6), cy),
+             ('L', X(s * 2.1), cy + s * .25), ('C', X(s * .8), cy + s * .05, X(-s * .8), cy + s * .05, X(-s * 1.6), cy), ('Z',)], body, layer_b)
+    cv.fill([('M', X(s * 1.25), cy + s * .25), ('C', X(s * .55), cy + s * 1.0, X(s * 1.0), cy + s * 2.2, X(s * 1.35), cy + s * 3.0),
+             ('C', X(s * 1.75), cy + s * 2.2, X(s * 2.0), cy + s * 1.0, X(s * 1.25), cy + s * .25), ('Z',)], flame, layer_f)
+    cv.fill(ellipse(X(s * 1.33), cy + s * .95, s * .22, s * .45, 0), flame2, layer_f)
 
 # ================================================================ PLATINUM: Padma
 def padma(cv, cx, by, s, fill_back, fill_front, line, line2, lw, layer='FOIL'):
@@ -58,24 +59,25 @@ def platinum_front(cv, m, art_only=False):
     cx = W / 2
     def art():
         # moonlit halo and fine rays behind the lotus
-        for r, c in ((31, '#17336a'), (25, '#1a3972'), (19, '#1d3e7a')):
+        for r, c in ((33, '#17336a'), (26.5, '#1a3972'), (20, '#1d3e7a')):
             cv.fill(circle(cx, 14, r), c, 'INK')
         for i in range(48):
             a = math.pi * i / 47
-            cv.stroke(poly([(cx + 19.5 * math.cos(a), 14 + 19.5 * math.sin(a)), (cx + 31 * math.cos(a), 14 + 31 * math.sin(a))], False), '#254a8b', .07, 'INK')
-        cv.stroke(arc(cx, 14, 31.4, 0, math.pi), P_['plat2'], .12, 'FOIL')
-        cv.stroke(arc(cx, 14, 19.2, 0, math.pi), '#3a5d9c', .1, 'INK')
+            cv.stroke(poly([(cx + 20.5 * math.cos(a), 14 + 20.5 * math.sin(a)), (cx + 33 * math.cos(a), 14 + 33 * math.sin(a))], False), '#254a8b', .07, 'INK')
+        cv.stroke(arc(cx, 14, 33.4, 0, math.pi), P_['plat2'], .14, 'FOIL')
+        cv.stroke(arc(cx, 14, 20.2, 0, math.pi), '#3a5d9c', .1, 'INK')
         # the Ganga
         cv.fill(rect(-3, -3, W + 6, 14.6), ('lin', 0, 14.6, 0, -3, [(0, '#10275a'), (1, '#07122b')]), 'INK')
         waves(cv, 13.4, 7, .55, '#3c5f9f', .11, 'INK')
         waves(cv, 13.4, 2, .55, P_['plat2'], .12, 'FOIL', x0=cx - 22, x1=cx + 22)
-        padma(cv, cx, 13.4, .4, '#183a76', '#21478a', P_['plat'], P_['plat2'], .14)
+        padma(cv, cx, 12.8, .32, '#183a76', '#21478a', P_['plat'], P_['plat2'], .14)
         # reflection
         for k, wdt in enumerate((10, 7, 4.5)):
             cv.stroke(poly([(cx - wdt, 10.6 - k * 1.3), (cx + wdt, 10.6 - k * 1.3)], False), '#5878b2', .1, 'INK')
         # two diyas on the water
-        for x in (13.5, W - 15.5):
-            diya(cv, x, 14.2, .9, P_['plat2'], '#f4d58f', '#fff4d6', 'FOIL', 'INK')
+        # a matched pair of diyas, spouts and flames facing the lotus
+        diya(cv, 15.0, 14.0, .9, P_['plat2'], '#f4d58f', '#fff4d6', 'FOIL', 'INK', d=1)
+        diya(cv, W - 15.0, 14.0, .9, P_['plat2'], '#f4d58f', '#fff4d6', 'FOIL', 'INK', d=-1)
         # small stars
         for x, y, r in ((9, 46, .16), (16, 50, .1), (24, 44.5, .12), (W - 10, 47, .16), (W - 18, 50.5, .1), (W - 25, 44, .12), (6, 38, .1), (W - 6, 37, .1)):
             cv.fill(circle(x, y, r), P_['plat'], 'FOIL')
@@ -86,21 +88,24 @@ def platinum_front(cv, m, art_only=False):
     for (x, y, sx, sy) in ((3.5, 3.5, 1, 1), (W - 3.5, 3.5, -1, 1), (3.5, H - 3.5, 1, -1), (W - 3.5, H - 3.5, -1, -1)):
         cv.stroke([('M', x + sx * 2.2, y), ('C', x + sx * 1.1, y + sy * .2, x + sx * .2, y + sy * 1.1, x, y + sy * 2.2)], P_['plat'], .14, 'FOIL')
         cv.fill(circle(x + sx * 1.15, y + sy * 1.15, .28), P_['plat'], 'FOIL')
-    # lockup: NIKADI with the building mark standing over N-I-K, as in the logo
+    # lockup: NIKADI with the building mark standing over N-I-K, as in the logo; all inside the arch
     SH = [(0, '#ffffff'), (.35, '#dfe6f0'), (.55, '#9eacc2'), (.75, '#eef2f7'), (1, '#b9c4d4')]
-    pt = 14.5; tr = .2
-    wd = text_width('gloock', 'NIKADI', pt, tr); x0 = cx - wd / 2; yb = 31.6
+    pt = 12.5; tr = .2; yb = 29.1
+    wd = text_width('gloock', 'NIKADI', pt, tr); x0 = cx - wd / 2
+    cap = pt * PT * .7
     wnik = text_width('gloock', 'NIK', pt, tr) - tr * pt * PT
-    mh = wnik / .92
-    mw = mh * 318 / 345
-    shapes, mw = mark_shapes(x0 + (wnik - mw) / 2, yb + 5.75, mh)
-    for t, c in shapes: cv.fill(c, {'dark': ('lin', 0, yb + 5.6 + mh, 0, yb + 5.6, SH), 'light': '#8f9fb8', 'arc': ('lin', x0, 0, x0 + wnik, 0, SH)}[t], 'FOIL')
+    mh = min(wnik / .92, 11.2); mw = mh * 318 / 345
+    shapes, mw = mark_shapes(x0 + (wnik - mw) / 2, yb + cap + 1.0, mh)
+    for t, c in shapes: cv.fill(c, {'dark': ('lin', 0, yb + cap + 1 + mh, 0, yb + cap + 1, SH), 'light': '#8f9fb8', 'arc': ('lin', x0, 0, x0 + wnik, 0, SH)}[t], 'FOIL')
     T(cv, 'gloock', 'NIKADI', x0, yb, pt, ('lin', x0, yb + 6, x0 + wd, yb, SH), tr, layer='FOIL')
-    T(cv, 'arsenal', 'P L A T I N U M', cx, 27.4, 5.0, P_['plat'], .32, align='center', layer='FOIL')
-    T(cv, 'work', 'SRI DHAM MAYAPUR', cx, 24.0, 3.0, P_['sub'], .42, align='center', layer='FOIL')
+    T(cv, 'workb', 'P L A T I N U M', cx, 25.0, 5.4, P_['plat'], .34, align='center', layer='FOIL')
+    sy = 21.6; st = 'SRI DHAM MAYAPUR'; sw = text_width('work', st, 2.9, .42)
+    T(cv, 'work', st, cx, sy, 2.9, P_['sub'], .42, align='center', layer='FOIL')
+    mid = sy + 2.9 * PT * .7 / 2
     for sg in (-1, 1):
-        cv.stroke(poly([(cx + sg * 12.2, 25.0), (cx + sg * 18.0, 25.0)], False), P_['plat2'], .1, 'FOIL')
-        cv.fill([('M', cx + sg * 11.6, 25.45), ('L', cx + sg * 12.05, 25.0), ('L', cx + sg * 11.6, 24.55), ('L', cx + sg * 11.15, 25.0), ('Z',)], P_['plat'], 'FOIL')
+        g0 = sw / 2 + 1.8
+        cv.stroke(poly([(cx + sg * (g0 + 1.2), mid), (cx + sg * (g0 + 7.5), mid)], False), P_['plat2'], .1, 'FOIL')
+        cv.fill([('M', cx + sg * g0, mid + .42), ('L', cx + sg * (g0 + .42), mid), ('L', cx + sg * g0, mid - .42), ('L', cx + sg * (g0 - .42), mid), ('Z',)], P_['plat'], 'FOIL')
     if not art_only:
         T(cv, 'arsenal', m['name'].upper(), 6, 6.0, 7.0, P_['plat'], .14, layer='FOIL')
         T(cv, 'plexmono', m['no'], W - 6, 6.0, 4.8, P_['plat2'], .12, align='right', layer='FOIL')
