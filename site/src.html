@@ -3628,7 +3628,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     var BODY_AST={armL:armL,armR:armR,legL:legL,legR:legR,torso:torso,ty:1.18,g:AST};
     var HUM=new T.Group();HUM.visible=false;A.add(HUM);
     var skin=new T.MeshStandardMaterial({color:0xc68a5e,roughness:.65}),hair=new T.MeshStandardMaterial({color:0x1a1410,roughness:.8}),
-        kurta=new T.MeshStandardMaterial({color:0xe9862c,roughness:.75}),dhoti=new T.MeshStandardMaterial({color:0xf6f2e6,roughness:.8}),
+        kurta=new T.MeshStandardMaterial({color:0xd4560f,roughness:.8}),dhoti=new T.MeshStandardMaterial({color:0xf6f2e6,roughness:.8}),
         zari=new T.MeshStandardMaterial({color:0xe6b84a,metalness:.7,roughness:.3}),tilakM=new T.MeshBasicMaterial({color:0xfff6dc});
     function hp(g,m,x,y,z,par){var o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;(par||HUM).add(o);return o;}
     var hTorso=new T.Group();hTorso.position.y=1.28;HUM.add(hTorso);var kt=new T.Mesh(new T.LatheGeometry(new T.SplineCurve([[.08,.32],[.22,.27],[.235,.12],[.21,-.1],[.22,-.3],[.3,-.6],[.31,-.63]].map(function(q){return new T.Vector2(q[0],q[1]);})).getPoints(24),28),kurta);kt.scale.z=.74;kt.castShadow=true;hTorso.add(kt);kurta.side=T.DoubleSide;
