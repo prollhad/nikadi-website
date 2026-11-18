@@ -92,9 +92,34 @@
   {d:'2027-09-06',c:['f'],n:'Lalita Shashthi',a:'The appearance day of Lalita Sakhi, the leader of the eight principal gopis (Ashta Sakhis).',m:'The Ashta Sakhis beside Sri Sri Radha Madhava are specially dressed and worshipped.'},
   {d:'2027-09-12',c:['f'],n:'Vamana Dvadashi',a:'The appearance day of Lord Vamanadeva. Also the appearance of Srila Jiva Goswami.',m:'Fasting until noon and a feast.'},
   {d:'2027-10-29',c:['f','in'],big:1,n:'Diwali · Dipa Dana',a:'The festival of lights. In Kartik, devotees offer lamps to Lord Damodara every evening.',m:'The whole temple is lit with lamps. Kali Puja is also celebrated across West Bengal.'},
-  {d:'2027-11-01',c:['f'],big:1,n:'TOVP grand opening begins',a:'The Temple of the Vedic Planetarium, the giant new temple in Mayapur, begins its grand opening, planned to run for six months.',m:'Cultural programs, yajnas, kirtans and parikramas. Very large crowds are expected from November 2027, so please book well in advance.'},
+  {d:'2027-11-01',e:'2027-11-02',c:['f'],big:1,n:'TOVP grand opening',a:'The grand opening of the Temple of the Vedic Planetarium, the giant new temple in Mayapur, on 1–2 November 2027, with celebrations planned to continue for six months.',m:'Cultural programs, yajnas, kirtans and parikramas. Very large crowds are expected from November 2027, so please book well in advance.'},
   {d:'2027-11-06',c:['f'],n:'Gopashtami',a:'The day young Krishna first went out to herd the cows.',m:'The Goshala cows are decorated and fed, and devotees visit Sri Mayapur Goshala.'},
   {d:'2027-11-14',c:['f','in'],big:1,n:'Rasa Purnima · end of Kartik',a:'The full moon of Kartik, remembering Krishna’s rasa dance. The holy month of Damodara ends.',m:'Nabadwip across the river holds its famous Rash Yatra with huge decorated idols. Expect crowds.'}
   ];
+  /* Gaura Purnima festival 2027: the official ISKCON Mayapur program (also shown on the website and in the staff app) */
+  window.NK_GP={from:'2027-02-19',to:'2027-03-24',items:[
+    {d:'2027-02-19',n:'Sri Nityananda Trayodashi · festival season begins'},
+    {d:'2027-02-21',e:'2027-02-24',n:'GBC Plenary meetings (part 1)'},
+    {d:'2027-02-25',n:'153rd appearance day of Srila Bhaktisiddhanta Sarasvati Thakura Prabhupada'},
+    {d:'2027-02-25',e:'2027-02-28',n:'ILS (ISKCON Leadership Sanga)'},
+    {d:'2027-02-28',n:'Devotees arrive'},
+    {d:'2027-03-01',n:'Srila Prabhupada Connect Day (English / Russian)'},
+    {d:'2027-03-01',e:'2027-03-03',n:'GBC Plenary meetings (part 2)'},
+    {d:'2027-03-02',e:'2027-03-04',n:'Shravana Utsava'},
+    {d:'2027-03-05',n:'Festival inauguration · Garuda-dhvaja flag hoisting · GBC Ishtagoshthi · Kirtan Mela adhivasa'},
+    {d:'2027-03-06',e:'2027-03-10',n:'Kirtan Mela'},
+    {d:'2027-03-06',n:'SGGS and Mayapur Sankirtan book distribution awards'},
+    {d:'2027-03-07',n:'Sri Shivaratri at ISKCON Rajapur Jagannatha temple · World Sankirtan awards'},
+    {d:'2027-03-08',e:'2027-03-09',n:'Sri Sri Radha-Madhava Jhulan Yatra'},
+    {d:'2027-03-10',n:'Navadvipa Mandala Parikrama adhivasa'},
+    {d:'2027-03-11',e:'2027-03-17',n:'Navadvipa Mandala Parikrama'},
+    {d:'2027-03-18',n:'Parikrama Mahamilana'},
+    {d:'2027-03-18',e:'2027-03-21',n:'Cultural programs'},
+    {d:'2027-03-19',n:'Ekadashi · Bhagavatam and Chaitanya-charitamrita yajna · Radha-Madhava Boat Festival'},
+    {d:'2027-03-20',n:'Shantipur festival · Radha-Madhava procession'},
+    {d:'2027-03-21',n:'Ganga Puja · immersion of ashes · Gaura Purnima adhivasa · Prabhupada Connect Day (Bengali)'},
+    {d:'2027-03-22',n:'GAURA PURNIMA · appearance of Sri Chaitanya Mahaprabhu'},
+    {d:'2027-03-23',n:'Sri Jagannatha Mishra festival feast'},
+    {d:'2027-03-24',n:'Garuda-dhvaja flag lowering · festival ends'}]};
   window.NK_CAL.sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:0;});
 })();

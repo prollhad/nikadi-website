@@ -87,6 +87,7 @@
   function hols(d) { return (window.NK_CAL || []).filter(function (x) { return x.d <= d && d <= (x.e || x.d); }); }
   function holsIn(a, b) { return (window.NK_CAL || []).filter(function (x) { return x.d < b && (x.e || x.d) >= a; }); }
   function holDot(d) { var h = hols(d); return h.length ? '<em class="hdot ' + HKIND[h[0].c[0]] + '" title="' + esc(h.map(function (x) { return x.n; }).join(' · ')) + '"></em>' : ''; }
+  function isGP(d) { var g = window.NK_GP; return !!g && d >= g.from && d <= g.to; }
   function isFS(d) { var w = new Date(d + 'T00:00:00Z').getUTCDay(); return w === 5 || w === 6; }
   function holTags(x) { return x.c.map(function (c) { return '<span class="htag ' + HKIND[c] + '">' + HLBL[c] + '</span>'; }).join('') + (x.big ? '<span class="htag h-busy">Busy · expect calls</span>' : ''); }
   function holBox(list, title) {
@@ -1997,7 +1998,7 @@
     var head = '<div class="hrow"><div><p class="kicker">Availability · ' + mm + '</p><h1>Calendar</h1></div><div class="upd">' +
       '<button class="refresh" type="button" id="cp" aria-label="Earlier dates">‹' + (isDesk() ? ' Earlier' : '') + '</button><button class="refresh" type="button" id="ct">Today</button><button class="refresh" type="button" id="cn" aria-label="Later dates">' + (isDesk() ? 'Later ' : '') + '›</button>' +
       (mgr() ? '<button class="refresh gold" type="button" id="cb">+ ' + (isDesk() ? 'New booking' : 'Book') + '</button>' : '') + '</div></div>' +
-      '<div class="legend"><span class="k-occ"><i></i>Guest staying</span><span class="k-arr"><i></i>Booked (advance paid)</span><span class="k-past"><i></i>Stayed</span><span><i style="background:transparent;border:1px solid var(--line)"></i>Free</span><span class="k-fs"><i></i>Friday / Saturday</span><span class="k-hf"><i></i>Mayapur festival</span><span class="k-hin"><i></i>Indian holiday</span><span class="k-hx"><i></i>International</span></div>';
+      '<div class="legend"><span class="k-occ"><i></i>Guest staying</span><span class="k-arr"><i></i>Booked (advance paid)</span><span class="k-past"><i></i>Stayed</span><span><i style="background:transparent;border:1px solid var(--line)"></i>Free</span><span class="k-gp"><i></i>Gaura Purnima festival</span><span class="k-fs"><i></i>Friday / Saturday</span><span class="k-hf"><i></i>Mayapur festival</span><span class="k-hin"><i></i>Indian holiday</span><span class="k-hx"><i></i>International</span></div>';
     var pend = c.pending.length ? '<div class="panel"><div class="sec-h"><h2>Waiting for payment</h2><span class="small">not on the calendar yet</span></div><div class="list">' + c.pending.map(function (b) {
       return '<div class="bl tap" data-booking="' + esc(b.id) + '"><span class="t">' + esc(b.guest) + '</span><span class="d">' + esc(dShort(b.checkin)) + ' to ' + esc(dShort(b.checkout)) + ' · ' + b.guests + ' guests · ' + b.roomsNeeded + (b.roomsNeeded > 1 ? ' rooms' : ' room') + '</span><span class="a"><span class="pill">Pending</span></span></div>';
     }).join('') + '</div></div>' : '';
@@ -2006,7 +2007,7 @@
       var cols = 'grid-template-columns:132px repeat(' + c.days + ',minmax(30px,1fr))';
       var g = '<div class="cal" style="' + cols + '"><div class="cal-corner">Room</div>' + days.map(function (d, j) {
         var dd = new Date(d + 'T00:00:00Z'), we = isFS(d);
-        return '<button type="button" class="cal-h' + (d === c.today ? ' today' : '') + (we ? ' fs' : '') + (hols(d).length ? ' hol ' + HKIND[hols(d)[0].c[0]] : '') + (d === X.day ? ' sel' : '') + '" data-day="' + d + '" style="grid-column:' + (j + 2) + '"' + (hols(d).length ? ' title="' + esc(hols(d).map(function (x) { return x.n; }).join(' · ')) + '"' : '') + '><span>' + (dd.getUTCDate() === 1 ? '<i>' + MON[dd.getUTCMonth()] + '</i>' : WD[dd.getUTCDay()].slice(0, 2)) + '</span><b>' + dd.getUTCDate() + '</b>' + holDot(d) + '</button>';
+        return '<button type="button" class="cal-h' + (d === c.today ? ' today' : '') + (we ? ' fs' : '') + (isGP(d) ? ' gp' : '') + (hols(d).length ? ' hol ' + HKIND[hols(d)[0].c[0]] : '') + (d === X.day ? ' sel' : '') + '" data-day="' + d + '" style="grid-column:' + (j + 2) + '"' + (hols(d).length ? ' title="' + esc(hols(d).map(function (x) { return x.n; }).join(' · ')) + '"' : '') + '><span>' + (dd.getUTCDate() === 1 ? '<i>' + MON[dd.getUTCMonth()] + '</i>' : WD[dd.getUTCDay()].slice(0, 2)) + '</span><b>' + dd.getUTCDate() + '</b>' + holDot(d) + '</button>';
       }).join('');
       c.rooms.forEach(function (r, ri) {
         var row = ri + 2;
@@ -2027,11 +2028,11 @@
     } else {
       body = '<div class="daystrip" id="ds">' + days.map(function (d) {
         var dd = new Date(d + 'T00:00:00Z'), n = c.rooms.filter(function (r) { return !nightOf(c, r.room, d); }).length;
-        var cl = (d === c.today ? 'today ' : '') + (isFS(d) ? 'fs' : '');
+        var cl = (d === c.today ? 'today ' : '') + (isFS(d) ? 'fs ' : '') + (isGP(d) ? 'gp' : '');
         return '<button type="button" data-day="' + d + '" aria-pressed="' + (d === X.day) + '"' + (cl ? ' class="' + cl.trim() + '"' : '') + '><span>' + WD[dd.getUTCDay()] + '</span><b>' + dd.getUTCDate() + '</b><small>' + n + ' free</small>' + holDot(d) + '</button>';
       }).join('') + '</div>' + dayPanel(c, X.day) + pend;
     }
-    v.innerHTML = head + body;
+    v.innerHTML = head + body + festFolders(c);
     $('#cp', v).onclick = function () { X.calFrom = addDays(c.from, -Math.round(c.days / 2)); X.cal = null; render(); loadExtra(); };
     $('#cn', v).onclick = function () { X.calFrom = addDays(c.from, Math.round(c.days / 2)); X.cal = null; render(); loadExtra(); };
     $('#ct', v).onclick = function () { X.calFrom = addDays(c.today, isDesk() ? -2 : 0); X.day = c.today; X.cal = null; render(); loadExtra(); };
@@ -2041,6 +2042,14 @@
     $$('.cal-bar, [data-bar]', v).forEach(function (b) { b.onclick = function () { openBar(b.dataset.kind, b.dataset.id); }; });
     $$('[data-booking]', v).forEach(function (b) { b.onclick = function () { openBooking(b.dataset.booking); }; });
     var sel = $('#ds [aria-pressed="true"]', v); if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+  function festFolders(c) {
+    var today = c.today, end = addDays(today, 400), F = (window.NK_CAL || []).filter(function (x) { return x.c.indexOf('f') >= 0 && (x.e || x.d) >= today && x.d <= end; });
+    var g = window.NK_GP, GI = g ? g.items.filter(function (x) { return (x.e || x.d) >= today; }) : [];
+    function row(x, gpMain) { return '<div class="fr' + (gpMain ? ' main' : '') + '"><span class="fd">' + esc(dShort(x.d)) + (x.e ? ' – ' + esc(dShort(x.e)) : '') + '</span><span class="fn">' + esc(x.n) + (x.big ? ' <span class="htag h-busy">Busy</span>' : '') + '</span></div>'; }
+    return '<div class="panel fest"><div class="sec-h"><h2>Festivals</h2><span class="small">from the shared calendar · plan rooms and staff</span></div>' +
+      (GI.length ? '<details class="ff gp"><summary><b>Gaura Purnima Festival 2027</b><span class="small">' + esc(dShort(g.from)) + ' – ' + esc(dShort(g.to)) + ' · official ISKCON Mayapur program · busiest weeks of the year</span></summary>' + GI.map(function (x) { return row(x, /GAURA PURNIMA/.test(x.n)); }).join('') + '</details>' : '') +
+      '<details class="ff"><summary><b>Mayapur festivals</b><span class="small">' + F.length + ' festival dates in the next 12 months</span></summary>' + F.map(function (x) { return row(x); }).join('') + '</details></div>';
   }
   function openBar(kind, id) {
     if (kind === 'booked') { if (mgr()) openBooking(id); else toast('Booked. Ask reception for details.'); return; }

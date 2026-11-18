@@ -775,3 +775,14 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .ph-t i{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.45);color:transparent;font-style:normal;display:grid;place-items:center;font-size:.8rem;border:1px solid rgba(255,255,255,.6)}
 .ph-t.sel{border-color:var(--gold-hi,#e0be7a)}.ph-t.sel i{background:var(--gold-hi,#e0be7a);color:#1a1408;border-color:transparent}
 .ph-big{width:100%;max-height:60vh;object-fit:contain;border-radius:10px;background:#000}
+
+/* Gaura Purnima festival days + festival folders */
+.cal-h.gp{box-shadow:inset 0 -3px 0 #e8b64c}.daystrip .gp{box-shadow:inset 0 -3px 0 #e8b64c}
+.legend .k-gp i{background:#e8b64c}
+.panel.fest .ff{border:1px solid var(--line);border-radius:12px;margin-top:10px;overflow:hidden}
+.panel.fest .ff>summary{list-style:none;cursor:pointer;display:grid;gap:2px;padding:12px 14px;background:var(--panel)}.panel.fest .ff>summary::-webkit-details-marker{display:none}
+.panel.fest .ff>summary b::before{content:"▸ ";color:var(--gold-hi,#e8c77a)}.panel.fest .ff[open]>summary b::before{content:"▾ "}
+.panel.fest .ff.gp{border-color:rgba(232,182,76,.6)}.panel.fest .ff.gp>summary b{color:var(--gold-hi,#e8c77a);font-weight:800}
+.panel.fest .fr{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 14px;border-top:1px solid var(--line);font-size:.88rem}
+.panel.fest .fr .fd{color:var(--gold-hi,#e8c77a);font-weight:700;white-space:nowrap}.panel.fest .fr.main{background:rgba(232,182,76,.14)}.panel.fest .fr.main .fn{font-weight:800}
+@media (max-width:600px){.panel.fest .fr{grid-template-columns:1fr;gap:2px}}
