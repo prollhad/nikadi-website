@@ -909,7 +909,11 @@ html[data-lang=ru] h1,html[data-lang=ru] h2,html[data-lang=ru] h3{font-weight:60
 .avc-legend{flex:1;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;font-size:.8rem;color:var(--muted)}
 .avc-legend span{display:inline-flex;align-items:center;gap:7px}
 .lg{width:10px;height:10px;border-radius:50%;display:inline-block}
-.lg.free{background:#5fd08a}.lg.few{background:#f0b44c}.lg.full{background:#e07a62}
+.lg.free{background:#5fd08a}.lg.few{background:#f0b44c}.lg.full{background:#e07a62}.lg.fill{background:#f4b27a}.lg.busy{background:#d9661f}
+.avd.a-dm-free{background:rgba(70,190,120,.16);border-color:rgba(95,208,138,.45)}.avd.a-dm-free i{background:#5fd08a}.avd.a-dm-free small{color:#a7ecc0}
+.avd.a-dm-fill{background:rgba(255,170,90,.1);border:1.5px solid #ffb877;box-shadow:inset 0 0 0 1px rgba(255,184,119,.15)}.avd.a-dm-fill b{color:#ffd2a8}.avd.a-dm-fill i{background:#ffbf80}.avd.a-dm-fill small{color:#ffd9b0}
+.avd.a-dm-busy{background:linear-gradient(160deg,rgba(238,112,28,.62),rgba(190,72,12,.55));border-color:rgba(255,140,60,.85)}.avd.a-dm-busy i{background:#fff0e0}.avd.a-dm-busy small{color:#fff0e0}.avd.a-dm-busy b{color:#fff}
+.avc-legend .lg{width:11px;height:11px;flex:none}
 .avc-nav{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--gold-hi);font-size:1.4rem;cursor:pointer;flex:none}
 .avc-nav:hover:not(:disabled){border-color:var(--gold)}
 .avc-nav:disabled{opacity:.3;cursor:default}
@@ -942,7 +946,7 @@ html[data-lang=ru] h1,html[data-lang=ru] h2,html[data-lang=ru] h3{font-weight:60
 .avc-acts{display:flex;gap:10px;flex-wrap:wrap}
 .avc-acts .btn{padding:12px 20px}
 .avc-note{color:var(--muted);font-size:.78rem}
-.avc.offline .lg,.avc.offline .avd i{display:none}
+.avc.offline .avc-legend span:has(.lg.full){display:none}.avc.offline .avd:not([class*="a-dm-"]) i{display:none}
 
 /* weather gadget opens the full forecast */
 a.gw-wx{text-decoration:none;color:inherit;cursor:pointer;transition:border-color .25s,transform .25s}
