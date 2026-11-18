@@ -1351,6 +1351,13 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
 .mw-prompt kbd{font:inherit;font-size:.8rem;padding:2px 9px;border-radius:6px;background:#f4d797;color:#151a2c}
 @keyframes mwPulse{50%{box-shadow:0 0 26px rgba(244,215,151,.45)}}
 .mw-sh{color:#f4e7c4}
+.mw-veil.gold{background:radial-gradient(circle,#fffaf0,#ffd98a)}
+.mw-goal{position:absolute;top:70px;left:16px;z-index:4;max-width:300px;padding:10px 16px;border-radius:14px;background:rgba(10,12,22,.6);border:1px solid rgba(217,173,85,.45);color:#f4e7c4;font-size:.86rem}
+.mw-goal b{color:#fff}.mw-goal small{display:block;margin-top:3px;color:#c9cede;font-size:.74rem;line-height:1.4}
+.mw-mapbox{position:absolute;top:70px;right:16px;z-index:4;display:grid;gap:6px;justify-items:end}
+.mw-mapbox canvas{width:180px;height:180px;border-radius:16px;border:1px solid rgba(217,173,85,.55);display:block}
+.mw-mapbox.big{top:50%;right:50%;transform:translate(50%,-50%);z-index:7;justify-items:center}.mw-mapbox.big canvas{width:520px;height:520px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.mw-maprow{display:flex;gap:6px}.mw-maprow button{font:inherit;font-size:.74rem;font-weight:700;color:#f4e7c4;background:rgba(10,12,22,.65);border:1px solid rgba(217,173,85,.5);border-radius:999px;padding:6px 12px;cursor:pointer}.mw-maprow button:hover{background:rgba(217,173,85,.25)}
 .mw-veil{position:absolute;inset:0;z-index:6;background:#fff;opacity:0;pointer-events:none;transition:opacity .6s ease}.mw-veil.on{opacity:1}
 .mw-world{position:absolute;top:80px;left:50%;transform:translate(-50%,-10px);z-index:5;text-align:center;opacity:0;transition:opacity .8s ease,transform .8s ease;pointer-events:none;text-shadow:0 2px 18px rgba(0,0,0,.8)}
 .mw-world.on{opacity:1;transform:translate(-50%,0)}.mw-world b{display:block;font-family:var(--display,Georgia,serif);font-size:clamp(2rem,4vw,3.2rem);font-weight:500;color:#fff}.mw-world small{display:block;max-width:560px;margin:6px auto 0;font-size:.95rem;color:#f4e7c4}
