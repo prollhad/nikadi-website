@@ -3961,7 +3961,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       FL.forEach(function(f,k){put(flI,k,f[0],f[1],f[2],f[3],f[3],(r()-.5)*.9,r()*6.28,(r()-.5)*.9);flI.setColorAt(k,CL.setHex(f[4]));});flI.instanceColor.needsUpdate=true;SW.add(flI);
       /* grass */
       var grG=new T.PlaneGeometry(1,1);grG.translate(0,.5,0);var GRN=36000,grI=new T.InstancedMesh(grG,new T.MeshStandardMaterial({map:grT,alphaTest:.35,side:T.DoubleSide,roughness:.9}),GRN),gk=0;
-      for(i=0;i<GRN*1.6&&gk<GRN;i++){var gx1=(r()-.5)*SWR*1.9,gz1=(r()-.5)*SWR*1.9;if(Math.hypot(gx1,gz1)>SWR-50||(Math.abs(gx1)<11&&gz1<548&&gz1>-300)||Math.hypot(gx1,gz1-560)<30||(Math.abs(gx1)<82&&gz1<-338&&gz1>-462))continue;var gs=.7+r()*.8;put(grI,gk++,gx1,swBase(gx1,gz1)-.04,gz1,gs*1.3,gs*.75,0,r()*6.28,0);}
+      for(i=0;i<GRN*1.6&&gk<GRN;i++){var gx1=(r()-.5)*SWR*1.9,gz1=(r()-.5)*SWR*1.9;if(Math.hypot(gx1,gz1)>SWR-50||(Math.abs(gx1)<11&&gz1<548&&gz1>-300)||Math.hypot(gx1,gz1-560)<30||(Math.abs(gx1)<82&&gz1<-338&&gz1>-462)||Math.hypot(gx1+160,gz1-40)<24||Math.hypot(gx1-160,gz1+60)<17||Math.hypot(gx1-110,gz1-180)<47||Math.hypot(gx1+130,gz1-260)<33)continue;var gs=.7+r()*.8;put(grI,gk++,gx1,swBase(gx1,gz1)-.04,gz1,gs*1.3,gs*.75,0,r()*6.28,0);}
       grI.count=gk;grI.receiveShadow=true;SW.add(grI);
       /* lotus ponds */
       [[110,180,46],[-130,260,32]].forEach(function(P){var wtr=M(new T.CircleGeometry(P[2],48),new T.MeshStandardMaterial({color:0x5fb8d8,roughness:.08,metalness:.3,transparent:true,opacity:.88}),P[0],-.35,P[1],SW,1);wtr.rotation.x=-Math.PI/2;
@@ -4065,13 +4065,13 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     function swargBits(on){[ground,moonBall,ACT,dust,sky,halo,ringSky,portal,moonLbl].forEach(function(o){if(o)o.visible=!on&&(o!==ringSky||(WORLDS[cur]||{}).ring)&&o!==moonLbl;});
       ROCKS.forEach(function(o){o.visible=!on;});floaters.forEach(function(f){f.visible=!on&&!!(WORLDS[cur]||{}).float;});bodies.forEach(function(B){B.m.visible=!on;B.lb.visible=!on;});if(SW)SW.visible=on;}
     function enterSwarg(){if(busyW)return;busyW=true;veil.classList.add('on','gold');setTimeout(function(){
-      if(!SW)buildSwarg();cur='Swarg';swargBits(true);clearActs();S.background=new T.Color(0xffe8d6);S.fog=new T.Fog(0xfbe3da,600,3200);sun.color.setHex(0xfff0d8);sun.intensity=1.25;S.environment=envFor('swarg','#3a55b0','#ffd9b8','#7fae6a',6);
+      if(!SW)buildSwarg();cur='Swarg';swargBits(true);clearActs();S.background=new T.Color(0xffe8d6);S.fog=new T.Fog(0xf3cfc8,700,3600);sun.color.setHex(0xfff0d8);sun.intensity=1.25;S.environment=envFor('swarg','#3a55b0','#ffd9b8','#7fae6a',6);R.toneMappingExposure=.68;
       /* the ship parks itself on the landing ghat and you step out in kurta and dhoti */
       SH.position.set(0,swH(0,560)+.05,560);shipYaw=Math.PI;SH.rotation.set(0,shipYaw,0);shipV=0;shipVy=0;shipRoll=0;seen={};
       mode='walk';A.visible=true;useBody(BODY_HUM);help.classList.remove('ship');setHud();heading=Math.PI;A.rotation.y=heading;A.position.set(9,swH(9,548),548);vel.set(0,0,0);onGround=true;dist=8;yawOff=0;pitch=.14;camPos.set(0,0,0);
       setTimeout(function(){veil.classList.remove('on','gold');busyW=false;showBanner('Swarga Loka','Amaravati, the city of Indradev. Your ship is parked on the ghat. Walk north along the marble avenue to Vaijayanta palace.');chime([523,659,784,1047]);},200);},800);}
     function leaveSwarg(){if(busyW)return;busyW=true;veil.classList.add('on','gold');setTimeout(function(){
-      cur='Moon';swargBits(false);regen('Moon');sun.color.setHex(0xfff6e8);sun.intensity=2.3;useBody(BODY_AST);
+      cur='Moon';swargBits(false);regen('Moon');R.toneMappingExposure=.82;sun.color.setHex(0xfff6e8);sun.intensity=2.3;useBody(BODY_AST);
       SH.position.copy(PORTALP).add(new T.Vector3(0,-1300,0));shipVy=0;shipV=60;camPos.set(0,0,0);
       setTimeout(function(){veil.classList.remove('on','gold');busyW=false;showBanner('Back among the planets','Fly into any planet to explore it, or into the Earth to land in Mayapur.');},200);},800);}
     /* ---- dandavat pranam ---- */
