@@ -295,10 +295,10 @@ try{
     addEventListener('resize',function(){if(!open)return;cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight);});
     var fuelEl=document.getElementById('mwFuel'),altEl=document.getElementById('mwAlt'),hudL=document.getElementById('mwHudL'),help=document.getElementById('mwHelp'),prompt=document.getElementById('mwPrompt'),moved=0;
     var camPos=new T.Vector3(),look=new T.Vector3(),tmp=new T.Vector3();
-    function nearShip(){return Math.hypot(A.position.x-SH.position.x,A.position.z-SH.position.z)<6&&Math.abs(A.position.y-SH.position.y)<4;}
+    function nearShip(){return Math.hypot(A.position.x-SH.position.x,A.position.z-SH.position.z)<8.5&&Math.abs(A.position.y-SH.position.y)<5;}
     function shipLanded(){var x=SH.position.x,z=SH.position.z;return Math.abs(x)<HALF*.86&&Math.abs(z)<HALF*.86&&SH.position.y-height(x,z)<1.5;}
     function toggleShip(){if(ending)return;if(mode==='walk'&&nearShip()){mode='ship';A.visible=false;dist=Math.max(dist,16);help.classList.add('ship');}
-      else if(mode==='ship'&&shipLanded()){mode='walk';A.visible=true;heading=shipYaw;var sx=Math.cos(shipYaw)*4,sz=-Math.sin(shipYaw)*4;A.position.set(SH.position.x+sx,height(SH.position.x+sx,SH.position.z+sz),SH.position.z+sz);vel.set(0,0,0);dist=8;help.classList.remove('ship');}
+      else if(mode==='ship'&&shipLanded()){mode='walk';A.visible=true;heading=shipYaw;var sx=Math.cos(shipYaw)*5.5,sz=-Math.sin(shipYaw)*5.5;A.position.set(SH.position.x+sx,height(SH.position.x+sx,SH.position.z+sz),SH.position.z+sz);vel.set(0,0,0);dist=8;help.classList.remove('ship');}
       setHud();}
     prompt.addEventListener('click',function(){toggleShip();});
     function setHud(){hudL.textContent=mode==='ship'?'Fuel':'Jetpack';}
@@ -320,7 +320,7 @@ try{
         var gh=height(A.position.x,A.position.z);
         if(A.position.y<=gh){if(!onGround&&vel.y<-2)puff(A.position.x,A.position.z,10);A.position.y=gh;vel.y=0;onGround=true;}
         /* do not walk through the ship */
-        var dsx=A.position.x-SH.position.x,dsz=A.position.z-SH.position.z,dd=Math.hypot(dsx,dsz);if(dd<3.2&&A.position.y<SH.position.y+3.5){A.position.x=SH.position.x+dsx/dd*3.2;A.position.z=SH.position.z+dsz/dd*3.2;}
+        var dsx=A.position.x-SH.position.x,dsz=A.position.z-SH.position.z,dd=Math.hypot(dsx,dsz);if(dd<4.2&&A.position.y<SH.position.y+3.5){A.position.x=SH.position.x+dsx/dd*4.2;A.position.z=SH.position.z+dsz/dd*4.2;}
         if(onGround)fuel=Math.min(1,fuel+dt*.25);
         var thr=!onGround&&K[' ']&&fuel>0;flame.visible=thr;plight.intensity=thr?2.5:0;if(thr)flame.scale.y=.8+Math.random()*.5;
         A.rotation.y+=((heading-A.rotation.y+Math.PI*3)%(Math.PI*2)-Math.PI)*Math.min(1,dt*12);
