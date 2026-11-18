@@ -3531,7 +3531,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     /* the rest of the moon, so it is a real ball when you fly away */
     var MR=1800,mt=document.createElement('canvas');mt.width=1024;mt.height=512;var mx=mt.getContext('2d'),mi=mx.createImageData(1024,512);
     for(i=0;i<1024*512;i++){var u=i%1024,v=(i/1024)|0,n=fbm(u*.012,v*.024,5),mar=fbm(u*.004+5,v*.008+9,4)<.42?.62:1,c=(.36+(n-.5)*.3)*mar*255;mi.data[i*4]=c;mi.data[i*4+1]=c*.985;mi.data[i*4+2]=c*.96;mi.data[i*4+3]=255;}mx.putImageData(mi,0,0);
-    var ctex=new T.CanvasTexture(mt);var moonBall=new T.Mesh(new T.SphereGeometry(MR,96,64),new T.MeshStandardMaterial({map:ctex,roughness:1}));moonBall.position.set(0,-MR-3,0);moonBall.receiveShadow=true;S.add(moonBall);
+    var ctex=new T.CanvasTexture(mt);var moonBall=new T.Mesh(new T.SphereGeometry(MR,96,64),new T.MeshStandardMaterial({map:ctex,roughness:1}));moonBall.position.set(0,-MR-16,0);moonBall.receiveShadow=true;S.add(moonBall);
     var MOONC=moonBall.position.clone();
     /* ---- rocks: on the ground, and floating ---- */
     function rockGeo(seed){var g=new T.IcosahedronGeometry(1,2),p=g.attributes.position;for(var k=0;k<p.count;k++){var v=new T.Vector3(p.getX(k),p.getY(k),p.getZ(k)),n=.75+.5*vn(v.x*2+seed,v.y*2+v.z*2+seed*3);v.multiplyScalar(n);v.y*=.7;p.setXYZ(k,v.x,v.y,v.z);}g.computeVertexNormals();return g;}
@@ -3903,7 +3903,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       SW.add(AIR);AIR.userData={ears:ears,trk:trk};SWC.push({x:-34,z:-306,r:5.5});
       SWPOI.push({x:-34,z:-306,r:22,t:'Airavata',s:'Indra’s white elephant, born from the churning of the ocean, king of all elephants.'});
       /* ---- Vaijayanta palace ---- */
-      var PY=3.6;[[160,1.2,120,.6],[148,1.2,108,1.8],[136,1.2,96,3]].forEach(function(q){M(new T.BoxGeometry(q[0],q[1],q[2]),MARBLE,PAL.x,q[3],PAL.z);M(new T.BoxGeometry(q[0]+.2,.2,q[2]+.2),GOLD,PAL.x,q[3]+.6,PAL.z);});
+      var PY=3.6;[[160,1.2,120,.6],[148,1.2,108,1.8],[136,1.2,96,3]].forEach(function(q){M(new T.BoxGeometry(q[0],q[1],q[2]),MARBLE,PAL.x,q[3],PAL.z);M(new T.BoxGeometry(q[0]+.24,.3,q[2]+.24),GOLD,PAL.x,q[3]+.3,PAL.z);});
       /* red carpet to the throne */
       M(new T.BoxGeometry(8,.06,64),RED,0,PY+.04,PAL.z+10,SW,1);M(new T.BoxGeometry(8,.06,30),RED,0,.04,-312,SW,1);
       /* colonnade */
@@ -3932,7 +3932,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       M(new T.CylinderGeometry(.12,.12,9),GOLD,2.8,PY+5.5,PAL.z-29.5);var um=M(new T.ConeGeometry(3.6,1.6,24,1,true),mat(0xfaf6ea,{side:T.DoubleSide}),2.8,PY+10.4,PAL.z-29.5);
       SWC.push({x:0,z:PAL.z-28,r:7,h:PY+1.2});var cl1=new T.PointLight(0xffd9a0,1.4,140);cl1.position.set(0,PY+11,PAL.z-14);SW.add(cl1);var cl3=new T.PointLight(0xffe6c0,.9,160);cl3.position.set(0,PY+11,PAL.z+22);SW.add(cl3);
       /* Indradev, seated, holding the vajra */
-      INDRA=person({skin:0xe3b07a,dhoti:0xf2c230,top:0xd8a032,sash:0xc4202a,crown:1,tilak:1});var ig=INDRA.g;ig.scale.setScalar(1.55);ig.position.set(0,PY+2.6,PAL.z-29.2);
+      INDRA=person({skin:0xe3b07a,dhoti:0xf2c230,top:0xd8a032,sash:0xc4202a,crown:1,tilak:1});var ig=INDRA.g;ig.scale.setScalar(2.3);ig.position.set(0,PY+2.35,PAL.z-29.2);
       ig.children.forEach(function(c){if(c.geometry&&c.geometry.type==='CylinderGeometry'&&c.position.y<.8){c.scale.y=.55;c.position.y=.55;}});
       [-1,1].forEach(function(sd){var th=M(new T.CylinderGeometry(.13,.12,.85,10),mat(0xf2c230),.15*sd,.62,.36,ig);th.rotation.x=Math.PI/2;var sh2=M(new T.CylinderGeometry(.11,.09,.7,10),mat(0xe3b07a),.15*sd,.25,.78,ig);});
       var vj=new T.Group();M(new T.CylinderGeometry(.04,.04,.5,8),GOLD,0,0,0,vj);[-1,1].forEach(function(sd){M(new T.ConeGeometry(.12,.3,6),GOLD,0,.32*sd,0,vj).rotation.x=sd<0?Math.PI:0;M(new T.TorusGeometry(.1,.025,6,12),GOLD,0,.2*sd,0,vj);});
