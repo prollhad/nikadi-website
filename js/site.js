@@ -581,7 +581,7 @@ try{
   var tr=$('revTrack');
   if(tr){
     document.querySelectorAll('[data-rev]').forEach(function(b){b.addEventListener('click',function(){var c=tr.querySelector('.rev');tr.scrollBy({left:(c?c.offsetWidth+18:320)*(+b.getAttribute('data-rev')),behavior:'smooth'});});});
-    function checkMore(){tr.querySelectorAll('.rev').forEach(function(r){var p=r.querySelector('p'),b=r.querySelector('.rev-more');if(!r.classList.contains('open'))b.hidden=p.scrollHeight<=p.clientHeight+2;});}
+    function checkMore(){tr.querySelectorAll('.rev').forEach(function(r){var p=r.querySelector('p'),b=r.querySelector('.rev-more');if(b&&p&&!r.classList.contains('open'))b.hidden=p.scrollHeight<=p.clientHeight+2;});}
     tr.addEventListener('click',function(e){var b=e.target.closest('.rev-more');if(!b)return;var r=b.closest('.rev');r.classList.toggle('open');b.textContent=r.classList.contains('open')?'Show less':'Read more';});
     window.addEventListener('load',checkMore);window.addEventListener('resize',checkMore);setTimeout(checkMore,300);
   }
