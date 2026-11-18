@@ -4,9 +4,82 @@ try{
 }catch(e){console.error("[nikadi part 0]",e);}
 /* part 1 */
 try{
-function nkPh(v){var s=String(v||'').trim(),d=s.replace(/\D/g,'');if(!d)return '';var i=/^(\+|00)/.test(s);if(i&&s.charAt(0)==='0')d=d.slice(2);if(i){if(d.indexOf('91')===0&&/^[6-9]\d{9}$/.test(d.slice(2)))return d.slice(2);return d.length>=8&&d.length<=15&&d.indexOf('91')!==0?d:'';}if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);if(d.length===11&&d.charAt(0)==='0')d=d.slice(1);if(/^[6-9]\d{9}$/.test(d))return d;return d.length>=11&&d.length<=15&&d.charAt(0)!=='0'&&d.indexOf('91')!==0?d:'';}
+
+/* ---- sky & weather moments: tap Sunrise and sunset for dawn or dusk light, Weather for thunder or rain;
+   from 11 PM to 3 AM (India time) the page shows the real night sky with tonight's moon. Preview: ?fx=dusk|dawn|thunder|rain|night ---- */
+(function(){
+  var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function ist(){return new Date(Date.now()+330*60000);}
+  var fx=document.createElement('div');fx.id='fx';fx.setAttribute('aria-hidden','true');document.body.appendChild(fx);
+  var busy=false;
+  function done(ms){setTimeout(function(){fx.classList.remove('fx-on');setTimeout(function(){fx.className='';fx.innerHTML='';busy=false;},1700);},ms);}
+  function sky(kind){if(busy)return;busy=true;
+    fx.className='fx-'+kind;fx.innerHTML='<div class="fx-tint"></div><div class="fx-glow"></div><div class="fx-sun"></div>';
+    requestAnimationFrame(function(){requestAnimationFrame(function(){fx.classList.add('fx-on');});});done(6200);}
+  function seg(x,y,n,spread,step){var d='M'+x.toFixed(1)+' '+y.toFixed(1),pts=[];for(var i=0;i<n;i++){x+=(Math.random()-.5)*spread;y+=step*(.5+Math.random());d+=' L'+x.toFixed(1)+' '+y.toFixed(1);pts.push([x,y]);}return {d:d,pts:pts};}
+  function bolt(){var x0=25+Math.random()*50,main=seg(x0,-2,26,3.2,2.4),paths=[main.d];
+    for(var b=0;b<3;b++){var p=main.pts[4+Math.floor(Math.random()*14)];paths.push(seg(p[0],p[1],6+Math.floor(Math.random()*6),4,2).d);}
+    var g=paths.map(function(d,i){var w=i?.12:.22;return '<path d="'+d+'" stroke="rgba(170,190,255,.35)" stroke-width="'+(w*6)+'"/><path d="'+d+'" stroke="#f4f7ff" stroke-width="'+w+'"/>';}).join('');
+    return {x:x0,svg:'<svg class="fx-bolt" viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%" fill="none" stroke-linejoin="round" stroke-linecap="round"><g style="filter:blur(.15px)">'+g+'</g></svg>'};}
+  function thunder(){if(busy)return;busy=true;var b=bolt();
+    fx.className='fx-storm';fx.innerHTML='<div class="fx-dark"></div><div class="fx-flash"></div>'+b.svg;fx.style.setProperty('--fxx',b.x+'%');
+    requestAnimationFrame(function(){fx.classList.add('fx-on');});
+    var f=fx.querySelector('.fx-flash'),bo=fx.querySelector('.fx-bolt');
+    function strike(t){setTimeout(function(){if(RM)return;f.classList.remove('go');bo.classList.remove('go');void f.offsetWidth;f.classList.add('go');bo.classList.add('go');},t);}
+    strike(250);strike(1300);strike(2100);done(2900);}
+  function rain(){if(busy)return;busy=true;
+    fx.className='fx-rain';fx.innerHTML='<div class="fx-dark"></div><canvas></canvas>';requestAnimationFrame(function(){fx.classList.add('fx-on');});
+    var c=fx.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1),W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;
+    var N=Math.round(innerWidth*.45),drops=[];for(var i=0;i<N;i++)drops.push({x:Math.random()*W,y:Math.random()*H,l:(10+Math.random()*16)*dpr,v:(14+Math.random()*10)*dpr,a:.15+Math.random()*.35});
+    var t0=performance.now(),dur=4800;
+    (function frame(t){var k=(t-t0)/dur;if(k>1||RM){x.clearRect(0,0,W,H);return;}
+      var fade=k<.12?k/.12:k>.8?(1-k)/.2:1;x.clearRect(0,0,W,H);x.lineCap='round';
+      drops.forEach(function(d){x.strokeStyle='rgba(200,215,235,'+(d.a*fade).toFixed(3)+')';x.lineWidth=dpr;x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d.x-d.l*.18,d.y+d.l);x.stroke();
+        d.y+=d.v;d.x-=d.v*.18;if(d.y>H){d.y=-d.l;d.x=Math.random()*W*1.1;}});
+      requestAnimationFrame(frame);})(t0);
+    done(4800);}
+  function weatherMoment(){var w=window.NK_WX,c=w&&w.current?w.current.weather_code:null;if(c==null)return;
+    if(c>=95)thunder();else if((c>=51&&c<=67)||(c>=80&&c<=82))rain();}
+  /* sunrise card: dawn light before noon, dusk light after */
+  var sun=document.getElementById('gwSun');
+  if(sun)sun.addEventListener('click',function(e){e.preventDefault();sky(ist().getUTCHours()<12?'dawn':'dusk');});
+  var wx=document.getElementById('gwWx');if(wx)wx.addEventListener('click',function(){weatherMoment();});
+
+  /* ---------- the night sky (11 PM – 3 AM) ---------- */
+  function moonPhase(){var syn=29.530588853,ref=Date.UTC(2000,0,6,18,14)/864e5,now=Date.now()/864e5;var p=((now-ref)%syn+syn)%syn/syn;return p;} // 0 new, .5 full
+  function drawMoon(cv,p){var s=cv.width,r=s*.36,cx=s/2,cy=s/2,x=cv.getContext('2d');x.clearRect(0,0,s,s);
+    var g=x.createRadialGradient(cx,cy,r*.95,cx,cy,s*.5);g.addColorStop(0,'rgba(220,228,255,.18)');g.addColorStop(1,'rgba(220,228,255,0)');x.fillStyle=g;x.beginPath();x.arc(cx,cy,s*.5,0,7);x.fill();
+    x.save();x.beginPath();x.arc(cx,cy,r,0,7);x.clip();
+    var b=x.createRadialGradient(cx-r*.3,cy-r*.3,r*.1,cx,cy,r);b.addColorStop(0,'#f4f1e6');b.addColorStop(1,'#cfcab9');x.fillStyle=b;x.fillRect(0,0,s,s);
+    [[-.35,-.2,.28],[.1,-.35,.2],[.25,.1,.3],[-.1,.3,.22],[-.42,.25,.14],[.38,-.12,.12]].forEach(function(m){var mg=x.createRadialGradient(cx+m[0]*r,cy+m[1]*r,0,cx+m[0]*r,cy+m[1]*r,m[2]*r);mg.addColorStop(0,'rgba(120,118,110,.45)');mg.addColorStop(1,'rgba(120,118,110,0)');x.fillStyle=mg;x.fillRect(0,0,s,s);});
+    // shadow: waxing lights the right side, waning the left
+    var k=Math.cos(2*Math.PI*p),wax=p<.5;x.fillStyle='rgba(6,10,22,.9)';x.shadowColor='rgba(6,10,22,.9)';x.shadowBlur=s*.02;x.beginPath();
+    if(wax){x.arc(cx,cy,r,Math.PI/2,Math.PI*1.5,false);x.ellipse(cx,cy,Math.abs(k)*r,r,0,-Math.PI/2,Math.PI/2,k<0);}
+    else{x.arc(cx,cy,r,-Math.PI/2,Math.PI/2,false);x.ellipse(cx,cy,Math.abs(k)*r,r,0,Math.PI/2,-Math.PI/2,k<0);}
+    x.fill();x.restore();}
+  function night(force){var h=ist().getUTCHours();if(!force&&!(h>=23||h<3))return;
+    var ns=document.createElement('div');ns.id='nightsky';ns.setAttribute('aria-hidden','true');ns.innerHTML='<canvas></canvas><div class="moon"><canvas width="200" height="200"></canvas></div>';document.body.insertBefore(ns,document.body.firstChild);
+    var c=ns.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1);
+    function stars(){var W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;x.clearRect(0,0,W,H);
+      var sg=x.createLinearGradient(0,0,0,H);sg.addColorStop(0,'#050916');sg.addColorStop(1,'#0b1226');x.fillStyle=sg;x.fillRect(0,0,W,H);
+      var n=Math.round(innerWidth*innerHeight/2600),seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
+      for(var i=0;i<n;i++){var r=rnd(),sz=r<.92?.5+rnd()*.6:1+rnd()*.9;x.fillStyle='rgba('+(r<.1?'255,236,214':r<.2?'214,226,255':'240,244,255')+','+(.25+rnd()*.6).toFixed(2)+')';x.beginPath();x.arc(rnd()*W,rnd()*H,sz*dpr,0,7);x.fill();}
+      // a faint band of the Milky Way
+      var mw=x.createLinearGradient(0,H*.1,W,H*.9);mw.addColorStop(0,'rgba(180,190,230,0)');mw.addColorStop(.5,'rgba(180,190,230,.05)');mw.addColorStop(1,'rgba(180,190,230,0)');x.fillStyle=mw;x.fillRect(0,0,W,H);}
+    stars();addEventListener('resize',stars);drawMoon(ns.querySelector('.moon canvas'),moonPhase());
+    document.documentElement.classList.add('night-mood');}
+  var q=(location.search.match(/[?&]fx=(\w+)/)||[])[1];
+  night(q==='night');
+  if(q==='dusk'||q==='dawn')setTimeout(function(){sky(q);},900);if(q==='thunder')setTimeout(thunder,900);if(q==='rain')setTimeout(rain,900);
+  window.nkFx={sky:sky,thunder:thunder,rain:rain,night:night};
+})();
+
 }catch(e){console.error("[nikadi part 1]",e);}
 /* part 2 */
+try{
+function nkPh(v){var s=String(v||'').trim(),d=s.replace(/\D/g,'');if(!d)return '';var i=/^(\+|00)/.test(s);if(i&&s.charAt(0)==='0')d=d.slice(2);if(i){if(d.indexOf('91')===0&&/^[6-9]\d{9}$/.test(d.slice(2)))return d.slice(2);return d.length>=8&&d.length<=15&&d.indexOf('91')!==0?d:'';}if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);if(d.length===11&&d.charAt(0)==='0')d=d.slice(1);if(/^[6-9]\d{9}$/.test(d))return d;return d.length>=11&&d.length<=15&&d.charAt(0)!=='0'&&d.indexOf('91')!==0?d:'';}
+}catch(e){console.error("[nikadi part 2]",e);}
+/* part 3 */
 try{
 
 /* ---- Offer prices (from pricing.js) + member sign-in across the whole website ---- */
@@ -99,8 +172,8 @@ try{
   $('sdLogout').addEventListener('click',function(){var t=store('nk_token');store('nk_token',null);setMember(null);close();});
 })();
 
-}catch(e){console.error("[nikadi part 2]",e);}
-/* part 3 */
+}catch(e){console.error("[nikadi part 3]",e);}
+/* part 4 */
 try{
 
 /* ---- Pay online (Razorpay). Shows only after the Razorpay keys are added in the Apps Script settings. ---- */
@@ -144,8 +217,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 3]",e);}
-/* part 4 */
+}catch(e){console.error("[nikadi part 4]",e);}
+/* part 5 */
 try{
 
 // ---- Settings: update these to change payment details ----
@@ -207,8 +280,8 @@ var WA = "917501101137";
   }
 })();
 
-}catch(e){console.error("[nikadi part 4]",e);}
-/* part 5 */
+}catch(e){console.error("[nikadi part 5]",e);}
+/* part 6 */
 try{
 
 /* ---- Online forms (Advance Booking + Guest Registration) ---- */
@@ -359,8 +432,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 5]",e);}
-/* part 6 */
+}catch(e){console.error("[nikadi part 6]",e);}
+/* part 7 */
 try{
 
 /* ---- Photo lightbox ---- */
@@ -388,8 +461,8 @@ try{
   lb.addEventListener('touchend',function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)show(i+(dx<0?1:-1));sx=null;});
 })();
 
-}catch(e){console.error("[nikadi part 6]",e);}
-/* part 7 */
+}catch(e){console.error("[nikadi part 7]",e);}
+/* part 8 */
 try{
 
 /* ---- Hero: moving photo slideshow, new photo every 5 seconds ---- */
@@ -427,8 +500,8 @@ try{
   load(1); start();
 })();
 
-}catch(e){console.error("[nikadi part 7]",e);}
-/* part 8 */
+}catch(e){console.error("[nikadi part 8]",e);}
+/* part 9 */
 try{
 
 /* ---- Membership pop-up: once, after the visitor starts scrolling ---- */
@@ -455,8 +528,8 @@ try{
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!pop.hidden)close(3);});
 })();
 
-}catch(e){console.error("[nikadi part 8]",e);}
-/* part 9 */
+}catch(e){console.error("[nikadi part 9]",e);}
+/* part 10 */
 try{
 
 /* ---- Room details gallery ---- */
@@ -484,8 +557,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 9]",e);}
-/* part 10 */
+}catch(e){console.error("[nikadi part 10]",e);}
+/* part 11 */
 try{
 
 /* ---- v3: reviews carousel, live gadgets, phone dock + menu, quick message, share, scroll reveal ---- */
@@ -616,7 +689,7 @@ try{
   function wxLoad(){
     return fetch('https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LNG+'&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,uv_index_max,sunrise,sunset&timezone=Asia%2FKolkata&forecast_days=7')
     .then(function(r){return r.json();}).then(function(w){
-      WXD=w;
+      WXD=w;window.NK_WX=w;
       var c=w.current,dl=w.daily;
       $('gTemp').innerHTML=Math.round(c.temperature_2m)+'°<small>'+(WX[c.weather_code]||'')+'</small>';
       $('gWxSub').textContent='Humidity '+c.relative_humidity_2m+'% · today '+Math.round(dl.temperature_2m_min[0])+'° to '+Math.round(dl.temperature_2m_max[0])+'°'+(dl.precipitation_probability_max[0]!=null?' · rain '+dl.precipitation_probability_max[0]+'%':'');
@@ -705,8 +778,8 @@ try{
 })();
 
 
-}catch(e){console.error("[nikadi part 10]",e);}
-/* part 11 */
+}catch(e){console.error("[nikadi part 11]",e);}
+/* part 12 */
 try{
 
 /* ---- v4: temple program (live next arati) + Instagram darshan embeds ---- */
@@ -759,8 +832,8 @@ try{
 })();
 
 
-}catch(e){console.error("[nikadi part 11]",e);}
-/* part 12 */
+}catch(e){console.error("[nikadi part 12]",e);}
+/* part 13 */
 try{
 
 /* ---- v5: membership deck + Instagram loader for all rows ---- */
@@ -789,8 +862,8 @@ try{
 })();
 
 
-}catch(e){console.error("[nikadi part 12]",e);}
-/* part 13 */
+}catch(e){console.error("[nikadi part 13]",e);}
+/* part 14 */
 try{
 
 (function(){var r=document.getElementById('qrail');if(!r)return;var t=r.querySelector('.qr-toggle');
@@ -798,8 +871,8 @@ t.addEventListener('click',function(){var o=r.classList.toggle('open');t.setAttr
 r.addEventListener('click',function(e){if(e.target.closest('.qr'))r.classList.remove('open');});
 document.addEventListener('click',function(e){if(!e.target.closest('#qrail'))r.classList.remove('open');});})();
 
-}catch(e){console.error("[nikadi part 13]",e);}
-/* part 14 */
+}catch(e){console.error("[nikadi part 14]",e);}
+/* part 15 */
 try{
 
 /* transport: tabs + live next trains */
@@ -827,8 +900,8 @@ try{
   upd(); setInterval(upd,30000);
 })();
 
-}catch(e){console.error("[nikadi part 14]",e);}
-/* part 15 */
+}catch(e){console.error("[nikadi part 15]",e);}
+/* part 16 */
 try{
 
 (function(){
@@ -855,8 +928,8 @@ try{
   document.querySelectorAll('[data-tp-go]').forEach(function(a){a.addEventListener('click',function(){var b=document.querySelector('#transport [data-tp="'+a.getAttribute('data-tp-go')+'"]');if(b)b.click();else try{sessionStorage.setItem('nk_tp',a.getAttribute('data-tp-go'));}catch(e){}});});
 })();
 
-}catch(e){console.error("[nikadi part 15]",e);}
-/* part 16 */
+}catch(e){console.error("[nikadi part 16]",e);}
+/* part 17 */
 try{
 
 /* train details: tap a train time (exact NTES timetable) */
@@ -886,8 +959,8 @@ window.NK_TRAINS={"13103":{"d":"Daily","s":[["Sealdah","18:20"],["Ranaghat Jn","
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dlg.hidden)close();});
 })();
 
-}catch(e){console.error("[nikadi part 16]",e);}
-/* part 17 */
+}catch(e){console.error("[nikadi part 17]",e);}
+/* part 18 */
 try{
 
 (function(){var f=document.getElementById('gtForm');if(!f)return;
@@ -896,8 +969,8 @@ f.addEventListener('submit',function(e){e.preventDefault();var x=f.elements,L=['
 if(x.fr.value.trim())L.push('From: '+x.fr.value.trim());if(x.to.value.trim())L.push('To: '+x.to.value.trim());if(x.dt.value)L.push('Date: '+x.dt.value);L.push('Travellers: '+x.px.value);if(x.m.value.trim())L.push(x.m.value.trim());
 window.open('https://wa.me/919933864574?text='+encodeURIComponent(L.join('\n')),'_blank','noopener');});})();
 
-}catch(e){console.error("[nikadi part 17]",e);}
-/* part 18 */
+}catch(e){console.error("[nikadi part 18]",e);}
+/* part 19 */
 try{
 
 (function(){var v=document.getElementById('mvidV'),b=document.getElementById('mvidS');if(!v||!b)return;
@@ -908,8 +981,8 @@ document.addEventListener('visibilitychange',function(){if(document.hidden)v.pau
 b.addEventListener('click',function(){var on=v.muted;v.muted=!on;if(on){v.volume=1;play();}b.setAttribute('aria-pressed',on?'true':'false');b.setAttribute('aria-label',on?'Turn sound off':'Turn sound on');b.querySelector('span').textContent=on?'Sound off':'Sound on';});
 })();
 
-}catch(e){console.error("[nikadi part 18]",e);}
-/* part 19 */
+}catch(e){console.error("[nikadi part 19]",e);}
+/* part 20 */
 try{
 
 (function(){var row=document.getElementById('meetIg'),nav=document.getElementById('meetNav');if(!row||!nav)return;
@@ -923,8 +996,8 @@ var t;row.addEventListener('scroll',function(){clearTimeout(t);t=setTimeout(mark
 window.addEventListener('resize',mark);mark();
 })();
 
-}catch(e){console.error("[nikadi part 19]",e);}
-/* part 20 */
+}catch(e){console.error("[nikadi part 20]",e);}
+/* part 21 */
 try{
 
 /* phones: Instagram's frames swallow sideways swipes, so a clear layer on top lets the row scroll; a tap still opens the post */
@@ -932,8 +1005,8 @@ try{
 row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-instgrm-permalink]'),f=c.querySelector('iframe'),h=q?q.getAttribute('data-instgrm-permalink'):f?f.src.replace(/embed.*$/,''):'';if(!h)return;var t=document.createElement('a');t.className='igc-tap';t.href=h.split('?')[0];t.target='_blank';t.rel='noopener';t.setAttribute('aria-label','Open this post on Instagram');c.appendChild(t);});
 })();
 
-}catch(e){console.error("[nikadi part 20]",e);}
-/* part 21 */
+}catch(e){console.error("[nikadi part 21]",e);}
+/* part 22 */
 try{
 
 /* ---- v6: live availability calendar (free / few / full from the front desk, prices from pricing.js) ---- */
@@ -1027,8 +1100,8 @@ try{
   if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();load();setInterval(function(){if(!document.hidden)load();},5*60000);}},{rootMargin:'400px 0px'});io.observe(box);}else load();
 })();
 
-}catch(e){console.error("[nikadi part 21]",e);}
-/* part 22 */
+}catch(e){console.error("[nikadi part 22]",e);}
+/* part 23 */
 try{
 
 /* ---- festival calendar: temple festivals (gold), Indian public holidays (saffron), international days (pale green).
@@ -1096,8 +1169,8 @@ try{
   document.addEventListener('nk:lang',function(){show();drawNext();});
 })();
 
-}catch(e){console.error("[nikadi part 22]",e);}
-/* part 23 */
+}catch(e){console.error("[nikadi part 23]",e);}
+/* part 24 */
 try{
 
 /* ---- v7: festival calendar countdown, staff wall and guest wall (from /data/*.json) ---- */
@@ -1123,8 +1196,8 @@ try{
   });
 })();
 
-}catch(e){console.error("[nikadi part 23]",e);}
-/* part 24 */
+}catch(e){console.error("[nikadi part 24]",e);}
+/* part 25 */
 try{
 
 /* ---- page banner: gentle room photo slideshow ---- */
@@ -1132,8 +1205,8 @@ try{
 if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 setInterval(function(){if(document.hidden)return;im[i].classList.remove('on');i=(i+1)%im.length;im[i].classList.add('on');},4500);})();
 
-}catch(e){console.error("[nikadi part 24]",e);}
-/* part 25 */
+}catch(e){console.error("[nikadi part 25]",e);}
+/* part 26 */
 try{
 
 /* ---- language switch: English, বাংলা, हिन्दी, Русский, 中文, Español ----
@@ -1210,4 +1283,4 @@ try{
   fetch('/data/i18n/'+cur+'.json?v=3').then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(D){try{apply(D);}catch(e){console.error(e);}done();try{document.dispatchEvent(new Event('nk:lang'));}catch(e){}}).catch(done);
 })();
 
-}catch(e){console.error("[nikadi part 25]",e);}
+}catch(e){console.error("[nikadi part 26]",e);}

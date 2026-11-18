@@ -267,6 +267,41 @@ section.alt{background:var(--band)}
 }
 @media (min-width:761px){.swipe-hint{display:none}}
 
+
+/* ---- sky & weather moments ---- */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:95;overflow:hidden}
+#fx>*{position:absolute;inset:0}
+.fx-tint{opacity:0;transition:opacity 1.6s ease}
+.fx-on .fx-tint{opacity:1}
+.fx-dusk .fx-tint{background:linear-gradient(180deg,rgba(74,38,98,.55) 0%,rgba(170,64,90,.35) 38%,rgba(255,120,60,.42) 72%,rgba(255,176,92,.55) 100%);mix-blend-mode:soft-light}
+.fx-dusk .fx-glow{background:radial-gradient(70% 45% at 50% 105%,rgba(255,140,60,.55),rgba(255,90,60,.18) 45%,transparent 70%);opacity:0;transition:opacity 1.8s ease}
+.fx-dawn .fx-tint{background:linear-gradient(0deg,rgba(255,196,150,.5) 0%,rgba(255,160,170,.32) 40%,rgba(150,170,220,.3) 100%);mix-blend-mode:soft-light}
+.fx-dawn .fx-glow{background:radial-gradient(65% 40% at 50% 104%,rgba(255,214,150,.6),rgba(255,170,150,.2) 45%,transparent 72%);opacity:0;transition:opacity 1.8s ease}
+.fx-on .fx-glow{opacity:1}
+.fx-sun{inset:auto!important;left:calc(50% - min(11vw,90px))!important;width:min(22vw,180px);height:min(22vw,180px);border-radius:50%;opacity:0;
+  background:radial-gradient(circle,#fff6dc 0 34%,#ffd27a 48%,rgba(255,150,70,.55) 60%,rgba(255,120,60,0) 72%);filter:blur(.4px)}
+.fx-dusk .fx-sun{top:72vh!important;animation:fxSet 7s ease-in forwards}
+.fx-dawn .fx-sun{top:104vh!important;animation:fxRise 7s ease-out forwards}
+@keyframes fxSet{0%{opacity:0;transform:translateY(-6vh)}15%{opacity:.95}80%{opacity:.85}100%{opacity:0;transform:translateY(26vh)}}
+@keyframes fxRise{0%{opacity:0;transform:translateY(0)}20%{opacity:.95}85%{opacity:.85}100%{opacity:0;transform:translateY(-34vh)}}
+.fx-storm .fx-dark{background:rgba(6,10,24,.5);opacity:0;transition:opacity .5s}
+.fx-storm.fx-on .fx-dark{opacity:1}
+.fx-flash{background:radial-gradient(120% 90% at var(--fxx,60%) 0%,rgba(235,240,255,.95),rgba(190,205,255,.55) 40%,rgba(120,140,220,.15) 75%);opacity:0}
+.fx-flash.go{animation:fxFlash .9s ease-out}
+@keyframes fxFlash{0%{opacity:0}6%{opacity:1}14%{opacity:.15}22%{opacity:.85}40%{opacity:.1}100%{opacity:0}}
+.fx-bolt{opacity:0}.fx-bolt.go{animation:fxBolt .5s ease-out}
+@keyframes fxBolt{0%{opacity:0}8%{opacity:1}30%{opacity:.4}45%{opacity:.9}100%{opacity:0}}
+.fx-rain .fx-dark{background:linear-gradient(180deg,rgba(40,55,80,.35),rgba(20,30,50,.25));opacity:0;transition:opacity .8s}
+.fx-rain.fx-on .fx-dark{opacity:1}
+/* night sky behind the page, 11 PM – 3 AM India time */
+#nightsky{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity 2.5s ease}
+html.night-mood #nightsky{opacity:1}
+html.night-mood body{background:#060a17}
+html.night-mood .s:not(.alt){background:transparent}
+#nightsky canvas{position:absolute;inset:0;width:100%;height:100%}
+.moon{position:absolute;top:118px;right:6vw;width:clamp(54px,7vw,96px);aspect-ratio:1}
+.moon canvas{position:static;width:100%;height:100%}
+@media (prefers-reduced-motion:reduce){.fx-sun,.fx-flash.go,.fx-bolt.go{animation:none}}
 .gal figure[data-more]{display:none}.gal.all figure[data-more]{display:block}.paybox{grid-column:1/-1;border:1px solid rgba(217,173,85,.45);border-radius:var(--r);background:var(--panel);overflow:hidden}.paybox>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px}.paybox>summary::-webkit-details-marker{display:none}.paybox>summary span{display:grid;gap:4px}.paybox>summary b{font-size:1.1rem}.paybox>summary small{color:var(--muted);font-size:.84rem}.paybox>summary i{font-style:normal;font-size:1.6rem;color:var(--gold-hi);transition:transform .2s}.paybox[open]>summary i{transform:rotate(45deg)}.paybox>.upi{margin:0 24px 24px}
 .gal-more{display:flex;justify-content:center;margin-top:18px}.gal.all+.gal-more{display:none}
 .gal img,.views img{width:100%;height:100%;max-width:100%;object-fit:cover;display:block;transition:transform .6s ease}
@@ -3098,6 +3133,76 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   </div>
 </div>
 <script>(function(){var b=document.getElementById('galMore');if(b)b.addEventListener('click',function(){var g=document.querySelector('.gal');g.classList.add('all');});})();</script>
+<script>
+/* ---- sky & weather moments: tap Sunrise and sunset for dawn or dusk light, Weather for thunder or rain;
+   from 11 PM to 3 AM (India time) the page shows the real night sky with tonight's moon. Preview: ?fx=dusk|dawn|thunder|rain|night ---- */
+(function(){
+  var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function ist(){return new Date(Date.now()+330*60000);}
+  var fx=document.createElement('div');fx.id='fx';fx.setAttribute('aria-hidden','true');document.body.appendChild(fx);
+  var busy=false;
+  function done(ms){setTimeout(function(){fx.classList.remove('fx-on');setTimeout(function(){fx.className='';fx.innerHTML='';busy=false;},1700);},ms);}
+  function sky(kind){if(busy)return;busy=true;
+    fx.className='fx-'+kind;fx.innerHTML='<div class="fx-tint"></div><div class="fx-glow"></div><div class="fx-sun"></div>';
+    requestAnimationFrame(function(){requestAnimationFrame(function(){fx.classList.add('fx-on');});});done(6200);}
+  function seg(x,y,n,spread,step){var d='M'+x.toFixed(1)+' '+y.toFixed(1),pts=[];for(var i=0;i<n;i++){x+=(Math.random()-.5)*spread;y+=step*(.5+Math.random());d+=' L'+x.toFixed(1)+' '+y.toFixed(1);pts.push([x,y]);}return {d:d,pts:pts};}
+  function bolt(){var x0=25+Math.random()*50,main=seg(x0,-2,26,3.2,2.4),paths=[main.d];
+    for(var b=0;b<3;b++){var p=main.pts[4+Math.floor(Math.random()*14)];paths.push(seg(p[0],p[1],6+Math.floor(Math.random()*6),4,2).d);}
+    var g=paths.map(function(d,i){var w=i?.12:.22;return '<path d="'+d+'" stroke="rgba(170,190,255,.35)" stroke-width="'+(w*6)+'"/><path d="'+d+'" stroke="#f4f7ff" stroke-width="'+w+'"/>';}).join('');
+    return {x:x0,svg:'<svg class="fx-bolt" viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%" fill="none" stroke-linejoin="round" stroke-linecap="round"><g style="filter:blur(.15px)">'+g+'</g></svg>'};}
+  function thunder(){if(busy)return;busy=true;var b=bolt();
+    fx.className='fx-storm';fx.innerHTML='<div class="fx-dark"></div><div class="fx-flash"></div>'+b.svg;fx.style.setProperty('--fxx',b.x+'%');
+    requestAnimationFrame(function(){fx.classList.add('fx-on');});
+    var f=fx.querySelector('.fx-flash'),bo=fx.querySelector('.fx-bolt');
+    function strike(t){setTimeout(function(){if(RM)return;f.classList.remove('go');bo.classList.remove('go');void f.offsetWidth;f.classList.add('go');bo.classList.add('go');},t);}
+    strike(250);strike(1300);strike(2100);done(2900);}
+  function rain(){if(busy)return;busy=true;
+    fx.className='fx-rain';fx.innerHTML='<div class="fx-dark"></div><canvas></canvas>';requestAnimationFrame(function(){fx.classList.add('fx-on');});
+    var c=fx.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1),W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;
+    var N=Math.round(innerWidth*.45),drops=[];for(var i=0;i<N;i++)drops.push({x:Math.random()*W,y:Math.random()*H,l:(10+Math.random()*16)*dpr,v:(14+Math.random()*10)*dpr,a:.15+Math.random()*.35});
+    var t0=performance.now(),dur=4800;
+    (function frame(t){var k=(t-t0)/dur;if(k>1||RM){x.clearRect(0,0,W,H);return;}
+      var fade=k<.12?k/.12:k>.8?(1-k)/.2:1;x.clearRect(0,0,W,H);x.lineCap='round';
+      drops.forEach(function(d){x.strokeStyle='rgba(200,215,235,'+(d.a*fade).toFixed(3)+')';x.lineWidth=dpr;x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d.x-d.l*.18,d.y+d.l);x.stroke();
+        d.y+=d.v;d.x-=d.v*.18;if(d.y>H){d.y=-d.l;d.x=Math.random()*W*1.1;}});
+      requestAnimationFrame(frame);})(t0);
+    done(4800);}
+  function weatherMoment(){var w=window.NK_WX,c=w&&w.current?w.current.weather_code:null;if(c==null)return;
+    if(c>=95)thunder();else if((c>=51&&c<=67)||(c>=80&&c<=82))rain();}
+  /* sunrise card: dawn light before noon, dusk light after */
+  var sun=document.getElementById('gwSun');
+  if(sun)sun.addEventListener('click',function(e){e.preventDefault();sky(ist().getUTCHours()<12?'dawn':'dusk');});
+  var wx=document.getElementById('gwWx');if(wx)wx.addEventListener('click',function(){weatherMoment();});
+
+  /* ---------- the night sky (11 PM – 3 AM) ---------- */
+  function moonPhase(){var syn=29.530588853,ref=Date.UTC(2000,0,6,18,14)/864e5,now=Date.now()/864e5;var p=((now-ref)%syn+syn)%syn/syn;return p;} // 0 new, .5 full
+  function drawMoon(cv,p){var s=cv.width,r=s*.36,cx=s/2,cy=s/2,x=cv.getContext('2d');x.clearRect(0,0,s,s);
+    var g=x.createRadialGradient(cx,cy,r*.95,cx,cy,s*.5);g.addColorStop(0,'rgba(220,228,255,.18)');g.addColorStop(1,'rgba(220,228,255,0)');x.fillStyle=g;x.beginPath();x.arc(cx,cy,s*.5,0,7);x.fill();
+    x.save();x.beginPath();x.arc(cx,cy,r,0,7);x.clip();
+    var b=x.createRadialGradient(cx-r*.3,cy-r*.3,r*.1,cx,cy,r);b.addColorStop(0,'#f4f1e6');b.addColorStop(1,'#cfcab9');x.fillStyle=b;x.fillRect(0,0,s,s);
+    [[-.35,-.2,.28],[.1,-.35,.2],[.25,.1,.3],[-.1,.3,.22],[-.42,.25,.14],[.38,-.12,.12]].forEach(function(m){var mg=x.createRadialGradient(cx+m[0]*r,cy+m[1]*r,0,cx+m[0]*r,cy+m[1]*r,m[2]*r);mg.addColorStop(0,'rgba(120,118,110,.45)');mg.addColorStop(1,'rgba(120,118,110,0)');x.fillStyle=mg;x.fillRect(0,0,s,s);});
+    // shadow: waxing lights the right side, waning the left
+    var k=Math.cos(2*Math.PI*p),wax=p<.5;x.fillStyle='rgba(6,10,22,.9)';x.shadowColor='rgba(6,10,22,.9)';x.shadowBlur=s*.02;x.beginPath();
+    if(wax){x.arc(cx,cy,r,Math.PI/2,Math.PI*1.5,false);x.ellipse(cx,cy,Math.abs(k)*r,r,0,-Math.PI/2,Math.PI/2,k<0);}
+    else{x.arc(cx,cy,r,-Math.PI/2,Math.PI/2,false);x.ellipse(cx,cy,Math.abs(k)*r,r,0,Math.PI/2,-Math.PI/2,k<0);}
+    x.fill();x.restore();}
+  function night(force){var h=ist().getUTCHours();if(!force&&!(h>=23||h<3))return;
+    var ns=document.createElement('div');ns.id='nightsky';ns.setAttribute('aria-hidden','true');ns.innerHTML='<canvas></canvas><div class="moon"><canvas width="200" height="200"></canvas></div>';document.body.insertBefore(ns,document.body.firstChild);
+    var c=ns.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1);
+    function stars(){var W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;x.clearRect(0,0,W,H);
+      var sg=x.createLinearGradient(0,0,0,H);sg.addColorStop(0,'#050916');sg.addColorStop(1,'#0b1226');x.fillStyle=sg;x.fillRect(0,0,W,H);
+      var n=Math.round(innerWidth*innerHeight/2600),seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
+      for(var i=0;i<n;i++){var r=rnd(),sz=r<.92?.5+rnd()*.6:1+rnd()*.9;x.fillStyle='rgba('+(r<.1?'255,236,214':r<.2?'214,226,255':'240,244,255')+','+(.25+rnd()*.6).toFixed(2)+')';x.beginPath();x.arc(rnd()*W,rnd()*H,sz*dpr,0,7);x.fill();}
+      // a faint band of the Milky Way
+      var mw=x.createLinearGradient(0,H*.1,W,H*.9);mw.addColorStop(0,'rgba(180,190,230,0)');mw.addColorStop(.5,'rgba(180,190,230,.05)');mw.addColorStop(1,'rgba(180,190,230,0)');x.fillStyle=mw;x.fillRect(0,0,W,H);}
+    stars();addEventListener('resize',stars);drawMoon(ns.querySelector('.moon canvas'),moonPhase());
+    document.documentElement.classList.add('night-mood');}
+  var q=(location.search.match(/[?&]fx=(\w+)/)||[])[1];
+  night(q==='night');
+  if(q==='dusk'||q==='dawn')setTimeout(function(){sky(q);},900);if(q==='thunder')setTimeout(thunder,900);if(q==='rain')setTimeout(rain,900);
+  window.nkFx={sky:sky,thunder:thunder,rain:rain,night:night};
+})();
+</script>
 <script src="pricing.js"></script>
 <script src="calendar.js"></script>
 <script>function nkPh(v){var s=String(v||'').trim(),d=s.replace(/\D/g,'');if(!d)return '';var i=/^(\+|00)/.test(s);if(i&&s.charAt(0)==='0')d=d.slice(2);if(i){if(d.indexOf('91')===0&&/^[6-9]\d{9}$/.test(d.slice(2)))return d.slice(2);return d.length>=8&&d.length<=15&&d.indexOf('91')!==0?d:'';}if(d.length===12&&d.indexOf('91')===0)d=d.slice(2);if(d.length===11&&d.charAt(0)==='0')d=d.slice(1);if(/^[6-9]\d{9}$/.test(d))return d;return d.length>=11&&d.length<=15&&d.charAt(0)!=='0'&&d.indexOf('91')!==0?d:'';}</script>
@@ -3701,7 +3806,7 @@ var WA = "917501101137";
   function wxLoad(){
     return fetch('https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LNG+'&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,uv_index_max,sunrise,sunset&timezone=Asia%2FKolkata&forecast_days=7')
     .then(function(r){return r.json();}).then(function(w){
-      WXD=w;
+      WXD=w;window.NK_WX=w;
       var c=w.current,dl=w.daily;
       $('gTemp').innerHTML=Math.round(c.temperature_2m)+'°<small>'+(WX[c.weather_code]||'')+'</small>';
       $('gWxSub').textContent='Humidity '+c.relative_humidity_2m+'% · today '+Math.round(dl.temperature_2m_min[0])+'° to '+Math.round(dl.temperature_2m_max[0])+'°'+(dl.precipitation_probability_max[0]!=null?' · rain '+dl.precipitation_probability_max[0]+'%':'');
