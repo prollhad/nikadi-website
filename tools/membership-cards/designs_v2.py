@@ -69,7 +69,7 @@ def platinum_front(cv, m, art_only=False):
         cv.fill(rect(-3, -3, W + 6, 14.6), ('lin', 0, 14.6, 0, -3, [(0, '#10275a'), (1, '#07122b')]), 'INK')
         waves(cv, 13.4, 7, .55, '#3c5f9f', .11, 'INK')
         waves(cv, 13.4, 2, .55, P_['plat2'], .12, 'FOIL', x0=cx - 22, x1=cx + 22)
-        padma(cv, cx, 13.4, .55, '#183a76', '#21478a', P_['plat'], P_['plat2'], .14)
+        padma(cv, cx, 13.4, .4, '#183a76', '#21478a', P_['plat'], P_['plat2'], .14)
         # reflection
         for k, wdt in enumerate((10, 7, 4.5)):
             cv.stroke(poly([(cx - wdt, 10.6 - k * 1.3), (cx + wdt, 10.6 - k * 1.3)], False), '#5878b2', .1, 'INK')
@@ -80,12 +80,27 @@ def platinum_front(cv, m, art_only=False):
         for x, y, r in ((9, 46, .16), (16, 50, .1), (24, 44.5, .12), (W - 10, 47, .16), (W - 18, 50.5, .1), (W - 25, 44, .12), (6, 38, .1), (W - 6, 37, .1)):
             cv.fill(circle(x, y, r), P_['plat'], 'FOIL')
     clipped(cv, full, art)
-    # lettering on the lotus
-    shapes, mw = mark_shapes(cx - 2.5, 41.6, 5.8)
-    for t, c in shapes: cv.fill(c, {'dark': P_['plat'], 'light': P_['plat2'], 'arc': P_['plat2']}[t], 'FOIL')
-    T(cv, 'gloock', 'NIKADI', cx, 34.4, 13.0, P_['plat'], .2, align='center', layer='FOIL')
-    T(cv, 'arsenal', 'P L A T I N U M', cx, 30.0, 5.0, P_['plat'], .3, align='center', layer='FOIL')
-    T(cv, 'work', 'SRI DHAM MAYAPUR', cx, 26.6, 3.2, P_['sub'], .4, align='center', layer='FOIL')
+    # inset double frame with small lotus-bud corners (silver foil)
+    cv.stroke(rrect(2.6, 2.6, W - 5.2, H - 5.2, 1.9), P_['plat2'], .16, 'FOIL')
+    cv.stroke(rrect(3.5, 3.5, W - 7.0, H - 7.0, 1.4), '#5d77a6', .08, 'FOIL')
+    for (x, y, sx, sy) in ((3.5, 3.5, 1, 1), (W - 3.5, 3.5, -1, 1), (3.5, H - 3.5, 1, -1), (W - 3.5, H - 3.5, -1, -1)):
+        cv.stroke([('M', x + sx * 2.2, y), ('C', x + sx * 1.1, y + sy * .2, x + sx * .2, y + sy * 1.1, x, y + sy * 2.2)], P_['plat'], .14, 'FOIL')
+        cv.fill(circle(x + sx * 1.15, y + sy * 1.15, .28), P_['plat'], 'FOIL')
+    # lockup: NIKADI with the building mark standing over N-I-K, as in the logo
+    SH = [(0, '#ffffff'), (.35, '#dfe6f0'), (.55, '#9eacc2'), (.75, '#eef2f7'), (1, '#b9c4d4')]
+    pt = 14.5; tr = .2
+    wd = text_width('gloock', 'NIKADI', pt, tr); x0 = cx - wd / 2; yb = 31.6
+    wnik = text_width('gloock', 'NIK', pt, tr) - tr * pt * PT
+    mh = wnik / .92
+    mw = mh * 318 / 345
+    shapes, mw = mark_shapes(x0 + (wnik - mw) / 2, yb + 5.75, mh)
+    for t, c in shapes: cv.fill(c, {'dark': ('lin', 0, yb + 5.6 + mh, 0, yb + 5.6, SH), 'light': '#8f9fb8', 'arc': ('lin', x0, 0, x0 + wnik, 0, SH)}[t], 'FOIL')
+    T(cv, 'gloock', 'NIKADI', x0, yb, pt, ('lin', x0, yb + 6, x0 + wd, yb, SH), tr, layer='FOIL')
+    T(cv, 'arsenal', 'P L A T I N U M', cx, 27.4, 5.0, P_['plat'], .32, align='center', layer='FOIL')
+    T(cv, 'work', 'SRI DHAM MAYAPUR', cx, 24.0, 3.0, P_['sub'], .42, align='center', layer='FOIL')
+    for sg in (-1, 1):
+        cv.stroke(poly([(cx + sg * 12.2, 25.0), (cx + sg * 18.0, 25.0)], False), P_['plat2'], .1, 'FOIL')
+        cv.fill([('M', cx + sg * 11.6, 25.45), ('L', cx + sg * 12.05, 25.0), ('L', cx + sg * 11.6, 24.55), ('L', cx + sg * 11.15, 25.0), ('Z',)], P_['plat'], 'FOIL')
     if not art_only:
         T(cv, 'arsenal', m['name'].upper(), 6, 6.0, 7.0, P_['plat'], .14, layer='FOIL')
         T(cv, 'plexmono', m['no'], W - 6, 6.0, 4.8, P_['plat2'], .12, align='right', layer='FOIL')
@@ -198,10 +213,55 @@ def mandir(cv, lw=.14):
     for x, y, r in ((44, 48, .2), (50, 44, .12), (79, 49, .22), (82.5, 42, .12), (74, 47.5, .1), (47, 39.5, .1), (83, 33, .14), (41, 30, .1)):
         cv.fill(circle(x, y, r), '#f1d998' if r > .15 else '#a99a7a', 'GOLD')
 
+def rosette(cv, cx, cy, r0, amp, m, n, color, lw, layer, pts=480, rot=0):
+    for j in range(n):
+        ph = 2 * math.pi * j / (m * n) + rot
+        cmds = []
+        for i in range(pts + 1):
+            t = 2 * math.pi * i / pts
+            r = r0 + amp * math.sin(m * t + ph * m)
+            cmds.append((cx + r * math.cos(t), cy + r * math.sin(t)))
+        cv.stroke(poly(cmds, False), color, lw, layer)
+
+def lotus_badge(cv, cx, cy, s, G, G2, layer='GOLD'):
+    for i in range(8):
+        a = math.pi / 2 + 2 * math.pi * i / 8
+        p, P, tip = petal(cx, cy, a - math.pi / 2, s * 3.1, s * 1.05)
+        cv.fill(p, ('lin', cx, cy + s * 3, cx, cy, [(0, '#f7e7b4'), (1, '#b48a3e')]), layer)
+    for i in range(8):
+        a = math.pi / 2 + 2 * math.pi * (i + .5) / 8
+        p, P, tip = petal(cx, cy, a - math.pi / 2, s * 2.2, s * .8)
+        cv.fill(p, '#8a6a2c', layer)
+    cv.fill(circle(cx, cy, s * .75), ('rad', cx - s * .2, cy + s * .2, s * .9, [(0, '#fff3cf'), (1, '#c9a35a')]), layer)
+    for k in range(10):
+        a = 2 * math.pi * k / 10
+        cv.fill(circle(cx + s * .48 * math.cos(a), cy + s * .48 * math.sin(a), s * .07), '#7a5824', layer)
+
 def plus_front(cv, m, art_only=False):
-    cv.fill(rrect(0, 0, W, H, R), ('lin', 0, H, 0, 0, [(0, '#050506'), (.6, '#121214'), (1, '#1c1b1f')]), 'BASE')
-    clipped(cv, rrect(0, 0, W, H, R), lambda: mandir(cv))
-    brand_row(cv, 6, H - 6 - 8.2, 8.2, {'dark': X['gold3'], 'light': X['gold2'], 'arc': X['gold']}, 'gloock', 13.5, X['gold3'], X['steel'], layer='GOLD', word_track=.2, sub=False)
+    full = rrect(0, 0, W, H, R)
+    cv.fill(full, ('lin', 0, H, W, 0, [(0, '#0b0b0d'), (.45, '#18181b'), (.6, '#202024'), (1, '#0a0a0c')]), 'BASE')
+    cx, cy = W - 19.5, H / 2 - 1
+    def art():
+        # brushed steel: fine horizontal hairlines
+        for k in range(0, 270):
+            y = -1 + k * .21
+            col = '#1d1d21' if k % 3 else '#232328'
+            cv.stroke(poly([(-2, y), (W + 2, y)], False), col, .045, 'ENGRAVE')
+        # soft sheen behind the rosette
+        # guilloche rosette, engraved steel, with a gold inner band
+        rosette(cv, cx, cy, 26.5, 1.9, 22, 9, '#5d6066', .05, 'ENGRAVE')
+        rosette(cv, cx, cy, 21.0, 1.6, 18, 9, '#73767c', .05, 'ENGRAVE', rot=.2)
+        rosette(cv, cx, cy, 15.6, 1.3, 15, 8, '#8f9297', .05, 'ENGRAVE', rot=.4)
+        rosette(cv, cx, cy, 10.6, 1.0, 12, 8, '#b59050', .055, 'GOLD', rot=.1)
+        for r, c, w in ((29.0, '#46484d', .06), (23.9, '#5a5c61', .05), (18.4, '#6a6d72', .05), (13.1, '#a8823f', .07), (7.9, '#d4b06a', .09), (7.2, '#a8823f', .05)):
+            cv.stroke(circle(cx, cy, r), c, w, 'GOLD' if c.startswith('#a8') or c.startswith('#d4') else 'ENGRAVE')
+        for k in range(72):
+            a = 2 * math.pi * k / 72
+            cv.fill(circle(cx + 13.1 * math.cos(a), cy + 13.1 * math.sin(a), .1), '#d4b06a', 'GOLD')
+        lotus_badge(cv, cx, cy, 1.9, '#d4b06a', '#8a6a2c')
+    clipped(cv, full, art)
+    # thin gold rule down the card, and the lettering
+    brand_row(cv, 6, H - 6 - 8.2, 8.2, {'dark': X['gold3'], 'light': X['gold2'], 'arc': X['gold']}, 'gloock', 13.5, ('lin', 0, H - 5, 0, H - 14, [(0, '#f8e7b5'), (.5, '#d4b06a'), (1, '#a8823f')]), X['steel'], layer='GOLD', word_track=.2, sub=False)
     T(cv, 'arsenal', 'P L A T I N U M   P L U S', 6, H - 19.6, 5.0, X['gold3'], .3, layer='GOLD')
     cv.stroke(poly([(6, H - 21.4), (17, H - 21.4)], False), X['gold'], .14, 'GOLD')
     T(cv, 'work', 'SRI DHAM MAYAPUR', 6, H - 24.6, 3.2, X['steel'], .4, layer='ENGRAVE')

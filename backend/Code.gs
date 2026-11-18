@@ -75,7 +75,9 @@ var RATE_PERIODS = [
 function rateKind_(type) { var t = String(type || ''); return /large/i.test(t) ? 'double' : /twin/i.test(t) ? 'twin' : 'double'; }
 function todayIst_() { return Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM-dd'); }
 function ratePeriod_(ymd) { ymd = String(ymd || todayIst_()).slice(0, 10); for (var i = 0; i < RATE_PERIODS.length; i++) if (ymd >= RATE_PERIODS[i].from && ymd <= RATE_PERIODS[i].to) return RATE_PERIODS[i]; return RATE_PERIODS[RATE_PERIODS.length - 1]; }
-function rateFor_(type, ymd) { return ratePeriod_(ymd)[rateKind_(type)]; }
+/* Fridays and Saturdays in offer months cost 500 more a night (busy days in Mayapur). */
+function friSat_(ymd) { var p = String(ymd || '').split('-'); if (p.length < 3) return false; var w = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay(); return w === 5 || w === 6; }
+function rateFor_(type, ymd) { var pr = ratePeriod_(ymd); return pr[rateKind_(type)] + (pr.offer && ymd && friSat_(ymd) ? 500 : 0); }
 function addDayYmd_(ymd, n) { var p = ymd.split('-'); return Utilities.formatDate(new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n, 12)), 'UTC', 'yyyy-MM-dd'); }
 /** Price of a stay with every night priced on its own date; pct = member discount. */
 function stayQuote_(type, ci, co, rooms, pct) {
@@ -83,7 +85,7 @@ function stayQuote_(type, ci, co, rooms, pct) {
   var q = { nights: 0, total: 0, offerTotal: 0, rates: [], offer: '' }, d = String(ci || '').slice(0, 10), end = String(co || '').slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !/^\d{4}-\d{2}-\d{2}$/.test(end) || end <= d) return q;
   while (d < end && q.nights < 400) {
-    var per = ratePeriod_(d), r = per[rateKind_(type)], m = Math.round(r * (100 - (Number(pct) || 0)) / 100);
+    var per = ratePeriod_(d), r = rateFor_(type, d), m = Math.round(r * (100 - (Number(pct) || 0)) / 100);
     q.rates.push(m); q.total += m * rooms; q.offerTotal += r * rooms; if (per.offer && !q.offer) q.offer = per.offer;
     q.nights++; d = addDayYmd_(d, 1);
   }

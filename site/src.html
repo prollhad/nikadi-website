@@ -348,6 +348,7 @@ section.alt{background:var(--band)}
 .dist li > span:first-child{min-width:0}
 .dist .t{white-space:nowrap;color:var(--gold-hi);font-variant-numeric:tabular-nums}
 .dist .t small{color:var(--muted);font-size:.8rem;margin-left:4px}
+.busy-note{margin:10px 0 0;padding:10px 14px;border-radius:12px;border:1px solid rgba(232,140,60,.45);background:rgba(232,140,60,.08);color:var(--ink);font-size:.86rem;max-width:62ch}.busy-note b{color:#f2a65e}
 .dist li{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px 14px}
 .dir-go{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid rgba(217,173,85,.5);color:var(--gold-hi);text-decoration:none;font-size:.74rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:background .2s,border-color .2s}
 .dir-go svg{width:14px;height:14px}.dir-go:hover,.dir-go:focus-visible{background:rgba(217,173,85,.14);border-color:var(--gold)}
@@ -1160,8 +1161,8 @@ html{overflow-x:hidden}
 .a-silver{--art:url(/app/icons/card-silver.svg);color:#23272c}
 .a-gold{--art:url(/app/icons/card-gold.svg);color:#efd594;padding:0 9% 7.4% 9%!important}
 .a-gold .a-pts b{color:#f3dda0}
-.a-platinum{--art:url(/app/icons/card-platinum.svg?v=2);color:#e6ebf2;padding:0 7% 5%!important}
-.a-plus{--art:url(/app/icons/card-plus.svg?v=2);color:#d9dadc;padding:0 9% 7.4% 9%!important}
+.a-platinum{--art:url(/app/icons/card-platinum.svg?v=3);color:#e6ebf2;padding:0 7% 5%!important}
+.a-plus{--art:url(/app/icons/card-plus.svg?v=3);color:#d9dadc;padding:0 9% 7.4% 9%!important}
 .mcard.art2.a-plus .a-bot{flex-direction:column-reverse;align-items:flex-start;max-width:46%;gap:8px}
 .mcard.art2.a-plus .a-pts{justify-items:start;text-align:left}
 .a-plus .a-pts b{background:linear-gradient(180deg,#f3dfa6,#c9a35a 70%,#a9823e);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -1722,7 +1723,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 
     <div class="avc rv" id="avc">
       <div class="avc-head">
-        <div><p class="kicker rule">Live availability</p><h3>Which nights are free</h3><p class="avc-lead">Tap your check-in date, then your check-out date. Prices shown are per room, per night.</p></div>
+        <div><p class="kicker rule">Live availability</p><h3>Which nights are free</h3><p class="avc-lead">Tap your check-in date, then your check-out date. Prices shown are per room, per night.</p><p class="busy-note"><b>Busy days in Mayapur:</b> Fridays, Saturdays and festival dates fill up first and cost ₹500 more a night on offer dates. Book early to get the lower rates.</p></div>
         <div class="avc-tabs" role="tablist" aria-label="Room type">
           <button type="button" role="tab" aria-selected="true" data-avt="Deluxe Double">Deluxe Double</button>
           <button type="button" role="tab" aria-selected="false" data-avt="Deluxe Twin">Deluxe Twin</button>
@@ -3121,7 +3122,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       card.querySelectorAll('[data-std="'+k+'"]').forEach(function(el){el.textContent=(now<std||mine<std)?inr(std):'';});
       card.querySelectorAll('[data-now="'+k+'"]').forEach(function(el){el.textContent=inr(pct?mine:now);});
     });
-    $('ocFoot').textContent=pct?'Your '+m.tier+' discount of '+pct+'% is already taken off'+(offer?' the offer price.':'.'):(offer?'Per room, per night. Come and enjoy your nights at Nikadi. Members pay even less.':'Per room, per night. Members save 5–20% on every night.'); }
+    $('ocFoot').textContent=pct?'Your '+m.tier+' discount of '+pct+'% is already taken off'+(offer?' the offer price.':'.'):(offer?'Per room, per night. Fridays and Saturdays ₹500 more. Members pay even less.':'Per room, per night. Members save 5–20% on every night.'); }
     /* room cards and room pages */
     document.querySelectorAll('.price[data-kind]').forEach(function(el){
       var k=el.dataset.kind, std=R.STANDARD[k], now=P[k], mine=R.memberRate(now,pct);
@@ -3719,8 +3720,8 @@ var WA = "917501101137";
   var R=window.NikadiRates;
   if(R&&$('gPrD')){
     var td=R.today(),P=R.period(td),inr=function(n){return '₹'+Number(n).toLocaleString('en-IN');};
-    $('gPrD').textContent=inr(P.double);$('gPrT').textContent=inr(P.twin);
-    if(R.standard('double')>P.double){$('gPrDs').textContent=inr(R.standard('double'));$('gPrTs').textContent=inr(R.standard('twin'));}
+    $('gPrD').textContent=inr(R.rate('double',td));$('gPrT').textContent=inr(R.rate('twin',td));
+    if(R.standard('double')>R.rate('double',td)){$('gPrDs').textContent=inr(R.standard('double'));$('gPrTs').textContent=inr(R.standard('twin'));}
     if(P.offer)$('gPrLbl').textContent="Tonight's price · "+P.offer.name;
   }
 

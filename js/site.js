@@ -33,7 +33,7 @@ try{
       card.querySelectorAll('[data-std="'+k+'"]').forEach(function(el){el.textContent=(now<std||mine<std)?inr(std):'';});
       card.querySelectorAll('[data-now="'+k+'"]').forEach(function(el){el.textContent=inr(pct?mine:now);});
     });
-    $('ocFoot').textContent=pct?'Your '+m.tier+' discount of '+pct+'% is already taken off'+(offer?' the offer price.':'.'):(offer?'Per room, per night. Come and enjoy your nights at Nikadi. Members pay even less.':'Per room, per night. Members save 5–20% on every night.'); }
+    $('ocFoot').textContent=pct?'Your '+m.tier+' discount of '+pct+'% is already taken off'+(offer?' the offer price.':'.'):(offer?'Per room, per night. Fridays and Saturdays ₹500 more. Members pay even less.':'Per room, per night. Members save 5–20% on every night.'); }
     /* room cards and room pages */
     document.querySelectorAll('.price[data-kind]').forEach(function(el){
       var k=el.dataset.kind, std=R.STANDARD[k], now=P[k], mine=R.memberRate(now,pct);
@@ -639,8 +639,8 @@ try{
   var R=window.NikadiRates;
   if(R&&$('gPrD')){
     var td=R.today(),P=R.period(td),inr=function(n){return '₹'+Number(n).toLocaleString('en-IN');};
-    $('gPrD').textContent=inr(P.double);$('gPrT').textContent=inr(P.twin);
-    if(R.standard('double')>P.double){$('gPrDs').textContent=inr(R.standard('double'));$('gPrTs').textContent=inr(R.standard('twin'));}
+    $('gPrD').textContent=inr(R.rate('double',td));$('gPrT').textContent=inr(R.rate('twin',td));
+    if(R.standard('double')>R.rate('double',td)){$('gPrDs').textContent=inr(R.standard('double'));$('gPrTs').textContent=inr(R.standard('twin'));}
     if(P.offer)$('gPrLbl').textContent="Tonight's price · "+P.offer.name;
   }
 

@@ -2672,5 +2672,19 @@
 "Все маршруты начинаются от Nikadi Guest House.",
 "所有路线均从 Nikadi 宾馆出发。",
 "Todas las rutas salen de Nikadi Guest House."
+],
+"<b>Busy days in Mayapur:</b> Fridays, Saturdays and festival dates fill up first and cost ₹500 more a night on offer dates. Book early to get the lower rates.": [
+"<b>মায়াপুরে ব্যস্ত দিন:</b> শুক্র, শনিবার ও উৎসবের দিনগুলো আগে ভরে যায় এবং অফারের সময় প্রতি রাতে ₹৫০০ বেশি। কম দামে পেতে আগে বুক করুন।",
+"<b>मायापुर में व्यस्त दिन:</b> शुक्रवार, शनिवार और उत्सव की तारीखें सबसे पहले भरती हैं और ऑफ़र के दिनों में प्रति रात ₹500 ज़्यादा लगते हैं। कम दाम के लिए पहले से बुक करें।",
+"<b>Загруженные дни в Маяпуре:</b> пятницы, субботы и праздники заполняются первыми и в дни акции стоят на ₹500 дороже за ночь. Бронируйте заранее, чтобы получить цену ниже.",
+"<b>玛雅普尔的繁忙日子：</b>周五、周六和节日最先订满，优惠期间每晚加收 ₹500。提早预订可享更低价格。",
+"<b>Días de mucha demanda en Mayapur:</b> viernes, sábados y festivales se llenan primero y en fechas de oferta cuestan ₹500 más por noche. Reserva pronto para conseguir el precio más bajo."
+],
+"Per room, per night. Fridays and Saturdays ₹{0} more. Members pay even less.": [
+"প্রতি রুম, প্রতি রাত। শুক্র ও শনিবার ₹{0} বেশি। সদস্যরা আরও কম দেন।",
+"प्रति कमरा, प्रति रात। शुक्रवार और शनिवार ₹{0} ज़्यादा। सदस्य और भी कम देते हैं।",
+"За номер, за ночь. В пятницу и субботу на ₹{0} дороже. Участники платят ещё меньше.",
+"每间每晚。周五、周六加收 ₹{0}。会员价更低。",
+"Por habitación y noche. Viernes y sábados ₹{0} más. Los miembros pagan aún menos."
 ]
 }

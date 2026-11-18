@@ -166,9 +166,11 @@ var DESK_RATE_PERIODS = [
   { from: '2027-05-06', to: '9999-12-31', double: 3500, twin: 3000 }
 ];
 function deskRateOn(type, ymd) {
+  /* Fridays and Saturdays in offer months cost 500 more a night (busy days in Mayapur). */
+  var up = 0; if (/^\d{4}-\d\d-\d\d/.test(String(ymd || ''))) { var pp = String(ymd).split('-'), wd = new Date(Date.UTC(+pp[0], +pp[1] - 1, +pp[2])).getUTCDay(); if (wd === 5 || wd === 6) up = 500; }
   var k = /large/i.test(String(type || '')) ? 'double' : /twin/i.test(String(type || '')) ? 'twin' : 'double';
-  for (var i = 0; i < DESK_RATE_PERIODS.length; i++) if (ymd >= DESK_RATE_PERIODS[i].from && ymd <= DESK_RATE_PERIODS[i].to) return DESK_RATE_PERIODS[i][k];
-  return DESK_RATE_PERIODS[DESK_RATE_PERIODS.length - 1][k];
+  for (var i = 0; i < DESK_RATE_PERIODS.length; i++) if (ymd >= DESK_RATE_PERIODS[i].from && ymd <= DESK_RATE_PERIODS[i].to) return DESK_RATE_PERIODS[i][k] + (DESK_RATE_PERIODS[i].double < 5000 ? up : 0);
+  var last = DESK_RATE_PERIODS[DESK_RATE_PERIODS.length - 1]; return last[k] + (last.double < 5000 ? up : 0);
 }
 
 var DESK_DEFAULTS = {

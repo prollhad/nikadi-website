@@ -3,6 +3,10 @@
    A night's price depends on the date of that night, not the booking date. Member discounts come off the price of the night. */
 (function (root) {
   var STANDARD = { double: 5000, twin: 4500 };
+  /* Fridays and Saturdays in offer months cost 500 more a night (busy days in Mayapur). */
+  var WEEKEND_UP = 500;
+  function isFriSat(ymd) { var p = String(ymd).split('-'), w = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay(); return w === 5 || w === 6; }
+  function nightRate(p, k, ymd) { return p[k] + (p.offer && ymd && isFriSat(ymd) ? WEEKEND_UP : 0); }
   var PERIODS = [
     { from: '2000-01-01', to: '2026-12-23', double: 3500, twin: 3000,
       offer: { name: 'Special offer', until: '23 December',
@@ -17,7 +21,7 @@
   function kind(type) { var t = String(type || ''); return /large/i.test(t) ? 'double' : /twin/i.test(t) ? 'twin' : 'double'; }
   function todayIST() { return new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10); }
   function period(ymd) { ymd = String(ymd || todayIST()).slice(0, 10); for (var i = 0; i < PERIODS.length; i++) if (ymd >= PERIODS[i].from && ymd <= PERIODS[i].to) return PERIODS[i]; return PERIODS[PERIODS.length - 1]; }
-  function rate(type, ymd) { return period(ymd)[kind(type)]; }
+  function rate(type, ymd) { ymd = String(ymd || todayIST()).slice(0, 10); return nightRate(period(ymd), kind(type), ymd); }
   function standard(type) { return STANDARD[kind(type)]; }
   function memberRate(r, pct) { return Math.round(r * (100 - (Number(pct) || 0)) / 100); }
   function addDay(ymd, n) { var p = ymd.split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)).toISOString().slice(0, 10); }
@@ -28,7 +32,7 @@
     if (!ci || !co || co <= ci) return out;
     var d = ci, first = null;
     while (d < co && out.nights < 400) {
-      var p = period(d), r = p[kind(type)], m = memberRate(r, pct);
+      var p = period(d), r = nightRate(p, kind(type), d), m = memberRate(r, pct);
       out.perNight.push({ date: d, rate: r, member: m, offer: !!p.offer });
       out.standard += standard(type) * rooms; out.offer += r * rooms; out.total += m * rooms;
       if (p.offer && !out.offerName) out.offerName = p.offer.name;
@@ -37,5 +41,5 @@
     }
     return out;
   }
-  root.NikadiRates = { STANDARD: STANDARD, PERIODS: PERIODS, kind: kind, period: period, rate: rate, standard: standard, memberRate: memberRate, quote: quote, today: todayIST };
+  root.NikadiRates = { STANDARD: STANDARD, PERIODS: PERIODS, kind: kind, period: period, rate: rate, standard: standard, memberRate: memberRate, quote: quote, today: todayIST, isFriSat: isFriSat, WEEKEND_UP: WEEKEND_UP };
 })(typeof window !== 'undefined' ? window : this);
