@@ -175,10 +175,10 @@ try{
     function hs(x,y){var n=(x*374761393+y*668265263)|0;n=(n^(n>>13))*1274126177|0;return ((n^(n>>16))&0xffff)/0xffff;}
     function vn(x,y){var xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),a=hs(xi,yi),b=hs(xi+1,yi),c=hs(xi,yi+1),d=hs(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
     function fbm(x,y,o){var t=0,am=1,f=1,s=0;for(var k=0;k<o;k++){t+=am*vn(x*f,y*f);s+=am;f*=2.03;am*=.5;}return t/s;}
-    var SIZE=420,HALF=SIZE/2,CR=[],i;
-    for(i=0;i<70;i++){var r=Math.random()<.12?14+Math.random()*16:2+Math.pow(Math.random(),2)*9;CR.push([Math.random()*SIZE-HALF,Math.random()*SIZE-HALF,r,r*(.18+Math.random()*.1)]);}
-    CR.push([0,-40,22,4.5]);
-    function height(x,z){var h=(fbm(x*.012,z*.012,5)-.5)*14+(fbm(x*.09,z*.09,3)-.5)*1.3;
+    var SIZE=420,HALF=SIZE/2,CR=[],i,HA=14,HO=0,HS=.012;
+    function craters(n,big){CR=[];for(var k=0;k<n;k++){var r=Math.random()<.12?14+Math.random()*16:2+Math.pow(Math.random(),2)*9;CR.push([Math.random()*SIZE-HALF,Math.random()*SIZE-HALF,r,r*(.18+Math.random()*.1)*(big||1)]);}if(n)CR.push([0,-40,22,4.5*(big||1)]);}
+    craters(70);
+    function height(x,z){var h=(fbm(x*HS+HO,z*HS+HO,5)-.5)*HA+(fbm(x*.09+HO,z*.09,3)-.5)*1.3;
       for(var k=0;k<CR.length;k++){var c=CR[k],dx=x-c[0],dz=z-c[1],d2=dx*dx+dz*dz,rr=c[2]*1.8;if(d2>rr*rr)continue;var d=Math.sqrt(d2)/c[2];
         if(d<1)h+=c[3]*(d*d-1);h+=c[3]*.38*Math.exp(-Math.pow((d-1)/.28,2));}
       var e=Math.max(Math.abs(x),Math.abs(z))-HALF*.82;if(e>0)h+=e*e*.02;return h;}
@@ -199,9 +199,9 @@ try{
     function rockGeo(seed){var g=new T.IcosahedronGeometry(1,2),p=g.attributes.position;for(var k=0;k<p.count;k++){var v=new T.Vector3(p.getX(k),p.getY(k),p.getZ(k)),n=.75+.5*vn(v.x*2+seed,v.y*2+v.z*2+seed*3);v.multiplyScalar(n);v.y*=.7;p.setXYZ(k,v.x,v.y,v.z);}g.computeVertexNormals();return g;}
     var rm=new T.MeshStandardMaterial({color:0x8a8783,roughness:1,flatShading:true}),dummy=new T.Object3D();
     var PAD={x:14,z:22};
-    for(var vv=0;vv<3;vv++){var im=new T.InstancedMesh(rockGeo(vv*7.3),rm,170);im.castShadow=im.receiveShadow=true;
-      for(i=0;i<170;i++){var rx,rz;do{rx=Math.random()*SIZE*.8-SIZE*.4;rz=Math.random()*SIZE*.8-SIZE*.4;}while(Math.hypot(rx-PAD.x,rz-PAD.z)<12||Math.hypot(rx,rz-8)<6);var s=Math.random()<.08?1.5+Math.random()*2.5:.15+Math.pow(Math.random(),2)*.9;
-        dummy.position.set(rx,height(rx,rz)+s*.25,rz);dummy.rotation.set(Math.random()*3,Math.random()*6,Math.random()*3);dummy.scale.set(s,s*(.6+Math.random()*.6),s);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix);}S.add(im);}
+    var ROCKS=[];function placeRocks(){ROCKS.forEach(function(im){for(var i=0;i<170;i++){var rx,rz;do{rx=Math.random()*SIZE*.8-SIZE*.4;rz=Math.random()*SIZE*.8-SIZE*.4;}while(Math.hypot(rx-PAD.x,rz-PAD.z)<12||Math.hypot(rx,rz-8)<6);var s=Math.random()<.08?1.5+Math.random()*2.5:.15+Math.pow(Math.random(),2)*.9;
+        dummy.position.set(rx,height(rx,rz)+s*.25,rz);dummy.rotation.set(Math.random()*3,Math.random()*6,Math.random()*3);dummy.scale.set(s,s*(.6+Math.random()*.6),s);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix);}im.instanceMatrix.needsUpdate=true;});}
+    for(var vv=0;vv<3;vv++){var im=new T.InstancedMesh(rockGeo(vv*7.3),rm,170);im.castShadow=im.receiveShadow=true;ROCKS.push(im);S.add(im);}placeRocks();
     var floaters=[],fg=rockGeo(11);
     for(i=0;i<70;i++){var fm=new T.Mesh(fg,rm);var fs=.2+Math.pow(Math.random(),2)*1.6;fm.scale.setScalar(fs);var fx=Math.random()*240-120,fz=Math.random()*240-120;
       fm.position.set(fx,height(fx,fz)+3+Math.random()*28,fz);fm.castShadow=true;fm.userData={b:fm.position.y,ph:Math.random()*6,rs:new T.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(.4),sp:.2+Math.random()*.5};S.add(fm);floaters.push(fm);}
@@ -231,7 +231,7 @@ try{
         var rt=new T.CanvasTexture(rc),uv=rg.attributes.uv,pp=rg.attributes.position;for(var q2=0;q2<pp.count;q2++){var d=Math.hypot(pp.getX(q2),pp.getY(q2));uv.setXY(q2,(d-r*1.3)/(r*1.0),.5);}
         var ring=new T.Mesh(rg,new T.MeshBasicMaterial({map:rt,side:T.DoubleSide,transparent:true,depthWrite:false}));ring.rotation.x=Math.PI/2.3;m.add(ring);}
       if(opts.atm){var at=new T.Mesh(new T.SphereGeometry(r*1.05,48,32),new T.MeshBasicMaterial({color:opts.atm,transparent:true,opacity:.2,side:T.BackSide}));m.add(at);}
-      var b={name:name,m:m,r:r,exit:!!opts.exit,spin:opts.spin||.01};bodies.push(b);return b;}
+      var b={name:name,m:m,lb:lb,r:r,exit:!!opts.exit,spin:opts.spin||.01};bodies.push(b);return b;}
     function std(o){return new T.MeshStandardMaterial(Object.assign({roughness:.9,metalness:0},o));}
     var SUNP=new T.Vector3(44000,22000,22000);
     var sunMesh=planet('Sun',2600,SUNP,new T.MeshBasicMaterial({color:0xfff3d6}),{big:1});
@@ -264,25 +264,62 @@ try{
     var plight=new T.PointLight(0xffa050,0,8);plight.position.set(0,.5,-.4);A.add(plight);
     S.add(A);
     /* ---- the spaceship ---- */
-    var SH=new T.Group(),hull=new T.MeshStandardMaterial({color:0xe9e6df,metalness:.55,roughness:.35}),gold=new T.MeshStandardMaterial({color:0xd4b06a,metalness:.9,roughness:.25}),dark=new T.MeshStandardMaterial({color:0x2b2f3a,metalness:.6,roughness:.4});
+    var SH=new T.Group(),hull=new T.MeshStandardMaterial({color:0xf7f7f4,metalness:.35,roughness:.3}),gold=new T.MeshStandardMaterial({color:0xf2b21b,metalness:.6,roughness:.25}),dark=new T.MeshStandardMaterial({color:0x26324d,metalness:.6,roughness:.4}),red=new T.MeshStandardMaterial({color:0xe5322d,metalness:.3,roughness:.3}),blue=new T.MeshStandardMaterial({color:0x1f6fe0,metalness:.35,roughness:.3}),orange=new T.MeshStandardMaterial({color:0xff8a1f,metalness:.3,roughness:.3});
     function sp3(g,m,x,y,z){var o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;SH.add(o);return o;}
     var body=sp3(new T.CylinderGeometry(1.1,1.4,6,24),hull,0,2,0);body.rotation.x=Math.PI/2;
-    sp3(new T.SphereGeometry(1.1,24,16),hull,0,2,3).scale.set(1,1,1.6);
+    sp3(new T.SphereGeometry(1.1,24,16),red,0,2,3).scale.set(1,1,1.6);
     var glass=sp3(new T.SphereGeometry(.9,24,16,0,Math.PI*2,0,Math.PI/2),new T.MeshStandardMaterial({color:0x6fb6ff,metalness:.2,roughness:.05,transparent:true,opacity:.75}),0,2.7,1.4);glass.scale.set(1,.8,1.5);
-    var wing=new T.BoxGeometry(5.6,.14,2.2);sp3(wing,hull,0,1.7,-.8);sp3(new T.BoxGeometry(.14,1.6,1.6),hull,0,3,-2.4);
-    sp3(new T.BoxGeometry(5.7,.18,.3),gold,0,1.72,.32);sp3(new T.CylinderGeometry(1.45,1.45,.18,24),gold,0,2,-1.2).rotation.x=Math.PI/2;
+    var wing=new T.BoxGeometry(5.6,.14,2.2);sp3(wing,blue,0,1.7,-.8);sp3(new T.BoxGeometry(.6,.18,2.3),gold,-3,1.7,-.8);sp3(new T.BoxGeometry(.6,.18,2.3),gold,3,1.7,-.8);
+    sp3(new T.BoxGeometry(.16,1.9,1.7),red,0,3.1,-2.4);sp3(new T.BoxGeometry(.18,.35,1.75),gold,0,3.9,-2.4);sp3(new T.BoxGeometry(2.4,.1,.9),blue,0,2.4,-2.6);
+    sp3(new T.BoxGeometry(5.7,.18,.3),gold,0,1.72,.32);sp3(new T.CylinderGeometry(1.45,1.45,.18,24),orange,0,2,-1.2).rotation.x=Math.PI/2;sp3(new T.CylinderGeometry(1.32,1.32,.14,24),red,0,2,.9).rotation.x=Math.PI/2;
+    (function(){function decal(w,h){var c=document.createElement('canvas');c.width=1024;c.height=256;var x=c.getContext('2d');x.font='900 190px Arial Black,Arial,sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineWidth=18;x.strokeStyle='#f2b21b';x.strokeText('NIKADI',512,135);x.fillStyle='#1b2f6b';x.fillText('NIKADI',512,135);
+      return new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({map:new T.CanvasTexture(c),transparent:true,roughness:.4,metalness:.1,polygonOffset:true,polygonOffsetFactor:-2}));}
+      var l=decal(3.4,.85);l.position.set(-1.33,2.05,.2);l.rotation.y=-Math.PI/2;SH.add(l);var r2=decal(3.4,.85);r2.position.set(1.33,2.05,.2);r2.rotation.y=Math.PI/2;SH.add(r2);
+      var t1=decal(4.4,1.1);t1.rotation.x=-Math.PI/2;t1.rotation.z=Math.PI;t1.position.set(0,1.78,-.8);SH.add(t1);})();
     [-1.9,1.9].forEach(function(x){var e=sp3(new T.CylinderGeometry(.45,.55,1.8,16),dark,x,1.7,-1.4);e.rotation.x=Math.PI/2;});
     [[-1.6,-1.6],[1.6,-1.6],[0,1.8]].forEach(function(q){sp3(new T.CylinderGeometry(.08,.08,1.4,8),dark,q[0],.7,q[1]);sp3(new T.CylinderGeometry(.35,.35,.08,12),dark,q[0],0,q[1]);});
-    var fireM=new T.MeshBasicMaterial({color:0x8fd0ff,transparent:true,opacity:.85,blending:T.AdditiveBlending,depthWrite:false});
+    var fireM=new T.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:.85,blending:T.AdditiveBlending,depthWrite:false});
     var fires=[-1.9,1.9,0].map(function(x,k){var f=new T.Mesh(new T.ConeGeometry(k===2?.75:.42,2.6,16),fireM);f.rotation.x=-Math.PI/2;f.position.set(x,k===2?2:1.7,k===2?-4.3:-3.6);SH.add(f);return f;});
-    var shipLight=new T.PointLight(0x8fd0ff,0,30);shipLight.position.set(0,2,-4);SH.add(shipLight);
+    var shipLight=new T.PointLight(0xffa040,0,30);shipLight.position.set(0,2,-4);SH.add(shipLight);
     S.add(SH);
     /* footprints and dust puffs */
     var puffs=[],pm=new T.MeshBasicMaterial({color:0xcfc9bf,transparent:true,opacity:.5,depthWrite:false}),pg=new T.SphereGeometry(.25,8,6);
     function puff(x,z,n,y0){for(var k=0;k<n;k++){var o=new T.Mesh(pg,pm.clone());o.position.set(x+(Math.random()-.5)*.4,(y0!=null?y0:height(x,z))+.1,z+(Math.random()-.5)*.4);o.userData={v:new T.Vector3((Math.random()-.5)*1.2,.4+Math.random()*.8,(Math.random()-.5)*1.2),t:0};S.add(o);puffs.push(o);}}
+    /* ---- small worlds on every planet (except the Earth, which takes you home, and the Sun) ---- */
+    var MOONMAT=moonBall.material,MOONTEX=null,cur='Moon',curB=null;
+    var WORLDS={
+      Moon:{g:3.1,ground:[.3,.3,.29],rock:0x8a8783,sky:0x000000,fog:null,cr:70,ha:14,float:1,fact:'Low gravity: jump high and float.'},
+      Mercury:{g:4.6,ground:[.33,.29,.26],rock:0x7a6e64,sky:0x000000,fog:null,cr:110,ha:10,float:1,fact:'The closest planet to the Sun. Days are hot and nights are freezing.'},
+      Venus:{g:6.5,ground:[.55,.38,.18],rock:0x8a5a2a,sky:0xc99a4a,fog:[0xc99a4a,40,320],cr:8,ha:26,fact:'Thick golden clouds and the hottest surface of any planet.'},
+      Mars:{g:4.6,ground:[.52,.24,.12],rock:0x7a3a20,sky:0xd9a37a,fog:[0xd9a37a,90,520],cr:30,ha:30,dust:0xc07050,fact:'The red planet, with the tallest volcano in the solar system.'},
+      Jupiter:{g:8,ground:[.62,.5,.38],rock:0xa07850,sky:0x8a6a48,fog:[0x9a7a58,60,380],cr:0,ha:40,dust:0xe0c8a0,bands:1,fact:'A giant made of gas. You are standing on a floating cloud island.'},
+      Saturn:{g:6.5,ground:[.66,.58,.4],rock:0xb59a62,sky:0x1a1408,fog:[0x3a2e18,140,700],cr:0,ha:22,ring:1,fact:'Look up: the rings fill the sky.'},
+      Uranus:{g:6,ground:[.48,.68,.7],rock:0x7aaab0,sky:0x6fb3bf,fog:[0x7fc3cf,90,520],cr:10,ha:18,dust:0xd8f4f8,fact:'An ice giant that spins on its side.'},
+      Neptune:{g:7,ground:[.16,.28,.62],rock:0x2a4aa0,sky:0x1d3a8a,fog:[0x2a4aa8,80,460],cr:10,ha:18,dust:0xaecbff,fact:'The windiest planet, with storms faster than sound.'},
+      Pluto:{g:1.6,ground:[.72,.63,.53],rock:0xa08a72,sky:0x000000,fog:null,cr:60,ha:12,float:1,fact:'A tiny icy world, with a heart-shaped plain of nitrogen ice.'}};
+    var ringSky=new T.Mesh(new T.RingGeometry(900,1700,128),new T.MeshBasicMaterial({color:0xe3cfa0,transparent:true,opacity:.45,side:T.DoubleSide,depthWrite:false,fog:false}));ringSky.rotation.set(-1.1,0,.35);ringSky.position.set(0,300,-600);ringSky.visible=false;S.add(ringSky);
+    function regen(name){var w=WORLDS[name];HA=w.ha;HO=name==='Moon'?0:name.length*13.7;HS=w.bands?.006:.012;craters(w.cr,w.bands?0:1);
+      for(var i=0;i<pa.count;i++){var x=pa.getX(i),z=pa.getZ(i),y=height(x,z);pa.setY(i,y);var g=1+(fbm(x*.05+9+HO,z*.05+3,3)-.5)*.6+(fbm(x*.4,z*.4,2)-.5)*.25,m=fbm(x*.006+40+HO,z*.006,3)<.42?.75:1;
+        if(w.bands)m*=.82+.3*Math.sin(z*.05+fbm(x*.02,z*.02,3)*6);col[i*3]=w.ground[0]*g*m;col[i*3+1]=w.ground[1]*g*m;col[i*3+2]=w.ground[2]*g*m;}
+      pa.needsUpdate=true;geo.attributes.color.needsUpdate=true;geo.computeVertexNormals();placeRocks();rm.color.setHex(w.rock);
+      floaters.forEach(function(f){f.visible=!!w.float;});dust.material.color.setHex(w.dust||0xd8d4cc);dust.material.opacity=w.dust?.8:.55;
+      S.background=new T.Color(w.sky);S.fog=w.fog?new T.Fog(w.fog[0],w.fog[1],w.fog[2]):null;ringSky.visible=!!w.ring;
+      sky.visible=!w.fog;}
+    var veil=document.getElementById('mwVeil'),banner=document.getElementById('mwWorld'),bTimer=0;
+    function showBanner(t,sub){banner.innerHTML='<b>'+t+'</b><small>'+sub+'</small>';banner.hidden=false;void banner.offsetWidth;banner.classList.add('on');clearTimeout(bTimer);bTimer=setTimeout(function(){banner.classList.remove('on');setTimeout(function(){banner.hidden=true;},800);},4200);}
+    var busyW=false;
+    function landOn(B){if(busyW)return;busyW=true;veil.classList.add('on');setTimeout(function(){
+      cur=B.name;curB=B;regen(B.name);B.m.visible=false;B.lb.visible=false;moonBall.material=B.m.material;moonLbl.visible=false;
+      SH.position.set(PAD.x,height(PAD.x,PAD.z)+40,PAD.z);shipV=0;shipVy=-20;camPos.set(0,0,0);
+      setTimeout(function(){veil.classList.remove('on');busyW=false;showBanner('Welcome to '+B.name,WORLDS[B.name].fact+' Press E after landing to walk.');},150);},700);}
+    function leaveWorld(){if(busyW||!curB)return;busyW=true;veil.classList.add('on');var B=curB;setTimeout(function(){
+      B.m.visible=true;B.lb.visible=true;moonBall.material=MOONMAT;cur='Moon';curB=null;regen('Moon');
+      SH.position.copy(B.m.position).add(new T.Vector3(0,B.r*1.06+60,0));shipVy=40;camPos.set(0,0,0);
+      setTimeout(function(){veil.classList.remove('on');busyW=false;showBanner('Back in space','Fly to another planet, or into the Earth to land in Mayapur.');},150);},700);}
+    var tooHot=0;
     /* ---- state ---- */
     var mode,heading,vel=new T.Vector3(),onGround,fuel,shipYaw,shipV,shipVy,shipRoll,ending;
-    function reset(){mode='walk';heading=0;vel.set(0,0,0);onGround=true;fuel=1;A.visible=true;A.position.set(0,height(0,8),8);A.rotation.set(0,0,0);
+    function reset(){if(cur!=='Moon'){if(curB){curB.m.visible=true;curB.lb.visible=true;}moonBall.material=MOONMAT;cur='Moon';curB=null;regen('Moon');}mode='walk';heading=0;vel.set(0,0,0);onGround=true;fuel=1;A.visible=true;A.position.set(0,height(0,8),8);A.rotation.set(0,0,0);
       shipYaw=-.6;shipV=0;shipVy=0;shipRoll=0;ending=false;SH.position.set(PAD.x,height(PAD.x,PAD.z)+.05,PAD.z);SH.rotation.set(0,shipYaw,0);camPos.set(0,0,0);setHud();}
     /* ---- input ---- */
     var K={},yawOff=0,pitch=.14,dist=8,drag=null,t=0,step=0,last=performance.now();
@@ -315,7 +352,7 @@ try{
         var tx=Math.sin(heading)*fw*speed,tz=Math.cos(heading)*fw*speed,ctl=onGround?10:2.2;
         vel.x+=(tx-vel.x)*Math.min(1,ctl*dt);vel.z+=(tz-vel.z)*Math.min(1,ctl*dt);
         if(K[' ']){if(onGround){vel.y=5.2;onGround=false;puff(A.position.x,A.position.z,6);}else if(fuel>0&&vel.y<6){vel.y+=7.2*dt;fuel=Math.max(0,fuel-dt*.22);}}
-        vel.y-=1.62*1.9*dt;A.position.addScaledVector(vel,dt);
+        vel.y-=WORLDS[cur].g*dt;A.position.addScaledVector(vel,dt);
         var lim=HALF*.86;A.position.x=Math.max(-lim,Math.min(lim,A.position.x));A.position.z=Math.max(-lim,Math.min(lim,A.position.z));
         var gh=height(A.position.x,A.position.z);
         if(A.position.y<=gh){if(!onGround&&vel.y<-2)puff(A.position.x,A.position.z,10);A.position.y=gh;vel.y=0;onGround=true;}
@@ -343,7 +380,8 @@ try{
         if(inPlane){var gh2=height(px2,pz2)+.05;if(SH.position.y<gh2){SH.position.y=gh2;if(shipVy<0)shipVy=0;}}
         else{tmp.copy(SH.position).sub(MOONC);var dm=tmp.length();if(dm<MR+2){SH.position.copy(MOONC).add(tmp.multiplyScalar((MR+2)/dm));}}
         /* planets: bump off them; the Earth takes you home */
-        for(var bi=0;bi<bodies.length;bi++){var B=bodies[bi];tmp.copy(SH.position).sub(B.m.position);var dB=tmp.length();if(dB<B.r*1.06+3){if(B.exit){landEarth();break;}SH.position.copy(B.m.position).add(tmp.multiplyScalar((B.r*1.06+3)/dB));shipV*=.3;}}
+        for(var bi=0;bi<bodies.length;bi++){var B=bodies[bi];tmp.copy(SH.position).sub(B.m.position);var dB=tmp.length();if(B.m.visible&&dB<B.r*1.06+3){if(B.exit){landEarth();break;}if(B.name!=='Sun'&&!busyW){landOn(B);break;}SH.position.copy(B.m.position).add(tmp.multiplyScalar((B.r*1.06+3)/dB));shipV*=.3;if(t-tooHot>4){tooHot=t;showBanner('Too hot to land!','The Sun is 5,500 °C at the surface. Try a planet instead.');}}}
+        if(curB&&(SH.position.y>420||Math.hypot(SH.position.x,SH.position.z)>700))leaveWorld();
         shipRoll+=(-tn*(.25+Math.min(.35,Math.abs(shipV)/2000))-shipRoll)*Math.min(1,dt*4);
         SH.rotation.set(-Math.max(-.35,Math.min(.35,shipVy/1200)),shipYaw,shipRoll,'YXZ');
         var pow=Math.min(1,Math.max(fw>0?.35:0,Math.abs(shipV)/600)+(K[' ']?.25:0));fires.forEach(function(f){f.visible=pow>.05;f.scale.set(1,.4+pow*(run?1.8:1)+Math.random()*.15,1);});shipLight.intensity=pow*3;
@@ -364,7 +402,7 @@ try{
       if(!camPos.lengthSq()||camPos.distanceTo(want)>3000)camPos.copy(want);camPos.lerp(want,1-Math.pow(mode==='ship'?.0005:.0015,dt));cam.position.copy(camPos);look.copy(focus).y+=mode==='ship'?2:2.2;cam.lookAt(look);
       sky.position.copy(cam.position);
       sun.position.copy(focus).addScaledVector(SUND,150);sun.target.position.copy(focus);
-      moonLbl.visible=cam.position.distanceTo(MOONC)>MR*2.2;moonLbl.position.copy(MOONC).add(new T.Vector3(0,MR*1.3,0));
+      moonLbl.visible=cur==='Moon'&&cam.position.distanceTo(MOONC)>MR*2.2;moonLbl.position.copy(MOONC).add(new T.Vector3(0,MR*1.3,0));
       if(fw||tn||K[' ']){moved+=dt;if(moved>6)help.classList.add('dim');}
       R.render(S,cam);}
     reset();
