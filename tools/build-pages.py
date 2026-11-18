@@ -74,11 +74,13 @@ for name, p in PAGES.items():
             for i in re.findall(r'\bid="([\w-]+)"', secs[s]): idpage.setdefault(i, name)
 def purl(name): return PAGES[name]['url']
 
+SHOW = ['img/rooms/double-04.jpg', 'img/rooms/double-01.jpg', 'img/rooms/double-02.jpg', 'img/rooms/double-05.jpg']
 def banner(b):
     k, h, t, img = b
-    bg = ('<img class="pg-bg" src="' + img + '" alt="" aria-hidden="true">') if img else ''
-    return ('<section class="pg-hero' + ('' if img else ' pg-hero-plain') + '">' + bg + '<div class="wrap"><nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>›</span><span aria-current="page">' + h + '</span></nav>'
-            '<p class="kicker rule">' + k + '</p><h1>' + h + '</h1><p>' + t + '</p></div></section>\n')
+    imgs = ''.join('<img src="' + u + '" alt="' + ('Deluxe room at Nikadi Guest House' if i == 0 else '') + '"' + (' aria-hidden="true"' if i else '') + ' loading="' + ('eager' if i == 0 else 'lazy') + '" decoding="async"' + (' class="on"' if i == 0 else '') + '>' for i, u in enumerate(SHOW))
+    return ('<section class="pg-hero"><div class="wrap pg-grid"><div class="pg-copy"><nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>›</span><span aria-current="page">' + h + '</span></nav>'
+            '<p class="kicker rule">' + k + '</p><h1>' + h + '</h1><p>' + t + '</p></div>'
+            '<a class="pg-show" href="/#rooms" aria-label="See our rooms">' + imgs + '<span class="pg-show-tag">Our deluxe rooms ›</span></a></div></section>\n')
 
 for name, p in PAGES.items():
     h = head

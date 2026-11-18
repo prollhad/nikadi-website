@@ -1042,3 +1042,12 @@ try{
 })();
 
 }catch(e){console.error("[nikadi part 21]",e);}
+/* part 22 */
+try{
+
+/* ---- page banner: gentle room photo slideshow ---- */
+(function(){var s=document.querySelector('.pg-show');if(!s)return;var im=[].slice.call(s.querySelectorAll('img')),i=0;if(im.length<2)return;
+if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+setInterval(function(){if(document.hidden)return;im[i].classList.remove('on');i=(i+1)%im.length;im[i].classList.add('on');},4500);})();
+
+}catch(e){console.error("[nikadi part 22]",e);}
