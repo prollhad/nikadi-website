@@ -882,19 +882,21 @@ try{
   function show(k){tabs.forEach(function(t){t.setAttribute('aria-selected',t.getAttribute('data-tp')===k?'true':'false');});panes.forEach(function(p){p.hidden=p.getAttribute('data-pane')!==k;});}
   tabs.forEach(function(t){t.addEventListener('click',function(){show(t.getAttribute('data-tp'));});});
   if(location.hash==='#trains')show('train');
+  sec.addEventListener('click',function(e){var g=e.target.closest('[data-tpgo]');if(!g)return;show(g.getAttribute('data-tpgo'));var tb=sec.querySelector('.tp-tabs');if(tb)tb.scrollIntoView({behavior:'smooth',block:'start'});});
   try{var go=sessionStorage.getItem('nk_tp');if(go){sessionStorage.removeItem('nk_tp');show(go);}}catch(e){}
   function mins(t){var a=t.split(':');return +a[0]*60+(+a[1]);}
   function t12(t){var a=t.split(':'),h=+a[0];return (h%12||12)+':'+a[1]+(h<12?' AM':' PM');}
+  function T_(x){return window.nkT?nkT(x):x;}
   function upd(){
     var d=new Date(Date.now()+330*60000),now=d.getUTCHours()*60+d.getUTCMinutes();
     sec.querySelectorAll('.nxt').forEach(function(box){
-      var list=box.nextElementSibling.querySelectorAll('.tr'),up=[];
+      var dd=box.closest('.dir'),list=dd.querySelectorAll('.tr'),up=[];
       var wd=d.getUTCDay();list.forEach(function(li){var ds=li.getAttribute('data-days')||'Daily',runs=ds==='Daily'||(ds.indexOf('only')>0?wd===0:wd!==0);li.classList.toggle('off',!runs);var m=mins(li.getAttribute('data-d'));li.classList.toggle('gone',false);li._gone=m<now;li.classList.remove('soon');if(m>=now&&runs)up.push(li);});
       var tomorrow=false; if(!up.length){up=[].slice.call(list).filter(function(li){return (li.getAttribute('data-days')||'Daily')==='Daily';});tomorrow=true;}
       if(!tomorrow)list.forEach(function(li){li.classList.toggle('gone',li._gone);});
       up=up.slice(0,3); if(up[0])up[0].classList.add('soon');
-      var dl=box.nextElementSibling.querySelector('.dl').textContent;
-      box.innerHTML='<span class="nl">Next trains · '+dl+(tomorrow?' · tomorrow':'')+'</span>'+up.map(function(li){var m=mins(li.getAttribute('data-d')),inm=tomorrow?(24*60-now+m):(m-now),h=Math.floor(inm/60);return '<span class="nc'+(li.classList.contains('ac')?' ac':'')+'"><b>'+t12(li.getAttribute('data-d'))+'</b>'+(li.classList.contains('ac')?' AC':'')+' <small>'+(inm<1?'now':'in '+(h?h+' h':'')+(inm%60?(h?' ':'')+(inm%60)+' min':''))+'</small></span>';}).join('');
+      var sm=dd.querySelector('.dl small');if(sm&&up[0]){var m0=mins(up[0].getAttribute('data-d')),i0=tomorrow?(24*60-now+m0):(m0-now),h0=Math.floor(i0/60);sm.textContent='Next train · '+t12(up[0].getAttribute('data-d'))+(tomorrow?' · '+T_('tomorrow'):' · '+(i0<1?T_('now'):T_('in '+(h0?h0+' h':'')+(i0%60?(h0?' ':'')+(i0%60)+' min':''))))+' · '+list.length+' trains';}
+      box.innerHTML='<span class="nl">Next trains'+(tomorrow?' · tomorrow':'')+'</span>'+up.map(function(li){var m=mins(li.getAttribute('data-d')),inm=tomorrow?(24*60-now+m):(m-now),h=Math.floor(inm/60);return '<span class="nc'+(li.classList.contains('ac')?' ac':'')+'"><b>'+t12(li.getAttribute('data-d'))+'</b>'+(li.classList.contains('ac')?' AC':'')+' <small>'+(inm<1?'now':'in '+(h?h+' h':'')+(inm%60?(h?' ':'')+(inm%60)+' min':''))+'</small></span>';}).join('');
     });
   }
   upd(); setInterval(upd,30000);

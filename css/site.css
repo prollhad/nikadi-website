@@ -1377,7 +1377,14 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
 .nxt .nc b{color:var(--ink)}
 .nxt .nc.ac{border-color:rgba(120,190,255,.6);color:#cfe7ff}
 .nxt .nc small{color:var(--muted)}
-.dir .dl{font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.dir{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);overflow:hidden}
+.dir>summary.dl{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 12px;padding:14px 16px;margin:0;font-size:1rem;font-weight:700;color:var(--ink)}
+.dir>summary.dl::-webkit-details-marker{display:none}
+.dir>summary.dl small{grid-column:1;font-size:.74rem;font-weight:500;color:var(--muted)}
+.dir>summary.dl::after{content:"+";grid-column:2;grid-row:1/3;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(217,173,85,.5);color:var(--gold-hi);font-size:1.2rem;font-weight:400;transition:transform .2s}
+.dir[open]>summary.dl::after{transform:rotate(45deg)}
+.dir>summary.dl small{color:var(--gold-hi)}.dir>.nxt{margin:0 12px 10px}
+.dir>.ttab{padding:0 12px 14px}
 .ttab{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
 .ttab li{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:baseline;padding:7px 10px;border-radius:12px;border:1px solid var(--line);background:rgba(10,15,31,.4);font-size:.82rem}
 .ttab li b{font-weight:700}
@@ -1418,6 +1425,30 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
 .trd-route li.mayapur{color:var(--gold-hi)}
 
 /* Nikadi × Gourdham Travels */
+/* Nikadi x Gourdham Travels: header, glimpse tiles, phone layout */
+.tg-title .tg-x{color:var(--gold-hi);font-weight:300;opacity:.8}
+.tg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin:0 0 30px}
+@media (max-width:1100px){.tg{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:620px){.tg{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}}
+.tg-i{display:flex;align-items:center;gap:10px;min-width:0;text-align:left;font:inherit;color:var(--ink);text-decoration:none;background:linear-gradient(160deg,rgba(217,173,85,.1),rgba(255,255,255,.02));border:1px solid rgba(217,173,85,.35);border-radius:16px;padding:12px;cursor:pointer;transition:border-color .2s,transform .2s,background .2s}
+.tg-i:hover,.tg-i:focus-visible{border-color:var(--gold);transform:translateY(-2px)}
+.tg-i svg{flex:none;width:26px;height:26px;color:var(--gold-hi)}
+.tg-i span{display:grid;gap:2px;min-width:0}.tg-i b{font-size:.9rem;line-height:1.2}.tg-i small{font-size:.72rem;color:var(--muted);line-height:1.25}
+@media (max-width:620px){
+  #transport .gt{border-radius:22px}
+  #transport .gt-top{padding:20px 18px;gap:8px}#transport .gt-n,#transport .gt-g{font-size:1.55rem}#transport .gt-x{font-size:1.3rem}#transport .gt-tag{font-size:.7rem}
+  #transport .gt-body{padding:20px 16px;gap:22px}
+  #transport .gt-intro h3{font-size:1.6rem}#transport .gt-intro p{font-size:.95rem}
+  #transport .gt-contact li{display:grid;gap:2px}#transport .gt-contact b{text-align:left}
+  #transport .gt .car-acts{display:grid;grid-template-columns:1fr;gap:8px}#transport .gt .car-acts .btn{width:100%;justify-content:center;margin:0}
+  #transport .gt-form{padding:18px 14px;border-radius:18px}
+  #transport .gt-sv{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #transport .gts{padding:16px 14px;gap:4px}#transport .gts svg{width:26px;height:26px}#transport .gts b{font-size:1rem}#transport .gts span{font-size:.76rem}
+  #transport .gt-money{padding:22px 14px}
+  #transport .gtm{grid-template-columns:auto minmax(0,1fr);gap:14px;padding:16px}#transport .gtm-logo{width:54px;height:54px;border-radius:16px}#transport .gtm-logo svg,#transport .gtm-logo.wu svg,#transport .gtm-logo.mg svg{width:30px;height:30px}
+  #transport .gtm .btn{width:100%;justify-content:center}
+  #transport .tg-i:last-child{grid-column:1/-1}
+}
 .gt{border-radius:28px;overflow:hidden;border:1px solid rgba(217,173,85,.55);background:linear-gradient(160deg,#16224a,#0d1530 55%,#0a0f1f);margin-bottom:34px;box-shadow:0 30px 70px -30px rgba(0,0,0,.8)}
 .gt-top{background:var(--gold-grad);color:var(--gold-ink);padding:26px clamp(20px,3vw,40px);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
 .gt-brand{display:flex;align-items:center;gap:clamp(10px,2vw,22px);flex-wrap:wrap;font-family:var(--display);font-weight:700;line-height:1}
