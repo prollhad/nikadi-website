@@ -747,7 +747,7 @@
       h += '<div class="bill"><h3>Bill</h3>' +
         '<div class="bl sum"><span class="t">Room · ' + s.nights + (s.nights > 1 ? ' nights' : ' night') + ' × ' + inr(s.rate) + '</span><span class="d">' + esc(s.rateNote || 'Agreed rate per night') + '</span><span class="a">' + inr(s.roomTotal) + '</span></div>' +
         s.charges.map(function (c) {
-          return '<div class="bl tap" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.item) + ' × ' + c.qty + (c.free ? '<span class="free">Free' + (c.note ? ' (' + esc(freeWhy(c.note)) + ')' : '') + '</span>' : '') + '</span>' +
+          return '<div class="bl tap' + (S.st.fine && c.item === S.st.fine.item ? ' fine' : '') + '" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.item) + ' × ' + c.qty + (c.free ? '<span class="free">Free' + (c.note ? ' (' + esc(freeWhy(c.note)) + ')' : '') + '</span>' : '') + '</span>' +
             '<span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span><span class="a">' + (c.free ? '₹0' : inr(c.total)) + '</span></div>';
         }).join('') +
         '<div class="bl sum"><span class="t">Total</span><span class="d">Room ' + inr(s.roomTotal) + ' + extras ' + inr(s.extras) + '</span><span class="a">' + inr(s.roomTotal + s.extras) + '</span></div>' +
@@ -758,6 +758,7 @@
         '<p class="small">Tap an extra to change or remove it. Tap a payment to correct a mistake.' + (rcp() ? ' Changes to recorded money go to the manager for approval.' : '') + '</p>';
       h += '<div class="btns">' + (inHouse ? '<button class="btn btn-gold" id="b-add" type="button">Add item</button>' : '') +
         '<button class="btn btn-line" id="b-pay" type="button">Take payment</button>' +
+        (S.st.fine && (inHouse || approver()) ? '<button class="btn btn-danger" id="b-fine" type="button">Add fine ' + inr(S.st.fine.amount) + '</button>' : '') +
         (s.paid > 0 ? '<button class="btn btn-quiet" id="b-ref" type="button">' + (s.balance < 0 ? 'Refund ' + inr(-s.balance) : 'Refund money') + '</button>' : '') +
         (inHouse ? '<button class="btn btn-quiet" id="b-edit" type="button">Edit / extend</button><button class="btn btn-quiet" id="b-out" type="button">Check out</button>' : '') + '</div>';
       if (!inHouse && s.undo) h += s.undo === 'ok'
@@ -778,6 +779,7 @@
     if ((b = $('#b-ids', body))) b.onclick = function () { openIds(s); };
     if ((b = $('#b-kit', body))) b.onclick = function () { openKit(s, body); };
     if ((b = $('#b-pay', body))) b.onclick = function () { openPay(s, body); };
+    if ((b = $('#b-fine', body))) b.onclick = function () { openFine(s, body); };
     if ((b = $('#b-edit', body))) b.onclick = function () { openEdit(s, body); };
     if ((b = $('#b-ref', body))) b.onclick = function () { openRefund('stay', s, body); };
     if (m) $$('[data-pay].tap', body).forEach(function (row) { row.onclick = function () { var p = s.payments.filter(function (x) { return x.id === row.dataset.pay; })[0]; if (p) openVoid(p, 'stay', body); }; });
@@ -1433,27 +1435,48 @@
     void parentBody;
   }
 
+  /* Fine for breaking the house rules (default ₹2,000): goes on the bill in red with the reason. */
+  function openFine(s, parentBody) {
+    var f = S.st.fine, body = openSheet('Fine · Room ' + s.room);
+    body.innerHTML = '<div class="note bad"><b>' + esc(s.guest) + '</b>' + esc(f.text) + '. It shows in red on the bill and can be changed or removed later.</div>' +
+      field('Amount (₹)', '<input class="input" id="f-amt" inputmode="numeric" value="' + f.amount + '">') +
+      field('What happened', '<input class="input" id="f-why" maxlength="160" placeholder="e.g. Smoking in the room">', true) +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-danger big-cta" id="go" type="button">Add fine to the bill</button>';
+    $('#go', body).onclick = function () {
+      var amt = $('#f-amt', body).value.replace(/\D/g, ''), why = $('#f-why', body).value.trim();
+      if (!why) { $('#err', body).textContent = 'Write what happened (it is printed on the bill).'; return; }
+      submit(this, $('#err', body), 'deskFine', { id: s.id, amount: amt, reason: why }, function (r) { vibrate(); toast('Fine of ' + inr(amt) + ' added · Room ' + s.room); closeSheet(); drawStay(parentBody, r.stay); refresh(); });
+    };
+  }
+
   function openEditCharge(c, s, parentBody) {
     var body = openSheet(c.item + ' · Room ' + s.room);
-    body.innerHTML = '<p class="small">Added ' + esc(tShort(c.at)) + ' by ' + esc(c.by) + '</p>' +
+    var tiers = c.item === 'Late checkout' && S.st.lateOut ? S.st.lateOut : null;
+    var ask = rcp() && !(c.auto && s.status === 'In house'); // the automatic late check-out line can be changed without approval
+    body.innerHTML = '<p class="small">Added ' + esc(tShort(c.at)) + ' by ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</p>' +
+      (tiers ? '<div class="field"><span>Late check-out till</span><div class="seg" id="f-tier">' + tiers.map(function (x) {
+        return '<button type="button" data-p="' + x.price + '" aria-pressed="' + (!c.free && Number(c.price) === x.price) + '">' + esc(x.label) + '<br>' + inr(x.price) + '</button>';
+      }).join('') + '</div><span class="small">Or type any amount below. Use “Remove from bill” if the guest left on time.</span></div>' : '') +
       '<div class="field"><span>Quantity</span>' + stepper('f-q', c.qty, 1, 50) + '</div>' +
       field('Price each (₹)', '<input class="input" id="f-p" inputmode="numeric" value="' + (c.free ? 0 : c.price) + '">') +
       '<label class="toggle"><span>Free (no charge)</span><input type="checkbox" id="f-free"' + (c.free ? ' checked' : '') + '></label>' +
       (!c.free && s.paid > 0 ? '<div class="refund-box"><label class="toggle"><span>When removing, also give the guest money back</span><input type="checkbox" id="f-back"></label>' +
         '<div id="f-backf" hidden>' + field('Amount to give back (₹)', '<input class="input" id="f-bamt" inputmode="numeric" value="' + Math.min(c.total, s.paid) + '">') +
         '<div class="field"><span>Paid back by</span>' + seg('method', S.st.methods, 'Cash') + '</div>' + refField('f-bref') + '</div></div>' : '') +
-      approvalNote() + (rcp() ? reasonField('f-why', 'e.g. Guest returned the mattress') : field('Reason (optional)', '<input class="input" id="f-why" maxlength="200">')) +
-      '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">' + goLabel('Save') + '</button><button class="btn btn-danger" id="rm" type="button">' + (rcp() ? 'Request removal' : 'Remove from bill') + '</button>' +
+      (ask ? approvalNote() + reasonField('f-why', 'e.g. Guest returned the mattress') : field('Reason (optional)', '<input class="input" id="f-why" maxlength="200">')) +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">' + (ask ? goLabel('Save') : 'Save') + '</button><button class="btn btn-danger" id="rm" type="button">' + (ask ? 'Request removal' : 'Remove from bill') + '</button>' +
       '';
     wireSteppers(body); wireSegs(body);
-    var bk = $('#f-back', body); if (bk) bk.onchange = function () { $('#f-backf', body).hidden = !bk.checked; $('#rm', body).textContent = rcp() ? 'Request removal' + (bk.checked ? ' + refund' : '') : 'Remove' + (bk.checked ? ' and refund' : ' from bill'); };
+    var tg = $('#f-tier', body);
+    if (tg) tg.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; $$('button', tg).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); $('#f-p', body).value = b.dataset.p; $('#f-free', body).checked = false; $('#f-q', body).textContent = '1'; };
+    var bk = $('#f-back', body); if (bk) bk.onchange = function () { $('#f-backf', body).hidden = !bk.checked; $('#rm', body).textContent = rcp() && (ask || bk.checked) ? 'Request removal' + (bk.checked ? ' + refund' : '') : 'Remove' + (bk.checked ? ' and refund' : ' from bill'); };
     $('#go', body).onclick = function () {
       submit(this, $('#err', body), 'deskEditCharge', { id: c.id, qty: Number($('#f-q', body).textContent), price: $('#f-p', body).value.replace(/\D/g, '') || '0', free: $('#f-free', body).checked, reason: $('#f-why', body).value },
         function (r) { toast('Saved'); closeSheet(); drawStay(parentBody, r.stay); });
     };
     $('#rm', body).onclick = function () {
       var b = this;
-      if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = rcp() ? 'Tap again to send' : 'Tap again to remove'; return; }
+      if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = ask || (rcp() && bk && bk.checked) ? 'Tap again to send' : 'Tap again to remove'; return; }
       var d = { id: c.id, remove: true, reason: $('#f-why', body).value };
       if (bk && bk.checked) { d.refundAmount = $('#f-bamt', body).value.replace(/\D/g, ''); d.method = segVal(body, 'method'); d.ref = $('#f-bref', body).value; }
       submit(b, $('#err', body), 'deskEditCharge', d, function (r) { toast('Removed'); closeSheet(); drawStay(parentBody, r.stay); });

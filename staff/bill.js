@@ -106,7 +106,7 @@
       rows += '<tr class="disc"><td></td><td class="mono">' + ROOM_HSN + '</td><td><b>Less: ' + esc(x.label) + '</b>' + (x.note ? '<small>' + esc(x.note) + '</small>' : '') + '</td><td></td><td></td><td class="c">' + ROOM_GST + '%</td><td class="r">' + num(-x.amount) + '</td></tr>';
     });
     (d.items || []).forEach(function (x) {
-      rows += '<tr><td class="c">' + (++sl) + '</td><td class="mono">' + esc(x.hsn || '—') + '</td><td><b>' + esc(x.label) + '</b>' + (x.note ? '<small>' + esc(x.note) + '</small>' : '') + '</td>' +
+      rows += '<tr' + (x.fine ? ' class="fine"' : '') + '><td class="c">' + (++sl) + '</td><td class="mono">' + esc(x.hsn || '—') + '</td><td><b>' + esc(x.label) + '</b>' + (x.note ? '<small>' + esc(x.note) + '</small>' : '') + '</td>' +
         '<td class="c">' + x.qty + ' ' + esc(x.unit || 'Nos') + '</td><td class="r">' + num(x.rate) + '</td><td class="c">' + (x.gst == null ? ROOM_GST : x.gst) + '%</td><td class="r">' + num(x.qty * x.rate) + '</td></tr>';
     });
 
@@ -221,6 +221,7 @@
     '.lines th.c{text-align:center}.lines th.r{text-align:right}',
     '.lines td{padding:8px;border-bottom:1px solid #dde3e5;border-right:1px solid #eef1f2;vertical-align:top}',
     '.lines td b{font-weight:600}.lines small{display:block;color:#66737a;font-size:11px;margin-top:2px}',
+    '.lines tr.fine td,.lines tr.fine small{color:#c0262d;font-weight:600}.lines tr.fine td{background:#fdf0f0;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
     '.lines tr.disc td{color:#1e6b46}.lines tfoot td{font-weight:700;background:#f2f5f6;border-top:1px solid #1d2326;padding:9px 8px}',
     '.incl{margin:6px 0 0;font-size:11px;color:#66737a}',
     '.split{display:grid;grid-template-columns:1fr 270px;gap:22px;margin-top:18px;align-items:start}',

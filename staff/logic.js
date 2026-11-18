@@ -41,6 +41,16 @@ var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (take
 var DESK_BILL_URL = 'https://www.nikadiguesthouse.com/bill/?id='; // the QR code on every bill opens this + the bill's secret id
 var DESK_BILL_DELAY_HOURS = 12; // the bill is emailed automatically this long after check-out
 var DESK_BILL_PREFIX = 'NGH';
+/* Late check-out: check-out is by 9:00 AM. Prices for staying on (used in the check-out reminder and the bill).
+   If a guest is still in the room at 9:00 AM on check-out day, the timer adds the first step (₹500) to the bill by itself.
+   The front desk can change it to ₹1,000 / ₹1,500 or any amount, make it free, or remove it (no manager approval needed for this automatic line). */
+var DESK_CHECKOUT_TIME = '09:00';
+var DESK_LATE_OUT = [{ till: '10:00', label: '10 AM', price: 500 }, { till: '11:00', label: '11 AM', price: 1000 }, { till: '12:00', label: '12 noon', price: 1500 }];
+var DESK_LATE_ITEM = 'Late checkout', DESK_LATE_BY = 'Automatic';
+/* Still in the room after 12 noon: the full room price for one more day is added by itself (the ₹500–₹1,500 late check-out line comes off). Editable and removable. */
+var DESK_LATE_FULL_TIME = '12:00', DESK_LATE_FULL_ITEM = 'Late checkout (full day)', DESK_LATE_FULL_BY = 'Automatic (12 noon)';
+/* Fine: added by the front desk for breaking the house rules the guest signed at check-in. Printed in red on the bill. No GST (a penalty, not a service). */
+var DESK_FINE_ITEM = 'Fine', DESK_FINE_AMOUNT = 2000, DESK_FINE_TEXT = 'For violating the terms and conditions of Nikadi Guest House, signed by the guest';
 /* WhatsApp (Meta WhatsApp Cloud API). Message wordings are approved by Meta as templates with these names. */
 var DESK_WA = { welcome: 'nikadi_welcome', membership: 'nikadi_membership', booking: 'nikadi_booking_confirmed', bill: 'nikadi_bill', lang: 'en' };
 /* Expenses: categories in groups. 'shop' fills the shop / payee automatically. 'stock' links the purchase to a stock item. */
@@ -66,6 +76,8 @@ var DESK_HSN = {
   'Dental kit': ['3306', 5, 'Nos', 'Dental kit'],
   'Extra mattress': ['996311', 5, 'Nos', 'Extra mattress'],
   'Late checkout': ['996311', 5, 'Nos', 'Late check-out'],
+  'Late checkout (full day)': ['996311', 5, 'Day', 'Late check-out after 12 noon (full day)'],
+  'Fine': ['', 0, 'Nos', 'Fine'],
   'Laundry': ['999712', 5, 'Pcs', 'Laundry'],
   _default: ['996311', 5, 'Nos', '']
 };
@@ -393,7 +405,7 @@ function deskCore(db, hooks) {
     var v = { id: s.id, room: s.room, guest: s.guest, guests: s.guests, waOk: s.waOk === 'Yes', waOffers: s.waOffers === 'Yes', checkin: s.checkin, checkout: s.checkout, nights: s.nights, status: s.status,
       leavesToday: s.status === 'In house' && s.checkout <= today(), inBy: s.inBy, inAt: s.inAt, outBy: s.outBy, outAt: s.outAt };
     v.charges = chargesOf(s.id).map(function (c) {
-      var o = { id: c.id, at: c.at, item: c.item, qty: c.qty, free: c.free === 'Yes', note: c.note, by: c.by };
+      var o = { id: c.id, at: c.at, item: c.item, qty: c.qty, free: c.free === 'Yes', note: c.note, by: c.by, auto: autoLate(c) };
       if (mgr) { o.price = c.price; o.total = c.total; }
       return o;
     }).reverse();
@@ -454,7 +466,9 @@ function deskCore(db, hooks) {
     chargesOf(s.id).forEach(function (c) {
       if (c.free === 'Yes' || !(Number(c.total) > 0)) return; // free things (like the 2 waters) are not printed
       var k = c.item + '|' + c.price;
-      if (!byKey[k]) { var m = itemMeta(c.item); byKey[k] = { label: m.label, hsn: m.hsn, gst: m.gst, unit: m.unit, qty: 0, rate: Number(c.price) }; items.push(byKey[k]); }
+      if (c.item === DESK_FINE_ITEM) k += '|' + c.id; // every fine on its own line, with its reason
+      if (!byKey[k]) { var m = itemMeta(c.item); byKey[k] = { label: m.label, hsn: m.hsn, gst: m.gst, unit: m.unit, qty: 0, rate: Number(c.price) }; items.push(byKey[k]);
+        if (c.item === DESK_FINE_ITEM) { byKey[k].fine = true; byKey[k].note = DESK_FINE_TEXT + (c.note ? ': ' + c.note : ''); } }
       byKey[k].qty += Number(c.qty || 0);
     });
     var payments = [], refunds = [];
@@ -628,7 +642,8 @@ function deskCore(db, hooks) {
       if (o.room) add('care', 'Anything you need?', n + ', Hare Krishna! We hope you are comfortable in room ' + o.room + '.\nIf you need anything, like fresh towels, drinking water, an extra blanket or help with a car, just reply here or call reception on +91 75011 01137. We are happy to help.');
       if (!o.member) add('membership', 'Membership invite', waHandText('membership', [n]));
     } else {
-      if (o.leaving) add('checkout', 'Check-out reminder', n + ', Hare Krishna! A gentle reminder from Nikadi Guest House: check-out is by 9:00 AM on ' + dd(o.checkout) + '.\nIf you would like a late check-out, please reply here and we will check if the room is available. Thank you!');
+      if (o.leaving) add('checkout', 'Check-out reminder', n + ', Hare Krishna! A gentle reminder from Nikadi Guest House: check-out is by 9:00 AM on ' + dd(o.checkout) + '.\nIf you would like a late check-out, please reply here and we will check if the room is available:\n' +
+        DESK_LATE_OUT.map(function (x) { return 'Till ' + x.label + ': ' + rupees(x.price); }).join('\n') + '\nAfter 12 noon: full room price for one more day.\nIf you are still in the room after 9:00 AM, ' + rupees(DESK_LATE_OUT[0].price) + ' late check-out is added to your bill. Thank you!');
       if (o.bill) add('bill', 'Bill + review', waHandText('bill', [n].concat(o.bill.params.slice(1)), o.bill.link));
       if (o.bill) add('billonly', 'Bill only', n + ', your bill ' + o.bill.params[1] + ' from Nikadi Guest House: total ' + o.bill.params[2] + ' (incl. GST), ' + o.bill.params[3] + '.\n🧾 See or download it here: ' + o.bill.link + '\nThank you for staying with us 🙏');
       add('review', 'Thank you + Google review', n + ', Hare Krishna! Thank you so much for staying with us at Nikadi Guest House. It was a joy to have you.\n⭐ If you enjoyed your stay, a short Google review helps other devotees find us: ' + DESK_WA_REVIEW + '\nWhenever the Dham calls you back, we will be happy to welcome you again.');
@@ -1020,7 +1035,7 @@ function deskCore(db, hooks) {
     var bks = db.all('bookings');
     var reqs = db.all('requests');
     me.canApprove = canApprove(me);
-    var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, compHosts: DESK_COMP_HOSTS, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
+    var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, compHosts: DESK_COMP_HOSTS, lateOut: DESK_LATE_OUT, fine: { item: DESK_FINE_ITEM, amount: DESK_FINE_AMOUNT, text: DESK_FINE_TEXT }, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
       approvals: canApprove(me) ? reqs.filter(function (r) { return r.status === 'Pending'; }).length : 0,
       backToReady: true, waAuto: waAutoOn(), waConsent: true, waToSend: mgr ? waKitCount() : 0,
       laundryNew: mgr ? db.all('laundry').filter(function (x) { return x.status === 'Waiting for approval' || x.status === 'Return to check'; }).length : 0,
@@ -1185,7 +1200,7 @@ function deskCore(db, hooks) {
       if (METHODS.indexOf(req.method) < 0) fail('method_required');
       if ((req.method === 'UPI' || req.method === 'Bank transfer') && !text(req.ref, 40)) fail('ref_required');
     }
-    var g = gate(me, 'editCharge', req, 'Room ' + c.room + ' · ' + c.item + ' × ' + c.qty + ' (₹' + c.total + '): ' +
+    var g = autoLate(c) && s.status === 'In house' && !(back > 0) ? null : gate(me, 'editCharge', req, 'Room ' + c.room + ' · ' + c.item + ' × ' + c.qty + ' (₹' + c.total + '): ' +
       (req.remove ? 'remove from the bill' + (back > 0 ? ' and refund ₹' + back + ' by ' + req.method : '') : 'change to ' + req.qty + (req.free ? ' (free)' : req.total != null && req.total !== '' ? ' for ₹' + req.total + ' in total' : ' × ₹' + req.price)));
     if (g) return g;
     if (req.remove) {
@@ -1837,7 +1852,53 @@ function deskCore(db, hooks) {
     var r = archiveOld(); cfgSet('lastArchive', d); return r;
   };
 
-  api._sendDue = function (opt) { var arch = opt && opt.archive ? archiveRun(opt.limit || 8) : [], lf = []; if (opt && opt.archive) try { lf = laundryFileRun(4); } catch (e) { if (String(e && e.message) === '__NK_WAIT__') throw e; } return { sent: sendDue(opt && opt.waOnly), archived: arch, laundry: lf }; };
+  /* Timer (every 10 minutes): guests still in the room after 9:00 AM on check-out day get ₹500 late check-out on the bill, once.
+     Never added again for that stay, even if the front desk removed it. Free stays (comp) get nothing; Platinum members get it free (their perk). */
+  function lateCheckoutRun() {
+    var t = today(), now = stamp(), hm = now.slice(11), out = [];
+    if (hm < DESK_CHECKOUT_TIME) return out;
+    var it = find('items', 'item', DESK_LATE_ITEM), full = hm >= DESK_LATE_FULL_TIME;
+    db.all('stays').forEach(function (s) {
+      if (s.status !== 'In house' || s.checkout !== t || s.comp) return;
+      var mine = db.all('charges').filter(function (c) { return c.stay === s.id; });
+      if (full) { // after 12 noon: one more day at the room price
+        if (mine.some(function (c) { return c.item === DESK_LATE_FULL_ITEM; })) return; // already on (or taken off) the bill
+        mine.forEach(function (c) { if (c.item === DESK_LATE_ITEM && !c.removed) db.set('charges', c, { removed: 'Replaced by the full-day charge at 12 noon ' + now }); });
+        var rate = Number(s.rate || 0); if (!(rate > 0)) return;
+        db.add('charges', { id: id('C'), at: now, stay: s.id, room: s.room, item: DESK_LATE_FULL_ITEM, qty: 1, price: rate, total: rate, free: 'No',
+          note: 'Added automatically, still in the room after 12 noon · full room price for one more day', by: DESK_LATE_FULL_BY, removed: '' });
+        recompute(s); out.push({ room: s.room, stay: s.id, price: rate, full: true });
+        return;
+      }
+      if (!it || !yes(it.active)) return;
+      if (mine.some(function (c) { return c.item === DESK_LATE_ITEM || c.item === DESK_LATE_FULL_ITEM; })) return;
+      var mem = memberOf(s.phone), perk = mem && (mem.tierKey === 'platinum' || mem.tierKey === 'plus');
+      var price = DESK_LATE_OUT[0].price;
+      db.add('charges', { id: id('C'), at: now, stay: s.id, room: s.room, item: DESK_LATE_ITEM, qty: 1, price: perk ? 0 : price, total: perk ? 0 : price, free: perk ? 'Yes' : 'No',
+        note: 'Till ' + DESK_LATE_OUT[0].label + ' · added automatically, not checked out by 9:00 AM' + (perk ? ' · free for ' + mem.tier + ' member' : ''), by: DESK_LATE_BY, removed: '' });
+      recompute(s);
+      out.push({ room: s.room, stay: s.id, price: perk ? 0 : price });
+    });
+    return out;
+  }
+  function autoLate(c) { return c && ((c.item === DESK_LATE_ITEM && c.by === DESK_LATE_BY) || (c.item === DESK_LATE_FULL_ITEM && c.by === DESK_LATE_FULL_BY)); }
+  /* Fine on a guest's room bill (default ₹2,000). Front desk adds it with a reason; it can be changed or removed like any bill item. */
+  api.fine = function (req) {
+    var me = auth(req); needMgr(me);
+    var s = stay(req.id);
+    if (s.status !== 'In house') { needApprover(me); lockedOut(me, s); }
+    var amt = req.amount == null || req.amount === '' ? DESK_FINE_AMOUNT : money(req.amount); if (!(amt > 0)) fail('invalid_amount');
+    var why = text(req.reason, 160); if (!why) fail('reason_required');
+    var rt0 = s.roomTotal;
+    db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: s.room, item: DESK_FINE_ITEM, qty: 1, price: amt, total: amt, free: 'No', note: why, by: me.name, removed: '' });
+    recompute(s);
+    afterChange(s, me, rt0);
+    return { stay: stayView(s, me) };
+  };
+
+  api._lateCheckout = function () { return lateCheckoutRun(); };
+
+  api._sendDue = function (opt) { var late = []; try { late = lateCheckoutRun(); } catch (e) { if (String(e && e.message) === '__NK_WAIT__') throw e; } var arch = opt && opt.archive ? archiveRun(opt.limit || 8) : [], lf = []; if (opt && opt.archive) try { lf = laundryFileRun(4); } catch (e) { if (String(e && e.message) === '__NK_WAIT__') throw e; } return { sent: sendDue(opt && opt.waOnly), archived: arch, laundry: lf, late: late }; };
   /* Recent bills for the front desk list. */
   api.bills = function (req) {
     var me = auth(req); needMgr(me);

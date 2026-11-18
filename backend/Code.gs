@@ -40,7 +40,7 @@ var TIERS = [
   { key: 'platinum', name: 'Platinum', nights: 40, discount: 15, earn: 2, birthday: 100, perks: [
     { id: 'rate', text: '15% member rate on every booking' },
     { id: 'points', text: '2 points for every ₹100 of room tariff' },
-    { id: 'latecheckout', text: 'Free late check-out till 11 AM (usually ₹1,500)', onsite: true },
+    { id: 'latecheckout', text: 'Free late check-out till 11 AM (usually ₹1,000)', onsite: true },
     { id: 'upgrade', text: 'Free room upgrade, when available', onsite: true },
     { id: 'dental', text: 'Free dental kit every stay', onsite: true }] },
   { key: 'plus', name: 'Platinum Plus', nights: 100, discount: 20, earn: 4, birthday: 100, perks: [
