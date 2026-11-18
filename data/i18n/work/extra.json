@@ -1,0 +1,1605 @@
+{
+"{D}": [
+"{D}",
+"{D}",
+"{D}",
+"{D}",
+"{D}"
+],
+"{0} h {1} min": [
+"{0} ঘণ্টা {1} মিনিট",
+"{0} घंटे {1} मिनट",
+"{0} ч {1} мин",
+"{0} 小时 {1} 分钟",
+"{0} h {1} min"
+],
+"{0} h": [
+"{0} ঘণ্টা",
+"{0} घंटे",
+"{0} ч",
+"{0} 小时",
+"{0} h"
+],
+"{0} min": [
+"{0} মিনিট",
+"{0} मिनट",
+"{0} мин",
+"{0} 分钟",
+"{0} min"
+],
+"in {D}": [
+"{D} পরে",
+"{D} में",
+"через {D}",
+"{D}后",
+"en {D}"
+],
+"In {D}": [
+"{D} পরে",
+"{D} में",
+"Через {D}",
+"{D}后",
+"En {D}"
+],
+"in a moment": [
+"এখনই",
+"बस अभी",
+"сейчас",
+"马上",
+"en un momento"
+],
+"now": [
+"এখন",
+"अभी",
+"сейчас",
+"现在",
+"ahora"
+],
+"tomorrow": [
+"আগামীকাল",
+"कल",
+"завтра",
+"明天",
+"mañana"
+],
+"tomorrow, in {D}": [
+"আগামীকাল, {D} পরে",
+"कल, {D} में",
+"завтра, через {D}",
+"明天，{D}后",
+"mañana, en {D}"
+],
+"Tomorrow morning": [
+"আগামীকাল সকালে",
+"कल सुबह",
+"Завтра утром",
+"明天早上",
+"Mañana por la mañana"
+],
+"Today": [
+"আজ",
+"आज",
+"Сегодня",
+"今天",
+"Hoy"
+],
+"Tomorrow": [
+"আগামীকাল",
+"कल",
+"Завтра",
+"明天",
+"Mañana"
+],
+"India time": [
+"ভারতীয় সময়",
+"भारतीय समय",
+"время в Индии",
+"印度时间",
+"hora de la India"
+],
+"{0} night": [
+"{0} রাত",
+"{0} रात",
+"{0} ночь",
+"{0} 晚",
+"{0} noche"
+],
+"{0} nights": [
+"{0} রাত",
+"{0} रातें",
+"{0} ноч.",
+"{0} 晚",
+"{0} noches"
+],
+"come and enjoy your nights at Nikadi": [
+"নিকাডিতে এসে রাতগুলো উপভোগ করুন",
+"निकाडी में आइए और अपनी रातों का आनंद लीजिए",
+"приезжайте и наслаждайтесь ночами в Nikadi",
+"欢迎来 Nikadi 享受美好夜晚",
+"ven a disfrutar tus noches en Nikadi"
+],
+"Special offer till {0} Dec": [
+"{0} ডিসেম্বর পর্যন্ত বিশেষ অফার",
+"{0} दिसंबर तक विशेष ऑफ़र",
+"Спецпредложение до {0} дек.",
+"特惠至 12 月 {0} 日",
+"Oferta especial hasta el {0} dic"
+],
+"rooms from ₹{0}": [
+"রুম ₹{0} থেকে",
+"कमरे ₹{0} से",
+"номера от ₹{0}",
+"房价 ₹{0} 起",
+"habitaciones desde ₹{0}"
+],
+"Summer Darshan Special": [
+"গ্রীষ্মকালীন দর্শন স্পেশাল",
+"समर दर्शन स्पेशल",
+"Летнее даршан-предложение",
+"夏季觐见特惠",
+"Especial Darshan de verano"
+],
+"our best price of the year, steps away from the Mayapur ISKCON Temple": [
+"বছরের সেরা দাম, মায়াপুর ইসকন মন্দির থেকে কয়েক পা দূরে",
+"साल की सबसे अच्छी कीमत, मायापुर इस्कॉन मंदिर से कुछ कदम दूर",
+"лучшая цена года, в двух шагах от храма ИСККОН в Маяпуре",
+"全年最优价格，距玛雅普尔 ISKCON 神庙仅几步之遥",
+"nuestro mejor precio del año, a pocos pasos del Templo ISKCON de Mayapur"
+],
+"Special offer": [
+"বিশেষ অফার",
+"विशेष ऑफ़र",
+"Спецпредложение",
+"特惠",
+"Oferta especial"
+],
+"Till {0} December": [
+"{0} ডিসেম্বর পর্যন্ত",
+"{0} दिसंबर तक",
+"До {0} декабря",
+"至 12 月 {0} 日",
+"Hasta el {0} de diciembre"
+],
+"till {0} December": [
+"{0} ডিসেম্বর পর্যন্ত",
+"{0} दिसंबर तक",
+"до {0} декабря",
+"至 12 月 {0} 日",
+"hasta el {0} de diciembre"
+],
+"Our best price of the year": [
+"বছরের সেরা দাম",
+"साल की सबसे अच्छी कीमत",
+"Лучшая цена года",
+"全年最优价格",
+"Nuestro mejor precio del año"
+],
+"Deluxe rooms, per night": [
+"ডিলাক্স রুম, প্রতি রাত",
+"डीलक्स कमरे, प्रति रात",
+"Номера делюкс, за ночь",
+"豪华客房，每晚",
+"Habitaciones deluxe, por noche"
+],
+"Per room, per night. Come and enjoy your nights at Nikadi. Members pay even less.": [
+"প্রতি রুম, প্রতি রাত। নিকাডিতে এসে রাতগুলো উপভোগ করুন। সদস্যরা আরও কম দেন।",
+"प्रति कमरा, प्रति रात। निकाडी में आइए और अपनी रातों का आनंद लीजिए। सदस्य और भी कम देते हैं।",
+"За номер, за ночь. Приезжайте и наслаждайтесь ночами в Nikadi. Участники платят ещё меньше.",
+"每间每晚。欢迎来 Nikadi 享受美好夜晚。会员价更低。",
+"Por habitación y noche. Ven a disfrutar tus noches en Nikadi. Los miembros pagan aún menos."
+],
+"Per room, per night. Members save {0}–{1}% on every night.": [
+"প্রতি রুম, প্রতি রাত। সদস্যরা প্রতি রাতে {0}–{1}% বাঁচান।",
+"प्रति कमरा, प्रति रात। सदस्य हर रात {0}–{1}% बचाते हैं।",
+"За номер, за ночь. Участники экономят {0}–{1}% за каждую ночь.",
+"每间每晚。会员每晚可省 {0}–{1}%。",
+"Por habitación y noche. Los miembros ahorran un {0}–{1}% cada noche."
+],
+"Per night": [
+"প্রতি রাত",
+"प्रति रात",
+"За ночь",
+"每晚",
+"Por noche"
+],
+"for a limited time": [
+"সীমিত সময়ের জন্য",
+"सीमित समय के लिए",
+"ограниченное время",
+"限时",
+"por tiempo limitado"
+],
+"Members save {0}–{1}%": [
+"সদস্যরা বাঁচান {0}–{1}%",
+"सदस्य बचाते हैं {0}–{1}%",
+"Участники экономят {0}–{1}%",
+"会员省 {0}–{1}%",
+"Los miembros ahorran {0}–{1}%"
+],
+"Member rate": [
+"সদস্য দাম",
+"सदस्य दर",
+"Цена для участников",
+"会员价",
+"Tarifa de miembro"
+],
+"Members pay from <b>₹{0}</b> to <b>₹{1}</b> · <u>sign in</u> or join free": [
+"সদস্যরা দেন <b>₹{0}</b> থেকে <b>₹{1}</b> · <u>সাইন ইন</u> বা বিনামূল্যে যোগ দিন",
+"सदस्य देते हैं <b>₹{0}</b> से <b>₹{1}</b> · <u>साइन इन</u> करें या मुफ़्त जुड़ें",
+"Участники платят от <b>₹{0}</b> до <b>₹{1}</b> · <u>войдите</u> или вступите бесплатно",
+"会员价 <b>₹{0}</b> 至 <b>₹{1}</b> · <u>登录</u>或免费加入",
+"Los miembros pagan de <b>₹{0}</b> a <b>₹{1}</b> · <u>inicia sesión</u> o únete gratis"
+],
+"special offer.": [
+"বিশেষ অফার।",
+"विशेष ऑफ़र।",
+"спецпредложение.",
+"特惠。",
+"oferta especial."
+],
+"special offer (max {0} guests per room).": [
+"বিশেষ অফার (প্রতি রুমে সর্বোচ্চ {0} জন)।",
+"विशेष ऑफ़र (प्रति कमरा अधिकतम {0} अतिथि)।",
+"спецпредложение (до {0} гостей в номере).",
+"特惠（每间最多 {0} 人）。",
+"oferta especial (máx. {0} huéspedes por habitación)."
+],
+"summer darshan special.": [
+"গ্রীষ্মকালীন দর্শন স্পেশাল।",
+"समर दर्शन स्पेशल।",
+"летнее даршан-предложение.",
+"夏季觐见特惠。",
+"especial darshan de verano."
+],
+"(max {0} guests per room).": [
+"(প্রতি রুমে সর্বোচ্চ {0} জন)।",
+"(प्रति कमरा अधिकतम {0} अतिथि)।",
+"(до {0} гостей в номере).",
+"（每间最多 {0} 人）。",
+"(máx. {0} huéspedes por habitación)."
+],
+"Choose a check-out date after check-in.": [
+"চেক-ইনের পরের একটি চেক-আউট তারিখ বেছে নিন।",
+"चेक-इन के बाद की चेक-आउट तारीख चुनें।",
+"Выберите дату выезда после даты заезда.",
+"请选择晚于入住日的退房日期。",
+"Elige una fecha de salida posterior a la de entrada."
+],
+"50% advance for {0} in {1} (from the booking bar above) is ₹{2}. Please pay after we confirm your room on WhatsApp.": [
+"{1}-এ {0}-এর জন্য ৫০% অগ্রিম (ওপরের বুকিং বার অনুযায়ী) ₹{2}। WhatsApp-এ আমরা রুম নিশ্চিত করার পর পেমেন্ট করুন।",
+"{1} में {0} के लिए 50% अग्रिम (ऊपर के बुकिंग बार से) ₹{2} है। WhatsApp पर कमरे की पुष्टि होने के बाद भुगतान करें।",
+"Предоплата 50% за {0}, {1} (по панели бронирования выше): ₹{2}. Оплатите после того, как мы подтвердим номер в WhatsApp.",
+"{1}、{0}的 50% 预付款（依上方预订栏）为 ₹{2}。请在我们于 WhatsApp 确认房间后再付款。",
+"El 50% de anticipo por {0} en {1} (según la barra de reserva de arriba) es ₹{2}. Paga cuando confirmemos tu habitación por WhatsApp."
+],
+"Check-out by {0} AM": [
+"চেক-আউট সকাল {0}-এর মধ্যে",
+"चेक-आउट सुबह {0} तक",
+"Выезд до {0}",
+"上午 {0} 前退房",
+"Check-out antes de las {0} AM"
+],
+"Check-in opens at {0} AM": [
+"চেক-ইন শুরু সকাল {0}-এ",
+"चेक-इन सुबह {0} से",
+"Заезд с {0}",
+"上午 {0} 开始入住",
+"Check-in desde las {0} AM"
+],
+"Check-in is open now": [
+"এখন চেক-ইন চলছে",
+"चेक-इन अभी खुला है",
+"Заезд открыт",
+"现在可以入住",
+"El check-in está abierto"
+],
+"from {0} AM": [
+"সকাল {0} থেকে",
+"सुबह {0} से",
+"с {0}",
+"上午 {0} 起",
+"desde las {0} AM"
+],
+"Arriving late tonight? WhatsApp us before you come": [
+"আজ রাতে দেরিতে আসছেন? আসার আগে WhatsApp করুন",
+"आज रात देर से आ रहे हैं? आने से पहले WhatsApp करें",
+"Приедете поздно? Напишите нам в WhatsApp",
+"今晚晚到？请提前 WhatsApp 联系我们",
+"¿Llegas tarde esta noche? Escríbenos por WhatsApp antes"
+],
+"Clear": [
+"পরিষ্কার আকাশ",
+"साफ़",
+"Ясно",
+"晴",
+"Despejado"
+],
+"Mostly clear": [
+"প্রায় পরিষ্কার",
+"ज़्यादातर साफ़",
+"Малооблачно",
+"大致晴朗",
+"Mayormente despejado"
+],
+"Partly cloudy": [
+"আংশিক মেঘলা",
+"आंशिक बादल",
+"Переменная облачность",
+"局部多云",
+"Parcialmente nublado"
+],
+"Cloudy": [
+"মেঘলা",
+"बादल",
+"Облачно",
+"多云",
+"Nublado"
+],
+"Fog": [
+"কুয়াশা",
+"कोहरा",
+"Туман",
+"雾",
+"Niebla"
+],
+"Drizzle": [
+"গুঁড়ি গুঁড়ি বৃষ্টি",
+"बूंदाबांदी",
+"Морось",
+"毛毛雨",
+"Llovizna"
+],
+"Light rain": [
+"হালকা বৃষ্টি",
+"हल्की बारिश",
+"Небольшой дождь",
+"小雨",
+"Lluvia ligera"
+],
+"Rain": [
+"বৃষ্টি",
+"बारिश",
+"Дождь",
+"雨",
+"Lluvia"
+],
+"Heavy rain": [
+"ভারী বৃষ্টি",
+"भारी बारिश",
+"Сильный дождь",
+"大雨",
+"Lluvia intensa"
+],
+"Snow": [
+"তুষার",
+"बर्फ़",
+"Снег",
+"雪",
+"Nieve"
+],
+"Showers": [
+"ঝিরঝিরে বৃষ্টি",
+"बौछारें",
+"Ливни",
+"阵雨",
+"Chubascos"
+],
+"Heavy showers": [
+"প্রবল বৃষ্টি",
+"तेज़ बौछारें",
+"Сильные ливни",
+"强阵雨",
+"Chubascos fuertes"
+],
+"Thunderstorm": [
+"বজ্রবৃষ্টি",
+"आंधी-तूफ़ान",
+"Гроза",
+"雷暴",
+"Tormenta"
+],
+"Sunrise in {D}. Mangala arati is before sunrise.": [
+"{D} পরে সূর্যোদয়। মঙ্গল আরতি সূর্যোদয়ের আগে।",
+"{D} में सूर्योदय। मंगल आरती सूर्योदय से पहले होती है।",
+"Восход через {D}. Мангала-арати — до восхода.",
+"{D}后日出。晨曦礼拜在日出之前。",
+"Amanece en {D}. La mangala arati es antes del amanecer."
+],
+"The sun has set. Evening arati and kirtan time in the Dham.": [
+"সূর্য অস্ত গেছে। ধামে সন্ধ্যা আরতি ও কীর্তনের সময়।",
+"सूरज ढल गया। धाम में संध्या आरती और कीर्तन का समय।",
+"Солнце село. В Дхаме время вечернего арати и киртана.",
+"太阳已落山。正是圣地晚间礼拜与唱颂的时候。",
+"Ya se puso el sol. Es hora del arati vespertino y el kirtan en el Dham."
+],
+"Sunset in {D}. Lovely time for a walk by the Ganga.": [
+"{D} পরে সূর্যাস্ত। গঙ্গার ধারে হাঁটার সুন্দর সময়।",
+"{D} में सूर्यास्त। गंगा किनारे सैर का सुंदर समय।",
+"Закат через {D}. Прекрасное время для прогулки у Ганги.",
+"{D}后日落。正适合去恒河边散步。",
+"Atardece en {D}. Buen momento para pasear junto al Ganges."
+],
+"Humidity {0}%": [
+"আর্দ্রতা {0}%",
+"नमी {0}%",
+"Влажность {0}%",
+"湿度 {0}%",
+"Humedad {0}%"
+],
+"today {0}° to {1}°": [
+"আজ {0}° থেকে {1}°",
+"आज {0}° से {1}°",
+"сегодня от {0}° до {1}°",
+"今天 {0}° 至 {1}°",
+"hoy de {0}° a {1}°"
+],
+"rain {0}%": [
+"বৃষ্টি {0}%",
+"बारिश {0}%",
+"дождь {0}%",
+"降雨 {0}%",
+"lluvia {0}%"
+],
+"Today {0}° to {1}°": [
+"আজ {0}° থেকে {1}°",
+"आज {0}° से {1}°",
+"Сегодня от {0}° до {1}°",
+"今天 {0}° 至 {1}°",
+"Hoy de {0}° a {1}°"
+],
+"{0}% chance of rain": [
+"বৃষ্টির সম্ভাবনা {0}%",
+"बारिश की संभावना {0}%",
+"вероятность дождя {0}%",
+"降雨概率 {0}%",
+"{0}% de probabilidad de lluvia"
+],
+"Warmer than it reads": [
+"যা দেখাচ্ছে তার চেয়ে গরম লাগে",
+"जितना दिखता है उससे ज़्यादा गर्म",
+"Ощущается теплее",
+"体感更热",
+"Se siente más cálido"
+],
+"Cooler than it reads": [
+"যা দেখাচ্ছে তার চেয়ে ঠান্ডা লাগে",
+"जितना दिखता है उससे ज़्यादा ठंडा",
+"Ощущается прохладнее",
+"体感更凉",
+"Se siente más fresco"
+],
+"About the same": [
+"প্রায় একই",
+"लगभग उतना ही",
+"Примерно так же",
+"差不多",
+"Más o menos igual"
+],
+"{0} km/h": [
+"{0} কিমি/ঘণ্টা",
+"{0} किमी/घंटा",
+"{0} км/ч",
+"{0} 公里/小时",
+"{0} km/h"
+],
+"Calm and gentle": [
+"শান্ত ও মৃদু",
+"शांत और हल्की",
+"Тихо и спокойно",
+"风平浪静",
+"Calma y suave"
+],
+"A light breeze": [
+"হালকা বাতাস",
+"हल्की हवा",
+"Лёгкий ветерок",
+"微风",
+"Brisa ligera"
+],
+"Windy by the river": [
+"নদীর ধারে হাওয়া বেশি",
+"नदी किनारे तेज़ हवा",
+"Ветрено у реки",
+"河边风大",
+"Viento junto al río"
+],
+"About {0} mm": [
+"প্রায় {0} মিমি",
+"लगभग {0} मिमी",
+"около {0} мм",
+"约 {0} 毫米",
+"Unos {0} mm"
+],
+"No real rain expected": [
+"তেমন বৃষ্টির সম্ভাবনা নেই",
+"ख़ास बारिश की उम्मीद नहीं",
+"Дождя почти не ожидается",
+"预计基本无雨",
+"No se espera lluvia"
+],
+"Moderate, a cap helps": [
+"মাঝারি, টুপি কাজে দেবে",
+"मध्यम, टोपी काम आएगी",
+"Умеренный, пригодится кепка",
+"中等，戴顶帽子更好",
+"Moderado, una gorra ayuda"
+],
+"High, carry an umbrella": [
+"বেশি, ছাতা সঙ্গে রাখুন",
+"ज़्यादा, छाता साथ रखें",
+"Высокий, возьмите зонт",
+"较高，请带伞",
+"Alto, lleva paraguas"
+],
+"Very high, stay in shade at noon": [
+"খুব বেশি, দুপুরে ছায়ায় থাকুন",
+"बहुत ज़्यादा, दोपहर में छाँव में रहें",
+"Очень высокий, в полдень держитесь в тени",
+"很高，中午请待在阴凉处",
+"Muy alto, quédate a la sombra al mediodía"
+],
+"Rain is likely today. Carry an umbrella for the walk to the temple.": [
+"আজ বৃষ্টির সম্ভাবনা আছে। মন্দিরে যাওয়ার পথে ছাতা নিয়ে যান।",
+"आज बारिश की संभावना है। मंदिर जाते समय छाता साथ रखें।",
+"Сегодня вероятен дождь. Возьмите зонт для прогулки в храм.",
+"今天可能下雨。去神庙时请带伞。",
+"Hoy es probable que llueva. Lleva paraguas para ir al templo."
+],
+"Early mornings are cool. Bring a shawl for Mangal Arati at {0} AM.": [
+"ভোরবেলা ঠান্ডা থাকে। সকাল {0}-এর মঙ্গল আরতির জন্য একটি শাল সঙ্গে আনুন।",
+"सुबह-सुबह ठंडक रहती है। सुबह {0} की मंगल आरती के लिए शॉल साथ लाएँ।",
+"Ранним утром прохладно. Возьмите шаль на Мангала-арати в {0}.",
+"清晨较凉。参加凌晨 {0} 的晨曦礼拜请带披肩。",
+"Las madrugadas son frescas. Trae un chal para la Mangal Arati de las {0} AM."
+],
+"Hot afternoon. Plan darshan and parikrama for the morning and evening, and drink plenty of water.": [
+"গরম বিকেল। দর্শন ও পরিক্রমা সকাল-সন্ধ্যায় রাখুন, আর প্রচুর জল খান।",
+"गर्म दोपहर। दर्शन और परिक्रमा सुबह-शाम रखें, और ख़ूब पानी पिएँ।",
+"Жаркий день. Планируйте даршан и парикраму на утро и вечер и пейте больше воды.",
+"午后炎热。请把觐见和绕行安排在早晚，并多喝水。",
+"Tarde calurosa. Planea el darshan y la parikrama por la mañana y la tarde, y bebe mucha agua."
+],
+"Strong sun around midday. Use the {0}–{1} PM temple break to rest in your room.": [
+"দুপুরে কড়া রোদ। মন্দিরের {0}–{1}টার বিরতিতে রুমে বিশ্রাম নিন।",
+"दोपहर में तेज़ धूप। मंदिर के {0}–{1} बजे के विराम में कमरे में आराम करें।",
+"Сильное солнце в полдень. Отдохните в номере во время перерыва в храме с {0} до {1} дня.",
+"正午阳光强烈。可趁神庙下午 {0}–{1} 点休息时回房歇息。",
+"Sol fuerte a mediodía. Aprovecha el descanso del templo de {0} a {1} PM para reposar en tu habitación."
+],
+"Temperature next {0} hours": [
+"পরের {0} ঘণ্টার তাপমাত্রা",
+"अगले {0} घंटों का तापमान",
+"Температура на {0} часа",
+"未来 {0} 小时气温",
+"Temperatura próximas {0} horas"
+],
+"high {0}°, low {1}°": [
+"সর্বোচ্চ {0}°, সর্বনিম্ন {1}°",
+"अधिकतम {0}°, न्यूनतम {1}°",
+"макс. {0}°, мин. {1}°",
+"最高 {0}°，最低 {1}°",
+"máx. {0}°, mín. {1}°"
+],
+"Sun {0} AM – {1} PM": [
+"সূর্য {0} AM – {1} PM",
+"सूर्य {0} AM – {1} PM",
+"Солнце {0} – {1}",
+"日照 {0} AM – {1} PM",
+"Sol {0} AM – {1} PM"
+],
+"{0}% rain": [
+"বৃষ্টি {0}%",
+"बारिश {0}%",
+"дождь {0}%",
+"降雨 {0}%",
+"lluvia {0}%"
+],
+"Right now in Mayapur, updated at {0} AM India time.": [
+"এখন মায়াপুরে, ভারতীয় সময় সকাল {0}-এ হালনাগাদ।",
+"अभी मायापुर में, भारतीय समय सुबह {0} पर अपडेट।",
+"Сейчас в Маяпуре, обновлено в {0} по индийскому времени.",
+"玛雅普尔当前天气，印度时间上午 {0} 更新。",
+"Ahora en Mayapur, actualizado a las {0} AM, hora de la India."
+],
+"Right now in Mayapur, updated at {0} PM India time.": [
+"এখন মায়াপুরে, ভারতীয় সময় {0} PM-এ হালনাগাদ।",
+"अभी मायापुर में, भारतीय समय {0} PM पर अपडेट।",
+"Сейчас в Маяпуре, обновлено в {0} PM по индийскому времени.",
+"玛雅普尔当前天气，印度时间下午 {0} 更新。",
+"Ahora en Mayapur, actualizado a las {0} PM, hora de la India."
+],
+"Weather is not available right now": [
+"এখন আবহাওয়ার তথ্য পাওয়া যাচ্ছে না",
+"अभी मौसम की जानकारी उपलब्ध नहीं",
+"Погода сейчас недоступна",
+"暂时无法获取天气",
+"El tiempo no está disponible ahora"
+],
+"The forecast could not load right now. Please try again in a minute.": [
+"এখন পূর্বাভাস লোড হল না। এক মিনিট পরে আবার চেষ্টা করুন।",
+"अभी पूर्वानुमान लोड नहीं हो सका। एक मिनट बाद फिर कोशिश करें।",
+"Прогноз сейчас не загрузился. Попробуйте через минуту.",
+"预报暂时无法加载，请稍后再试。",
+"No se pudo cargar la previsión. Inténtalo de nuevo en un minuto."
+],
+"Temperature over the next {0} hours": [
+"পরের {0} ঘণ্টার তাপমাত্রা",
+"अगले {0} घंटों का तापमान",
+"Температура на ближайшие {0} часа",
+"未来 {0} 小时的气温",
+"Temperatura en las próximas {0} horas"
+],
+"Going on now": [
+"এখন চলছে",
+"अभी चल रहा है",
+"Идёт сейчас",
+"正在进行",
+"En curso"
+],
+"started at {0}": [
+"শুরু {0}-এ",
+"{0} पर शुरू",
+"началось в {0}",
+"{0} 开始",
+"empezó a las {0}"
+],
+"{0} at {1}": [
+"{1}-এ {0}",
+"{1} पर {0}",
+"{0} в {1}",
+"{1} {0}",
+"{0} a las {1}"
+],
+"Next: {0}": [
+"পরের: {0}",
+"अगला: {0}",
+"Далее: {0}",
+"下一项：{0}",
+"Siguiente: {0}"
+],
+"● Live now": [
+"● এখন সরাসরি",
+"● अभी लाइव",
+"● Идёт сейчас",
+"● 正在进行",
+"● En directo"
+],
+"Opens again with {0} at {1}": [
+"আবার খুলবে {1}-এ {0} দিয়ে",
+"{1} पर {0} के साथ फिर खुलेगा",
+"Откроется снова: {0} в {1}",
+"{1} {0}时重新开放",
+"Vuelve a abrir con {0} a las {1}"
+],
+"Opens {1} ({0})": [
+"খুলবে {1} ({0})",
+"खुलेगा {1} ({0})",
+"Откроется в {1} ({0})",
+"{1} 开放（{0}）",
+"Abre a las {1} ({0})"
+],
+"All temples in Mayapur close 1–4 PM.": [
+"মায়াপুরের সব মন্দির দুপুর ১টা থেকে ৪টা বন্ধ থাকে।",
+"मायापुर के सभी मंदिर दोपहर 1 से 4 बजे तक बंद रहते हैं।",
+"Все храмы Маяпура закрыты с 13:00 до 16:00.",
+"玛雅普尔所有神庙下午 1 点至 4 点关闭。",
+"Todos los templos de Mayapur cierran de 1 a 4 PM."
+],
+"Temple closed now": [
+"মন্দির এখন বন্ধ",
+"मंदिर अभी बंद है",
+"Храм сейчас закрыт",
+"神庙现在关闭",
+"El templo está cerrado ahora"
+],
+"Temple closed for the night": [
+"মন্দির রাতের জন্য বন্ধ",
+"मंदिर रात के लिए बंद",
+"Храм закрыт на ночь",
+"神庙夜间关闭",
+"El templo está cerrado por la noche"
+],
+"Temple timings": [
+"মন্দিরের সময়",
+"मंदिर का समय",
+"Расписание храма",
+"神庙开放时间",
+"Horario del templo"
+],
+"First program tomorrow": [
+"আগামীকালের প্রথম অনুষ্ঠান",
+"कल का पहला कार्यक्रम",
+"Первая программа завтра",
+"明天第一项活动",
+"Primer programa de mañana"
+],
+"Next at the temple": [
+"মন্দিরে এর পরে",
+"मंदिर में अगला",
+"Далее в храме",
+"神庙下一项",
+"Lo próximo en el templo"
+],
+"At the temple now": [
+"মন্দিরে এখন",
+"मंदिर में अभी",
+"Сейчас в храме",
+"神庙正在进行",
+"Ahora en el templo"
+],
+"Next trains": [
+"পরের ট্রেন",
+"अगली ट्रेनें",
+"Ближайшие поезда",
+"下一班火车",
+"Próximos trenes"
+],
+"Sealdah": [
+"শিয়ালদহ",
+"सियालदह",
+"Сеалда",
+"锡尔达",
+"Sealdah"
+],
+"Krishnanagar City": [
+"কৃষ্ণনগর সিটি",
+"कृष्णनगर सिटी",
+"Кришнанагар-Сити",
+"克里希纳纳加尔市",
+"Krishnanagar City"
+],
+"Krishnanagar": [
+"কৃষ্ণনগর",
+"कृष्णनगर",
+"Кришнанагар",
+"克里希纳纳加尔",
+"Krishnanagar"
+],
+"Howrah": [
+"হাওড়া",
+"हावड़ा",
+"Хаора",
+"豪拉",
+"Howrah"
+],
+"Nabadwip Dham": [
+"নবদ্বীপ ধাম",
+"नवद्वीप धाम",
+"Навадвипа-Дхам",
+"纳巴德维普圣地",
+"Nabadwip Dham"
+],
+"Kolkata (Sealdah)": [
+"কলকাতা (শিয়ালদহ)",
+"कोलकाता (सियालदह)",
+"Калькутта (Сеалда)",
+"加尔各答（锡尔达）",
+"Calcuta (Sealdah)"
+],
+"arrives {0} AM": [
+"পৌঁছায় {0} AM",
+"पहुँचती है {0} AM",
+"прибытие {0}",
+"上午 {0} 到达",
+"llega a las {0} AM"
+],
+"arrives {0} PM": [
+"পৌঁছায় {0} PM",
+"पहुँचती है {0} PM",
+"прибытие {0} PM",
+"下午 {0} 到达",
+"llega a las {0} PM"
+],
+"Next AC local": [
+"পরের এসি লোকাল",
+"अगली एसी लोकल",
+"Следующая AC-электричка",
+"下一班空调市郊车",
+"Próximo tren local con AC"
+],
+"{0} AM (arrives {1} AM)": [
+"{0} AM (পৌঁছায় {1} AM)",
+"{0} AM (पहुँचती है {1} AM)",
+"{0} (прибытие {1})",
+"上午 {0}（上午 {1} 到达）",
+"{0} AM (llega {1} AM)"
+],
+"{0} AM (arrives {1} PM)": [
+"{0} AM (পৌঁছায় {1} PM)",
+"{0} AM (पहुँचती है {1} PM)",
+"{0} (прибытие {1} PM)",
+"上午 {0}（下午 {1} 到达）",
+"{0} AM (llega {1} PM)"
+],
+"{0} PM (arrives {1} PM)": [
+"{0} PM (পৌঁছায় {1} PM)",
+"{0} PM (पहुँचती है {1} PM)",
+"{0} PM (прибытие {1} PM)",
+"下午 {0}（下午 {1} 到达）",
+"{0} PM (llega {1} PM)"
+],
+"{0} PM (arrives {1} AM)": [
+"{0} PM (পৌঁছায় {1} AM)",
+"{0} PM (पहुँचती है {1} AM)",
+"{0} PM (прибытие {1})",
+"下午 {0}（上午 {1} 到达）",
+"{0} PM (llega {1} AM)"
+],
+"This one is the AC local": [
+"এটিই এসি লোকাল",
+"यही एसी लोकल है",
+"Это и есть AC-электричка",
+"这班就是空调市郊车",
+"Este es el tren local con AC"
+],
+"No more AC locals today": [
+"আজ আর এসি লোকাল নেই",
+"आज और एसी लोकल नहीं",
+"Сегодня AC-электричек больше нет",
+"今天已无空调市郊车",
+"No hay más trenes con AC hoy"
+],
+"AC local train": [
+"এসি লোকাল ট্রেন",
+"एसी लोकल ट्रेन",
+"Электричка с кондиционером",
+"空调市郊列车",
+"Tren local con AC"
+],
+"Express train": [
+"এক্সপ্রেস ট্রেন",
+"एक्सप्रेस ट्रेन",
+"Скорый поезд",
+"特快列车",
+"Tren exprés"
+],
+"MEMU train": [
+"মেমু ট্রেন",
+"मेमू ट्रेन",
+"Поезд MEMU",
+"MEMU 列车",
+"Tren MEMU"
+],
+"Local train": [
+"লোকাল ট্রেন",
+"लोकल ट्रेन",
+"Электричка",
+"市郊列车",
+"Tren local"
+],
+"No. {0}": [
+"নং {0}",
+"नं. {0}",
+"№ {0}",
+"车次 {0}",
+"N.º {0}"
+],
+"{0} stops": [
+"{0}টি স্টপ",
+"{0} स्टॉप",
+"{0} остановок",
+"{0} 站",
+"{0} paradas"
+],
+"Runs": [
+"চলে",
+"चलती है",
+"Ходит",
+"运行",
+"Circula"
+],
+"Daily": [
+"প্রতিদিন",
+"रोज़",
+"Ежедневно",
+"每天",
+"A diario"
+],
+"Mon–Sat (not Sunday)": [
+"সোম–শনি (রবিবার নয়)",
+"सोम–शनि (रविवार नहीं)",
+"Пн–Сб (не по воскресеньям)",
+"周一至周六（周日停运）",
+"Lun–sáb (no los domingos)"
+],
+"Sundays only": [
+"শুধু রবিবার",
+"केवल रविवार",
+"Только по воскресеньям",
+"仅周日",
+"Solo domingos"
+],
+"Train {0} details": [
+"ট্রেন {0}-এর বিবরণ",
+"ट्रेन {0} का विवरण",
+"Поезд {0}: подробности",
+"{0} 次列车详情",
+"Detalles del tren {0}"
+],
+"From Krishnanagar it is about 40 minutes by bus, auto or car to Mayapur and Nikadi. Times from the official Indian Railways timetable (NTES / RailOne).": [
+"কৃষ্ণনগর থেকে বাস, অটো বা গাড়িতে মায়াপুর ও নিকাডি প্রায় ৪০ মিনিট। সময় ভারতীয় রেলের সরকারি সময়সূচি (NTES / RailOne) থেকে।",
+"कृष्णनगर से बस, ऑटो या कार से मायापुर और निकाडी लगभग 40 मिनट है। समय भारतीय रेलवे की आधिकारिक समय सारणी (NTES / RailOne) से।",
+"От Кришнанагара до Маяпура и Nikadi около 40 минут на автобусе, авторикше или машине. Время — по официальному расписанию Индийских железных дорог (NTES / RailOne).",
+"从克里希纳纳加尔乘巴士、三轮车或汽车到玛雅普尔和 Nikadi 约 40 分钟。时间来自印度铁路官方时刻表（NTES / RailOne）。",
+"Desde Krishnanagar hay unos 40 minutos en autobús, auto o coche hasta Mayapur y Nikadi. Horarios del horario oficial de Indian Railways (NTES / RailOne)."
+],
+"From Mayapur, Krishnanagar station is about 40 minutes by bus, auto or car. Times from the official Indian Railways timetable (NTES / RailOne).": [
+"মায়াপুর থেকে কৃষ্ণনগর স্টেশন বাস, অটো বা গাড়িতে প্রায় ৪০ মিনিট। সময় ভারতীয় রেলের সরকারি সময়সূচি (NTES / RailOne) থেকে।",
+"मायापुर से कृष्णनगर स्टेशन बस, ऑटो या कार से लगभग 40 मिनट है। समय भारतीय रेलवे की आधिकारिक समय सारणी (NTES / RailOne) से।",
+"От Маяпура до станции Кришнанагар около 40 минут на автобусе, авторикше или машине. Время — по официальному расписанию Индийских железных дорог (NTES / RailOne).",
+"从玛雅普尔乘巴士、三轮车或汽车到克里希纳纳加尔站约 40 分钟。时间来自印度铁路官方时刻表（NTES / RailOne）。",
+"Desde Mayapur, la estación de Krishnanagar está a unos 40 minutos en autobús, auto o coche. Horarios del horario oficial de Indian Railways (NTES / RailOne)."
+],
+"From Nabadwip Dham take a toto to the ghat and the ferry across the Ganga to Mayapur. Times from the official Indian Railways timetable (NTES / RailOne).": [
+"নবদ্বীপ ধাম থেকে টোটোতে ঘাটে গিয়ে গঙ্গা পার হয়ে ফেরিতে মায়াপুর। সময় ভারতীয় রেলের সরকারি সময়সূচি (NTES / RailOne) থেকে।",
+"नवद्वीप धाम से टोटो लेकर घाट जाएँ और फ़ेरी से गंगा पार कर मायापुर पहुँचें। समय भारतीय रेलवे की आधिकारिक समय सारणी (NTES / RailOne) से।",
+"От Навадвипа-Дхам на тото до гхата, затем паромом через Гангу в Маяпур. Время — по официальному расписанию Индийских железных дорог (NTES / RailOne).",
+"从纳巴德维普圣地乘电动三轮车到河坛，再乘渡轮过恒河到玛雅普尔。时间来自印度铁路官方时刻表（NTES / RailOne）。",
+"Desde Nabadwip Dham toma un toto hasta el ghat y el ferry por el Ganges hasta Mayapur. Horarios del horario oficial de Indian Railways (NTES / RailOne)."
+],
+"From Mayapur, cross the Ganga by ferry to Nabadwip and take a toto to Nabadwip Dham station. Times from the official Indian Railways timetable (NTES / RailOne).": [
+"মায়াপুর থেকে ফেরিতে গঙ্গা পার হয়ে নবদ্বীপ, তারপর টোটোতে নবদ্বীপ ধাম স্টেশন। সময় ভারতীয় রেলের সরকারি সময়সূচি (NTES / RailOne) থেকে।",
+"मायापुर से फ़ेरी से गंगा पार कर नवद्वीप जाएँ और टोटो से नवद्वीप धाम स्टेशन। समय भारतीय रेलवे की आधिकारिक समय सारणी (NTES / RailOne) से।",
+"Из Маяпура паромом через Гангу в Навадвип, затем на тото до станции Навадвипа-Дхам. Время — по официальному расписанию Индийских железных дорог (NTES / RailOne).",
+"从玛雅普尔乘渡轮过恒河到纳巴德维普，再乘电动三轮车到纳巴德维普圣地站。时间来自印度铁路官方时刻表（NTES / RailOne）。",
+"Desde Mayapur, cruza el Ganges en ferry hasta Nabadwip y toma un toto a la estación de Nabadwip Dham. Horarios del horario oficial de Indian Railways (NTES / RailOne)."
+],
+"Pick your check-in date.": [
+"চেক-ইনের তারিখ বেছে নিন।",
+"चेक-इन की तारीख चुनें।",
+"Выберите дату заезда.",
+"请选择入住日期。",
+"Elige la fecha de entrada."
+],
+"Check-in <b>{0}</b>. Now pick your check-out date.": [
+"চেক-ইন <b>{0}</b>। এবার চেক-আউটের তারিখ বেছে নিন।",
+"चेक-इन <b>{0}</b>। अब चेक-आउट की तारीख चुनें।",
+"Заезд <b>{0}</b>. Теперь выберите дату выезда.",
+"入住 <b>{0}</b>。请选择退房日期。",
+"Entrada <b>{0}</b>. Ahora elige la fecha de salida."
+],
+"<b>{0}</b> to <b>{1}</b>": [
+"<b>{0}</b> থেকে <b>{1}</b>",
+"<b>{0}</b> से <b>{1}</b>",
+"<b>{0}</b> — <b>{1}</b>",
+"<b>{0}</b> 至 <b>{1}</b>",
+"<b>{0}</b> a <b>{1}</b>"
+],
+"<b>₹{0}</b> for one Deluxe Double room": [
+"একটি ডিলাক্স ডাবল রুমের জন্য <b>₹{0}</b>",
+"एक डीलक्स डबल कमरे के लिए <b>₹{0}</b>",
+"<b>₹{0}</b> за один номер Делюкс Дабл",
+"一间豪华大床房 <b>₹{0}</b>",
+"<b>₹{0}</b> por una Deluxe Double"
+],
+"<b>₹{0}</b> for one Deluxe Twin room": [
+"একটি ডিলাক্স টুইন রুমের জন্য <b>₹{0}</b>",
+"एक डीलक्स ट्विन कमरे के लिए <b>₹{0}</b>",
+"<b>₹{0}</b> за один номер Делюкс Твин",
+"一间豪华双床房 <b>₹{0}</b>",
+"<b>₹{0}</b> por una Deluxe Twin"
+],
+"<b>₹{0}</b> for one Large Twin room": [
+"একটি লার্জ টুইন রুমের জন্য <b>₹{0}</b>",
+"एक लार्ज ट्विन कमरे के लिए <b>₹{0}</b>",
+"<b>₹{0}</b> за один номер Ларж Твин",
+"一间大双床房 <b>₹{0}</b>",
+"<b>₹{0}</b> por una Large Twin"
+],
+"Few left": [
+"অল্প বাকি",
+"कुछ ही बचे",
+"Мало",
+"仅剩少量",
+"Quedan pocas"
+],
+"Sold out": [
+"সব ভর্তি",
+"फ़ुल",
+"Нет мест",
+"已满",
+"Agotado"
+],
+"available": [
+"খালি আছে",
+"उपलब्ध",
+"есть места",
+"有空房",
+"disponible"
+],
+"only a few rooms left": [
+"অল্প কয়েকটি রুম বাকি",
+"कुछ ही कमरे बचे",
+"осталось мало номеров",
+"仅剩少量房间",
+"quedan pocas habitaciones"
+],
+"sold out": [
+"সব ভর্তি",
+"फ़ुल",
+"мест нет",
+"已满",
+"agotado"
+],
+"That night is sold out for the Deluxe Double. Try the other room type, or another date.": [
+"ওই রাতে ডিলাক্স ডাবল সব ভর্তি। অন্য ধরনের রুম বা অন্য তারিখ দেখুন।",
+"उस रात डीलक्स डबल फ़ुल है। दूसरा कमरा प्रकार या दूसरी तारीख आज़माएँ।",
+"На эту ночь Делюкс Дабл занят. Попробуйте другой тип номера или другую дату.",
+"当晚豪华大床房已满。请尝试其他房型或日期。",
+"Esa noche la Deluxe Double está agotada. Prueba otro tipo de habitación u otra fecha."
+],
+"That night is sold out for the Deluxe Twin. Try the other room type, or another date.": [
+"ওই রাতে ডিলাক্স টুইন সব ভর্তি। অন্য ধরনের রুম বা অন্য তারিখ দেখুন।",
+"उस रात डीलक्स ट्विन फ़ुल है। दूसरा कमरा प्रकार या दूसरी तारीख आज़माएँ।",
+"На эту ночь Делюкс Твин занят. Попробуйте другой тип номера или другую дату.",
+"当晚豪华双床房已满。请尝试其他房型或日期。",
+"Esa noche la Deluxe Twin está agotada. Prueba otro tipo de habitación u otra fecha."
+],
+"That night is sold out for the Large Twin. Try the other room type, or another date.": [
+"ওই রাতে লার্জ টুইন সব ভর্তি। অন্য ধরনের রুম বা অন্য তারিখ দেখুন।",
+"उस रात लार्ज ट्विन फ़ुल है। दूसरा कमरा प्रकार या दूसरी तारीख आज़माएँ।",
+"На эту ночь Ларж Твин занят. Попробуйте другой тип номера или другую дату.",
+"当晚大双床房已满。请尝试其他房型或日期。",
+"Esa noche la Large Twin está agotada. Prueba otro tipo de habitación u otra fecha."
+],
+"The night of {0} is sold out, so those dates are not free together. Pick an earlier check-out, or another check-in.": [
+"{0}-এর রাত সব ভর্তি, তাই এই তারিখগুলো একসঙ্গে খালি নেই। আগের চেক-আউট বা অন্য চেক-ইন বেছে নিন।",
+"{0} की रात फ़ुल है, इसलिए ये तारीखें एक साथ खाली नहीं हैं। पहले का चेक-आउट या दूसरा चेक-इन चुनें।",
+"Ночь {0} занята, поэтому эти даты подряд недоступны. Выберите более ранний выезд или другой заезд.",
+"{0} 当晚已满，这些日期无法连住。请选择更早的退房日或其他入住日。",
+"La noche del {0} está agotada, así que esas fechas no están libres juntas. Elige una salida antes u otra entrada."
+],
+"Live from our front desk, updated every few minutes. Your booking is confirmed once we reply on WhatsApp.": [
+"সরাসরি আমাদের ফ্রন্ট ডেস্ক থেকে, প্রতি কয়েক মিনিটে হালনাগাদ। WhatsApp-এ আমরা উত্তর দিলেই আপনার বুকিং নিশ্চিত।",
+"सीधे हमारे फ़्रंट डेस्क से, हर कुछ मिनट में अपडेट। WhatsApp पर हमारे जवाब के साथ आपकी बुकिंग पक्की होती है।",
+"Напрямую с нашего ресепшена, обновляется каждые несколько минут. Бронь подтверждается после нашего ответа в WhatsApp.",
+"实时来自我们的前台，每隔几分钟更新。我们在 WhatsApp 回复后即确认您的预订。",
+"En directo desde nuestra recepción, se actualiza cada pocos minutos. Tu reserva se confirma cuando respondemos por WhatsApp."
+],
+"Prices shown for each night. Send us your dates and we will confirm free rooms within minutes on WhatsApp.": [
+"প্রতি রাতের দাম দেখানো আছে। আপনার তারিখ পাঠান, কয়েক মিনিটের মধ্যে WhatsApp-এ খালি রুম নিশ্চিত করব।",
+"हर रात की कीमत दिखाई गई है। अपनी तारीखें भेजें, हम कुछ ही मिनटों में WhatsApp पर खाली कमरों की पुष्टि करेंगे।",
+"Цены указаны за каждую ночь. Пришлите даты — мы подтвердим свободные номера в WhatsApp за несколько минут.",
+"显示的是每晚房价。发送您的日期，我们会在几分钟内通过 WhatsApp 确认空房。",
+"Se muestran los precios de cada noche. Envíanos tus fechas y te confirmamos habitaciones libres por WhatsApp en minutos."
+],
+"Happening now": [
+"এখন চলছে",
+"अभी चल रहा है",
+"Идёт сейчас",
+"正在进行",
+"Está ocurriendo"
+],
+"day to go": [
+"দিন বাকি",
+"दिन बाकी",
+"день до",
+"天后",
+"día"
+],
+"days to go": [
+"দিন বাকি",
+"दिन बाकी",
+"дн. до",
+"天后",
+"días"
+],
+"Next festival": [
+"পরের উৎসব",
+"अगला उत्सव",
+"Ближайший праздник",
+"下一个节日",
+"Próximo festival"
+],
+"Book for this festival": [
+"এই উৎসবের জন্য বুক করুন",
+"इस उत्सव के लिए बुक करें",
+"Забронировать на этот праздник",
+"为此节日预订",
+"Reserva para este festival"
+],
+"View photo": [
+"ছবি দেখুন",
+"फ़ोटो देखें",
+"Открыть фото",
+"查看照片",
+"Ver foto"
+],
+"Photo viewer": [
+"ছবি দেখার জায়গা",
+"फ़ोटो व्यूअर",
+"Просмотр фото",
+"照片查看器",
+"Visor de fotos"
+],
+"Photo": [
+"ছবি",
+"फ़ोटो",
+"Фото",
+"照片",
+"Foto"
+],
+"King bed and warm cove lighting": [
+"কিং খাট ও উষ্ণ কোভ লাইট",
+"किंग बेड और गर्म कोव लाइटिंग",
+"Кровать king-size и тёплая подсветка",
+"特大床与暖色灯槽照明",
+"Cama king y cálida iluminación indirecta"
+],
+"Large Twin · 3rd floor": [
+"লার্জ টুইন · তিনতলা",
+"लार्ज ट्विन · तीसरी मंज़िल",
+"Ларж Твин · 3-й этаж",
+"大双床房 · 三楼",
+"Large Twin · 3.ª planta"
+],
+"Room for three, with the roof terrace outside": [
+"তিনজনের জায়গা, বাইরেই ছাদের টেরেস",
+"तीन लोगों की जगह, बाहर छत की टैरेस",
+"Номер на троих, рядом терраса на крыше",
+"可住三人，门外就是屋顶露台",
+"Espacio para tres, con la azotea fuera"
+],
+"Deep sleep, soft linen": [
+"গভীর ঘুম, নরম চাদর",
+"गहरी नींद, मुलायम चादरें",
+"Крепкий сон, мягкое бельё",
+"安睡，柔软床品",
+"Sueño profundo, ropa de cama suave"
+],
+"Opposite ISKCON Gate No. 4, lit up at night": [
+"ইসকন ৪ নম্বর গেটের উল্টো দিকে, রাতে আলোয় ঝলমলে",
+"इस्कॉन गेट नंबर 4 के सामने, रात में रोशन",
+"Напротив ворот № 4 ИСККОН, с ночной подсветкой",
+"ISKCON 4 号门对面，夜间灯火通明",
+"Frente a la Puerta n.º 4 de ISKCON, iluminada de noche"
+],
+"On Bhaktisiddhanta Saraswati Marg": [
+"ভক্তিসিদ্ধান্ত সরস্বতী মার্গে",
+"भक्तिसिद्धांत सरस्वती मार्ग पर",
+"На Бхактисиддханта Сарасвати Марг",
+"位于 Bhaktisiddhanta Saraswati 路",
+"En Bhaktisiddhanta Saraswati Marg"
+],
+"First floor, open 16 hours a day": [
+"দোতলায়, দিনে ১৬ ঘণ্টা খোলা",
+"पहली मंज़िल, दिन में 16 घंटे खुला",
+"Второй этаж, открыто 16 часов в день",
+"二楼，每天开放 16 小时",
+"Primera planta, abierta 16 horas al día"
+],
+"Large Twin room with two single beds and marble floor": [
+"দুটি সিঙ্গেল খাট ও মার্বেলের মেঝেসহ লার্জ টুইন রুম",
+"दो सिंगल बेड और संगमरमर फ़र्श वाला लार्ज ट्विन कमरा",
+"Номер Ларж Твин с двумя кроватями и мраморным полом",
+"配两张单人床和大理石地板的大双床房",
+"Large Twin con dos camas individuales y suelo de mármol"
+],
+"Nikadi Guest House lit up at night": [
+"রাতে আলোকিত নিকাডি গেস্ট হাউস",
+"रात में रोशन निकाडी गेस्ट हाउस",
+"Nikadi Guest House в ночной подсветке",
+"夜间灯火中的 Nikadi 宾馆",
+"Nikadi Guest House iluminada de noche"
+],
+"Deluxe Double room with king bed": [
+"কিং খাটসহ ডিলাক্স ডাবল রুম",
+"किंग बेड वाला डीलक्स डबल कमरा",
+"Номер Делюкс Дабл с кроватью king-size",
+"配特大床的豪华大床房",
+"Deluxe Double con cama king"
+],
+"Deluxe Double room with king bed and wardrobe": [
+"কিং খাট ও আলমারিসহ ডিলাক্স ডাবল রুম",
+"किंग बेड और अलमारी वाला डीलक्स डबल कमरा",
+"Номер Делюкс Дабл с кроватью king-size и шкафом",
+"配特大床和衣柜的豪华大床房",
+"Deluxe Double con cama king y armario"
+],
+"Deluxe Double room with sofa and wardrobe": [
+"সোফা ও আলমারিসহ ডিলাক্স ডাবল রুম",
+"सोफ़ा और अलमारी वाला डीलक्स डबल कमरा",
+"Номер Делюкс Дабл с диваном и шкафом",
+"配沙发和衣柜的豪华大床房",
+"Deluxe Double con sofá y armario"
+],
+"Nikadi Guest House building by day": [
+"দিনের আলোয় নিকাডি গেস্ট হাউসের ভবন",
+"दिन में निकाडी गेस्ट हाउस की इमारत",
+"Здание Nikadi Guest House днём",
+"白天的 Nikadi 宾馆大楼",
+"El edificio de Nikadi Guest House de día"
+],
+"Nikadi reception desk": [
+"নিকাডির রিসেপশন ডেস্ক",
+"निकाडी का रिसेप्शन डेस्क",
+"Ресепшен Nikadi",
+"Nikadi 前台",
+"Recepción de Nikadi"
+],
+"Deluxe Double room by the window": [
+"জানালার ধারে ডিলাক্স ডাবল রুম",
+"खिड़की के पास डीलक्स डबल कमरा",
+"Номер Делюкс Дабл у окна",
+"窗边的豪华大床房",
+"Deluxe Double junto a la ventana"
+],
+"Nikadi team": [
+"নিকাডি দল",
+"निकाडी टीम",
+"Команда Nikadi",
+"Nikadi 团队",
+"Equipo Nikadi"
+],
+"Guests at Nikadi Guest House": [
+"নিকাডি গেস্ট হাউসের অতিথিরা",
+"निकाडी गेस्ट हाउस के अतिथि",
+"Гости Nikadi Guest House",
+"Nikadi 宾馆的客人",
+"Huéspedes en Nikadi Guest House"
+],
+"Show less": [
+"কম দেখান",
+"कम दिखाएँ",
+"Свернуть",
+"收起",
+"Ver menos"
+],
+"Read more": [
+"আরও পড়ুন",
+"और पढ़ें",
+"Читать дальше",
+"展开阅读",
+"Leer más"
+],
+"Turn sound off": [
+"সাউন্ড বন্ধ করুন",
+"आवाज़ बंद करें",
+"Выключить звук",
+"关闭声音",
+"Desactivar sonido"
+],
+"Sound off": [
+"সাউন্ড বন্ধ",
+"आवाज़ बंद",
+"Без звука",
+"静音",
+"Sin sonido"
+],
+"Sound on": [
+"সাউন্ড চালু",
+"आवाज़ चालू",
+"Со звуком",
+"有声",
+"Con sonido"
+],
+"View this post by @mayapur_tv on Instagram": [
+"Instagram-এ @mayapur_tv-এর এই পোস্ট দেখুন",
+"Instagram पर @mayapur_tv की यह पोस्ट देखें",
+"Пост @mayapur_tv в Instagram",
+"在 Instagram 上查看 @mayapur_tv 的这条帖子",
+"Ver esta publicación de @mayapur_tv en Instagram"
+],
+"View this post by @srimayapurgoshala on Instagram": [
+"Instagram-এ @srimayapurgoshala-র এই পোস্ট দেখুন",
+"Instagram पर @srimayapurgoshala की यह पोस्ट देखें",
+"Пост @srimayapurgoshala в Instagram",
+"在 Instagram 上查看 @srimayapurgoshala 的这条帖子",
+"Ver esta publicación de @srimayapurgoshala en Instagram"
+],
+"View this post by @sakhifestivals on Instagram": [
+"Instagram-এ @sakhifestivals-এর এই পোস্ট দেখুন",
+"Instagram पर @sakhifestivals की यह पोस्ट देखें",
+"Пост @sakhifestivals в Instagram",
+"在 Instagram 上查看 @sakhifestivals 的这条帖子",
+"Ver esta publicación de @sakhifestivals en Instagram"
+],
+"View this post by @chandraamukhi_ on Instagram": [
+"Instagram-এ @chandraamukhi_-এর এই পোস্ট দেখুন",
+"Instagram पर @chandraamukhi_ की यह पोस्ट देखें",
+"Пост @chandraamukhi_ в Instagram",
+"在 Instagram 上查看 @chandraamukhi_ 的这条帖子",
+"Ver esta publicación de @chandraamukhi_ en Instagram"
+],
+"Open this post on Instagram": [
+"Instagram-এ এই পোস্ট খুলুন",
+"Instagram पर यह पोस्ट खोलें",
+"Открыть пост в Instagram",
+"在 Instagram 上打开此帖子",
+"Abrir esta publicación en Instagram"
+],
+"Name": [
+"নাম",
+"नाम",
+"Имя",
+"姓名",
+"Nombre"
+],
+"Age": [
+"বয়স",
+"उम्र",
+"Возраст",
+"年龄",
+"Edad"
+],
+"Relation": [
+"সম্পর্ক",
+"संबंध",
+"Родство",
+"关系",
+"Parentesco"
+],
+"ID type & number": [
+"পরিচয়পত্রের ধরন ও নম্বর",
+"पहचान पत्र का प्रकार और नंबर",
+"Тип и номер документа",
+"证件类型和号码",
+"Tipo y número de documento"
+],
+"Remove this guest": [
+"এই অতিথিকে বাদ দিন",
+"इस अतिथि को हटाएँ",
+"Удалить этого гостя",
+"移除此客人",
+"Quitar este huésped"
+],
+"Pay to the UPI ID below.": [
+"নিচের UPI আইডিতে পেমেন্ট করুন।",
+"नीचे दी गई UPI आईडी पर भुगतान करें।",
+"Оплатите на UPI ID ниже.",
+"请付款至下方 UPI ID。",
+"Paga al ID de UPI de abajo."
+],
+"Your message": [
+"আপনার মেসেজ",
+"आपका संदेश",
+"Ваше сообщение",
+"您的留言",
+"Tu mensaje"
+],
+"Your message (optional)": [
+"আপনার মেসেজ (ঐচ্ছিক)",
+"आपका संदेश (वैकल्पिक)",
+"Ваше сообщение (необязательно)",
+"您的留言（选填）",
+"Tu mensaje (opcional)"
+],
+"Your completed form": [
+"আপনার পূরণ করা ফর্ম",
+"आपका भरा हुआ फ़ॉर्म",
+"Ваша заполненная форма",
+"您填好的表单",
+"Tu formulario completado"
+],
+"Your sign-up details": [
+"আপনার সাইন-আপের তথ্য",
+"आपका साइन-अप विवरण",
+"Ваши данные для регистрации",
+"您的注册信息",
+"Tus datos de alta"
+],
+"More details": [
+"আরও তথ্য",
+"और जानकारी",
+"Подробнее",
+"更多信息",
+"Más detalles"
+],
+"Anything else (return date, budget, class)": [
+"অন্য কিছু (ফেরার তারিখ, বাজেট, শ্রেণি)",
+"और कुछ (वापसी की तारीख, बजट, श्रेणी)",
+"Что-то ещё (дата возвращения, бюджет, класс)",
+"其他（返程日期、预算、舱位）",
+"Algo más (fecha de vuelta, presupuesto, clase)"
+],
+"other countries": [
+"অন্য দেশ",
+"अन्य देश",
+"другие страны",
+"其他国家",
+"otros países"
+],
+"Copied. Paste it in WhatsApp.": [
+"কপি হয়েছে। WhatsApp-এ পেস্ট করুন।",
+"कॉपी हो गया। WhatsApp में पेस्ट करें।",
+"Скопировано. Вставьте в WhatsApp.",
+"已复制，请粘贴到 WhatsApp。",
+"Copiado. Pégalo en WhatsApp."
+],
+"Text selected. Use your device's copy option.": [
+"লেখা সিলেক্ট হয়েছে। ডিভাইসের কপি অপশন ব্যবহার করুন।",
+"टेक्स्ट चुना गया। अपने डिवाइस का कॉपी विकल्प इस्तेमाल करें।",
+"Текст выделен. Скопируйте его средствами устройства.",
+"文字已选中，请使用设备的复制功能。",
+"Texto seleccionado. Usa la opción de copiar de tu dispositivo."
+],
+"Selected. Use your device's copy option.": [
+"সিলেক্ট হয়েছে। ডিভাইসের কপি অপশন ব্যবহার করুন।",
+"चुना गया। अपने डिवाइस का कॉपी विकल्प इस्तेमाल करें।",
+"Выделено. Скопируйте средствами устройства.",
+"已选中，请使用设备的复制功能。",
+"Seleccionado. Usa la opción de copiar de tu dispositivo."
+],
+"Website link copied": [
+"ওয়েবসাইটের লিংক কপি হয়েছে",
+"वेबसाइट लिंक कॉपी हो गया",
+"Ссылка на сайт скопирована",
+"网站链接已复制",
+"Enlace del sitio copiado"
+],
+"Finding you…": [
+"আপনার অবস্থান খোঁজা হচ্ছে…",
+"आपकी जगह ढूँढ रहे हैं…",
+"Определяем ваше местоположение…",
+"正在定位…",
+"Buscando tu ubicación…"
+],
+"Your browser cannot share your location. Tap Directions to open Google Maps.": [
+"আপনার ব্রাউজার অবস্থান জানাতে পারছে না। Google Maps খুলতে দিকনির্দেশে ট্যাপ করুন।",
+"आपका ब्राउज़र लोकेशन साझा नहीं कर सकता। Google Maps खोलने के लिए दिशा-निर्देश पर टैप करें।",
+"Ваш браузер не может передать местоположение. Нажмите «Маршрут», чтобы открыть Google Maps.",
+"您的浏览器无法共享位置。点按“路线”打开 Google 地图。",
+"Tu navegador no puede compartir tu ubicación. Toca Cómo llegar para abrir Google Maps."
+],
+"We could not get your location. Tap Directions to open Google Maps instead.": [
+"আপনার অবস্থান পাওয়া গেল না। তার বদলে Google Maps খুলতে দিকনির্দেশে ট্যাপ করুন।",
+"आपकी लोकेशन नहीं मिल सकी। इसके बजाय Google Maps खोलने के लिए दिशा-निर्देश पर टैप करें।",
+"Не удалось определить местоположение. Нажмите «Маршрут», чтобы открыть Google Maps.",
+"无法获取您的位置。请点按“路线”改用 Google 地图。",
+"No pudimos obtener tu ubicación. Toca Cómo llegar para abrir Google Maps."
+],
+"<b>You are here!</b> Look for the lit NIKADI GUEST HOUSE sign opposite Gate No. 4. Reception is on the first floor.": [
+"<b>আপনি পৌঁছে গেছেন!</b> ৪ নম্বর গেটের উল্টো দিকে আলোকিত NIKADI GUEST HOUSE সাইনবোর্ড খুঁজুন। রিসেপশন দোতলায়।",
+"<b>आप पहुँच गए!</b> गेट नंबर 4 के सामने रोशन NIKADI GUEST HOUSE बोर्ड देखें। रिसेप्शन पहली मंज़िल पर है।",
+"<b>Вы на месте!</b> Ищите светящуюся вывеску NIKADI GUEST HOUSE напротив ворот № 4. Ресепшен на втором этаже.",
+"<b>您已到达！</b>请在 4 号门对面寻找亮着的 NIKADI GUEST HOUSE 招牌。前台在二楼。",
+"<b>¡Ya estás aquí!</b> Busca el cartel iluminado de NIKADI GUEST HOUSE frente a la Puerta n.º 4. La recepción está en la primera planta."
+],
+"<b>{0} m</b> away (straight line). About {1} minutes on foot, or hop on an e-rickshaw.": [
+"<b>{0} মিটার</b> দূরে (সরলরেখায়)। হেঁটে প্রায় {1} মিনিট, বা টোটোতে উঠে পড়ুন।",
+"<b>{0} मीटर</b> दूर (सीधी रेखा में)। पैदल लगभग {1} मिनट, या ई-रिक्शा ले लें।",
+"<b>{0} м</b> (по прямой). Около {1} минут пешком или на электрорикше.",
+"距离 <b>{0} 米</b>（直线）。步行约 {1} 分钟，或乘电动三轮车。",
+"A <b>{0} m</b> (en línea recta). Unos {1} minutos a pie, o súbete a un e-rickshaw."
+],
+"<b>{0} km</b> away (straight line). About {1} minutes on foot, or hop on an e-rickshaw.": [
+"<b>{0} কিমি</b> দূরে (সরলরেখায়)। হেঁটে প্রায় {1} মিনিট, বা টোটোতে উঠে পড়ুন।",
+"<b>{0} किमी</b> दूर (सीधी रेखा में)। पैदल लगभग {1} मिनट, या ई-रिक्शा ले लें।",
+"<b>{0} км</b> (по прямой). Около {1} минут пешком или на электрорикше.",
+"距离 <b>{0} 公里</b>（直线）。步行约 {1} 分钟，或乘电动三轮车。",
+"A <b>{0} km</b> (en línea recta). Unos {1} minutos a pie, o súbete a un e-rickshaw."
+],
+"<b>{0} km</b> away (straight line). Tap Directions for the road route and travel time.": [
+"<b>{0} কিমি</b> দূরে (সরলরেখায়)। রাস্তার পথ ও সময় জানতে দিকনির্দেশে ট্যাপ করুন।",
+"<b>{0} किमी</b> दूर (सीधी रेखा में)। सड़क का रास्ता और समय जानने के लिए दिशा-निर्देश पर टैप करें।",
+"<b>{0} км</b> (по прямой). Нажмите «Маршрут», чтобы увидеть дорогу и время в пути.",
+"距离 <b>{0} 公里</b>（直线）。点按“路线”查看道路路线和所需时间。",
+"A <b>{0} km</b> (en línea recta). Toca Cómo llegar para ver la ruta por carretera y el tiempo."
+],
+"Please check your mobile number (other countries: start with + and the country code).": [
+"মোবাইল নম্বরটি দেখে নিন (অন্য দেশ: + ও দেশের কোড দিয়ে শুরু করুন)।",
+"अपना मोबाइल नंबर जाँचें (अन्य देश: + और देश कोड से शुरू करें)।",
+"Проверьте номер телефона (для других стран начните с + и кода страны).",
+"请检查您的手机号码（其他国家：以 + 和国家代码开头）。",
+"Revisa tu número de móvil (otros países: empieza con + y el código del país)."
+],
+"Please check the mobile number (other countries: start with + and the country code).": [
+"মোবাইল নম্বরটি দেখে নিন (অন্য দেশ: + ও দেশের কোড দিয়ে শুরু করুন)।",
+"मोबाइल नंबर जाँचें (अन्य देश: + और देश कोड से शुरू करें)।",
+"Проверьте номер телефона (для других стран начните с + и кода страны).",
+"请检查手机号码（其他国家：以 + 和国家代码开头）。",
+"Revisa el número de móvil (otros países: empieza con + y el código del país)."
+],
+"This number is not a member yet. Join free to get member prices.": [
+"এই নম্বরটি এখনও সদস্য নয়। সদস্য দাম পেতে বিনামূল্যে যোগ দিন।",
+"यह नंबर अभी सदस्य नहीं है। सदस्य कीमतों के लिए मुफ़्त जुड़ें।",
+"Этот номер ещё не участник. Вступите бесплатно, чтобы получить цены для участников.",
+"此号码尚未成为会员。免费加入即可享受会员价。",
+"Este número aún no es miembro. Únete gratis para obtener precios de miembro."
+],
+"Please set your password first in the membership app (tap “Forgot password or first time?”).": [
+"আগে মেম্বারশিপ অ্যাপে পাসওয়ার্ড সেট করুন (“Forgot password or first time?”-এ ট্যাপ করুন)।",
+"पहले मेंबरशिप ऐप में पासवर्ड सेट करें (“Forgot password or first time?” पर टैप करें)।",
+"Сначала задайте пароль в приложении (нажмите «Forgot password or first time?»).",
+"请先在会员 App 中设置密码（点按“Forgot password or first time?”）。",
+"Primero crea tu contraseña en la app de membresía (toca “Forgot password or first time?”)."
+],
+"Wrong password. Please try again.": [
+"ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।",
+"गलत पासवर्ड। फिर कोशिश करें।",
+"Неверный пароль. Попробуйте ещё раз.",
+"密码错误，请重试。",
+"Contraseña incorrecta. Inténtalo de nuevo."
+],
+"Too many wrong attempts. Please wait {0} minutes.": [
+"অনেকবার ভুল হয়েছে। {0} মিনিট অপেক্ষা করুন।",
+"बहुत बार गलत प्रयास। {0} मिनट रुकें।",
+"Слишком много неудачных попыток. Подождите {0} минут.",
+"错误次数过多，请等待 {0} 分钟。",
+"Demasiados intentos fallidos. Espera {0} minutos."
+],
+"No connection. Please check your internet.": [
+"সংযোগ নেই। ইন্টারনেট দেখে নিন।",
+"कनेक्शन नहीं है। अपना इंटरनेट जाँचें।",
+"Нет соединения. Проверьте интернет.",
+"无网络连接，请检查网络。",
+"Sin conexión. Revisa tu internet."
+],
+"Please enter your password.": [
+"আপনার পাসওয়ার্ড লিখুন।",
+"अपना पासवर्ड डालें।",
+"Введите пароль.",
+"请输入密码。",
+"Introduce tu contraseña."
+],
+"Signing in…": [
+"সাইন ইন হচ্ছে…",
+"साइन इन हो रहा है…",
+"Вход…",
+"正在登录…",
+"Iniciando sesión…"
+],
+"Something went wrong. Please try again.": [
+"কিছু ভুল হয়েছে। আবার চেষ্টা করুন।",
+"कुछ गड़बड़ हुई। फिर कोशिश करें।",
+"Что-то пошло не так. Попробуйте ещё раз.",
+"出了点问题，请重试。",
+"Algo salió mal. Inténtalo de nuevo."
+],
+"Please enter an amount between ₹{0} and ₹{1}.": [
+"₹{0} থেকে ₹{1}-এর মধ্যে পরিমাণ লিখুন।",
+"₹{0} से ₹{1} के बीच राशि डालें।",
+"Введите сумму от ₹{0} до ₹{1}.",
+"请输入 ₹{0} 至 ₹{1} 之间的金额。",
+"Introduce un importe entre ₹{0} y ₹{1}."
+],
+"Please enter your name.": [
+"আপনার নাম লিখুন।",
+"अपना नाम डालें।",
+"Введите имя.",
+"请输入姓名。",
+"Introduce tu nombre."
+],
+"The payment could not start. Please try again or pay by UPI below.": [
+"পেমেন্ট শুরু হল না। আবার চেষ্টা করুন বা নিচে UPI-তে পেমেন্ট করুন।",
+"भुगतान शुरू नहीं हो सका। फिर कोशिश करें या नीचे UPI से भुगतान करें।",
+"Оплата не началась. Попробуйте ещё раз или оплатите через UPI ниже.",
+"无法发起付款。请重试或使用下方 UPI 付款。",
+"No se pudo iniciar el pago. Inténtalo de nuevo o paga por UPI abajo."
+],
+"We could not confirm the payment. If money was taken, send us the Razorpay receipt on WhatsApp.": [
+"পেমেন্ট নিশ্চিত করা গেল না। টাকা কাটা গেলে WhatsApp-এ Razorpay রসিদ পাঠান।",
+"भुगतान की पुष्टि नहीं हो सकी। पैसे कटे हों तो WhatsApp पर Razorpay रसीद भेजें।",
+"Не удалось подтвердить оплату. Если деньги списаны, пришлите квитанцию Razorpay в WhatsApp.",
+"无法确认付款。如已扣款，请在 WhatsApp 上发送 Razorpay 收据。",
+"No pudimos confirmar el pago. Si se cobró, envíanos el recibo de Razorpay por WhatsApp."
+],
+"Opening secure payment…": [
+"নিরাপদ পেমেন্ট খুলছে…",
+"सुरक्षित भुगतान खुल रहा है…",
+"Открываем безопасную оплату…",
+"正在打开安全支付…",
+"Abriendo el pago seguro…"
+],
+"Confirming…": [
+"নিশ্চিত করা হচ্ছে…",
+"पुष्टि हो रही है…",
+"Подтверждаем…",
+"正在确认…",
+"Confirmando…"
+],
+"The payment did not go through. No money was taken, or it will be returned by your bank. Please try again.": [
+"পেমেন্ট হয়নি। কোনো টাকা কাটা হয়নি, অথবা ব্যাংক তা ফেরত দেবে। আবার চেষ্টা করুন।",
+"भुगतान नहीं हुआ। कोई पैसा नहीं कटा, या बैंक उसे लौटा देगा। फिर कोशिश करें।",
+"Оплата не прошла. Деньги не списаны или банк их вернёт. Попробуйте ещё раз.",
+"付款未成功。未扣款，或银行会退回。请重试。",
+"El pago no se completó. No se cobró nada o tu banco lo devolverá. Inténtalo de nuevo."
+],
+"Book": [
+"বুক করুন",
+"बुक करें",
+"Бронь",
+"预订",
+"Reservar"
+]
+}

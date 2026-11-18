@@ -826,6 +826,12 @@ nav.main a{white-space:nowrap}
 
 /* language switch */
 html.i18n-wait body{opacity:0}
+html[data-lang=bn] body *,html[data-lang=hi] body *{letter-spacing:0!important}
+html[data-lang=zh] body *{letter-spacing:.02em!important}
+@media (max-width:520px){html[data-lang] .top-acts>.btn-gold{letter-spacing:.04em;padding-left:12px;padding-right:12px;font-size:.7rem;white-space:nowrap}html[data-lang=ru] .top-acts>.btn-gold,html[data-lang=es] .top-acts>.btn-gold{font-size:.62rem;letter-spacing:.02em}}
+.top-acts .bk-s{display:none}
+html[data-lang=bn] .top-acts .bk-l,html[data-lang=hi] .top-acts .bk-l,html[data-lang=zh] .top-acts .bk-l{display:inline!important}html[data-lang=bn] .top-acts .bk-s,html[data-lang=hi] .top-acts .bk-s,html[data-lang=zh] .top-acts .bk-s{display:none!important}
+@media (max-width:400px){.top-acts .bk-l{display:none}.top-acts .bk-s{display:inline}.top-acts{gap:8px}.brand-logo{height:40px!important}.top-acts .btn{padding-left:12px;padding-right:12px;letter-spacing:.08em}}
 body{transition:opacity .25s}
 html[data-lang=bn]{--display:"Noto Serif Bengali",Georgia,serif;--body:"Noto Sans Bengali","Lato",system-ui,sans-serif}
 html[data-lang=hi]{--display:"Noto Serif Devanagari",Georgia,serif;--body:"Noto Sans Devanagari","Lato",system-ui,sans-serif}
@@ -1069,9 +1075,9 @@ html{overflow-x:hidden}
 .mvid-snd svg{width:20px;height:20px}.mvid-snd .on{display:none}.mvid-snd[aria-pressed="true"] .on{display:inline}.mvid-snd[aria-pressed="true"] .off{display:none}
 
 .meet-solo{grid-template-columns:1fr;max-width:640px}
-.deity-ig{display:grid;gap:16px;align-content:start}
+.deity-ig{display:grid;gap:16px;align-content:start;grid-template-columns:minmax(0,1fr)}.deity-ig>*{min-width:0}
 .dz.tovp{aspect-ratio:16/10}
-.ig-list{display:grid;gap:10px}
+.ig-list{display:grid;gap:10px;grid-template-columns:minmax(0,1fr);min-width:0}.ig-follow>*{min-width:0}
 .ig-list .ig-follow{max-width:none}
 .ig-mini{color:var(--gold-hi);white-space:nowrap}
 

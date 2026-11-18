@@ -5,7 +5,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>document.documentElement.classList.add("js")</script>
-<script>(function(){try{var m=location.search.match(/[?&]lang=(en|bn|hi|ru|zh|es)\b/),l=m?m[1]:localStorage.getItem('nk_lang');if(m)localStorage.setItem('nk_lang',l);if(l&&l!=='en'){var d=document.documentElement;d.lang=l==='zh'?'zh-Hans':l;d.setAttribute('data-lang',l);d.classList.add('i18n-wait');setTimeout(function(){d.classList.remove('i18n-wait');},2500);var F={bn:'Noto+Serif+Bengali:wght@500;600&family=Noto+Sans+Bengali:wght@400;600;700',hi:'Noto+Serif+Devanagari:wght@500;600&family=Noto+Sans+Devanagari:wght@400;600;700',ru:'Cormorant+Garamond:wght@500;600;700&family=Noto+Sans:wght@400;600;700',zh:'Noto+Serif+SC:wght@500;600&family=Noto+Sans+SC:wght@400;500;700'};if(F[l])document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family='+F[l]+'&display=swap">');}}catch(e){}})();</script>
+<script>window.nkT=function(s){return s;};window.nkLang=function(){return document.documentElement.getAttribute('data-lang')||'en';};window.nkLoc=function(){return {bn:'bn-IN',hi:'hi-IN',ru:'ru-RU',zh:'zh-CN',es:'es-ES'}[nkLang()]||'en-IN';};window.nkFmt=function(d,o){if(nkLang()==='en')return null;try{var x={timeZone:'UTC'};for(var k in o)x[k]=o[k];return d.toLocaleDateString(nkLoc(),x);}catch(e){return null;}};window.nkNames=function(kind,style,fb){if(nkLang()==='en')return fb;try{var o={timeZone:'UTC'};o[kind==='m'?'month':'weekday']=style;var f=new Intl.DateTimeFormat(nkLoc(),o),r=[];for(var i=0;i<(kind==='m'?12:7);i++)r.push(f.format(kind==='m'?new Date(Date.UTC(2026,i,15)):new Date(Date.UTC(2026,2,1+i))));return r;}catch(e){return fb;}};
+(function(){try{var m=location.search.match(/[?&]lang=(en|bn|hi|ru|zh|es)\b/),l=m?m[1]:localStorage.getItem('nk_lang');if(m)localStorage.setItem('nk_lang',l);if(l&&l!=='en'){var d=document.documentElement;d.lang=l==='zh'?'zh-Hans':l;d.setAttribute('data-lang',l);d.classList.add('i18n-wait');setTimeout(function(){d.classList.remove('i18n-wait');},2500);var F={bn:'Noto+Serif+Bengali:wght@500;600&family=Noto+Sans+Bengali:wght@400;600;700',hi:'Noto+Serif+Devanagari:wght@500;600&family=Noto+Sans+Devanagari:wght@400;600;700',ru:'Cormorant+Garamond:wght@500;600;700&family=Noto+Sans:wght@400;600;700',zh:'Noto+Serif+SC:wght@500;600&family=Noto+Sans+SC:wght@400;500;700'};if(F[l])document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family='+F[l]+'&display=swap">');}}catch(e){}})();</script>
 <title>Things to do in Mayapur: holy places, ghats & prasadam · Nikadi Guest House</title>
 <link rel="icon" href="/favicon.ico?v=2" sizes="any">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png?v=2">
@@ -27,7 +28,7 @@
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Lato:wght@300;400;700&display=swap">
-<link rel="stylesheet" href="/css/site.css?v=118fc4ba">
+<link rel="stylesheet" href="/css/site.css?v=acaaff28">
 <script>(function(){var M={"home":"/","heroMember":"/","offerCard":"/","ocTag":"/","ocTitle":"/","ocFoot":"/","heroSlides":"/","capKick":"/","capText":"/","capNo":"/","capOf":"/","heroProg":"/","heroPrev":"/","heroNext":"/","bookForm":"/","rm":"/","gu":"/","bookSum":"/","now":"/","gwClock":"/","gClock":"/","gDate":"/","gDesk":"/","gwWx":"/","gTemp":"/","gCond":"/","gWxSub":"/","gFc":"/","gwSun":"/","gSunDot":"/","gRise":"/","gSet":"/","gSunSub":"/","gwPrice":"/","gPrLbl":"/","gPrDs":"/","gPrD":"/","gPrTs":"/","gPrT":"/","gAratiLbl":"/","gArati":"/","gAratiIn":"/","gTrain":"/","gTrainIn":"/","gTrainAc":"/","gFar":"/","gFarBtn":"/","rooms":"/","avc":"/","avcPrev":"/","avcNext":"/","avcMonths":"/","avcSel":"/","avcClear":"/","avcBook":"/","avcNote":"/","reviews":"/","revTrack":"/","member-teaser":"/","location":"/","amenities":"/","gallery":"/","booking":"/","cancellation":"/","payOnline":"/","poName":"/","poPhone":"/","poAmt":"/","poNote":"/","poHint":"/","poErr":"/","poGo":"/","poOk":"/","qr":"/","upiId":"/","upiActs":"/","upiLink":"/","upiMsg":"/","accNo":"/","ifsc":"/","bankMsg":"/","forms":"/","rules":"/","about":"/","team":"/","staffGrid":"/","guests":"/","guestWall":"/","faq":"/","phone":"/","email":"/","emailMsg":"/","qForm":"/","cMsg":"/","temple":"/temple.html","prog":"/temple.html","progLive":"/temple.html","progLiveName":"/temple.html","progLiveSub":"/temple.html","progNow":"/temple.html","progNext":"/temple.html","progIn":"/temple.html","igs":"/temple.html","festivals":"/temple.html","fvNext":"/temple.html","fvList":"/temple.html","meet":"/temple.html","meetIg":"/temple.html","mvid":"/temple.html","mvidV":"/temple.html","mvidS":"/temple.html","meetNav":"/temple.html","transport":"/travel.html","gourdham":"/travel.html","gtForm":"/travel.html","membership":"/membership.html","mdeck":"/membership.html"},h=location.hash.slice(1);if(h&&M[h])location.replace(M[h]+"#"+h);})();</script>
 </head>
 <body data-page="things-to-do">
@@ -42,7 +43,7 @@
     <div class="top-acts">
       <div class="lang" data-noi18n><button class="lang-btn" type="button" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9S14.5 18.3 12 21c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg><span id="langCode">EN</span></button><div class="lang-list" id="langList" hidden></div></div>
       <button class="mem-chip" id="memChip" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg><span id="memChipTxt">Member sign in</span></button>
-      <a class="btn btn-gold" href="/#booking">Book now</a>
+      <a class="btn btn-gold" href="/#booking"><span class="bk-l">Book now</span><span class="bk-s">Book</span></a>
     </div>
   </div>
 </header>
@@ -703,6 +704,7 @@
       <a href="https://g.page/r/CfDIGanjxtFCEAE/review" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/></svg><span>Write a review</span></a>
       <a href="/#home" class="hot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>Back to top</span></a>
     </div>
+    <div class="menu-langs" id="menuLangs" data-noi18n aria-label="Language"></div>
   </div>
 </div>
 
@@ -782,6 +784,6 @@
 
 <script src="/pricing.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="/js/site.js?v=072ba19a"></script>
+<script src="/js/site.js?v=6fb80ed3"></script>
 </body>
 </html>

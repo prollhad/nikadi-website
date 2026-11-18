@@ -1,0 +1,112 @@
+0	+ Add guest
+1	1 min
+2	1 point / ₹100
+3	1 point for every ₹100 of room tariff
+4	1.5 points / ₹100
+5	1.5 points for every ₹100 of room tariff
+6	10 inch mattress
+7	10 min
+8	10% member rate on every booking
+9	10% off
+10	100 bonus points in your birthday month
+11	100 nights in total · kept for 10 years
+12	100 nights · kept 10 years
+13	100 welcome points when you join
+14	11:55 AM → 2:11 PM
+15	12 min
+16	13 photos
+17	15 min
+18	15 nights in 2 years
+19	15% member rate on every booking
+20	15% off
+21	150 sq ft · 13.9 m²
+22	150 sq ft<small>13.9 m²</small>
+23	19 min
+24	19 photos
+25	190 sq ft · 17.7 m²
+26	190 sq ft<small>17.7 m²</small>
+27	1:30 PM → 3:40 PM
+28	2 min
+29	2 points / ₹100
+30	2 points for every ₹100 of room tariff
+31	2 single beds
+32	2 single<small>+ extra mattress</small>
+33	2 single<small>10 inch mattresses</small>
+34	20 min
+35	20% member rate on every booking
+36	20% off
+37	21 reviews on Google
+38	23 min
+39	3 min
+40	3 or more days before check-in
+41	3rd floor · Roof terrace · Up to 3 guests
+42	3rd floor · roof terrace right outside
+43	3rd floor<small>roof terrace outside</small>
+44	4 min
+45	4 points / ₹100
+46	4 points for every ₹100 of room tariff
+47	40 nights in 2 years
+48	44 min
+49	48 min
+50	4:05 PM → 6:20 PM
+51	4–5 min
+52	5 min
+53	5% member rate on every booking
+54	5% off
+55	50 bonus points in your birthday month
+56	500 pts
+57	5:55 AM · about 12 hr
+58	6 min
+59	6:15 AM · 3:00 PM
+60	6:15 AM · 3:30 PM
+61	7 min
+62	7 or more
+63	8 min
+64	8 minutes on foot to the Main Temple, 10 to Govinda's.
+65	8 or more
+66	8 photos
+67	9:48 AM → 12:07 PM
+68	<b>Arrival & departure</b>Check-in from 11:00 AM and check-out by 9:00 AM. Early arrival and late departure are subject to availability and may be charged.
+69	<b>Dietary observance</b>Out of respect for the sanctity of Sri Dham Mayapur, non-vegetarian food and eggs are not permitted on the premises.
+70	<b>Energy & keys</b>Please switch off lights, fans and air-conditioning when leaving the room, and deposit the room key at the Front Office.
+71	<b>Identification</b>A valid government-issued photo ID is mandatory for every guest, including accompanying guests. Foreign nationals must present a passport and valid visa.
+72	<b>In-room safety</b>Cooking is not permitted in rooms. Heaters, irons and other high-power appliances may be used only with the approval of the Front Office.
+73	<b>Payment</b>The room tariff is payable in advance at check-in. All incidental charges are to be settled before departure.
+74	<b>Property care</b>Any damage to rooms, furnishings, linen or fittings will be charged to the guest at actual cost.
+75	<b>Quiet hours</b>Guests are requested to keep noise to a minimum, particularly between 10:00 pm and 6:00 am.
+76	<b>Restricted items</b>Pets, weapons and illegal substances are not permitted. Any unlawful activity will be reported to the authorities.
+77	<b>Right of admission</b>The management reserves the right to refuse or terminate a stay, without refund, in case of misconduct or breach of these terms.
+78	<b>Valuables</b>Guests are responsible for their own cash, jewellery and belongings. The management accepts no liability for loss or theft.
+79	<b>Visitors</b>Only registered guests may stay overnight. Visitors are welcome in the reception area only.
+80	<i></i>Available
+81	<i></i>Live now at the temple
+82	<i></i>Only a few left
+83	<i></i>Sold out
+84	A <b>50% advance</b> holds your room for you. The balance is paid at check-in.
+85	A car with driver for a half day or full day in Kolkata: Kalighat, Dakshineswar, Belur Math, ISKCON Kolkata, Victoria Memorial, shopping and more.
+86	A free membership for guests who come back. You get 100 welcome points, 5–20% off every booking, and free nights with your points. <a>See the levels</a>.
+87	A quiet home for pilgrims, right at the temple gate
+88	A sattvic home in the holy dham
+89	A spacious air-conditioned room with a king-size bed, a sofa corner, a work desk and a private bathroom with rain shower. Warm cove lighting and wood-finish floors throughout.
+90	A spacious room with a king-size bed, sofa corner, work desk and a private bathroom with rain shower.
+91	A unit of Nikadi Projects Pvt. Ltd. · GSTIN 19AAHCN7789F1ZR<br>Sri Dham Mayapur, Opp. Namahatta Bhavan & ISKCON Gate No. 4, Nadia, WB 741313
+92	A warm welcome and help whenever you need it.
+93	AC
+94	AC local train · Galloping AC EMU
+95	Aadhaar
+96	About
+97	About 1 hr
+98	About 3 hr
+99	About 3.5 hr
+100	About us
+101	Accommodation
+102	Accompanying guests
+103	Account name
+104	Account no.
+105	Across from Gate No. 4
+106	Address
+107	Address <i>*</i>
+108	Adults <i>*</i>
+109	Advance Booking
+110	Advance Booking Form
+111	Advance and cancellation

@@ -1,0 +1,111 @@
+466	Live train status
+467	Loading
+468	Loading the latest forecast…
+469	Location
+470	Look for the lit sign opposite Gate No. 4
+471	Low and high
+472	Main ISKCON Temple
+473	Male
+474	Mangal Arati
+475	Mangal Arati is at 4:30 AM
+476	Mangala arati is before sunrise. Bring a shawl in winter.
+477	Maximum 3 guests per room. Rooms are added automatically.
+478	Mayapur
+479	Mayapur TV · daily darshan of the deities
+480	Mayapur right now
+481	Mayapur site scene
+482	Mayapur today
+483	Mayapur weather
+484	Mayapur → Bhubaneswar
+485	Mayapur → Kolkata buses
+486	Mayapur ⇄ Kolkata Airport
+487	Mayapur ⇄ Kolkata city
+488	Maybe later
+489	Meals are not served. Govinda's is a 10 minute walk.
+490	Meet <em>Chandramukhi</em>
+491	Member login
+492	Member rate
+493	Member rates (5%, 10%, 15% or 20% off, by level) apply to bookings made through the Nikadi member app or the front desk.
+494	Member rates on every booking, from 5% up to 20% off
+495	Member sign in
+496	Member-only offers on WhatsApp
+497	Members pay even less
+498	Members save 5–20% on every night, even on offer rates. Sign in once and your price shows everywhere on this website.
+499	Members save a further 5–20%
+500	Members save up to 20%
+501	Members save up to <em>20%</em> every night
+502	Membership
+503	Membership is free. Your registered mobile number is your member ID.
+504	Membership terms
+505	Menu
+506	Mobile
+507	Mobile (your member ID) <i>*</i>
+508	Mobile <i>*</i>
+509	Mobile and Xerox shop
+510	Mobile number
+511	Moments from guests who stayed with us
+512	Money Exchange
+513	Money exchange
+514	Money services · Western Union & MoneyGram agent
+515	MoneyGram
+516	MoneyGram agent
+517	Mon–Sat
+518	More buses and seats
+519	More holy places
+520	Morning kit
+521	Mosquito repellent
+522	Mother Ganga Ghat
+523	NIKADI
+524	NTES timetable
+525	Nabadwip Dham → Howrah
+526	Namahatta Bhavan
+527	Namahatta Bhavan (prasadam)
+528	Narasimha Chaturdashi
+529	Nationality <i>*</i>
+530	Netaji Subhas Chandra Bose International Airport (CCU). About 3 hours each way. Pick-up from the airport or drop for your flight, timed to your schedule.
+531	New · 3rd floor
+532	Next 24 hours
+533	Next 7 days
+534	Next at the temple
+535	Next train to Mayapur
+536	Nights
+537	Nikadi Guest House
+538	Nikadi Guest House and <b>Gourdham Travels</b> work together as one team, so our guests can book any kind of travel without leaving the guest house. Flights in India and abroad, trains, cars, buses, boats and full tour packages are booked for you by Gourdham Travels, right downstairs at Nikadi.
+539	Nikadi Guest House building, Bhaktisiddhanta Saraswati Marg
+540	Nikadi Guest House has one location, in Sri Dham Mayapur. Points and benefits are used here.
+541	Nikadi Guest House is a unit of Nikadi Projects Pvt. Ltd.
+542	Nikadi Guest House may update the membership terms from time to time.
+543	Nikadi Guest House was made for devotees and families who want to stay close to the Mayapur ISKCON Temple and come back to a clean, cool and peaceful room after darshan.
+544	Nikadi Guest House · A unit of Nikadi Projects Pvt. Ltd. · GSTIN 19AAHCN7789F1ZR
+545	Nikadi Guest House · Deluxe rooms opposite ISKCON Mayapur
+546	Nikadi Guest House, Mayapur. Premium AC deluxe rooms opposite ISKCON Gate No. 4, an 8 minute walk from the Main ISKCON Temple. Live availability, member rates and our own cars.
+547	Nikadi Guest House, opposite ISKCON Gate No. 4
+548	Nikadi Guest House<br>Bhaktisiddhanta Saraswati Marg<br>Opp. ISKCON Gate No. 4 (Namahatta Bhavan)<br>Mayapur, Nadia, West Bengal 741313
+549	Nikadi Membership
+550	Nikadi Membership · free
+551	Nikadi Membership: Silver, Gold, Platinum & Platinum Plus · Nikadi Guest House
+552	Nityananda Trayodashi
+553	No intoxication
+554	No smoking, tobacco, gutka, pan or alcohol anywhere on the premises. ₹2,000 fine for any violation.
+555	No smoking, tobacco, gutka, pan or alcohol on the premises. ₹2,000 fine for any violation.
+556	No, first time
+557	No. of nights
+558	No. of rooms <i>*</i>
+559	Non-AC, every day. Via Ultadanga, Airport, Barasat, Ranaghat, Shantipur and Krishnanagar.
+560	Not paid yet
+561	Off your booking for every 100 points
+562	Office
+563	On foot
+564	On the first floor. Enter at the left corner of the building, by the picture of Sri Chaitanya Mahaprabhu, and take the stairs up. <a>Watch the walk-up video</a>.
+565	Once we confirm the room is free, pay half of the total room price online, by UPI or by bank transfer. Scan the QR code or pay to our UPI ID from Google Pay, PhonePe, Paytm or any bank app.
+566	One desk for every journey
+567	One free night in any room
+568	Online form
+569	Open UPI app
+570	Open WhatsApp again
+571	Open air and sky views over Mayapur
+572	Open in Google Maps
+573	Open my membership card
+574	Opens
+575	Opens WhatsApp with your message ready to send.
+576	Opens WhatsApp with your request ready to send to Gourdham Travels (+91 99338 64574).

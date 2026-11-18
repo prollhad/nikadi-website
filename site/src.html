@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>document.documentElement.classList.add("js")</script>
-<script>(function(){try{var m=location.search.match(/[?&]lang=(en|bn|hi|ru|zh|es)\b/),l=m?m[1]:localStorage.getItem('nk_lang');if(m)localStorage.setItem('nk_lang',l);if(l&&l!=='en'){var d=document.documentElement;d.lang=l==='zh'?'zh-Hans':l;d.setAttribute('data-lang',l);d.classList.add('i18n-wait');setTimeout(function(){d.classList.remove('i18n-wait');},2500);var F={bn:'Noto+Serif+Bengali:wght@500;600&family=Noto+Sans+Bengali:wght@400;600;700',hi:'Noto+Serif+Devanagari:wght@500;600&family=Noto+Sans+Devanagari:wght@400;600;700',ru:'Cormorant+Garamond:wght@500;600;700&family=Noto+Sans:wght@400;600;700',zh:'Noto+Serif+SC:wght@500;600&family=Noto+Sans+SC:wght@400;500;700'};if(F[l])document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family='+F[l]+'&display=swap">');}}catch(e){}})();</script>
+<script>window.nkT=function(s){return s;};window.nkLang=function(){return document.documentElement.getAttribute('data-lang')||'en';};window.nkLoc=function(){return {bn:'bn-IN',hi:'hi-IN',ru:'ru-RU',zh:'zh-CN',es:'es-ES'}[nkLang()]||'en-IN';};window.nkFmt=function(d,o){if(nkLang()==='en')return null;try{var x={timeZone:'UTC'};for(var k in o)x[k]=o[k];return d.toLocaleDateString(nkLoc(),x);}catch(e){return null;}};window.nkNames=function(kind,style,fb){if(nkLang()==='en')return fb;try{var o={timeZone:'UTC'};o[kind==='m'?'month':'weekday']=style;var f=new Intl.DateTimeFormat(nkLoc(),o),r=[];for(var i=0;i<(kind==='m'?12:7);i++)r.push(f.format(kind==='m'?new Date(Date.UTC(2026,i,15)):new Date(Date.UTC(2026,2,1+i))));return r;}catch(e){return fb;}};
+(function(){try{var m=location.search.match(/[?&]lang=(en|bn|hi|ru|zh|es)\b/),l=m?m[1]:localStorage.getItem('nk_lang');if(m)localStorage.setItem('nk_lang',l);if(l&&l!=='en'){var d=document.documentElement;d.lang=l==='zh'?'zh-Hans':l;d.setAttribute('data-lang',l);d.classList.add('i18n-wait');setTimeout(function(){d.classList.remove('i18n-wait');},2500);var F={bn:'Noto+Serif+Bengali:wght@500;600&family=Noto+Sans+Bengali:wght@400;600;700',hi:'Noto+Serif+Devanagari:wght@500;600&family=Noto+Sans+Devanagari:wght@400;600;700',ru:'Cormorant+Garamond:wght@500;600;700&family=Noto+Sans:wght@400;600;700',zh:'Noto+Serif+SC:wght@500;600&family=Noto+Sans+SC:wght@400;500;700'};if(F[l])document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family='+F[l]+'&display=swap">');}}catch(e){}})();</script>
 <title>Nikadi Guest House</title>
 <link rel="icon" href="/favicon.ico?v=2" sizes="any">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png?v=2">
@@ -854,6 +855,12 @@ nav.main a{white-space:nowrap}
 
 /* language switch */
 html.i18n-wait body{opacity:0}
+html[data-lang=bn] body *,html[data-lang=hi] body *{letter-spacing:0!important}
+html[data-lang=zh] body *{letter-spacing:.02em!important}
+@media (max-width:520px){html[data-lang] .top-acts>.btn-gold{letter-spacing:.04em;padding-left:12px;padding-right:12px;font-size:.7rem;white-space:nowrap}html[data-lang=ru] .top-acts>.btn-gold,html[data-lang=es] .top-acts>.btn-gold{font-size:.62rem;letter-spacing:.02em}}
+.top-acts .bk-s{display:none}
+html[data-lang=bn] .top-acts .bk-l,html[data-lang=hi] .top-acts .bk-l,html[data-lang=zh] .top-acts .bk-l{display:inline!important}html[data-lang=bn] .top-acts .bk-s,html[data-lang=hi] .top-acts .bk-s,html[data-lang=zh] .top-acts .bk-s{display:none!important}
+@media (max-width:400px){.top-acts .bk-l{display:none}.top-acts .bk-s{display:inline}.top-acts{gap:8px}.brand-logo{height:40px!important}.top-acts .btn{padding-left:12px;padding-right:12px;letter-spacing:.08em}}
 body{transition:opacity .25s}
 html[data-lang=bn]{--display:"Noto Serif Bengali",Georgia,serif;--body:"Noto Sans Bengali","Lato",system-ui,sans-serif}
 html[data-lang=hi]{--display:"Noto Serif Devanagari",Georgia,serif;--body:"Noto Sans Devanagari","Lato",system-ui,sans-serif}
@@ -1097,9 +1104,9 @@ html{overflow-x:hidden}
 .mvid-snd svg{width:20px;height:20px}.mvid-snd .on{display:none}.mvid-snd[aria-pressed="true"] .on{display:inline}.mvid-snd[aria-pressed="true"] .off{display:none}
 
 .meet-solo{grid-template-columns:1fr;max-width:640px}
-.deity-ig{display:grid;gap:16px;align-content:start}
+.deity-ig{display:grid;gap:16px;align-content:start;grid-template-columns:minmax(0,1fr)}.deity-ig>*{min-width:0}
 .dz.tovp{aspect-ratio:16/10}
-.ig-list{display:grid;gap:10px}
+.ig-list{display:grid;gap:10px;grid-template-columns:minmax(0,1fr);min-width:0}.ig-follow>*{min-width:0}
 .ig-list .ig-follow{max-width:none}
 .ig-mini{color:var(--gold-hi);white-space:nowrap}
 
@@ -1368,7 +1375,7 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
     <div class="top-acts">
       <div class="lang" data-noi18n><button class="lang-btn" type="button" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-label="Language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9S14.5 18.3 12 21c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg><span id="langCode">EN</span></button><div class="lang-list" id="langList" hidden></div></div>
       <button class="mem-chip" id="memChip" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg><span id="memChipTxt">Member sign in</span></button>
-      <a class="btn btn-gold" href="#booking">Book now</a>
+      <a class="btn btn-gold" href="#booking"><span class="bk-l">Book now</span><span class="bk-s">Book</span></a>
     </div>
   </div>
 </header>
@@ -2957,6 +2964,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       <a href="https://g.page/r/CfDIGanjxtFCEAE/review" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/></svg><span>Write a review</span></a>
       <a href="#home" class="hot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>Back to top</span></a>
     </div>
+    <div class="menu-langs" id="menuLangs" data-noi18n aria-label="Language"></div>
   </div>
 </div>
 
@@ -3126,7 +3134,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     var ci=$('ci'),co=$('co'),rm=$('rm'),gu=$('gu');
     if(ci&&co&&co.value>ci.value&&window.NikadiRates){var k=Math.max(1,Math.ceil((+gu.value||1)/3));var q=NikadiRates.quote(rm.value,ci.value,co.value,k,m?m.discount:0);
       if(!$('poAmt').dataset.manual)$('poAmt').value=Math.ceil(q.total/2);
-      $('poHint').textContent='50% advance for '+q.nights+(q.nights>1?' nights':' night')+' in '+k+' × '+rm.options[rm.selectedIndex].text+' (from the booking bar above) is ₹'+Math.ceil(q.total/2).toLocaleString('en-IN')+'. Please pay after we confirm your room on WhatsApp.';
+      $('poHint').textContent=nkT('50% advance for {0} in {1} (from the booking bar above) is ₹{2}. Please pay after we confirm your room on WhatsApp.').replace('{0}',nkT(q.nights+(q.nights>1?' nights':' night'))).replace('{1}',k+' × '+rm.options[rm.selectedIndex].text).replace('{2}',Math.ceil(q.total/2).toLocaleString('en-IN'));
       if(!$('poNote').dataset.manual){var fd=function(v){return new Date(v+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});};$('poNote').value=fd(ci.value)+' – '+fd(co.value)+' · '+rm.options[rm.selectedIndex].text;}}
   }
   ['ci','co','rm','gu'].forEach(function(id){var el=$(id);if(el)el.addEventListener('change',function(){if(cfg)prefill();});});
@@ -3178,7 +3186,7 @@ var WA = "917501101137";
     var n=nights(),k=roomsFor(gu.value),opt=rm.options[rm.selectedIndex],mem=window.NK_MEMBER||null;
     if(n<=0){sum.innerHTML='Choose a check-out date after check-in.';return;}
     var q=NikadiRates.quote(opt.value,ci.value,co.value,k,mem?mem.discount:0);
-    var h=n+(n>1?' nights':' night')+' · '+k+' × '+opt.text+(k>1?' rooms':' room')+' · ';
+    var h=n+(n>1?' nights':' night')+' · '+k+' × '+opt.text+(nkLang()==='en'?(k>1?' rooms':' room'):'')+' · ';
     if(q.offer<q.standard)h+='<s>'+fmt(q.standard)+'</s> ';
     h+='<b>'+fmt(q.offer)+'</b>'+(q.offerName?' '+q.offerName.toLowerCase():'');
     if(mem&&mem.discount)h+=' · your '+mem.tier+' price <b>'+fmt(q.total)+'</b>';
@@ -3523,7 +3531,7 @@ var WA = "917501101137";
     var d=ist(),h=d.getUTCHours(),m=d.getUTCMinutes(),now=h*60+m;
     if($('gClock'))$('gClock').innerHTML=(h%12||12)+':'+pad(m)+'<small>'+(h<12?'AM':'PM')+'</small>';
     var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],mon=['January','February','March','April','May','June','July','August','September','October','November','December'];
-    if($('gDate'))$('gDate').textContent=days[d.getUTCDay()]+', '+d.getUTCDate()+' '+mon[d.getUTCMonth()]+' · India time';
+    if($('gDate'))$('gDate').textContent=(nkFmt(d,{weekday:'long',day:'numeric',month:'long'})||(days[d.getUTCDay()]+', '+d.getUTCDate()+' '+mon[d.getUTCMonth()]))+' · India time';
     var p=$('gDesk');if(p){
       if(now<9*60){p.textContent='Check-out by 9:00 AM · in '+dur(9*60-now);p.className='pill';}
       else if(now<11*60){p.textContent='Check-in opens at 11:00 AM · in '+dur(11*60-now);p.className='pill';}
@@ -3608,12 +3616,12 @@ var WA = "917501101137";
     $('wxChart').innerHTML=sv;
     if($('wxChartL'))$('wxChartL').textContent='Temperature next 24 hours · high '+Math.round(hi)+'°, low '+Math.round(lo)+'°';
     /* 7 days */
-    var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var dn=nkNames('d','short',['Sun','Mon','Tue','Wed','Thu','Fri','Sat']),mn=nkNames('m','short',['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']);
     var L=Math.min.apply(null,dl.temperature_2m_min),U=Math.max.apply(null,dl.temperature_2m_max),R=Math.max(U-L,1),dh='';
     for(var d=0;d<dl.time.length;d++){
       var dd=new Date(dl.time[d]+'T00:00:00Z'),mi=dl.temperature_2m_min[d],ma=dl.temperature_2m_max[d];
       var sr=hm(dl.sunrise[d]),ss=hm(dl.sunset[d]);
-      dh+='<div class="wx-day"><span class="d">'+(d===0?'Today':d===1?'Tomorrow':dn[dd.getUTCDay()])+'<small>'+dd.getUTCDate()+' '+mn[dd.getUTCMonth()]+'</small></span>'+wxIcon(dl.weather_code[d],1)+'<span class="cn">'+(WX[dl.weather_code[d]]||'')+'<small>Sun '+t12(sr[0],sr[1])+' – '+t12(ss[0],ss[1])+'</small></span><span class="wx-rng"><span>'+Math.round(mi)+'°</span><i><em style="left:'+((mi-L)/R*100).toFixed(0)+'%;right:'+((U-ma)/R*100).toFixed(0)+'%"></em></i><span>'+Math.round(ma)+'°</span></span><span class="rp">'+(dl.precipitation_probability_max[d]||0)+'% rain</span></div>';
+      dh+='<div class="wx-day"><span class="d">'+(d===0?'Today':d===1?'Tomorrow':dn[dd.getUTCDay()])+'<small>'+(nkFmt(dd,{day:'numeric',month:'short'})||(dd.getUTCDate()+' '+mn[dd.getUTCMonth()]))+'</small></span>'+wxIcon(dl.weather_code[d],1)+'<span class="cn">'+(WX[dl.weather_code[d]]||'')+'<small>Sun '+t12(sr[0],sr[1])+' – '+t12(ss[0],ss[1])+'</small></span><span class="wx-rng"><span>'+Math.round(mi)+'°</span><i><em style="left:'+((mi-L)/R*100).toFixed(0)+'%;right:'+((U-ma)/R*100).toFixed(0)+'%"></em></i><span>'+Math.round(ma)+'°</span></span><span class="rp">'+(dl.precipitation_probability_max[d]||0)+'% rain</span></div>';
     }
     $('wxDays').innerHTML=dh;
     $('wxUpd').textContent='Right now in Mayapur, updated at '+t12(now.getUTCHours(),now.getUTCMinutes())+' India time.';
@@ -3625,7 +3633,7 @@ var WA = "917501101137";
       var c=w.current,dl=w.daily;
       $('gTemp').innerHTML=Math.round(c.temperature_2m)+'°<small>'+(WX[c.weather_code]||'')+'</small>';
       $('gWxSub').textContent='Humidity '+c.relative_humidity_2m+'% · today '+Math.round(dl.temperature_2m_min[0])+'° to '+Math.round(dl.temperature_2m_max[0])+'°'+(dl.precipitation_probability_max[0]!=null?' · rain '+dl.precipitation_probability_max[0]+'%':'');
-      var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],h='';
+      var dn=nkNames('d','short',['Sun','Mon','Tue','Wed','Thu','Fri','Sat']),h='';
       for(var i=1;i<4;i++){var dd=new Date(dl.time[i]+'T00:00:00Z');h+='<div><span>'+dn[dd.getUTCDay()]+'</span><b>'+Math.round(dl.temperature_2m_max[i])+'° / '+Math.round(dl.temperature_2m_min[i])+'°</b><span>'+(WX[dl.weather_code[i]]||'')+'</span></div>';}
       $('gFc').innerHTML=h;
       var a=hm(dl.sunrise[0]),b=hm(dl.sunset[0]);
@@ -3716,8 +3724,9 @@ var WA = "917501101137";
   function $(id){return document.getElementById(id);}
   var rows=[].slice.call(document.querySelectorAll('#prog li'));
   var CL=rows.filter(function(li){return li.classList.contains('closed');});rows=rows.filter(function(li){return !li.classList.contains('closed');});
-  var P=rows.map(function(li){var t=li.getAttribute('data-t').split(':');return {li:li,m:+t[0]*60+(+t[1]),name:li.querySelector('.nm').textContent,time:li.querySelector('.tm').textContent.replace(/\s+/g,' ').trim()};});
+  var P=rows.map(function(li){var t=li.getAttribute('data-t').split(':');return {li:li,m:+t[0]*60+(+t[1]),get name(){return li.querySelector('.nm').textContent;},time:li.querySelector('.tm').textContent.replace(/\s+/g,' ').trim()};});
   function dur(min){var h=Math.floor(min/60),m=min%60;return h?(h+' h'+(m?' '+m+' min':'')):m+' min';}
+  function at(n,t){return nkT('{0} at {1}').replace('{0}',n).replace('{1}',t);}
   function upd(){
     if(!P.length)return;
     var d=new Date(Date.now()+330*60000),now=d.getUTCHours()*60+d.getUTCMinutes();
@@ -3731,21 +3740,21 @@ var WA = "917501101137";
     P.forEach(function(p){p.li.classList.toggle('done',!tomorrow&&p.m<=now&&p!==cur);p.li.classList.toggle('live',p===cur);p.li.classList.toggle('next',p===next&&!(shutDay||shutNight));});
     CL.forEach(function(li){var t=li.getAttribute('data-t');li.classList.toggle('next',(t==='13:00'&&shutDay)||(t==='20:30'&&shutNight));});
     var live=$('progLive');
-    if(live){live.hidden=!cur;if(cur){$('progLiveName').textContent=cur.name;$('progLiveSub').textContent='Going on now · started at '+cur.time+(next&&!tomorrow?' · '+next.name+' at '+next.time:'');}}
+    if(live){live.hidden=!cur;if(cur){$('progLiveName').textContent=cur.name;$('progLiveSub').textContent=nkT('Going on now')+' · '+nkT('started at {0}').replace('{0}',cur.time)+(next&&!tomorrow?' · '+at(next.name,next.time):'');}}
     var head,sub;
     if(shutDay||shutNight){
       head=shutDay?'Temple closed now':'Temple closed for the night';
-      sub=(shutDay?'All temples in Mayapur close 1–4 PM. Opens again with ':'Opens again with ')+next.name+' at '+next.time+' · in '+dur(inMin);
+      sub=(shutDay?nkT('All temples in Mayapur close 1–4 PM.')+' ':'')+nkT('Opens again with {0} at {1}').replace('{0}',next.name).replace('{1}',next.time)+' · '+nkT('in '+dur(inMin));
       if($('progNext')){$('progNext').textContent=head;$('progIn').textContent=sub;$('progNow').querySelector('.lbl').textContent='Temple timings';$('progNow').classList.add('shut');}
-      if($('gArati')){if($('gAratiLbl'))$('gAratiLbl').textContent='Next at the temple';$('gArati').textContent=head;$('gAratiIn').textContent='Opens '+next.time+' ('+next.name+') · in '+dur(inMin);}
+      if($('gArati')){if($('gAratiLbl'))$('gAratiLbl').textContent='Next at the temple';$('gArati').textContent=head;$('gAratiIn').textContent=nkT('Opens {1} ({0})').replace('{0}',next.name).replace('{1}',next.time)+' · '+nkT('in '+dur(inMin));}
       return;
     }
     if($('progNow'))$('progNow').classList.remove('shut');
     head=next.name+' · '+next.time;sub=(tomorrow?'Tomorrow morning · in ':'In ')+dur(inMin);
     if($('progNext')){$('progNext').textContent=head;$('progIn').textContent=sub;$('progNow').querySelector('.lbl').textContent=tomorrow?'First program tomorrow':'Next at the temple';}
-    if($('gArati')){if($('gAratiLbl'))$('gAratiLbl').textContent=cur?'At the temple now':'Next at the temple';$('gArati').textContent=cur?cur.name:next.name;$('gAratiIn').innerHTML=cur?'<span class="pill live" style="display:inline-block;margin-right:6px">● Live now</span>Next: '+next.name+' at '+next.time:next.time+' · '+(tomorrow?'tomorrow, in ':'in ')+dur(inMin);}
+    if($('gArati')){if($('gAratiLbl'))$('gAratiLbl').textContent=cur?'At the temple now':'Next at the temple';$('gArati').textContent=cur?cur.name:next.name;$('gAratiIn').innerHTML=cur?'<span class="pill live" style="display:inline-block;margin-right:6px">'+nkT('● Live now')+'</span>'+nkT('Next: {0}').replace('{0}',at(next.name,next.time)):next.time+' · '+(tomorrow?'tomorrow, in ':'in ')+dur(inMin);}
   }
-  upd();setInterval(upd,30000);
+  upd();setInterval(upd,30000);document.addEventListener('nk:lang',upd);
 
   /* Instagram's own embed script, loaded only when the darshan row comes near the screen */
   var box=$('igs');
@@ -3904,7 +3913,7 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
   function pad(n){return (n<10?'0':'')+n;}
   function ymd(y,m,d){var x=new Date(Date.UTC(y,m,d));return x.getUTCFullYear()+'-'+pad(x.getUTCMonth()+1)+'-'+pad(x.getUTCDate());}
   function addDay(s,n){var p=s.split('-');return ymd(+p[0],+p[1]-1,+p[2]+n);}
-  var MN=['January','February','March','April','May','June','July','August','September','October','November','December'],WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MN=['January','February','March','April','May','June','July','August','September','October','November','December'],WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],WDL=nkNames('d','short',null);
   var today=R?R.today():new Date(Date.now()+330*60000).toISOString().slice(0,10);
   var ty=+today.slice(0,4),tm=+today.slice(5,7)-1,off=0,MAXOFF=5,type='Deluxe Double',AV=null,ci=null,co=null,state='loading';
   function stat(d){
@@ -3915,17 +3924,17 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
   }
   function price(d){if(!R)return '';var r=R.rate(type,d);return '₹'+r.toLocaleString('en-IN');}
   function fullBetween(a,b){for(var d=a;d<b;d=addDay(d,1))if(stat(d)==='full')return d;return null;}
-  function nice(d){var p=d.split('-'),x=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));return WD[x.getUTCDay()]+' '+(+p[2])+' '+MN[+p[1]-1].slice(0,3);}
+  function nice(d){var p=d.split('-'),x=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));return nkFmt(x,{weekday:'short',day:'numeric',month:'short'})||WD[x.getUTCDay()]+' '+(+p[2])+' '+MN[+p[1]-1].slice(0,3);}
   function month(y,m){
-    var first=new Date(Date.UTC(y,m,1)).getUTCDay(),days=new Date(Date.UTC(y,m+1,0)).getUTCDate(),h='<div class="avm"><h4>'+MN[m]+' '+y+'</h4><div class="avm-g">';
-    WD.forEach(function(w){h+='<span class="wd">'+w.slice(0,2)+'</span>';});
+    var first=new Date(Date.UTC(y,m,1)).getUTCDay(),days=new Date(Date.UTC(y,m+1,0)).getUTCDate(),h='<div class="avm"><h4>'+(nkFmt(new Date(Date.UTC(y,m,1)),{month:'long',year:'numeric'})||(MN[m]+' '+y))+'</h4><div class="avm-g">';
+    (WDL||WD).forEach(function(w){h+='<span class="wd">'+(WDL?w:w.slice(0,2))+'</span>';});
     for(var i=0;i<first;i++)h+='<span class="avd a-blank"></span>';
     for(var d=1;d<=days;d++){
       var k=ymd(y,m,d),c=['avd'],st=stat(k),lbl=price(k),past=k<today;
-      if(past)c.push('a-past');else{if(st)c.push('a-'+st);if(st==='few')lbl='Few left';if(st==='full')lbl='Sold out';if(R&&R.period(k).offer)c.push('a-offer');}
+      if(past)c.push('a-past');else{if(st)c.push('a-'+st);if(st==='few')lbl=nkT('Few left');if(st==='full')lbl=nkT('Sold out');if(R&&R.period(k).offer)c.push('a-offer');}
       if(k===today)c.push('a-today');
       if(ci&&(k===ci||k===co))c.push('a-sel');else if(ci&&co&&k>ci&&k<co)c.push('a-in');
-      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+k+'"'+(past?' disabled':'')+' aria-label="'+nice(k)+(st?', '+(st==='free'?'available':st==='few'?'only a few rooms left':'sold out'):'')+'"><b>'+d+'</b><small>'+(past?'&nbsp;':lbl)+'</small><i></i></button>';
+      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+k+'"'+(past?' disabled':'')+' aria-label="'+nice(k)+(st?', '+nkT(st==='free'?'available':st==='few'?'only a few rooms left':'sold out'):'')+'"><b>'+d+'</b><small>'+(past?'&nbsp;':lbl)+'</small><i></i></button>';
     }
     return h+'</div></div>';
   }
@@ -3935,9 +3944,9 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
     $('avcPrev').disabled=off<=0;$('avcNext').disabled=off>=MAXOFF;
     box.classList.toggle('offline',!AV);
     var sel=$('avcSel');
-    if(!ci)sel.textContent='Pick your check-in date.';
-    else if(!co)sel.innerHTML='Check-in <b>'+nice(ci)+'</b>. Now pick your check-out date.';
-    else{var n=0;for(var d=ci;d<co;d=addDay(d,1))n++;var q=R?R.quote(type,ci,co,1,0):null;sel.innerHTML='<b>'+nice(ci)+'</b> to <b>'+nice(co)+'</b> · '+n+' night'+(n>1?'s':'')+(q&&q.total?' · <b>₹'+q.total.toLocaleString('en-IN')+'</b> for one '+type+' room':'');}
+    if(!ci)sel.textContent=nkT('Pick your check-in date.');
+    else if(!co)sel.innerHTML=nkT('Check-in <b>{0}</b>. Now pick your check-out date.').replace('{0}',nice(ci)).replace('.</b>.','.</b>');
+    else{var n=0;for(var d=ci;d<co;d=addDay(d,1))n++;var q=R?R.quote(type,ci,co,1,0):null;sel.innerHTML=nkT('<b>{0}</b> to <b>{1}</b>').replace('{0}',nice(ci)).replace('{1}',nice(co))+' · '+nkT(n+' night'+(n>1?'s':''))+(q&&q.total?' · '+nkT('<b>₹'+q.total.toLocaleString('en-IN')+'</b> for one '+type+' room'):'');}
     $('avcBook').hidden=!(ci&&co);$('avcClear').hidden=!ci;
   }
   box.addEventListener('click',function(e){
@@ -3947,7 +3956,7 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
     var b=e.target.closest('.avd');if(!b||b.disabled)return;
     var d=b.getAttribute('data-d'),st=stat(d);
     if(!ci||co||d<=ci){if(st==='full'){$('avcSel').textContent='That night is sold out for the '+type+'. Try the other room type, or another date.';return;}ci=d;co=null;}
-    else{var f=fullBetween(ci,d);if(f){$('avcSel').textContent='The night of '+nice(f)+' is sold out, so those dates are not free together. Pick an earlier check-out, or another check-in.';return;}co=d;}
+    else{var f=fullBetween(ci,d);if(f){$('avcSel').textContent=nkT('The night of {0} is sold out, so those dates are not free together. Pick an earlier check-out, or another check-in.').replace('{0}',nice(f));return;}co=d;}
     draw();
   });
   $('avcPrev').addEventListener('click',function(){if(off>0){off--;draw();}});
@@ -3980,7 +3989,7 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
 /* ---- v7: festival calendar countdown, staff wall and guest wall (from /data/*.json) ---- */
 (function(){
   function $(id){return document.getElementById(id);}
-  var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MN=nkNames('m','short',['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']),WD=nkNames('d','short',['Sun','Mon','Tue','Wed','Thu','Fri','Sat']);
   var today=new Date(Date.now()+330*60000).toISOString().slice(0,10);
   function dn(a,b){var p=a.split('-'),q=b.split('-');return Math.round((Date.UTC(+q[0],+q[1]-1,+q[2])-Date.UTC(+p[0],+p[1]-1,+p[2]))/864e5);}
   var list=$('fvList');
@@ -3991,12 +4000,13 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
       li.querySelector('time').innerHTML='<span>'+MN[+p[1]-1]+'</span><b>'+(+p[2])+'</b><small>'+WD[x.getUTCDay()]+' '+p[0]+'</small>';
       if(d<today)li.classList.add('gone');else if(!next)next=li;
     });
-    if(next){
+    function drawNext(){if(!next)return;
       var n=dn(today,next.getAttribute('data-d')),box=$('fvNext'),p=next.getAttribute('data-d').split('-');
       var wa='https://wa.me/917501101137?text='+encodeURIComponent('Hare Krishna! I would like to book a room at Nikadi Guest House for '+next.querySelector('h3').textContent+'.');
-      box.innerHTML='<div class="cd">'+(n===0?'Today':n)+'<small>'+(n===0?'Happening now':n===1?'day to go':'days to go')+'</small></div><div><p class="kicker">Next festival · '+(+p[2])+' '+MN[+p[1]-1]+' '+p[0]+'</p><h3>'+next.querySelector('h3').textContent+'</h3><p>'+next.querySelector('p').textContent+'</p></div><a class="btn btn-gold" href="'+wa+'" target="_blank" rel="noopener">Book for this festival</a>';
+      box.innerHTML='<div class="cd">'+(n===0?'Today':n)+'<small>'+(n===0?'Happening now':n===1?'day to go':'days to go')+'</small></div><div><p class="kicker">Next festival · '+(nkFmt(new Date(Date.UTC(+p[0],+p[1]-1,+p[2])),{day:'numeric',month:'short',year:'numeric'})||((+p[2])+' '+MN[+p[1]-1]+' '+p[0]))+'</p><h3>'+next.querySelector('h3').textContent+'</h3><p>'+next.querySelector('p').textContent+'</p></div><a class="btn btn-gold" href="'+wa+'" target="_blank" rel="noopener">Book for this festival</a>';
       box.hidden=false;
     }
+    drawNext();document.addEventListener('nk:lang',drawNext);
   }
   function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function load(url,cb){fetch(url,{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(cb).catch(function(){});}
@@ -4020,6 +4030,81 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
 (function(){var s=document.querySelector('.pg-show');if(!s)return;var im=[].slice.call(s.querySelectorAll('img')),i=0;if(im.length<2)return;
 if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 setInterval(function(){if(document.hidden)return;im[i].classList.remove('on');i=(i+1)%im.length;im[i].classList.add('on');},4500);})();
+</script>
+<script>
+/* ---- language switch: English, বাংলা, हिन्दी, Русский, 中文, Español ----
+   Same rules as tools/i18n-extract.py: a block of text (with its bold words and links) is one key. */
+(function(){
+  var L=[['en','English','EN'],['bn','বাংলা','Bengali'],['hi','हिन्दी','Hindi'],['ru','Русский','Russian'],['zh','中文','Chinese'],['es','Español','Spanish']];
+  var cur=document.documentElement.getAttribute('data-lang')||'en';
+  var INLINE={A:1,B:1,STRONG:1,EM:1,I:1,SMALL:1,S:1,SPAN:1,BR:1,SUP:1,U:1,TIME:1,MARK:1,ABBR:1},SKIP={SCRIPT:1,STYLE:1,SVG:1,NOSCRIPT:1,TEXTAREA:1,TEMPLATE:1,IFRAME:1,BLOCKQUOTE:1,INPUT:1};
+  var ATTRS=['alt','aria-label','placeholder','title'];
+  function ws(t){return t.replace(/\s+/g,' ');}
+  function canon(el){var o='';for(var c=el.firstChild;c;c=c.nextSibling){if(c.nodeType===3)o+=ws(c.nodeValue);else if(c.nodeType===1){var n=c.tagName.toLowerCase();if(n==='br')o+='<br>';else o+='<'+n+'>'+canon(c)+'</'+n+'>';}}return o;}
+  function hasText(el){for(var c=el.firstChild;c;c=c.nextSibling)if(c.nodeType===3&&/[A-Za-z]/.test(c.nodeValue))return true;return false;}
+  function isUnit(el){if(!hasText(el))return false;var all=el.getElementsByTagName('*');for(var i=0;i<all.length;i++){var d=all[i];if(!INLINE[d.tagName]||d.id||d.tagName==='BUTTON')return false;}return true;}
+  function fill(el,tr){
+    var orig={};[].forEach.call(el.getElementsByTagName('*'),function(x){(orig[x.tagName]=orig[x.tagName]||[]).push(x);});
+    var t=document.createElement('template');t.innerHTML=tr;var used={};
+    [].forEach.call(t.content.querySelectorAll('*'),function(x){var a=orig[x.tagName],k=used[x.tagName]||0;used[x.tagName]=k+1;var o=a&&a[k];if(o)for(var j=0;j<o.attributes.length;j++)x.setAttribute(o.attributes[j].name,o.attributes[j].value);});
+    el.textContent='';el.appendChild(t.content);
+  }
+  function apply(D){
+    var U=D.units||{},A=D.attrs||{};
+    /* tr(): exact match, then a number template ("In {0} h {1} min"), then each " · " part on its own */
+    var NUM=/\d+(?:[.,:]\d+)*/g,DUR=/\b(\d+) h(?: (\d+) min)?\b|\b(\d+) min\b/g;
+    function sub(t,n){return t.replace(/\{(\d+)\}/g,function(_,i){return n[+i]!=null?n[+i]:'';});}
+    function dur(x){var m=/(\d+) h(?: (\d+) min)?|(\d+) min/.exec(x),k=m[1]?(m[2]?'{0} h {1} min':'{0} h'):'{0} min',v=m[1]?(m[2]?[m[1],m[2]]:[m[1]]):[m[3]];return U[k]?sub(U[k],v):x;}
+    function tr1(k){if(U[k])return U[k];if(A[k])return A[k];var D=[],t0=k.replace(DUR,function(x){D.push(x);return '\u0001';}),n=[],t=t0.replace(NUM,function(x){n.push(x);return '{'+(n.length-1)+'}';});
+      var key=t.replace(/\u0001/g,'{D}');if((n.length||D.length)&&U[key]){var di=0;return sub(U[key],n).replace(/\{D\}/g,function(){return dur(D[di++]);});}return null;}
+    function tr(k){k=ws(k).trim();if(!k||!/[A-Za-z]/.test(k))return null;var r=tr1(k);if(r!=null)return r;
+      var ci=k.indexOf(': ');if(ci>0){var rt=k.slice(ci+2),a1=tr1(k.slice(0,ci)),b1=tr1(rt);if(b1==null&&(!/[a-z]{2}/.test(rt.replace(/\b[A-Z@][\w.'@-]*/g,''))))b1=rt;if(a1!=null&&b1!=null)return a1+': '+b1;}
+      var parts=k.split(/( · | → | ⇄ )/);if(parts.length<2)return null;var ok=0,out=parts.map(function(x,i){if(i%2||!/[A-Za-z]/.test(x))return x;var y=tr(x);if(y!=null){ok++;return y;}return x;});return ok?out.join(''):null;}
+    window.nkT=function(s){return tr(s)||s;};
+    function txt(c){var v=c.nodeValue,t=tr(v);if(t!=null&&t!==ws(v).trim()){c.nodeValue=v.match(/^\s*/)[0]+t+v.match(/\s*$/)[0];}}
+    function attrs(el){ATTRS.forEach(function(a){var v=el.getAttribute(a);if(v){var t=tr(v);if(t)el.setAttribute(a,t);}});}
+    function walk(el){
+      for(var c=el.firstChild;c;c=c.nextSibling){
+        if(c.nodeType===3){txt(c);continue;}
+        if(c.nodeType!==1||c.hasAttribute('data-noi18n'))continue;
+        if(c.tagName==='INPUT'||c.tagName==='TEXTAREA'){attrs(c);continue;}
+        if(SKIP[c.tagName])continue;
+        attrs(c);
+        if(c.tagName==='SELECT'){[].forEach.call(c.options,function(o){var k=ws(o.textContent).trim();if(U[k])o.textContent=U[k];});continue;}
+        if(isUnit(c)){var k2=canon(c).trim(),u2=tr1(k2);if(u2!=null){fill(c,u2);continue;}}
+        walk(c);
+      }
+    }
+    walk(document.body);
+    /* text the page scripts write later (live temple status, prices, calendar, weather) */
+    function ok(n){for(var e=n.nodeType===1?n:n.parentNode;e&&e!==document.body;e=e.parentNode){if(e.nodeType===1&&(SKIP[e.tagName]||e.hasAttribute('data-noi18n')))return false;}return true;}
+    var busy=false,mo=new MutationObserver(function(ms){if(busy)return;busy=true;try{ms.forEach(function(m){
+      if(m.type==='characterData'){if(ok(m.target))txt(m.target);return;}
+      var t=m.target;if(t.nodeType!==1||!ok(t))return;
+      if(m.type==='attributes'){var v=t.getAttribute(m.attributeName),r=v&&tr(v);if(r)t.setAttribute(m.attributeName,r);return;}
+      if(isUnit(t)){var k=canon(t).trim(),r2=tr1(k);if(r2!=null){fill(t,r2);return;}}
+      m.addedNodes.forEach(function(n){if(n.nodeType===3)txt(n);else if(n.nodeType===1&&!SKIP[n.tagName]&&!n.hasAttribute('data-noi18n')){attrs(n);if(isUnit(n)){var k3=canon(n).trim(),u3=tr1(k3);if(u3!=null){fill(n,u3);return;}}walk(n);}});
+    });}catch(e){console.error(e);}mo.takeRecords();busy=false;});
+    mo.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:ATTRS});
+    var tk=ws(document.title).trim();if(U[tk])document.title=U[tk];
+    var md=document.querySelector('meta[name=description]');if(md&&U[md.content])md.content=U[md.content];
+  }
+  function pick(code){try{localStorage.setItem('nk_lang',code);}catch(e){}
+    var u=new URL(location.href);u.searchParams.delete('lang');if(code!=='en')u.searchParams.set('lang',code);location.href=u.toString();}
+  var btn=document.getElementById('langBtn'),list=document.getElementById('langList'),ml=document.getElementById('menuLangs');
+  var me=L.filter(function(x){return x[0]===cur;})[0]||L[0];
+  if(btn){document.getElementById('langCode').textContent=me[0]==='en'?'EN':me[1];
+    list.innerHTML=L.map(function(x){return '<button type="button" data-lang-pick="'+x[0]+'"'+(x[0]===cur?' aria-current="true"':'')+'><span>'+x[1]+'</span><small>'+(x[0]==='en'?'':x[2])+'</small></button>';}).join('');
+    btn.addEventListener('click',function(e){e.stopPropagation();var o=list.hidden;list.hidden=!o;btn.setAttribute('aria-expanded',o?'true':'false');});
+    document.addEventListener('click',function(e){if(!list.hidden&&!e.target.closest('.lang')){list.hidden=true;btn.setAttribute('aria-expanded','false');}});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!list.hidden){list.hidden=true;btn.setAttribute('aria-expanded','false');btn.focus();}});}
+  if(ml)ml.innerHTML=L.map(function(x){return '<button type="button" data-lang-pick="'+x[0]+'"'+(x[0]===cur?' aria-current="true"':'')+'>'+x[1]+'</button>';}).join('');
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-lang-pick]');if(b){var c=b.getAttribute('data-lang-pick');if(c!==cur)pick(c);}});
+  if(cur!=='en')document.addEventListener('click',function(e){var a=e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href');if(/^\/(?:[\w-]+\.html)?(?:#.*)?$/.test(h)){var u=new URL(h,location.href);u.searchParams.set('lang',cur);a.href=u.pathname+u.search+u.hash;}},true);
+  if(cur==='en')return;
+  var done=function(){document.documentElement.classList.remove('i18n-wait');};
+  fetch('/data/i18n/'+cur+'.json?v=2').then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(D){try{apply(D);}catch(e){console.error(e);}done();try{document.dispatchEvent(new Event('nk:lang'));}catch(e){}}).catch(done);
+})();
 </script>
 </body>
 </html>
