@@ -255,10 +255,10 @@ section.alt{background:var(--band)}
 .fx-sun{inset:auto!important;left:calc(50% - min(11vw,90px))!important;width:min(22vw,180px);height:min(22vw,180px);border-radius:50%;opacity:0;
   background:radial-gradient(circle,#fff6dc 0 34%,#ffd27a 48%,rgba(255,150,70,.55) 60%,rgba(255,120,60,0) 72%);filter:blur(.4px)}
 .fx-dawn .fx-sun{top:100vh!important;animation:fxUp 12s cubic-bezier(.4,.15,.5,1) forwards}
-/* sunset: the sun comes down from the top and sinks below the page, turning from gold to red, with a pink and purple rim */
+/* sunset: the sun comes down from the top and sinks below the page: one plain reddish-orange disc, as the real setting sun looks */
 .fx-dusk .fx-sun{top:calc(-1 * min(22vw,180px))!important;animation:fxDown 12s cubic-bezier(.45,0,.6,.9) forwards;
-  background:radial-gradient(circle,#fff2c0 0 20%,#ffc84a 33%,#ff7a3a 46%,rgba(238,64,96,.7) 56%,rgba(170,80,200,.32) 65%,rgba(150,70,190,0) 73%)}
-@keyframes fxDown{0%{opacity:0;transform:translateY(0) scale(.85);filter:blur(.4px) hue-rotate(6deg)}10%{opacity:.95}82%{opacity:.95}100%{opacity:0;transform:translateY(calc(100vh + 100%)) scale(1.14);filter:blur(.4px) hue-rotate(-22deg) saturate(1.3)}}
+  background:radial-gradient(circle,#ff9a48 0 26%,#ff7a35 46%,#f4592c 60%,rgba(244,89,44,.4) 66%,rgba(244,89,44,0) 73%)}
+@keyframes fxDown{0%{opacity:0;transform:translateY(0) scale(.85)}10%{opacity:.95}82%{opacity:.95}100%{opacity:0;transform:translateY(calc(100vh + 100%)) scale(1.14)}}
 @keyframes fxUp{0%{opacity:0;transform:translateY(0) scale(.7)}10%{opacity:.95}70%{opacity:.95}100%{opacity:0;transform:translateY(calc(-100vh - 100%)) scale(1)}}
 @keyframes fxSet{0%{opacity:0;transform:translateY(-6vh)}15%{opacity:.95}80%{opacity:.85}100%{opacity:0;transform:translateY(26vh)}}
 @keyframes fxRise{0%{opacity:0;transform:translateY(0)}20%{opacity:.95}85%{opacity:.85}100%{opacity:0;transform:translateY(-34vh)}}
@@ -302,7 +302,12 @@ html.wx-rain #nightsky .wxrain,html.wx-storm #nightsky .wxrain{opacity:1}
 html.wx-cloudy #nightsky .daycl,html.wx-rain #nightsky .daycl,html.wx-storm #nightsky .daycl{opacity:0!important}
 html.wx-cloudy .moon,html.wx-rain .moon,html.wx-storm .moon{opacity:.25}
 @keyframes dayDrift{to{transform:translateX(-50%)}}
-html.sky-day #nightsky .daycl{opacity:.8}html.sky-dawn #nightsky .daycl{opacity:.4}html.sky-sunset #nightsky .daycl{opacity:.45}
+html.sky-day #nightsky .daycl{opacity:.8}html.sky-dawn #nightsky .daycl{opacity:.4}html.sky-sunset #nightsky .daycl{opacity:0}
+/* sunset clouds: dark purple-grey bodies with their undersides on fire (red, orange, pink, gold), drifting slowly */
+#nightsky .suncl{position:absolute;left:0;top:0;width:max(200%,2800px);height:74%;background-repeat:repeat-x;background-size:50% 100%;opacity:0;transition:opacity 4s ease;animation:dayDrift 190s linear infinite;will-change:transform}
+html.sky-sunset #nightsky .suncl{opacity:1}
+html.wx-cloudy #nightsky .suncl,html.wx-rain #nightsky .suncl,html.wx-storm #nightsky .suncl{opacity:0!important}
+@media (prefers-reduced-motion:reduce){#nightsky .suncl{animation:none}}
 @media (prefers-reduced-motion:reduce){#nightsky .daycl,#nightsky .wxdark,#nightsky .wxheavy{animation:none}}
 html.sky-dawn #nightsky::after{background:rgba(5,8,22,.38)}
 html.sky-sunset #nightsky::after{background:rgba(5,8,22,.36)}
