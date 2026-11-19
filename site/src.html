@@ -306,6 +306,8 @@ html.night-mood .s.alt{background:rgba(11,17,38,.5)}
 #nightsky::after{content:"";position:absolute;inset:0;background:rgba(5,8,22,0);transition:background 2s}
 html.sky-day #nightsky::after{background:rgba(5,8,22,.04)}
 #nightsky .daycl{position:absolute;left:0;top:0;width:max(200%,2600px);height:72%;background-repeat:repeat-x;background-size:50% 100%;opacity:0;transition:opacity 3s ease;animation:dayDrift 130s linear infinite;will-change:transform}
+.wx-mute{position:fixed;left:16px;bottom:16px;z-index:60;font:inherit;font-size:.74rem;font-weight:600;letter-spacing:.04em;color:var(--gold-hi);background:rgba(10,15,31,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(217,173,85,.45);border-radius:999px;padding:8px 14px;cursor:pointer}
+@media (max-width:1060px){.wx-mute{bottom:calc(86px + env(safe-area-inset-bottom,0px));left:12px}}
 #nightsky .wxtint{position:absolute;inset:0;background:#3b4454;opacity:0;transition:opacity 3s ease,background 3s ease}
 #nightsky .wxdark{filter:blur(7px);position:absolute;left:0;top:-3%;width:max(200%,2600px);height:100%;background-repeat:repeat-x;background-size:50% 100%;opacity:0;transition:opacity 3s ease;animation:dayDrift 80s linear infinite;will-change:transform}
 #nightsky .wxrain{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 2s ease}
@@ -3507,14 +3509,23 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   function wxLoop(now){wxRAF=0;if(wxMode!=='rain'&&wxMode!=='storm')return;if(document.hidden){wxRAF=requestAnimationFrame(wxLoop);return;}var c=wxEl.rain,x=c.getContext('2d');if(c.width!==innerWidth||c.height!==innerHeight){c.width=innerWidth;c.height=innerHeight;wxDrops=[];}
     var N=Math.round(innerWidth/(wxMode==='storm'?7:11));while(wxDrops.length<N)wxDrops.push({x:Math.random()*c.width*1.1,y:Math.random()*c.height,l:9+Math.random()*10,v:7+Math.random()*5,a:.16+Math.random()*.26});wxDrops.length=N;
     x.clearRect(0,0,c.width,c.height);x.lineCap='round';x.lineWidth=1.1;wxDrops.forEach(function(d){x.strokeStyle='rgba(200,215,235,'+d.a+')';x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d.x-d.l*.18,d.y+d.l);x.stroke();d.y+=d.v;d.x-=d.v*.18;if(d.y>c.height){d.y=-d.l;d.x=Math.random()*c.width*1.1;}});
-    if(wxMode==='storm'){if(!wxNext)wxNext=now+(wxPrev?2500:8000+Math.random()*12000);if(now>wxNext){wxNext=now+10000+Math.random()*40000;wxStrike(now);}
+    if(wxMode==='storm'){if(!wxNext)wxNext=now+2500;if(now>wxNext){wxNext=now+4000+Math.random()*2500;wxStrike(now);}
       if(wxBolt&&now-wxBolt.t<260){x.save();x.shadowColor='#cfe0ff';x.shadowBlur=18;x.strokeStyle='rgba(240,246,255,'+(1-(now-wxBolt.t)/260).toFixed(2)+')';x.lineWidth=2.2;x.beginPath();wxBolt.p.forEach(function(q,k){k?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]);});x.stroke();x.lineWidth=1.1;wxBolt.b.forEach(function(br){x.beginPath();br.forEach(function(q,k){k?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]);});x.stroke();});x.restore();}}
     wxRAF=requestAnimationFrame(wxLoop);}
   function wxStrike(now){var W=innerWidth,H=innerHeight,px=W*(.15+Math.random()*.7),py=0,p=[[px,py]],b=[];while(py<H*(.45+Math.random()*.2)){py+=14+Math.random()*26;px+=(Math.random()-.5)*46;p.push([px,py]);if(Math.random()<.16){var bx=px,by=py,br=[[bx,by]];for(var k=0;k<4;k++){bx+=(Math.random()-.3)*40*(Math.random()<.5?-1:1);by+=12+Math.random()*20;br.push([bx,by]);}b.push(br);}}
-    wxBolt={t:now||performance.now(),p:p,b:b};wxEl.flash.style.setProperty('--bx',(p[0][0]/W*100)+'%');wxEl.flash.classList.remove('go');void wxEl.flash.offsetWidth;wxEl.flash.classList.add('go');}
+    wxBolt={t:now||performance.now(),p:p,b:b};wxEl.flash.style.setProperty('--bx',(p[0][0]/W*100)+'%');wxEl.flash.classList.remove('go');void wxEl.flash.offsetWidth;wxEl.flash.classList.add('go');if(wxSnd&&!wxMute&&!document.hidden)thunderSound(.25+Math.random()*.6,.22+Math.random()*.12);}
   function wxAmbient(){var w=window.NK_WX,c=w&&w.current?w.current.weather_code:null,m=wxPrev||(c==null?'clear':c>=95?'storm':((c>=51&&c<=67)||(c>=80&&c<=82))?'rain':(c===3||c===45||c===48)?'cloudy':'clear');
     if(m===wxMode)return;wxMode=m;if(m!=='clear')wxSetup();var de=document.documentElement;de.classList.remove('wx-cloudy','wx-rain','wx-storm');if(m!=='clear')de.classList.add('wx-'+m);wxNext=0;
-    if((m==='rain'||m==='storm')&&!wxRAF&&!RM)wxRAF=requestAnimationFrame(wxLoop);if(wxEl&&m!=='rain'&&m!=='storm'){var x=wxEl.rain.getContext('2d');x.clearRect(0,0,wxEl.rain.width,wxEl.rain.height);}}
+    if((m==='rain'||m==='storm')&&!wxRAF&&!RM)wxRAF=requestAnimationFrame(wxLoop);if(wxEl&&m!=='rain'&&m!=='storm'){var x=wxEl.rain.getContext('2d');x.clearRect(0,0,wxEl.rain.width,wxEl.rain.height);}if(wxRainN){var n0=wxRainN;wxRainN=null;try{n0.s.stop();}catch(e){}}wxAudio();}
+  /* soft rain and thunder sound for the live weather. Browsers only allow sound after the visitor's first tap or key press. */
+  var wxSnd=false,wxMute=false,wxRainN=null,wxBtn=null;try{wxMute=localStorage.getItem('nk_wxmute')==='1';}catch(e){}
+  function wxAudio(){var on=wxSnd&&!wxMute&&!document.hidden&&(wxMode==='rain'||wxMode==='storm');
+    if(on&&!wxRainN&&AC){var src=AC.createBufferSource();src.buffer=noise(AC,4,false);src.loop=true;var hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=900;var lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=4800;var g=AC.createGain();g.gain.setValueAtTime(0,AC.currentTime);g.gain.linearRampToValueAtTime(wxMode==='storm'?.034:.024,AC.currentTime+2);src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(AC.destination);src.start();wxRainN={s:src,g:g};}
+    else if(!on&&wxRainN){var n=wxRainN;wxRainN=null;try{n.g.gain.linearRampToValueAtTime(0,AC.currentTime+.6);n.s.stop(AC.currentTime+.7);}catch(e){}}
+    var need=wxMode==='rain'||wxMode==='storm';if(need&&!wxBtn){wxBtn=document.createElement('button');wxBtn.type='button';wxBtn.className='wx-mute';wxBtn.addEventListener('click',function(){wxMute=!wxMute;try{localStorage.setItem('nk_wxmute',wxMute?'1':'0');}catch(e){}if(!wxMute){ac();wxSnd=!!AC;}wxAudio();});document.body.appendChild(wxBtn);}
+    if(wxBtn){wxBtn.hidden=!need;wxBtn.textContent=wxMute?'Rain sound off':(wxSnd?'Rain sound on':'Tap for rain sound');wxBtn.setAttribute('aria-pressed',String(!wxMute));}}
+  ['pointerdown','keydown','touchstart'].forEach(function(ev){addEventListener(ev,function(){if(wxSnd||wxMute||(wxMode!=='rain'&&wxMode!=='storm'))return;ac();wxSnd=!!AC;wxAudio();},{passive:true});});
+  document.addEventListener('visibilitychange',wxAudio);
   window.nkWxAmb=wxAmbient;window.nkWxStrike=function(){if(wxEl)wxStrike(performance.now());};
   function ambient(ph){if(!ns){ns=document.createElement('div');ns.id='nightsky';ns.setAttribute('aria-hidden','true');ns.innerHTML='<canvas></canvas><div class="moon"><canvas width="200" height="200"></canvas></div>';document.body.insertBefore(ns,document.body.firstChild);
       addEventListener('resize',function(){if(cur)paint(cur);});drawMoon(ns.querySelector('.moon canvas'),moonPhase());}
