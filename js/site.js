@@ -521,12 +521,19 @@ var WA = "917501101137";
   window.nkBarUpdate=update;
   [ci,co,rm,gu].forEach(function(el){el.addEventListener('change',update);});
   update();
+  /* "Check availability" takes the guest to the live calendar, with their room type and dates already marked there.
+     The calendar's "Book these dates" button then sends the WhatsApp request. (On pages without the calendar the button sends it directly, as before.) */
   document.getElementById('bookForm').addEventListener('submit',function(e){
     e.preventDefault();
+    if(window.nkAvc){var n0=nights();window.nkAvc.show(rm.selectedIndex===2?'Large Twin':rm.selectedIndex===1?'Deluxe Twin':'Deluxe Double',n0>=1?ci.value:null,n0>=1?co.value:null);return;}
+    sendWA();
+  });
+  function sendWA(){
     var n=nights();if(n<1){update();return;}
     var txt='Hare Krishna! I would like to book at Nikadi Guest House.\n\nRoom: '+rm.value+'\nCheck-in: '+pretty(ci.value)+'\nCheck-out: '+pretty(co.value)+' ('+n+(n>1?' nights':' night')+')\nGuests: '+gu.value+'\nRooms: '+roomsFor(gu.value)+'\n\nIs it available?';
     var a=document.createElement('a');a.href='https://wa.me/'+WA+'?text='+encodeURIComponent(txt);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
-  });
+  }
+  window.nkBookWA=sendWA;
   document.querySelectorAll('[data-room]').forEach(function(b){b.addEventListener('click',function(){rm.selectedIndex=+b.dataset.room;update();});});
 
   function copy(text,msgEl,srcEl){
@@ -1358,12 +1365,19 @@ try{
   $('avcPrev').addEventListener('click',function(){if(off>0){off--;draw();}});
   $('avcNext').addEventListener('click',function(){if(off<MAXOFF){off++;draw();}});
   $('avcClear').addEventListener('click',function(){ci=co=null;draw();});
-  /* fill the booking bar, then the normal Book handler scrolls to it */
-  $('avcBook').setAttribute('data-focus-book','');
-  $('avcBook').addEventListener('click',function(){
+  /* opened from the booking bar's "Check availability": show this room type, mark the chosen dates, turn to their month and scroll here */
+  window.nkAvc={show:function(t,a,b){
+    type=t;[].forEach.call(box.querySelectorAll('[data-avt]'),function(x){x.setAttribute('aria-selected',x.getAttribute('data-avt')===t?'true':'false');});
+    if(a&&b&&a>=today&&b>a&&!fullBetween(a,b)&&stat(a)!=='full'){ci=a;co=b;off=Math.max(0,Math.min(MAXOFF,(+a.slice(0,4)-ty)*12+(+a.slice(5,7)-1-tm)));}
+    draw();if(a&&b&&ci!==a)$('avcSel').textContent=nkT('Some of those nights are sold out for this room. Pick other dates below, or try another room type.');
+    box.style.scrollMarginTop='96px';box.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});}};
+  /* "Book these dates": copy them to the booking bar (so the price estimate matches) and send the WhatsApp request */
+  $('avcBook').addEventListener('click',function(e){
+    e.preventDefault();
     var a=$('ci'),b=$('co'),r=$('rm');if(!a||!b)return;
     a.value=ci;b.value=co;if(r)r.selectedIndex=type==='Large Twin'?2:type==='Deluxe Twin'?1:0;
     [a,b,r].forEach(function(el){if(!el)return;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));});
+    if(window.nkBookWA)window.nkBookWA();
   });
   function load(){
     var cached=null;try{cached=JSON.parse(sessionStorage.getItem('nk_av')||'null');}catch(e){}
