@@ -170,3 +170,19 @@ const sav4 = await call('deskSiteAvailability', { days: 30 });
 const ssBad = await call('deskSiteShow', { day: dShow, type: '*', show: 'full' });
 console.log('siteShow', ss1.ok || ss1.error, JSON.stringify(sav2.days[5].t), JSON.stringify(sav3.days[5].t), JSON.stringify(calS.site), JSON.stringify(sav4.days[5].t), 'noLogin:', ssBad.error);
 if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tShow] !== 'fill' || !calS.site[dShow] || Object.values(sav4.days[5].t).some(v => v !== 'free') || ssBad.ok) throw new Error('siteShow broken');
+// ---- housekeeping: water count and extra bedding/towels ----
+{
+  const st0 = await call('deskState', { token: tok });
+  const hkLine = st0.hk.stay.find(l => l[0] === 'water');
+  const lx0 = await call('deskLinenExtra', { token: tok });
+  console.log('hk water line', JSON.stringify(hkLine), 'linenExtra', lx0.ok || lx0.error, 'rooms', (lx0.rooms || []).length, 'items', (lx0.items || []).length);
+  if (!hkLine[2] || hkLine[2][0] !== 'No water needed' || !lx0.ok) throw new Error('hk water / linenExtra broken');
+  if (lx0.rooms.length) {
+    const rn = lx0.rooms[0].room, t0 = lx0.items.find(i => i.item === 'Towel').store;
+    const g = await call('deskLinenExtra', { token: tok, room: rn, items: { 'Towel': 2, 'Hand towel': 1 } });
+    const given = g.rooms.find(r => r.room === rn).given;
+    const back = await call('deskLinenExtra', { token: tok, back: given[0].id, unused: true });
+    console.log('extra given', JSON.stringify(given.map(x => x.qty + 'x' + x.item)), 'store towel', t0, '->', g.items.find(i => i.item === 'Towel').store, 'after back', back.rooms.find(r => r.room === rn).given.length);
+    if (given.length !== 2 || back.rooms.find(r => r.room === rn).given.length !== 1) throw new Error('linenExtra give/back broken');
+  }
+}

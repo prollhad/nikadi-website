@@ -15,7 +15,7 @@
     hk_checklist: 'Tick every line of the checklist first.',
     changelog_unavailable: 'The change log starts when the app moves to the new fast server.',
     comp_host: 'Pick whose guest this is.',
-    comp_no_money: 'This is a free stay. No money is taken.', wa_no_consent: 'The guest has not agreed to WhatsApp messages. Ask them first.', wa_paused: 'Automatic WhatsApp is off. Use “WhatsApp to send” (owner / manager) to send it by hand.', wa_opted_out: 'This guest replied STOP, so we cannot send WhatsApp messages to them.', linen_not_empty: 'This item still has pieces counted (in store, rooms or laundry). Set its counts to 0 first, or untick “In use” to hide it.', laundry_paid: 'This list is already paid, so it cannot be deleted. Change the counts instead.', laundry_empty: 'Write how many of at least one item.', laundry_approved: 'This was already approved. A manager can change it.', laundry_return_open: 'There is already a return waiting to be checked.', laundry_not_out: 'This list has not been given to the laundry yet.', laundry_no_return: 'Nothing to check.', nothing_to_pay: 'Nothing to pay.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
+    no_charge: 'This was already taken back or removed.', comp_no_money: 'This is a free stay. No money is taken.', wa_no_consent: 'The guest has not agreed to WhatsApp messages. Ask them first.', wa_paused: 'Automatic WhatsApp is off. Use “WhatsApp to send” (owner / manager) to send it by hand.', wa_opted_out: 'This guest replied STOP, so we cannot send WhatsApp messages to them.', linen_not_empty: 'This item still has pieces counted (in store, rooms or laundry). Set its counts to 0 first, or untick “In use” to hide it.', laundry_paid: 'This list is already paid, so it cannot be deleted. Change the counts instead.', laundry_empty: 'Write how many of at least one item.', laundry_approved: 'This was already approved. A manager can change it.', laundry_return_open: 'There is already a return waiting to be checked.', laundry_not_out: 'This list has not been given to the laundry yet.', laundry_no_return: 'Nothing to check.', nothing_to_pay: 'Nothing to pay.', comp_has_advance: 'Money was already received for this booking. Refund it first, then make it a free stay.',
     bill_no_required: 'Write the invoice number.',
     old_record: 'This record is more than a few months old and is kept in the archive Sheet. It can be viewed but not changed.',
     drive_unavailable: 'Google Drive is not connected here.',
@@ -776,6 +776,7 @@
     if (s.member) h += memberBox(s.member, false);
     if (s.service) h += serviceBox(s.service);
     if (inHouse) h += kitBox(s);
+    if (inHouse) h += '<button class="btn btn-line" type="button" id="b-extra">Extra bedding &amp; towels (not on the bill)</button>';
     if (m && s.notes) h += '<div class="note"><b>Notes</b>' + esc(s.notes) + '</div>';
     if (m && s.booking) h += '<button class="linkbtn" type="button" id="b-bk">From booking ' + esc(s.booking) + ' →</button>';
     if (m) h += '<button class="idc-room ' + (s.ids ? 'has' : 'none') + '" type="button" id="b-ids">' + ICON.idcopy + '<span><b>ID copies' + (s.ids ? ' · ' + s.ids + (s.ids === 1 ? ' ID' : ' IDs') + ' taken' : '') + '</b><small>' + (s.ids ? 'Open, add more or print on A4' : 'No ID saved yet for this stay · add Aadhaar, licence or passport') + '</small></span><i aria-hidden="true">›</i></button>';
@@ -818,6 +819,7 @@
     if ((b = $('#hk-done', body))) b.onclick = function () { openHkCheck(s.room, 'stay', function (check) { return api('deskServiceDone', { room: s.room, check: check }).then(function () { vibrate(); toast('Housekeeping done · Room ' + s.room); loadStay(body, s.id); refresh(); }); }); };
     if ((b = $('#hk-undo', body))) b.onclick = function () { var x = this; busy(x, true); api('deskServiceUndo', { room: s.room }).then(function () { toast('Undone'); loadStay(body, s.id); refresh(); }, function (e) { busy(x, false); toast(errText(e)); }); };
     if ((b = $('#b-add', body))) b.onclick = function () { openAdd(s.room); };
+    if ((b = $('#b-extra', body))) b.onclick = function () { openExtra(s.room, function () { refresh(); }); };
     if ((b = $('#b-bk', body))) b.onclick = function () { openBooking(s.booking); };
     if ((b = $('#b-ids', body))) b.onclick = function () { openIds(s); };
     if ((b = $('#b-kit', body))) b.onclick = function () { openKit(s, body); };
@@ -854,8 +856,42 @@
   function addDaysYmd(ymd, n) { var p = String(ymd).split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)); return d.toISOString().slice(0, 10); }
 
   function freeWhy(note) { note = String(note || ''); return /^Check-in/.test(note) ? 'check-in' : note === 'Welcome kit' ? 'welcome kit' : /^Daily housekeeping/.test(note) ? note.replace(/^Daily housekeeping \(day (\d+)\).*/, 'daily · day $1') : note; }
+  /* what housekeeping gives today: water is chosen in the checklist (1 to 4 bottles, or none), the rest is fixed */
+  function giveText(items) { return (items || []).map(function (i) { return i.item === 'Water bottle' ? 'Water bottles (choose 1 to 4, or none)' : i.qty + ' × ' + i.item; }).join(', '); }
+  /* Extra bedding and towels for a staying guest: taken from the clean store into the room, never on the bill */
+  function openExtra(roomNo, after) {
+    var body = openSheet('Bedding & towels', ''), D = null, pick = roomNo ? 'Room ' + roomNo : '';
+    body.innerHTML = '<div class="loading">Loading…</div>';
+    function load(p) { return api('deskLinenExtra', p || {}).then(function (r) { D = r; draw(); return r; }); }
+    function cur() { var n = Number(String(pick).replace(/\D/g, '')); return (D.rooms || []).filter(function (r) { return r.room === n; })[0] || null; }
+    function draw() {
+      if (!D.rooms.length) { body.innerHTML = '<p class="small">No guest is staying in any room right now.</p>'; return; }
+      if (!cur()) pick = D.rooms.length === 1 ? 'Room ' + D.rooms[0].room : '';
+      var groups = [], by = {};
+      D.items.forEach(function (i) { if (!by[i.group]) { by[i.group] = []; groups.push(i.group); } by[i.group].push(i); });
+      var r = cur();
+      body.innerHTML = '<p class="small">For a guest who is staying and asks for something extra: a towel, hand towel, bath mat, bedsheet, pillow, blanket or mattress. It is written on the room and counted out of the clean store. <b>It is not put on the bill.</b></p>' +
+        '<p class="kicker">Which room?</p>' + seg('ex-room', D.rooms.map(function (x) { return 'Room ' + x.room; }), pick) +
+        (r && r.given.length ? '<p class="kicker" style="margin-top:14px">Already given to room ' + r.room + '</p><div class="list">' + r.given.map(function (g) {
+          return '<div class="lc-row"><span>' + g.qty + ' × ' + esc(g.item) + '<small>' + esc(g.by) + ' · ' + esc(tShort(g.at)) + '</small></span><button class="btn btn-quiet sm" type="button" data-back="' + esc(g.id) + '">Take back</button></div>'; }).join('') + '</div>' : '') +
+        '<p class="kicker" style="margin-top:14px">What are you giving?</p>' +
+        groups.map(function (g) { return '<p class="small" style="margin:10px 0 6px"><b>' + esc(g) + '</b></p><div class="list">' + by[g].map(function (i) {
+          return '<label class="lc-row"><span>' + esc(i.item) + '<small>' + i.store + ' clean in store</small></span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="20" data-lk="' + esc(i.item) + '" value="0"><button type="button" data-d="1" aria-label="More">+</button></span></label>'; }).join('') + '</div>'; }).join('') +
+        '<p class="err" id="err" role="alert"></p><button class="btn btn-ok big-cta" id="go" type="button" disabled></button>';
+      function counts() { var o = {}; $$('input[data-lk]', body).forEach(function (i) { var n = Math.round(Number(i.value) || 0); if (n > 0) o[i.dataset.lk] = n; }); return o; }
+      function upd() { var n = Object.keys(counts()).length, go = $('#go', body); go.disabled = !pick || !n; go.textContent = !pick ? 'Choose the room first' : !n ? 'Choose what you are giving' : 'Give to ' + pick + ' (not on the bill)'; }
+      wireSegs(body, function () { var v = segVal(body, 'ex-room'); if (v && v !== pick) { var keep = counts(); pick = v; draw(); Object.keys(keep).forEach(function (k) { var i = $$('input[data-lk]', body).filter(function (x) { return x.dataset.lk === k; })[0]; if (i) i.value = keep[k]; }); } });
+      $$('.lc-q', body).forEach(function (w) { w.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; e.preventDefault(); var i = $('input', w); i.value = Math.max(0, Math.min(20, (Number(i.value) || 0) + Number(b.dataset.d))); upd(); }; });
+      $$('input[data-lk]', body).forEach(function (i) { i.oninput = upd; });
+      $$('[data-back]', body).forEach(function (b) { b.onclick = function () { busy(b, true); load({ back: b.dataset.back }).then(function () { toast('Taken back'); if (after) after(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
+      $('#go', body).onclick = function () { var x = this, n = Number(pick.replace(/\D/g, '')), c = counts(); if (x.disabled) return; busy(x, true);
+        load({ room: n, items: c }).then(function () { vibrate(); toast('Given to room ' + n + ' · not on the bill'); if (after) after(); }, function (e) { busy(x, false); $('#err', body).textContent = errText(e); vibrate(); }); };
+      upd();
+    }
+    load().then(null, function (e) { body.innerHTML = '<p class="err">' + esc(errText(e)) + '</p>'; });
+  }
   function serviceBox(sv) {
-    var list = (sv.items || []).map(function (i) { return i.qty + ' × ' + i.item; }).join(', ') || 'Room service';
+    var list = giveText(sv.items) || 'Room service';
     return '<div class="hk-box ' + (sv.done ? 'done' : 'due') + '"><div class="hk-h">' + ICON.housekeeping + '<b>Housekeeping today · day ' + sv.day + ' of ' + sv.of + '</b></div>' +
       (sv.done ? '<p>Done by ' + esc(sv.done.by) + ' at ' + esc(tShort(sv.done.at).split(', ').pop()) + ' · gave ' + esc(String(sv.done.items || list).split(' · Checked')[0]) + '</p><button class="btn btn-quiet sm" type="button" id="hk-undo">Undo</button>'
         : '<p>Free today: <b>' + esc(list) + '</b></p><button class="btn btn-ok" type="button" id="hk-done">Open housekeeping checklist</button>') + '</div>';
@@ -870,17 +906,18 @@
       return;
     }
     var d = HK.data, due = d.rooms.filter(function (r) { return r.due; }), left = due.filter(function (r) { return !r.done; }).length;
-    var daily = d.daily.map(function (i) { return i.qty + ' × ' + i.item; }).join(', ') || 'nothing set';
-    v.innerHTML = '<div class="hrow"><div><p class="kicker">' + esc(dShort(d.date)) + ' · free daily per room: ' + esc(daily) + '</p><h1>Housekeeping</h1></div><button class="btn btn-quiet" type="button" id="hrf">Refresh</button></div>' +
+    var daily = giveText(d.daily) || 'nothing set';
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">' + esc(dShort(d.date)) + ' · free daily per room: ' + esc(daily) + '</p><h1>Housekeeping</h1></div><div class="upd"><button class="btn btn-gold" type="button" id="hex">+ Bedding &amp; towels</button><button class="btn btn-quiet" type="button" id="hrf">Refresh</button></div></div>' +
       '<div class="counts"><div class="count c-dirty"><b>' + left + '</b><span>To do</span></div><div class="count c-ready"><b>' + (due.length - left) + '</b><span>Done</span></div></div>' +
       (due.length ? '<div class="list hk-list">' + due.map(function (r) {
         return '<div class="hk-row ' + (r.done ? 'done' : '') + '"><div class="hk-room"><b>' + r.room + '</b><small>' + esc(r.type) + '</small></div>' +
           '<div class="hk-what"><b>' + esc(r.guest) + ' · ' + r.guests + (r.guests > 1 ? ' guests' : ' guest') + ' · day ' + r.day + ' of ' + r.of + '</b>' +
-          '<span>' + (r.done ? '✓ Done by ' + esc(r.done.by) + ' at ' + esc(tShort(r.done.at).split(', ').pop()) + ' · ' + esc(String(r.done.items).split(' · Checked')[0]) : 'Give: ' + esc(r.items.map(function (i) { return i.qty + ' × ' + i.item; }).join(', ') || '—')) + '</span></div>' +
+          '<span>' + (r.done ? '✓ Done by ' + esc(r.done.by) + ' at ' + esc(tShort(r.done.at).split(', ').pop()) + ' · ' + esc(String(r.done.items).split(' · Checked')[0]) : 'Give: ' + esc(giveText(r.items) || '—')) + '</span></div>' +
           (r.done ? '<button class="btn btn-quiet sm" type="button" data-undo="' + r.room + '">Undo</button>' : '<button class="btn btn-ok" type="button" data-done="' + r.room + '">Checklist</button>') + '</div>';
       }).join('') + '</div>' : '<p class="small">No rooms need daily housekeeping today. Rooms are on this list from the guest\'s 2nd day until the day before they leave (the first day gets the free check-in water).</p>') +
       (function () { var other = d.rooms.filter(function (r) { return !r.due; }); return other.length ? '<p class="small">Not on today\'s list: ' + other.map(function (r) { return 'Room ' + r.room + (r.firstDay ? ' (arrived today)' : r.leaves ? ' (leaves today)' : ''); }).join(', ') + '.</p>' : ''; })();
     $('#hrf', v).onclick = function () { HK.data = null; render(); };
+    $('#hex', v).onclick = function () { openExtra(0); };
     $$('[data-done]', v).forEach(function (b) { b.onclick = function () { var n = Number(b.dataset.done); openHkCheck(n, 'stay', function (check) { return api('deskServiceDone', { room: n, check: check }).then(function (r) { vibrate(); toast('Room ' + n + ' done'); HK.data = r; render(); refresh(); }); }); }; });
     $$('[data-undo]', v).forEach(function (b) { b.onclick = function () { busy(b, true); api('deskServiceUndo', { room: Number(b.dataset.undo) }).then(function (r) { toast('Undone'); HK.data = r; render(); refresh(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
   }

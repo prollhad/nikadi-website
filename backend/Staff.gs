@@ -21,7 +21,9 @@ var DESK_DAILY_FREE = { 'Water bottle': 2 };
 /* Lines with a 4th part are linen: "Put fresh" asks how many of each were changed (fresh ones come out of the clean store,
    the used ones go to "used, waiting for laundry"); "Kept the used ones" changes nothing in the linen count. */
 var DESK_HK_FRESH = 'Put fresh', DESK_HK_KEPT = 'Kept the used ones (tidied)';
-var DESK_HK_STAY = [['water', '2 free water bottles given'], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['dental', 'Dental kit', ['Not needed', '1 given', '2 given', '3 given']],
+var DESK_HK_WATER = ['No water needed', '1 given', '2 given', '3 given', '4 given'];
+var DESK_EXTRA_NOTE = 'Extra bedding and towels'; // extra linen given to a staying guest: written on the room, never on the bill
+var DESK_HK_STAY = [['water', 'Water bottles', DESK_HK_WATER], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['dental', 'Dental kit', ['Not needed', '1 given', '2 given', '3 given']],
   ['bathroom', 'Bathroom cleaned'], ['binRoom', 'Dustbin in the room checked'], ['binToilet', 'Dustbin in the toilet checked'], ['floor', 'Floor cleaned'],
   ['bedding', 'Bedsheet, pillow covers, blanket cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Blanket cover (king size)': 1 }]];
 var DESK_HK_OUT = [['water', '2 fresh water bottles in the room'], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['kit', 'Used dental kit / toiletries removed'], ['bathroom', 'Bathroom cleaned'],
@@ -1222,6 +1224,7 @@ function deskCore(db, hooks) {
     if (req.remove) {
       db.set('charges', c, { removed: 'Removed by ' + who(me, req) + ' ' + stamp() + (req.reason ? ' · ' + text(req.reason, 120) : '') });
       if (it) moveStock(it, Number(c.qty), 'Charge removed', c.room, me.name);
+      if (c.note === DESK_EXTRA_NOTE) { var li = linenItem(c.item); if (li) linenMove(li, Number(c.qty), 'rooms', 'store', 'Extra removed from the room list', c.room, me.name); }
       if (back > 0) db.add('payments', { id: id('P'), at: stamp(), stay: s.id, room: s.room, amount: -back, method: req.method, note: 'Refund: ' + c.item + ' removed' + (req.reason ? ' · ' + text(req.reason, 100) : ''),
         by: who(me, req), booking: s.booking || '', ref: text(req.ref, 40), voided: '' });
     } else {
@@ -1341,11 +1344,14 @@ function deskCore(db, hooks) {
     var s = stay(r.stay);
     if (!serviceDue(s)) fail('no_service_today');
     if (serviceOf(s.id)) fail('already_done');
+    if (req.check && req.check.water === true) req.check.water = '2 given'; // an app not yet updated still sends a plain tick
     var checks = hkCheck(DESK_HK_STAY, req.check);
     hkLinen(DESK_HK_STAY, req.check, r.room, me.name);
     var day = nightsBetween(s.checkin, today()) + 1, ids = [], given = [];
     var dk = parseInt(req.check.dental, 10) || 0, extra = dk ? [{ item: 'Dental kit', qty: dk }] : [];
-    dailyFree().concat(extra).forEach(function (d) {
+    var wq = parseInt(req.check.water, 10) || 0; // how many bottles were really given (0 = guest did not need water): only these leave the stock
+    if (wq) extra.unshift({ item: 'Water bottle', qty: wq });
+    dailyFree().filter(function (d) { return d.item !== 'Water bottle'; }).concat(extra).forEach(function (d) {
       var it = find('items', 'item', d.item), cid = id('C');
       db.add('charges', { id: cid, at: stamp(), stay: s.id, room: r.room, item: d.item, qty: d.qty, price: 0, total: 0, free: 'Yes', note: 'Daily housekeeping (day ' + day + ')', by: me.name, removed: '' });
       if (it && yes(it.track)) moveStock(it, -d.qty, 'Free daily housekeeping', r.room, me.name);
@@ -1354,6 +1360,40 @@ function deskCore(db, hooks) {
     db.add('service', { id: id('H'), date: today(), room: r.room, stay: s.id, items: (given.join(', ') || 'Room serviced') + ' · Checked: ' + checks.join(', '), by: me.name, at: stamp(), charges: ids.join(','), undone: '' });
     recompute(s);
     return api.housekeeping(req);
+  };
+  /* ---- Extra bedding and towels for a staying guest (everyone, housekeeping included) ----
+     An extra towel, hand towel, bath mat, bedsheet, pillow, pillow cover, blanket or mattress: taken from the clean store into that room,
+     written on the room's list as free, and never printed on the bill. Taking one back, or the guest checking out, returns it
+     (things that get washed go to the laundry pile, the rest back to the store). */
+  function extrasOf(sid) { return chargesOf(sid).filter(function (c) { return c.note === DESK_EXTRA_NOTE; }); }
+  function extraBack(c, by, why, clean) {
+    var it = linenItem(c.item);
+    if (it) linenMove(it, Number(c.qty), 'rooms', clean || it.wash === 'No' ? 'store' : 'dirty', why, c.room, by);
+    db.set('charges', c, { removed: why + ' · ' + by + ' ' + stamp() });
+  }
+  api.linenExtra = function (req) {
+    var me = auth(req);
+    if (req.back) { // take one back from the room
+      var c = find('charges', 'id', String(req.back)); if (!c || c.removed || c.note !== DESK_EXTRA_NOTE) fail('no_charge');
+      extraBack(c, me.name, req.unused ? 'Taken back unused' : 'Taken back from the room', !!req.unused);
+    } else if (req.room != null && req.items) {
+      var r = room(req.room); if (r.status !== 'Occupied' || !r.stay) fail('room_not_occupied');
+      var s = stay(r.stay), n = linenCounts(req.items);
+      if (!linenSum(n)) fail('bad_qty');
+      Object.keys(n).forEach(function (k) { if (n[k] > 20) fail('bad_qty'); });
+      Object.keys(n).forEach(function (k) {
+        linenMove(linenItem(k), n[k], 'store', 'rooms', 'Extra for the guest', r.room, me.name);
+        db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: r.room, item: k, qty: n[k], price: 0, total: 0, free: 'Yes', note: DESK_EXTRA_NOTE, by: me.name, removed: '' });
+      });
+    }
+    var rooms = [];
+    db.all('rooms').forEach(function (r) {
+      if (r.status !== 'Occupied' || !r.stay) return;
+      var s = find('stays', 'id', r.stay); if (!s) return;
+      rooms.push({ room: r.room, guest: String(s.guest || '').split(/\s+/)[0], given: extrasOf(s.id).map(function (c) { return { id: c.id, item: c.item, qty: Number(c.qty), by: c.by, at: c.at }; }) });
+    });
+    rooms.sort(function (a, b) { return a.room - b.room; });
+    return { rooms: rooms, items: linenAll().filter(function (i) { return yes(i.active); }).map(function (i) { return { item: i.item, group: i.group || 'Other', store: Number(i.store || 0) }; }) };
   };
   /* Undo a mistaken "done" (the same person the same day, or a manager / owner). Puts the items back in stock. */
   api.serviceUndo = function (req) {
@@ -1665,6 +1705,7 @@ function deskCore(db, hooks) {
     recompute(s);
     var r = find('rooms', 'room', s.room);
     if (r && r.stay === s.id) db.set('rooms', r, { status: 'Needs cleaning', stay: '', updated: stamp(), by: me.name });
+    extrasOf(s.id).forEach(function (c) { var li = linenItem(c.item); if (li) linenMove(li, Number(c.qty), 'rooms', li.wash === 'No' ? 'store' : 'dirty', 'Guest checked out (extra given during the stay)', s.room, me.name); db.set('charges', c, { note: DESK_EXTRA_NOTE + ' (returned at check-out)' }); });
     if (s.comp) return { stay: stayView(s, me), member: null, bill: null, comp: true }; // free stay: no bill, no points
     var member = null, memBefore = memberOf(s.phone);
     if (hooks.onCheckout && s.phone) {

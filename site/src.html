@@ -372,7 +372,8 @@ html.sky-day .s:not(.alt) .head p,html.sky-sunset .s:not(.alt) .head p,html.sky-
 .lb{position:fixed;inset:0;z-index:40;background:rgba(5,8,18,.94);display:grid;grid-template-rows:auto 1fr auto;padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
 .lb-top{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.78rem;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
 .lb-stage{position:relative;display:grid;place-items:center;min-height:0;padding:10px 0}
-.lb-stage img{max-width:100%;max-height:100%;object-fit:contain;display:block;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+/* the height limit is in screen units (a percentage does not hold inside this grid), so the whole photo always fits */
+.lb-stage img{max-width:100%;max-height:calc(100vh - 150px);max-height:calc(100dvh - 150px);object-fit:contain;display:block;box-shadow:0 20px 60px rgba(0,0,0,.6)}
 .lb-cap{text-align:center;color:var(--ink);font-size:.95rem;min-height:1.5em}
 .lb button{background:rgba(14,22,48,.8);border:1px solid var(--line);color:var(--ink);width:46px;height:46px;border-radius:50%;cursor:pointer;font-size:1.3rem;line-height:1;display:grid;place-items:center}
 .lb button:hover{border-color:var(--gold);color:var(--gold-hi)}
@@ -631,9 +632,9 @@ section.member{background:radial-gradient(120% 90% at 85% 20%,rgba(217,173,85,.1
 .rd-gal{position:sticky;top:76px;display:grid;gap:12px;min-width:0}
 @media (max-width:960px){.rd-gal{position:static}}
 .rd-main{position:relative;background:#0d0b0a;aspect-ratio:3/4;max-height:72vh;width:100%;display:grid;place-items:center;overflow:hidden;touch-action:pan-y}
-.rd-img{width:100%;height:100%;max-width:100%;object-fit:contain;display:block;transition:opacity .25s ease}
+.rd-img{position:absolute;inset:0;width:100%;height:100%;max-width:100%;object-fit:contain;display:block;transition:opacity .25s ease} /* fills the frame exactly, so a tall photo is always shown whole and never cut at the bottom */
 .rd-img.fade{opacity:.25}
-.rd-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;background:rgba(10,15,31,.75);border:1px solid var(--line);color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer;display:grid;place-items:center}
+.rd-nav{position:absolute;z-index:2;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;background:rgba(10,15,31,.75);border:1px solid var(--line);color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer;display:grid;place-items:center}
 .rd-nav:hover{border-color:var(--gold);color:var(--gold-hi)}
 .rd-nav.prev{left:10px}.rd-nav.next{right:10px}
 .rd-count{position:absolute;right:12px;bottom:12px;background:rgba(10,15,31,.8);padding:5px 10px;font-size:.75rem;letter-spacing:.12em;font-variant-numeric:tabular-nums}

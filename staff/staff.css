@@ -803,3 +803,5 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .sitechip select{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;padding:3px 2px;border-radius:999px;cursor:pointer;max-width:120px}
 .sitechip select option{background:#14161d;color:#f1ece2}
 .sitechip.on{border-color:var(--gold);background:rgba(217,173,85,.1)}.sitechip.v-full{border-color:#e8705a;background:rgba(232,112,90,.14)}.sitechip.v-full select{color:#ffb3a3}
+
+.lc-row>.btn{width:auto;flex:none;padding-left:14px;padding-right:14px}
