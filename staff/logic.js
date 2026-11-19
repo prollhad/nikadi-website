@@ -20,7 +20,7 @@ var DESK_EXTRA_NOTE = 'Extra bedding and towels'; // extra linen given to a stay
 var DESK_HK_STAY = [['water', 'Water bottles', DESK_HK_WATER], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['dental', 'Dental kit', ['Not needed', '1 given', '2 given', '3 given']],
   ['bathroom', 'Bathroom cleaned'], ['binRoom', 'Dustbin in the room checked'], ['binToilet', 'Dustbin in the toilet checked'], ['floor', 'Floor cleaned'],
   ['bedding', 'Bedsheet, pillow covers, blanket cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Blanket cover (king size)': 1 }]];
-var DESK_HK_OUT = [['water', '2 fresh water bottles in the room'], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['kit', 'Used dental kit / toiletries removed'], ['bathroom', 'Bathroom cleaned'],
+var DESK_HK_OUT = [['water', 'Water bottles put in the room', DESK_HK_WATER], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['kit', 'Used dental kit / toiletries removed'], ['bathroom', 'Bathroom cleaned'],
   ['binRoom', 'Dustbin in the room emptied'], ['binToilet', 'Dustbin in the toilet emptied'], ['floor', 'Floor cleaned'],
   ['bedding', 'Bedsheet, pillow covers, blanket cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Blanket cover (king size)': 1 }]];
 /* Linen (bedding and towels): counted in 4 places. [item, laundry price per piece ₹ (the owner sets the real prices in the app)] */
@@ -2044,6 +2044,7 @@ function deskCore(db, hooks) {
       needMgr(me);
       db.add('service', { id: id('H'), date: today(), room: r.room, stay: '', items: 'Back to ready without cleaning (room not used)' + (req.note ? ' · ' + text(req.note, 120) : ''), by: me.name, at: stamp(), charges: '', undone: '' });
     } else if (req.status === 'Ready') {
+      if (req.check && req.check.water === true) req.check.water = '2 given'; // an app not yet updated still sends a plain tick
       var checks = hkCheck(DESK_HK_OUT, req.check);
       hkLinen(DESK_HK_OUT, req.check, r.room, me.name);
       db.add('service', { id: id('H'), date: today(), room: r.room, stay: '', items: 'Check-out cleaning · ' + checks.join(', '), by: me.name, at: stamp(), charges: '', undone: '' });
