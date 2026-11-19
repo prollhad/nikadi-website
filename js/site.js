@@ -138,15 +138,15 @@ try{
     else {/* sunset: violet top, purple, pink, red and gold at the horizon, with the sun itself sinking. pr runs 0 (70 min before sunset) to 1 (35 min after);
          the sun reaches the horizon line at the real sunset minute and then slips behind it, while the sky deepens. */
       var pr=sunsetPr(),k=Math.min(1,pr/.667),late=Math.max(0,(pr-.667)/.333),hz=.735,sx2=.64*W,sy2=(.4+(hz-.4)*k+late*.09)*H,sr2=Math.min(W,H)*(.05+.012*k);
-      grad([[0,'#23267a'],[.2,'#4b38a8'],[.38,'#8c44aa'],[.5,'#c94c8e'],[.6,'#ee4f5e'],[.68,'#ff7a2c'],[.72,'#ffb43a'],[hz,'#ffd062'],[.75,'#ff8a3a'],[.8,'#8a4a8e'],[1,'#22346f']]);
-      blob(.2,.5,.26,.08,'rgba(255,170,215,.5)');blob(.82,.44,.22,.07,'rgba(255,190,205,.42)');blob(.42,.56,.3,.06,'rgba(255,120,130,.38)');blob(.1,.36,.2,.06,'rgba(190,120,230,.3)');
+      grad([[0,'#1d2857'],[.28,'#35467f'],[.46,'#6c6690'],[.58,'#b07f7e'],[.67,'#e2935c'],[.715,'#f6ae62'],[hz,'#ffc47a'],[.75,'#c97a4c'],[.82,'#54455f'],[1,'#212d4a']]);
+      blob(.2,.52,.26,.07,'rgba(255,190,190,.2)');blob(.84,.48,.22,.06,'rgba(255,200,190,.18)');
       /* glow round the sun: gold close in, then red, then pink-purple further out */
-      blob(.64,sy2/H,.34,.3,'rgba(255,120,80,'+(.5-.2*late).toFixed(2)+')');blob(.64,sy2/H,.5,.2,'rgba(255,110,70,'+(.26-.1*late).toFixed(2)+')');blob(.64,sy2/H,.2,.2,'rgba(255,150,80,.5)');
+      blob(.64,sy2/H,.3,.24,'rgba(255,150,90,'+(.3-.12*late).toFixed(2)+')');blob(.64,sy2/H,.14,.14,'rgba(255,170,100,.4)');
       x.save();x.beginPath();x.rect(0,0,W,hz*H);x.clip(); /* the sun is hidden below the horizon line */
       var sg=x.createRadialGradient(sx2,sy2,0,sx2,sy2,sr2*1.5);/* one plain reddish-orange disc, a touch redder as it gets low */var c0=k<.5?'#ff9c4a':'#ff8a3e',c1=k<.5?'#ff7a34':'#f6602e',c2=k<.5?'#f4592c':'#e94a28';sg.addColorStop(0,c0);sg.addColorStop(.4,c1);sg.addColorStop(.64,c2);sg.addColorStop(.7,'rgba(240,84,44,.45)');sg.addColorStop(1,'rgba(240,84,44,0)');
       x.fillStyle=sg;x.beginPath();x.arc(sx2,sy2,sr2*1.5,0,7);x.fill();x.restore();
       /* its light lying on the water below the horizon */
-      blob(.64,.83,.12+.05*k,.13,'rgba(255,150,60,'+(.5-.3*late).toFixed(2)+')');blob(.64,.78,.05,.05,'rgba(255,220,130,'+(.45-.4*late).toFixed(2)+')');
+      blob(.64,.82,.1+.04*k,.1,'rgba(255,160,90,'+(.22-.14*late).toFixed(2)+')');
       if(late>0){x.fillStyle='rgba(18,14,52,'+(.34*late).toFixed(2)+')';x.fillRect(0,0,W,H);}}
   }
   /* slow drifting clouds for the daytime sky: painted once, then moved by the browser (cheap) */
@@ -167,12 +167,12 @@ try{
     function fb(u,v,oc){var t=0,am=.5,p=3;for(var o=0;o<oc;o++){t+=am*vn(u*p,v*p*1.25,p);p*=2;am*=.5;}return t;}
     var i,j,Hu=new Float32Array(Wc*Hc);for(j=0;j<Hc;j++)for(i=0;i<Wc;i++){var u=i/Wc,v=j/Hc,w=fb(u+.21,v+.47,2)-.36;Hu[j*Wc+i]=w;Nn[j*Wc+i]=fb(u+w*.22,v+w*.12,7);}
     function mix(a,b,t){return a+(b-a)*t;}
-    for(j=0;j<Hc;j++){var vy=j/Hc,th=.405+.045*Math.cos(vy*5.2),fade=Math.min(1,vy*9)*Math.min(1,(1-vy)*5);for(i=0;i<Wc;i++){var n=Nn[j*Wc+i],d=Math.max(0,Math.min(1,(n-th)/.075));d=d*d*(3-2*d);if(!d){continue;}
-      var dep=Math.max(0,Math.min(1,(n-th)/.2)),nb=Nn[Math.min(Hc-1,j+12)*Wc+i],und=Math.max(0,Math.min(1,.42+(n-nb)*15)),rim=Math.pow(1-dep,2.4),l=Math.max(0,Math.min(1,Math.pow(und,1.5)*(1.08-dep*.6)+rim*.5)),k=(j*Wc+i)*4;
+    for(j=0;j<Hc;j++){var vy=j/Hc,th=.47+.03*Math.cos(vy*5.2),fade=Math.min(1,vy*9)*Math.min(1,(1-vy)*5);for(i=0;i<Wc;i++){var n=Nn[j*Wc+i],d=Math.max(0,Math.min(1,(n-th)/.075));d=d*d*(3-2*d);if(!d){continue;}
+      var dep=Math.max(0,Math.min(1,(n-th)/.2)),nb=Nn[Math.min(Hc-1,j+12)*Wc+i],und=Math.max(0,Math.min(1,.42+(n-nb)*15)),rim=Math.pow(1-dep,2.4),l=Math.max(0,Math.min(1,Math.pow(und,1.4)*(.82-dep*.4)+rim*.3)),k=(j*Wc+i)*4;
       /* colour of the light: red and hot pink up high, orange in the middle, gold near the horizon, varied a little from cloud to cloud */
-      var hu=Math.max(0,Math.min(1,vy*1.15+Hu[j*Wc+i]*1.6)),lr=255,lg=hu<.5?mix(84,142,hu*2):mix(142,206,hu*2-1),lb=hu<.5?mix(104,52,hu*2):mix(52,96,hu*2-1);
-      var sr=mix(58,96,vy),sg=mix(42,52,vy),sb=mix(96,86,vy);
-      D[k]=mix(sr,lr,l);D[k+1]=mix(sg,lg,l)+rim*26*vy;D[k+2]=mix(sb,lb,l);D[k+3]=255*d*fade*.96;}}
+      var hu=Math.max(0,Math.min(1,vy*1.1+Hu[j*Wc+i]*.8)),lr=252,lg=mix(158,196,hu),lb=mix(140,118,hu);
+      var sr=mix(78,104,vy),sg=mix(76,84,vy),sb=mix(112,108,vy);
+      D[k]=mix(sr,lr,l);D[k+1]=mix(sg,lg,l);D[k+2]=mix(sb,lb,l);D[k+3]=255*d*fade*.8;}}
     x.putImageData(im,0,0);return 'url('+c.toDataURL()+')';}
   function sunsetClouds(){if(scl||!ns)return;scl=document.createElement('div');scl.className='suncl';scl.style.backgroundImage=sunsetTile();ns.insertBefore(scl,ns.querySelector('.moon'));}
   function dayClouds(){if(dcl||!ns)return;dcl=document.createElement('div');dcl.className='daycl';dcl.style.backgroundImage=cloudTile(.5,.2,[255,255,255],[205,215,232]);ns.insertBefore(dcl,ns.querySelector('.moon'));}

@@ -303,7 +303,7 @@ html.wx-cloudy #nightsky .daycl,html.wx-rain #nightsky .daycl,html.wx-storm #nig
 html.wx-cloudy .moon,html.wx-rain .moon,html.wx-storm .moon{opacity:.25}
 @keyframes dayDrift{to{transform:translateX(-50%)}}
 html.sky-day #nightsky .daycl{opacity:.8}html.sky-dawn #nightsky .daycl{opacity:.4}html.sky-sunset #nightsky .daycl{opacity:0}
-/* sunset clouds: dark purple-grey bodies with their undersides on fire (red, orange, pink, gold), drifting slowly */
+/* sunset clouds: a few soft grey-mauve clouds with a gentle peach light underneath, drifting slowly */
 #nightsky .suncl{position:absolute;left:0;top:0;width:max(200%,2800px);height:74%;background-repeat:repeat-x;background-size:50% 100%;opacity:0;transition:opacity 4s ease;animation:dayDrift 190s linear infinite;will-change:transform}
 html.sky-sunset #nightsky .suncl{opacity:1}
 html.wx-cloudy #nightsky .suncl,html.wx-rain #nightsky .suncl,html.wx-storm #nightsky .suncl{opacity:0!important}
