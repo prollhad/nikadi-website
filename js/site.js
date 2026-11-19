@@ -1238,12 +1238,13 @@ try{
      Sundays fill up, midweek is usually free. Live front-desk status, when the server sends it, always wins. */
   var DEMAND_UNTIL='2027-03-31';
   function hsh(d){var h=2166136261;for(var i=0;i<d.length;i++){h^=d.charCodeAt(i);h=Math.imul(h,16777619);}return ((h>>>0)%1000)/1000;}
-  function demand(d){if(d>DEMAND_UNTIL)return '';var p=d.split('-'),w=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])).getUTCDay(),h=hsh(d);
+  function demand(d){if(d>DEMAND_UNTIL)return '';var p=d.split('-'),w=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])).getUTCDay(),h=hsh(d+type);
     var fest=(window.NK_CAL||[]).some(function(x){return x.big&&x.d<=d&&d<=(x.e||x.d);});
-    if(fest||w===5||w===6)return h<.85?'busy':'fill';
-    if(w===0)return h<.75?'fill':'busy';
-    if(w===2||w===3)return h<.78?'free':'fill';
-    return h<.55?'free':'fill';}
+    /* a varied picture of how busy we expect each night to be: weekends and festivals lean busy, but not every one the same */
+    if(fest)return h<.72?'busy':'fill';
+    if(w===5||w===6)return h<.46?'busy':h<.8?'fill':'free';
+    if(w===0)return h<.2?'busy':h<.62?'fill':'free';
+    return h<.12?'busy':h<.45?'fill':'free';}
   function price(d){if(!R)return '';var r=R.rate(type,d);return '₹'+r.toLocaleString('en-IN');}
   function fullBetween(a,b){for(var d=a;d<b;d=addDay(d,1))if(stat(d)==='full')return d;return null;}
   function nice(d){var p=d.split('-'),x=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));return nkFmt(x,{weekday:'short',day:'numeric',month:'short'})||WD[x.getUTCDay()]+' '+(+p[2])+' '+MN[+p[1]-1].slice(0,3);}
@@ -1254,10 +1255,10 @@ try{
     for(var d=1;d<=days;d++){
       var k=ymd(y,m,d),c=['avd'],st=stat(k),lbl=price(k),past=k<today;
       var dm=past?'':st==='few'?'busy':st==='full'?'':demand(k);if(dm)c.push('a-dm-'+dm);
-      if(past)c.push('a-past');else{if(st&&!(dm&&st==='free'))c.push('a-'+st);if(st==='few')lbl=nkT('Almost full');if(st==='full')lbl=nkT('Sold out');if(R&&R.period(k).offer)c.push('a-offer');}
+      if(past)c.push('a-past');else{if(st&&!(dm&&st==='free'))c.push('a-'+st);if(st==='few')lbl=nkT(/Twin/.test(type)?'Few rooms':'Almost full');if(st==='full')lbl=nkT('Sold out');if(R&&R.period(k).offer)c.push('a-offer');}
       if(k===today)c.push('a-today');
       if(ci&&(k===ci||k===co))c.push('a-sel');else if(ci&&co&&k>ci&&k<co)c.push('a-in');
-      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+k+'"'+(past?' disabled':'')+' aria-label="'+nice(k)+(dm?', '+nkT(dm==='busy'?'almost booked':dm==='fill'?'filling up':'available'):st?', '+nkT(st==='free'?'available':st==='few'?'only a few rooms left':'sold out'):'')+'"><b>'+d+'</b><small>'+(past?'&nbsp;':lbl)+'</small><i></i></button>';
+      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+k+'"'+(past?' disabled':'')+' aria-label="'+nice(k)+(dm?', '+nkT(st==='few'?'only a few rooms left':dm==='busy'?'high demand':dm==='fill'?'popular night':'available'):st?', '+nkT(st==='free'?'available':st==='few'?'only a few rooms left':'sold out'):'')+'"><b>'+d+'</b><small>'+(past?'&nbsp;':lbl)+'</small><i></i></button>';
     }
     return h+'</div></div>';
   }
@@ -1300,7 +1301,7 @@ try{
       if(!j||!j.ok||!j.days)throw 0;
       var map={};j.days.forEach(function(x){map[x.d]=x.t;});AV=map;
       try{sessionStorage.setItem('nk_av',JSON.stringify({at:Date.now(),from:today,map:map}));}catch(e){}
-      $('avcNote').textContent='Live from our front desk, updated every few minutes. Your booking is confirmed once we reply on WhatsApp.';
+      $('avcNote').textContent='Sold-out nights come live from our front desk. The colours show how busy we expect each night to be. Your booking is confirmed once we reply on WhatsApp.';
       draw();
     }).catch(function(){if(!AV){$('avcNote').textContent='Prices shown for each night. Send us your dates and we will confirm free rooms within minutes on WhatsApp.';draw();}});
   }
