@@ -2577,12 +2577,33 @@ function deskCore(db, hooks) {
 
   /* Public (website calendar, no login): for each night from today, whether each room type is
      'free', 'few' (2 or fewer rooms left) or 'full'. Only these three words leave: no counts, no guest data. */
+  /* What the website calendar shows for a date, chosen by the front desk (Calendar → tap a date → "On the website").
+     Kept per date and room type ('*' = every type). Values: full (Sold out), few (Almost full), busy (High demand), fill (Popular night), open (Available).
+     No choice = automatic (real bookings). Past dates are dropped by themselves. */
+  var SITE_SHOW = { full: 1, few: 1, busy: 1, fill: 1, open: 1 };
+  function siteShowGet() { var m = {}; try { m = JSON.parse(cfgGet('siteShow') || '{}') || {}; } catch (e) { m = {}; } return m; }
+  function siteShowFrom(m, from, to) { var o = {}; Object.keys(m).forEach(function (d) { if (d >= from && d < to) o[d] = m[d]; }); return o; }
+  api.siteShow = function (req) {
+    var me = auth(req); needMgr(me);
+    var d = String(req.day || ''); if (!isYmd(d) || d < today()) fail('bad_dates');
+    var types = {}; db.all('rooms').forEach(function (r) { types[r.type || 'Deluxe Double'] = 1; });
+    var t = String(req.type || '*'); if (t !== '*' && !types[t]) fail('bad_room_type');
+    var v = String(req.show || 'auto'); if (v !== 'auto' && !SITE_SHOW[v]) fail('bad_value');
+    var m = siteShowGet(), t0 = today();
+    Object.keys(m).forEach(function (k) { if (k < t0) delete m[k]; });
+    var row = m[d] || {};
+    if (t === '*') row = v === 'auto' ? {} : { '*': v };
+    else { if (row['*']) { var all = row['*']; row = {}; Object.keys(types).forEach(function (k) { row[k] = all; }); } if (v === 'auto') delete row[t]; else row[t] = v; }
+    if (Object.keys(row).length) m[d] = row; else delete m[d];
+    cfgSet('siteShow', JSON.stringify(m));
+    return { day: d, show: m[d] || {}, by: me.name };
+  };
   api.siteAvailability = function (req) {
-    var days = Math.min(180, Math.max(7, Math.round(Number(req.days || 120)))), d = today(), out = [], names = null;
+    var days = Math.min(180, Math.max(7, Math.round(Number(req.days || 120)))), d = today(), out = [], names = null, show = siteShowGet();
     for (var i = 0; i < days; i++) {
       var av = api.availability({ _internal: true, checkin: d, checkout: addDays(d, 1) }), row = { d: d, t: {} };
       if (!names) names = av.types.map(function (t) { return t.type; });
-      av.types.forEach(function (t) { row.t[t.type] = t.free <= 0 ? 'full' : t.free <= 2 ? 'few' : 'free'; });
+      av.types.forEach(function (t) { var o = show[d] && (show[d][t.type] || show[d]['*']); row.t[t.type] = o && SITE_SHOW[o] ? o : t.free <= 0 ? 'full' : t.free <= 2 ? 'few' : 'free'; });
       out.push(row); d = addDays(d, 1);
     }
     return { from: today(), types: names || [], days: out };
@@ -2931,7 +2952,7 @@ function deskCore(db, hooks) {
     });
     var pending = db.all('bookings').filter(function (b) { return b.status === 'Pending' && overlaps(b.checkin, b.checkout, from, to); }).map(function (b) { return bookingView(b, me); });
     var rooms = db.all('rooms').map(function (r) { return { room: r.room, type: r.type, beds: r.beds, status: r.status }; }).sort(function (a, b) { return a.room - b.room; });
-    return { from: from, days: days, today: today(), rooms: rooms, bars: bars, pending: pending };
+    return { from: from, days: days, today: today(), rooms: rooms, bars: bars, pending: pending, site: mgr ? siteShowFrom(siteShowGet(), from, to) : {} };
   };
 
   /* remember which action is running, so auth() can keep the laundry team to their own screen */

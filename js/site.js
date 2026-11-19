@@ -1231,7 +1231,7 @@ try{
   function stat(d){
     if(!AV)return '';var row=AV[d];if(!row)return '';
     var re=type==='Large Twin'?/large/i:type==='Deluxe Twin'?/^(?!.*large).*twin/i:/double/i,best='';
-    Object.keys(row).forEach(function(k){if(!re.test(k))return;var v=row[k];if(v==='free'||(v==='few'&&best!=='free')||(v==='full'&&!best))best=v;});
+    Object.keys(row).forEach(function(k){if(!re.test(k))return;var v=row[k];if(v==='free'||(v==='few'&&best!=='free')||(v==='full'&&!best))best=v;else if(!best)best=v;});
     return best;
   }
   /* Demand shading until the end of March: Fridays, Saturdays and festival days are our busiest nights,
@@ -1253,8 +1253,8 @@ try{
     (WDL||WD).forEach(function(w){h+='<span class="wd">'+(WDL?w:w.slice(0,2))+'</span>';});
     for(var i=0;i<first;i++)h+='<span class="avd a-blank"></span>';
     for(var d=1;d<=days;d++){
-      var k=ymd(y,m,d),c=['avd'],st=stat(k),lbl=price(k),past=k<today;
-      var dm=past?'':st==='few'?'busy':st==='full'?'':demand(k);if(dm)c.push('a-dm-'+dm);
+      var k=ymd(y,m,d),c=['avd'],raw=stat(k),st=(raw==='busy'||raw==='fill'||raw==='open')?'free':raw,lbl=price(k),past=k<today;
+      var dm=past?'':raw==='busy'?'busy':raw==='fill'?'fill':raw==='open'?'free':st==='few'?'busy':st==='full'?'':demand(k); /* busy / fill / open: the front desk chose what this date shows */if(dm)c.push('a-dm-'+dm);
       if(past)c.push('a-past');else{if(st&&!(dm&&st==='free'))c.push('a-'+st);if(st==='few')lbl=nkT(/Twin/.test(type)?'Few rooms':'Almost full');if(st==='full')lbl=nkT('Sold out');if(R&&R.period(k).offer)c.push('a-offer');}
       if(k===today)c.push('a-today');
       if(ci&&(k===ci||k===co))c.push('a-sel');else if(ci&&co&&k>ci&&k<co)c.push('a-in');

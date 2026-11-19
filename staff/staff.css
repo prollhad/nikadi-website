@@ -794,3 +794,11 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .panel.fest .fr{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 14px;border-top:1px solid var(--line);font-size:.88rem}
 .panel.fest .fr .fd{color:var(--gold-hi,#e8c77a);font-weight:700;white-space:nowrap}.panel.fest .fr.main{background:rgba(232,182,76,.14)}.panel.fest .fr.main .fn{font-weight:800}
 @media (max-width:600px){.panel.fest .fr{grid-template-columns:1fr;gap:2px}}
+
+/* Calendar → a date → what the website shows for it */
+.sitebox{border:1px solid var(--line);border-left:3px solid #9cc2ee;border-radius:12px;padding:12px 14px;margin:0 0 14px;background:rgba(156,194,238,.05);display:grid;gap:8px}
+.sitebox.on{border-left-color:var(--gold);background:rgba(217,173,85,.07)}
+.sitetop{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}.sitetop .kicker{margin:0}
+.siterow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,220px);gap:10px;align-items:center;font-size:.88rem}.siterow.all{font-weight:700}
+.siterow select{width:100%;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;padding:6px 10px}
+.sitebox .small{margin:0}

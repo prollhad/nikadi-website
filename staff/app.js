@@ -2067,11 +2067,34 @@
     if (kind === 'booked') { if (mgr()) openBooking(id); else toast('Booked. Ask reception for details.'); return; }
     var body = openSheet(kind === 'stay' ? 'Staying' : 'Past stay'); body.innerHTML = '<div class="loading">Loading…</div>'; loadStay(body, id);
   }
+  /* front desk: choose what the website calendar shows for this date (all room types, or one type) */
+  var SITE_OPT = [['auto', 'Automatic (real bookings)'], ['full', 'Sold out'], ['few', 'Almost full'], ['busy', 'High demand'], ['fill', 'Popular night'], ['open', 'Available']];
+  function siteBox(c, d) {
+    if (!mgr() || d < c.today) return '';
+    var row = (c.site || {})[d] || {}, types = [];
+    c.rooms.forEach(function (r) { if (types.indexOf(r.type) < 0) types.push(r.type); });
+    function sel(t, cur) { return '<select data-siteshow="' + esc(t) + '" data-day="' + d + '" aria-label="Website shows for ' + esc(t === '*' ? 'all rooms' : t) + '">' + (cur === 'mixed' ? '<option value="" selected disabled>Different per room type</option>' : '') + SITE_OPT.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === cur ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>'; }
+    var vals = types.map(function (t) { return row[t] || row['*'] || 'auto'; }), same = vals.every(function (v) { return v === vals[0]; });
+    var any = vals.some(function (v) { return v !== 'auto'; });
+    return '<div class="sitebox' + (any ? ' on' : '') + '"><div class="sitetop"><p class="kicker">On the website · ' + esc(dShort(d)) + '</p><span class="small">' + (any ? 'Set by the front desk' : 'Showing real bookings') + '</span></div>' +
+      '<label class="siterow all"><span>All rooms</span>' + sel('*', same ? vals[0] : 'mixed') + '</label>' +
+      types.map(function (t, i) { return '<label class="siterow"><span>' + esc(t) + '</span>' + sel(t, vals[i]) + '</label>'; }).join('') +
+      '<p class="small">This changes only what guests see on the website calendar for this date. Sold out stops them choosing the date online. Bookings in the staff app are not changed.</p></div>';
+  }
+  document.addEventListener('change', function (e) {
+    var s = e.target.closest && e.target.closest('[data-siteshow]'); if (!s || !s.value) return;
+    var d = s.dataset.day; s.disabled = true;
+    api('deskSiteShow', { day: d, type: s.dataset.siteshow, show: s.value }).then(function (r) {
+      if (X.cal) { X.cal.site = X.cal.site || {}; if (Object.keys(r.show || {}).length) X.cal.site[d] = r.show; else delete X.cal.site[d]; }
+      toast('Website updated for ' + dShort(d)); if (S.tab === 'calendar') render();
+    }, function (err) { s.disabled = false; toast(errText(err)); });
+  });
   function dayPanel(c, d) {
     var rows = c.rooms.map(function (r) { return { r: r, x: nightOf(c, r.room, d) }; });
     var occ = rows.filter(function (o) { return o.x && o.x.kind !== 'booked'; }).length, bk = rows.filter(function (o) { return o.x && o.x.kind === 'booked'; }).length, fr = rows.length - occ - bk;
     return '<div class="panel' + (isFS(d) ? ' fs-panel' : '') + '" id="daypanel"><div class="sec-h"><h2>Night of ' + esc(dLong(d)) + '</h2><span class="small">' + (d === c.today ? 'tonight' : '') + (isFS(d) ? (d === c.today ? ' · ' : '') + '<span class="htag h-fs">' + WD[new Date(d + 'T00:00:00Z').getUTCDay()] + ' night</span>' : '') + '</span></div>' + holBox(hols(d), 'On this date') +
       '<div class="counts"><div class="count c-ready"><b>' + fr + '</b><span>Free</span></div><div class="count c-arr"><b>' + bk + '</b><span>Booked</span></div><div class="count c-occ"><b>' + occ + '</b><span>' + (d < c.today ? 'Stayed' : 'Occupied') + '</span></div><div class="count"><b>' + rows.length + '</b><span>Rooms</span></div></div>' +
+      siteBox(c, d) +
       '<div class="list daylist">' + rows.map(function (o) {
         var x = o.x, k = x ? (x.kind === 'booked' ? 'arr' : x.kind === 'past' ? 'past' : 'occ') : (d === c.today && o.r.status === 'Needs cleaning' ? 'dirty' : 'ready');
         var label = x ? (x.kind === 'booked' ? (x.comp ? 'Reserved · free' : 'Booked') : x.kind === 'past' ? 'Stayed' : 'Occupied') : (k === 'dirty' ? 'Free · to clean' : 'Free');

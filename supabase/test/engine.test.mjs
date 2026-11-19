@@ -159,3 +159,14 @@ console.log('cancel', cc.ok || cc.error, !!cg, cg && cg.msgs.map(m => m.kind).jo
 const sav = await call('deskSiteAvailability', { days: 30 });
 console.log('siteAvailability', sav.ok || sav.error, sav.days && sav.days.length, sav.types, sav.days && JSON.stringify(sav.days.filter(x => Object.values(x.t).some(v => v !== 'free')).slice(0, 3)));
 if (!sav.ok || sav.days.length !== 30) throw new Error('siteAvailability broken');
+const dShow = sav.days[5].d, tShow = sav.types[0];
+const ss1 = await call('deskSiteShow', { token: tok, day: dShow, type: '*', show: 'full' });
+const sav2 = await call('deskSiteAvailability', { days: 30 });
+const ss2 = await call('deskSiteShow', { token: tok, day: dShow, type: tShow, show: 'fill' });
+const sav3 = await call('deskSiteAvailability', { days: 30 });
+const calS = await call('deskCalendar', { token: tok, from: dShow, days: 3 });
+const ss3 = await call('deskSiteShow', { token: tok, day: dShow, type: '*', show: 'auto' });
+const sav4 = await call('deskSiteAvailability', { days: 30 });
+const ssBad = await call('deskSiteShow', { day: dShow, type: '*', show: 'full' });
+console.log('siteShow', ss1.ok || ss1.error, JSON.stringify(sav2.days[5].t), JSON.stringify(sav3.days[5].t), JSON.stringify(calS.site), JSON.stringify(sav4.days[5].t), 'noLogin:', ssBad.error);
+if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tShow] !== 'fill' || !calS.site[dShow] || Object.values(sav4.days[5].t).some(v => v !== 'free') || ssBad.ok) throw new Error('siteShow broken');
