@@ -156,3 +156,6 @@ const bkc = await call('deskBookingRequest', { guest: 'Sita Ram Ghosh', phone: '
 const cc = await call('deskBookingCancel', { token: tok, id: bkc.id || (bkc.booking && bkc.booking.id), reason: 'test' });
 const k7 = await call('deskWaKit', { token: tok }); const cg = k7.enq.find(g => g.cancelled);
 console.log('cancel', cc.ok || cc.error, !!cg, cg && cg.msgs.map(m => m.kind).join('/'), '\n' + (cg && cg.msgs[0].text));
+const sav = await call('deskSiteAvailability', { days: 30 });
+console.log('siteAvailability', sav.ok || sav.error, sav.days && sav.days.length, sav.types, sav.days && JSON.stringify(sav.days.filter(x => Object.values(x.t).some(v => v !== 'free')).slice(0, 3)));
+if (!sav.ok || sav.days.length !== 30) throw new Error('siteAvailability broken');
