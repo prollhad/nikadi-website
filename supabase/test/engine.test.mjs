@@ -186,3 +186,10 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
     if (given.length !== 2 || back.rooms.find(r => r.room === rn).given.length !== 1) throw new Error('linenExtra give/back broken');
   }
 }
+// ---- tonight's late price ----
+{
+  const s1 = await call('deskSiteAvailability', { days: 7 });
+  const hourIst = new Date(Date.now() + 330 * 60000).getUTCHours();
+  console.log('tonight deal at IST hour', hourIst, JSON.stringify(s1.deal));
+  if (hourIst < 18 && s1.deal) throw new Error('deal before 6 pm');
+}

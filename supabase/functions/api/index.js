@@ -457,7 +457,12 @@ function todayIst_() { return Utilities.formatDate(new Date(), 'Asia/Kolkata', '
 function ratePeriod_(ymd) { ymd = String(ymd || todayIst_()).slice(0, 10); for (var i = 0; i < RATE_PERIODS.length; i++) if (ymd >= RATE_PERIODS[i].from && ymd <= RATE_PERIODS[i].to) return RATE_PERIODS[i]; return RATE_PERIODS[RATE_PERIODS.length - 1]; }
 /* Fridays and Saturdays in offer months cost 500 more a night (busy days in Mayapur). */
 function friSat_(ymd) { var p = String(ymd || '').split('-'); if (p.length < 3) return false; var w = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay(); return w === 5 || w === 6; }
-function rateFor_(type, ymd) { var pr = ratePeriod_(ymd); return pr[rateKind_(type)] + (pr.offer && ymd && friSat_(ymd) ? 500 : 0); }
+function rateFor_(type, ymd) {
+  var pr = ratePeriod_(ymd), r = pr[rateKind_(type)] + (pr.offer && ymd && friSat_(ymd) ? 500 : 0);
+  /* tonight's late price (after 6 pm with 6 or more rooms empty, decided in Staff.gs): members get it too, with their discount on top */
+  if (ymd && pr.offer && String(ymd).slice(0, 10) === todayIst_()) { try { var d = typeof waCore_ === 'function' ? waCore_().tonightDeal() : null; if (d && d.date === String(ymd).slice(0, 10)) r = Math.min(r, d[rateKind_(type)]); } catch (e) {} }
+  return r;
+}
 function addDayYmd_(ymd, n) { var p = ymd.split('-'); return Utilities.formatDate(new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n, 12)), 'UTC', 'yyyy-MM-dd'); }
 /** Price of a stay with every night priced on its own date; pct = member discount. */
 function stayQuote_(type, ci, co, rooms, pct) {
@@ -2593,7 +2598,24 @@ function deskCore(db, hooks) {
   var DESK_UPI = 'nikadiguesthouse@axisbank', DESK_PAY_LINK = 'https://www.nikadiguesthouse.com/#booking';
   var DESK_TYPE_INFO = { 'Deluxe Double': ['Deluxe Double', 'king bed, up to 2 adults'], 'Deluxe Twin': ['Deluxe Twin', '2 single beds, up to 2 adults'], 'Large Twin': ['Large Twin', '2 single beds, more space, up to 3 adults'] };
   function roomTypeKey(t) { t = String(t || ''); return /large/i.test(t) ? 'Large Twin' : /twin/i.test(t) ? 'Deluxe Twin' : /double|king/i.test(t) ? 'Deluxe Double' : ''; }
-  function quoteOf(type, ci, co, rooms) { var tot = 0, d = ci; for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { tot += deskRateOn(type, d); d = addDays(d, 1); } return tot * Math.max(1, rooms || 1); }
+  /* ---- Tonight's late price ----
+     After 6 pm, if 6 or more rooms are still empty for tonight, tonight's night (only) is quoted at 3,000 (Deluxe Double, Large Twin) and 2,500 (Deluxe Twin),
+     on the website, in the staff app's availability and new bookings, and in WhatsApp quotes. Tomorrow night is the normal price again.
+     Only while an offer price is running (not in the full-price season). Stays and bookings already made keep the price they were given. */
+  var DEAL_AFTER = 18, DEAL_ROOMS = 6, DEAL_PRICE = { double: 3000, twin: 2500 }, dealMemo = null, dealBusy = false;
+  function tonightDeal() {
+    var t = today(), now = Date.now();
+    if (dealMemo && dealMemo.day === t && now - dealMemo.at < 60000) return dealMemo.deal;
+    if (dealBusy) return null;
+    var deal = null;
+    if (ist().getUTCHours() >= DEAL_AFTER) {
+      var offer = false; DESK_RATE_PERIODS.forEach(function (p) { if (t >= p.from && t <= p.to && p.double < 5000) offer = true; });
+      if (offer) { dealBusy = true; try { var free = 0; api.availability({ _internal: true, checkin: t, checkout: addDays(t, 1) }).types.forEach(function (x) { free += Number(x.free) || 0; }); if (free >= DEAL_ROOMS) deal = { date: t, double: DEAL_PRICE.double, twin: DEAL_PRICE.twin }; } catch (e) { deal = null; } dealBusy = false; }
+    }
+    dealMemo = { day: t, at: now, deal: deal }; return deal;
+  }
+  function rateNow(type, ymd) { var r = deskRateOn(type, ymd); if (ymd !== today()) return r; var d = tonightDeal(); return d ? Math.min(r, d[/large/i.test(String(type || '')) ? 'double' : /twin/i.test(String(type || '')) ? 'twin' : 'double']) : r; }
+  function quoteOf(type, ci, co, rooms) { var tot = 0, d = ci; for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { tot += rateNow(type, d); d = addDays(d, 1); } return tot * Math.max(1, rooms || 1); }
   function enqMsgs(o) {
     var n = o.first || 'Dear Sir/Ma\'am', out = [];
     function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
@@ -2649,7 +2671,7 @@ function deskCore(db, hooks) {
     add('ghello', 'Thank you for contacting us', G + ' Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur. How can we help you?');
     add('gdates', 'Please share your dates', G + ' Please share your check-in date, check-out date, number of guests and rooms needed, and we will reply with the available rooms and today\'s best price.');
     add('gfind', 'How to find us', G + ' Here is how to reach Nikadi Guest House:\nBhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4 (Namahatta Bhavan), Mayapur. Look for our lit NIKADI GUEST HOUSE sign.\nEnter at the left corner of the building, beside the picture of Sri Chaitanya Mahaprabhu, and take the stairs up to our first-floor reception.\nGoogle Maps: ' + DESK_WA_MAPS + '\nCall us any time: +91 75011 01137.');
-    add('grooms', 'Our rooms & prices', G + ' Our air-conditioned rooms (private bathroom with geyser, Wi-Fi and TV):\n• Deluxe Double (king bed, up to 2 adults): ' + rupees(deskRateOn('Deluxe Double', t)) + ' a night\n• Deluxe Twin (2 single beds, up to 2 adults): ' + rupees(deskRateOn('Deluxe Twin', t)) + ' a night\n• Large Twin (2 single beds, more space, up to 3 adults): ' + rupees(deskRateOn('Large Twin', t)) + ' a night\nPrices include GST and can change by date. Send us your dates for the exact price.');
+    add('grooms', 'Our rooms & prices', G + ' Our air-conditioned rooms (private bathroom with geyser, Wi-Fi and TV):\n• Deluxe Double (king bed, up to 2 adults): ' + rupees(rateNow('Deluxe Double', t)) + ' a night\n• Deluxe Twin (2 single beds, up to 2 adults): ' + rupees(rateNow('Deluxe Twin', t)) + ' a night\n• Large Twin (2 single beds, more space, up to 3 adults): ' + rupees(rateNow('Large Twin', t)) + ' a night\nPrices include GST and can change by date. Send us your dates for the exact price.');
     add('gphotos', 'Photos & website', G + ' You can see our rooms and photos here: ' + DESK_WA_SITE + '/#rooms');
     add('gpay', 'Advance & payment', G + ' To confirm a booking we take a 50% advance; the balance is paid at check-in.\nUPI ID: ' + DESK_UPI + ' (Nikadi Guest House)\nQR code: ' + DESK_PAY_LINK + '\nPlease send the payment screenshot in this chat.');
     add('grules', 'Check-in & house rules', G + ' Check-in from 11:00 AM, check-out by 9:00 AM. Please bring a photo ID for every guest.\nNikadi is a pure vegetarian home: no smoking, tobacco or alcohol. Quiet hours 10 PM to 6 AM. Rooms only; Govinda\'s and prasadam halls are a short walk away.');
@@ -2961,7 +2983,7 @@ function deskCore(db, hooks) {
       var o = { room: r.room, type: r.type, beds: r.beds, status: r.status, updated: r.updated, by: r.by };
       var ab = arriving[r.room];
       if (ab && !(r.stay && stays[r.stay])) o.arriving = { id: ab.id, guest: mgr ? ab.guest : String(ab.guest || '').split(/\s+/)[0], late: ab.checkin < t, comp: ab.comp || '' };
-      if (mgr) o.rate = r.type ? deskRateOn(r.type, t) : r.rate;
+      if (mgr) o.rate = r.type ? rateNow(r.type, t) : r.rate;
       var s = r.stay && stays[r.stay];
       if (s) {
         o.stay = { id: s.id, guest: mgr ? s.guest : String(s.guest || '').split(/\s+/)[0], guests: s.guests, checkin: s.checkin, checkout: s.checkout,
@@ -4341,9 +4363,9 @@ function deskCore(db, hooks) {
     if (comp && b && !b.comp && Number(b.advancePaid || 0) - Number(b.refunded || 0) > 0) fail('comp_has_advance');
     p.comp = comp; p.compRef = comp ? text(req.compRef != null ? req.compRef : b && b.compRef, 120) : '';
     var rate = req.rate != null && req.rate !== '' ? money(req.rate) : b ? Number(b.rate) : NaN;
-    if (isNaN(rate) || rate <= 0) rate = deskRateOn(p.roomType, p.checkin);
+    if (isNaN(rate) || rate <= 0) rate = rateNow(p.roomType, p.checkin);
     p.rate = comp ? 0 : rate;
-    if (!comp && b && b.comp && !(Number(req.rate) > 0)) p.rate = deskRateOn(p.roomType, p.checkin); // back to a paying guest
+    if (!comp && b && b.comp && !(Number(req.rate) > 0)) p.rate = rateNow(p.roomType, p.checkin); // back to a paying guest
     p.notes = text(req.notes != null ? req.notes : b && b.notes, 400);
     p.waOk = req.waOk != null ? consent(req.waOk) : b ? (b.waOk || 'No') : 'No';
     return p;
@@ -4531,7 +4553,7 @@ function deskCore(db, hooks) {
     var types = {};
     db.all('rooms').forEach(function (r) {
       var t = r.type || 'Deluxe Double';
-      if (!types[t]) types[t] = { type: t, beds: r.beds || '', total: 0, free: 0, rate: deskRateOn(t, ci), rates: [] };
+      if (!types[t]) types[t] = { type: t, beds: r.beds || '', total: 0, free: 0, rate: rateNow(t, ci), rates: [] };
       types[t].total++;
       if (!roomClash(r.room, ci, co)) types[t].free++;
     });
@@ -4545,7 +4567,7 @@ function deskCore(db, hooks) {
     });
     Object.keys(types).forEach(function (k) {
       var t = types[k], d = ci; t.rates = [];
-      for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { t.rates.push(deskRateOn(k, d)); d = addDays(d, 1); }
+      for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { t.rates.push(rateNow(k, d)); d = addDays(d, 1); }
     });
     return { checkin: ci, checkout: co, nights: nightsBetween(ci, co), types: Object.keys(types).map(function (k) { return types[k]; }) };
   };
@@ -4573,6 +4595,7 @@ function deskCore(db, hooks) {
     cfgSet('siteShow', JSON.stringify(m));
     return { day: d, show: m[d] || {}, by: me.name };
   };
+  api.tonightDeal = function () { return tonightDeal(); }; // internal: the member booking code asks for it
   api.siteAvailability = function (req) {
     var days = Math.min(180, Math.max(7, Math.round(Number(req.days || 120)))), d = today(), out = [], names = null, show = siteShowGet();
     for (var i = 0; i < days; i++) {
@@ -4581,7 +4604,7 @@ function deskCore(db, hooks) {
       av.types.forEach(function (t) { var o = show[d] && (show[d][t.type] || show[d]['*']); row.t[t.type] = o && SITE_SHOW[o] ? o : t.free <= 0 ? 'full' : t.free <= 2 ? 'few' : 'free'; });
       out.push(row); d = addDays(d, 1);
     }
-    return { from: today(), types: names || [], days: out };
+    return { from: today(), types: names || [], days: out, deal: tonightDeal() };
   };
 
   /* Public: the website's Advance Booking Form sends this (no login). Lands as Pending; never blocks rooms. */

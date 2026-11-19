@@ -981,14 +981,17 @@ try{
       var b=e.target.closest('.wx-hr');if(b){[].forEach.call(b.parentNode.children,function(x){x.classList.toggle('sel',x===b);});if(window.nkFx)nkFx.play(+b.getAttribute('data-c'),b.getAttribute('data-day')==='1');}});
   }
 
-  /* tonight's price (from pricing.js) */
+  /* tonight's price (from pricing.js). After 6 pm the front desk may send tonight's late price: then this card shows it, with the usual price struck through. */
   var R=window.NikadiRates;
-  if(R&&$('gPrD')){
-    var td=R.today(),P=R.period(td),inr=function(n){return '₹'+Number(n).toLocaleString('en-IN');};
+  window.nkTonight=function(){
+    if(!R||!$('gPrD'))return;
+    var td=R.today(),P=R.period(td),inr=function(n){return '₹'+Number(n).toLocaleString('en-IN');},dl=R.deal&&R.deal();
     $('gPrD').textContent=inr(R.rate('double',td));$('gPrT').textContent=inr(R.rate('twin',td));
-    if(R.standard('double')>R.rate('double',td)){$('gPrDs').textContent=inr(R.standard('double'));$('gPrTs').textContent=inr(R.standard('twin'));}
-    if(P.offer)$('gPrLbl').textContent="Tonight's price · "+P.offer.name;
-  }
+    if(dl&&R.usual('double',td)>R.rate('double',td)){$('gPrDs').textContent=inr(R.usual('double',td));$('gPrTs').textContent=inr(R.usual('twin',td));$('gPrLbl').textContent="Tonight only · late evening price";}
+    else{if(R.standard('double')>R.rate('double',td)){$('gPrDs').textContent=inr(R.standard('double'));$('gPrTs').textContent=inr(R.standard('twin'));}
+      if(P.offer)$('gPrLbl').textContent="Tonight's price · "+P.offer.name;}
+  };
+  nkTonight();
 
   /* how far am I */
   var fb=$('gFarBtn');
@@ -1368,6 +1371,7 @@ try{
     .then(function(r){return r.json();}).then(function(j){
       if(!j||!j.ok||!j.days)throw 0;
       var map={};j.days.forEach(function(x){map[x.d]=x.t;});AV=map;
+      if(R&&R.setDeal){R.setDeal(j.deal||null);if(window.nkTonight)nkTonight();} /* tonight's late price, when the front desk has switched it on */
       try{sessionStorage.setItem('nk_av',JSON.stringify({at:Date.now(),from:today,map:map}));}catch(e){}
       $('avcNote').textContent='Sold-out nights come live from our front desk. The colours show how busy we expect each night to be. Your booking is confirmed once we reply on WhatsApp.';
       draw();
@@ -1376,6 +1380,8 @@ try{
   if(matchMedia('(hover:hover)').matches){box.addEventListener('pointermove',function(e){var r=box.getBoundingClientRect();box.style.setProperty('--mx',(e.clientX-r.left)+'px');box.style.setProperty('--my',(e.clientY-r.top)+'px');box.classList.add('glow');});box.addEventListener('pointerleave',function(){box.classList.remove('glow');});}
   draw();
   if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es.some(function(x){return x.isIntersecting;})){io.disconnect();load();setInterval(function(){if(!document.hidden)load();},5*60000);}},{rootMargin:'400px 0px'});io.observe(box);}else load();
+  /* after 6 pm in Mayapur ask the front desk straight away, so tonight's late price shows without scrolling to the calendar */
+  if(new Date(Date.now()+330*60000).getUTCHours()>=18)load();
 })();
 
 }catch(e){console.error("[nikadi part 23]",e);}

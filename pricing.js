@@ -6,7 +6,13 @@
   /* Fridays and Saturdays in offer months cost 500 more a night (busy days in Mayapur). */
   var WEEKEND_UP = 500;
   function isFriSat(ymd) { var p = String(ymd).split('-'), w = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay(); return w === 5 || w === 6; }
-  function nightRate(p, k, ymd) { return p[k] + (p.offer && ymd && isFriSat(ymd) ? WEEKEND_UP : 0); }
+  /* Tonight's late price: after 6 pm, when the front desk still has 6 or more rooms empty for tonight, tonight (only) costs 3,000 / 2,500.
+     The server decides and sends it (deskSiteAvailability → deal); it applies to today's night only, and only in offer months. */
+  var DEAL = null;
+  function setDeal(d) { DEAL = d && d.date && d.date === todayIST() && d.double > 0 && d.twin > 0 ? { date: d.date, double: +d.double, twin: +d.twin } : null; }
+  function deal() { return DEAL && DEAL.date === todayIST() ? DEAL : null; }
+  function baseRate(p, k, ymd) { return p[k] + (p.offer && ymd && isFriSat(ymd) ? WEEKEND_UP : 0); }
+  function nightRate(p, k, ymd) { var r = baseRate(p, k, ymd), d = deal(); return d && p.offer && ymd === d.date ? Math.min(r, d[k]) : r; }
   var PERIODS = [
     { from: '2000-01-01', to: '2026-12-23', double: 3500, twin: 3000,
       offer: { name: 'Special offer', until: '23 December',
@@ -41,5 +47,5 @@
     }
     return out;
   }
-  root.NikadiRates = { STANDARD: STANDARD, PERIODS: PERIODS, kind: kind, period: period, rate: rate, standard: standard, memberRate: memberRate, quote: quote, today: todayIST, isFriSat: isFriSat, WEEKEND_UP: WEEKEND_UP };
+  root.NikadiRates = { setDeal: setDeal, deal: deal, usual: function (type, ymd) { ymd = String(ymd || todayIST()).slice(0, 10); return baseRate(period(ymd), kind(type), ymd); }, STANDARD: STANDARD, PERIODS: PERIODS, kind: kind, period: period, rate: rate, standard: standard, memberRate: memberRate, quote: quote, today: todayIST, isFriSat: isFriSat, WEEKEND_UP: WEEKEND_UP };
 })(typeof window !== 'undefined' ? window : this);
