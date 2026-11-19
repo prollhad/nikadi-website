@@ -1221,11 +1221,11 @@ try{
     for(var i=0;i<first;i++)h+='<span class="avd a-blank"></span>';
     for(var d=1;d<=days;d++){
       var k=ymd(y,m,d),c=['avd'],st=stat(k),lbl=price(k),past=k<today;
-      var dm=(!past&&(!st||st==='free'))?demand(k):'';if(dm)c.push('a-dm-'+dm);
-      if(past)c.push('a-past');else{if(st&&!(dm&&st==='free'))c.push('a-'+st);if(st==='few')lbl=nkT('Few left');if(st==='full')lbl=nkT('Sold out');if(R&&R.period(k).offer)c.push('a-offer');}
+      var dm=past?'':st==='few'?'busy':st==='full'?'':demand(k);if(dm)c.push('a-dm-'+dm);
+      if(past)c.push('a-past');else{if(st&&!(dm&&st==='free'))c.push('a-'+st);if(st==='few')lbl=nkT('Almost full');if(st==='full')lbl=nkT('Sold out');if(R&&R.period(k).offer)c.push('a-offer');}
       if(k===today)c.push('a-today');
       if(ci&&(k===ci||k===co))c.push('a-sel');else if(ci&&co&&k>ci&&k<co)c.push('a-in');
-      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+k+'"'+(past?' disabled':'')+' aria-label="'+nice(k)+(dm?', '+nkT(dm==='busy'?'busy, book soon':dm==='fill'?'filling up':'available'):st?', '+nkT(st==='free'?'available':st==='few'?'only a few rooms left':'sold out'):'')+'"><b>'+d+'</b><small>'+(past?'&nbsp;':lbl)+'</small><i></i></button>';
+      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+k+'"'+(past?' disabled':'')+' aria-label="'+nice(k)+(dm?', '+nkT(dm==='busy'?'almost booked':dm==='fill'?'filling up':'available'):st?', '+nkT(st==='free'?'available':st==='few'?'only a few rooms left':'sold out'):'')+'"><b>'+d+'</b><small>'+(past?'&nbsp;':lbl)+'</small><i></i></button>';
     }
     return h+'</div></div>';
   }

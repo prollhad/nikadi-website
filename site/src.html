@@ -1064,9 +1064,9 @@ html[data-lang=ru] h1,html[data-lang=ru] h2,html[data-lang=ru] h3{font-weight:60
 .avd i{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%}
 .avd.a-free i{background:#5fd08a}.avd.a-few i{background:#f0b44c}
 .avd.a-few small{color:#f6c977}
-.avd.a-full{cursor:not-allowed;background:rgba(224,122,98,.06)}
+.avd.a-full{cursor:not-allowed;background:repeating-linear-gradient(135deg,rgba(224,90,70,.2) 0 6px,rgba(224,90,70,.1) 6px 12px);border-color:rgba(232,112,90,.65)}.avd.a-full i{background:#e8705a}
 .avd.a-full b{color:#a9b0c6;text-decoration:line-through;text-decoration-color:rgba(224,122,98,.8)}
-.avd.a-full small{color:#e9967f}
+.avd.a-full small{color:#ffab98;font-weight:700}
 .avd.a-past,.avd.a-blank{visibility:hidden;pointer-events:none}
 .avd.a-past{visibility:visible;opacity:.22;cursor:default}
 .avd:hover:not(.a-full):not(.a-past){border-color:rgba(217,173,85,.6)}
@@ -1972,7 +1972,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       </div>
       <div class="avc-bar">
         <button type="button" class="avc-nav" id="avcPrev" aria-label="Previous month">‹</button>
-        <div class="avc-legend"><span><i class="lg free"></i>Available</span><span><i class="lg fill"></i>Filling up</span><span><i class="lg busy"></i>Busy · book soon</span><span><i class="lg full"></i>Sold out</span></div>
+        <div class="avc-legend"><span><i class="lg free"></i>Available</span><span><i class="lg fill"></i>Filling up</span><span><i class="lg busy"></i>Almost booked</span><span><i class="lg full"></i>Sold out</span></div>
         <button type="button" class="avc-nav" id="avcNext" aria-label="Next month">›</button>
       </div>
       <div class="avc-months" id="avcMonths"></div>
@@ -4531,11 +4531,11 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
     for(var i=0;i<first;i++)h+='<span class="avd a-blank"></span>';
     for(var d=1;d<=days;d++){
       var k=ymd(y,m,d),c=['avd'],st=stat(k),lbl=price(k),past=k<today;
-      var dm=(!past&&(!st||st==='free'))?demand(k):'';if(dm)c.push('a-dm-'+dm);
-      if(past)c.push('a-past');else{if(st&&!(dm&&st==='free'))c.push('a-'+st);if(st==='few')lbl=nkT('Few left');if(st==='full')lbl=nkT('Sold out');if(R&&R.period(k).offer)c.push('a-offer');}
+      var dm=past?'':st==='few'?'busy':st==='full'?'':demand(k);if(dm)c.push('a-dm-'+dm);
+      if(past)c.push('a-past');else{if(st&&!(dm&&st==='free'))c.push('a-'+st);if(st==='few')lbl=nkT('Almost full');if(st==='full')lbl=nkT('Sold out');if(R&&R.period(k).offer)c.push('a-offer');}
       if(k===today)c.push('a-today');
       if(ci&&(k===ci||k===co))c.push('a-sel');else if(ci&&co&&k>ci&&k<co)c.push('a-in');
-      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+k+'"'+(past?' disabled':'')+' aria-label="'+nice(k)+(dm?', '+nkT(dm==='busy'?'busy, book soon':dm==='fill'?'filling up':'available'):st?', '+nkT(st==='free'?'available':st==='few'?'only a few rooms left':'sold out'):'')+'"><b>'+d+'</b><small>'+(past?'&nbsp;':lbl)+'</small><i></i></button>';
+      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+k+'"'+(past?' disabled':'')+' aria-label="'+nice(k)+(dm?', '+nkT(dm==='busy'?'almost booked':dm==='fill'?'filling up':'available'):st?', '+nkT(st==='free'?'available':st==='few'?'only a few rooms left':'sold out'):'')+'"><b>'+d+'</b><small>'+(past?'&nbsp;':lbl)+'</small><i></i></button>';
     }
     return h+'</div></div>';
   }
