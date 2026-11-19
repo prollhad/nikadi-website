@@ -3512,12 +3512,13 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       grad([[0,'#1d2857'],[.28,'#35467f'],[.46,'#6c6690'],[.58,'#b07f7e'],[.67,'#e2935c'],[.715,'#f6ae62'],[hz,'#ffc47a'],[.75,'#c97a4c'],[.82,'#54455f'],[1,'#212d4a']]);
       blob(.2,.52,.26,.07,'rgba(255,190,190,.2)');blob(.84,.48,.22,.06,'rgba(255,200,190,.18)');
       /* glow round the sun: gold close in, then red, then pink-purple further out */
-      blob(.64,sy2/H,.3,.24,'rgba(255,150,90,'+(.3-.12*late).toFixed(2)+')');blob(.64,sy2/H,.14,.14,'rgba(255,170,100,.4)');
+      /* the glow only ever adds light (screen), so it can never leave a muddy dark ring where it crosses the blue of the sky */
+      x.globalCompositeOperation='screen';blob(.64,sy2/H,.36,.3,'rgba(255,170,110,'+(.34-.14*late).toFixed(2)+')');blob(.64,sy2/H,.17,.17,'rgba(255,190,120,'+(.46-.2*late).toFixed(2)+')');blob(.64,sy2/H,.08,.08,'rgba(255,210,150,.5)');x.globalCompositeOperation='source-over';
       x.save();x.beginPath();x.rect(0,0,W,hz*H);x.clip(); /* the sun is hidden below the horizon line */
-      var sg=x.createRadialGradient(sx2,sy2,0,sx2,sy2,sr2*1.5);/* one plain reddish-orange disc, a touch redder as it gets low */var c0=k<.5?'#ff9c4a':'#ff8a3e',c1=k<.5?'#ff7a34':'#f6602e',c2=k<.5?'#f4592c':'#e94a28';sg.addColorStop(0,c0);sg.addColorStop(.4,c1);sg.addColorStop(.64,c2);sg.addColorStop(.7,'rgba(240,84,44,.45)');sg.addColorStop(1,'rgba(240,84,44,0)');
+      var sg=x.createRadialGradient(sx2,sy2,0,sx2,sy2,sr2*1.5);/* one plain reddish-orange disc, a touch redder as it gets low */var c0=k<.5?'#ffb766':'#ffa655',c1=k<.5?'#ff9344':'#ff7e3a',c2=k<.5?'#fb6f30':'#f25c2c';sg.addColorStop(0,c0);sg.addColorStop(.4,c1);sg.addColorStop(.64,c2);sg.addColorStop(.7,'rgba(240,84,44,.45)');sg.addColorStop(1,'rgba(240,84,44,0)');
       x.fillStyle=sg;x.beginPath();x.arc(sx2,sy2,sr2*1.5,0,7);x.fill();x.restore();
       /* its light lying on the water below the horizon */
-      blob(.64,.82,.1+.04*k,.1,'rgba(255,160,90,'+(.22-.14*late).toFixed(2)+')');
+      x.globalCompositeOperation='screen';blob(.64,.82,.1+.04*k,.1,'rgba(255,160,90,'+(.2-.13*late).toFixed(2)+')');x.globalCompositeOperation='source-over';
       if(late>0){x.fillStyle='rgba(18,14,52,'+(.34*late).toFixed(2)+')';x.fillRect(0,0,W,H);}}
   }
   /* slow drifting clouds for the daytime sky: painted once, then moved by the browser (cheap) */
