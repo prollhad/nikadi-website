@@ -121,8 +121,13 @@ try{
     var H=(rise?360-Math.acos(ch)/R:Math.acos(ch)/R)/15,T=H+RA-.06571*t-6.622,UT=((T-lh)%24+24)%24;return Math.round(((UT+5.5)%24)*60);}
   function phase(){var d=ist(),m=d.getUTCHours()*60+d.getUTCMinutes(),sr=sunMin(true),ss=sunMin(false);
     if(m>=sr-40&&m<sr+50)return 'dawn';if(m>=sr+50&&m<ss-70)return 'day';if(m>=ss-70&&m<ss+35)return 'sunset';if(m>=ss+35&&m<ss+80)return 'dusk';return 'night';}
-  /* how far through the sunset we are: 0 = 70 minutes before sunset, .667 = the sunset minute, 1 = 35 minutes after (?sun=0..1 previews it) */
-  function sunsetPr(){var q=(location.search.match(/[?&]sun=([\d.]+)/)||[])[1];if(q!=null)return Math.max(0,Math.min(1,+q));if(/[?&]sky=sunset/.test(location.search))return .45;var d=ist(),m=d.getUTCHours()*60+d.getUTCMinutes()+d.getUTCSeconds()/60,ss=sunMin(false);return Math.max(0,Math.min(1,(m-(ss-70))/105));}
+  /* how far through the sunrise or sunset we are, from the real sun over Mayapur.
+     Sunset: 0 = 70 minutes before, .667 = the sunset minute, 1 = 35 minutes after. Sunrise: 0 = 40 minutes before, .444 = the sunrise minute, 1 = 50 minutes after.
+     (?sun=0..1 previews any moment) */
+  function sunPr(rise){var q=(location.search.match(/[?&]sun=([\d.]+)/)||[])[1];if(q!=null)return Math.max(0,Math.min(1,+q));if(/[?&]sky=(sunset|dawn)/.test(location.search))return rise?.7:.45;
+    var d=ist(),m=d.getUTCHours()*60+d.getUTCMinutes()+d.getUTCSeconds()/60;return rise?Math.max(0,Math.min(1,(m-(sunMin(true)-40))/90)):Math.max(0,Math.min(1,(m-(sunMin(false)-70))/105));}
+  /* can the sun be seen in Mayapur right now? 1 on a clear or partly cloudy sky, 0 when it is overcast, raining or stormy (then only a soft glow shows through) */
+  function sunVis(){return typeof wxMode==='string'&&wxMode!=='clear'?0:1;}
   var ns=null,cur=null;
   function paint(ph){var c=ns.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1),W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;
     var seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
@@ -131,21 +136,31 @@ try{
     function stars(k){var n=Math.round(innerWidth*innerHeight/2600*k);for(var i=0;i<n;i++){var r=rnd(),sz=r<.92?.5+rnd()*.6:1+rnd()*.9;x.fillStyle='rgba('+(r<.1?'255,236,214':r<.2?'214,226,255':'240,244,255')+','+((.25+rnd()*.6)*Math.min(1,k*1.4)).toFixed(2)+')';x.beginPath();x.arc(rnd()*W,rnd()*H*(k<1?.7:1),sz*dpr,0,7);x.fill();}}
     if(ph==='night'){grad([[0,'#050916'],[1,'#0b1226']]);stars(1);var mw=x.createLinearGradient(0,H*.1,W,H*.9);mw.addColorStop(0,'rgba(180,190,230,0)');mw.addColorStop(.5,'rgba(180,190,230,.05)');mw.addColorStop(1,'rgba(180,190,230,0)');x.fillStyle=mw;x.fillRect(0,0,W,H);}
     else if(ph==='dusk'){grad([[0,'#0a0f2a'],[.45,'#1e2160'],[.75,'#4a2d6e'],[.92,'#7a3a5e'],[1,'#a85a48']]);stars(.45);}
-    else if(ph==='dawn'){grad([[0,'#141a44'],[.35,'#3c3a7c'],[.62,'#86629e'],[.82,'#d58aa0'],[1,'#f3b08a']]);stars(.2);blob(.7,.95,.5,.25,'rgba(255,214,160,.35)');}
+    else if(ph==='dawn'){/* sunrise, live: pr runs 0 (40 min before sunrise) to 1 (50 min after). The sun is still under the horizon at first (only its glow shows),
+         crosses the horizon line at the real sunrise minute, then climbs while the sky turns from night blue to morning. */
+      var dp=sunPr(true),pre=Math.min(1,dp/.444),up=Math.max(0,(dp-.444)/.556),hzd=.735,vis=sunVis();
+      function mx(a,b,t){var o='#';for(var q=1;q<7;q+=2){var u=parseInt(a.substr(q,2),16),v=parseInt(b.substr(q,2),16);o+=('0'+Math.round(u+(v-u)*t).toString(16)).slice(-2);}return o;}
+      grad([[0,mx('#0f1538','#27407e',dp)],[.4,mx('#262b63','#4a6aa8',dp)],[.6,mx('#5c4d86','#9aa0c4',dp)],[.69,mx('#b47f88','#efc8a2',dp)],[hzd,mx('#eeb488','#ffe2a8',dp)],[.76,mx('#6c566f','#8a7a86',dp)],[1,mx('#1a2340','#263a5c',dp)]]);
+      stars(.34*(1-dp));
+      var dx=.36*W,dy=(up>0?hzd-(hzd-.42)*up:hzd+.07*(1-pre))*H,dr=Math.min(W,H)*(.056-.01*up);
+      x.globalCompositeOperation='screen';blob(.36,Math.min(hzd,dy/H),.4,.3,'rgba(255,214,150,'+((.16+.2*pre)*(.35+.65*vis)).toFixed(2)+')');blob(.36,Math.min(hzd,dy/H),.18,.18,'rgba(255,226,170,'+((.2+.3*pre)*vis).toFixed(2)+')');x.globalCompositeOperation='source-over';
+      if(vis>.5){x.save();x.beginPath();x.rect(0,0,W,hzd*H);x.clip();var dg=x.createRadialGradient(dx,dy,0,dx,dy,dr*1.5);dg.addColorStop(0,up<.35?'#ffe9a8':'#fffbe6');dg.addColorStop(.5,up<.35?'#ffd070':'#fff0b8');dg.addColorStop(.66,up<.35?'#ffb04a':'#ffe08a');dg.addColorStop(.72,'rgba(255,200,110,.45)');dg.addColorStop(1,'rgba(255,200,110,0)');
+        x.fillStyle=dg;x.beginPath();x.arc(dx,dy,dr*1.5,0,7);x.fill();x.restore();
+        x.globalCompositeOperation='screen';blob(.36,.82,.1,.1,'rgba(255,214,150,'+(.2*up+.06).toFixed(2)+')');x.globalCompositeOperation='source-over';}}
     else if(ph==='day'){grad([[0,'#2d5cad'],[.4,'#27508f'],[.75,'#1d3a6c'],[1,'#16294f']]);var sx=.78*W,sy=.2*H,sr=Math.min(W,H)*.042;blob(.78,.2,.5,.5,'rgba(255,228,170,.3)');blob(.78,.2,.16,.16,'rgba(255,240,205,.45)');
-      var sd=x.createRadialGradient(sx,sy,0,sx,sy,sr*1.5);sd.addColorStop(0,'#fffdf2');sd.addColorStop(.62,'#fff1c4');sd.addColorStop(.8,'rgba(255,226,150,.55)');sd.addColorStop(1,'rgba(255,220,140,0)');x.fillStyle=sd;x.beginPath();x.arc(sx,sy,sr*1.5,0,7);x.fill();
+      if(sunVis()>.5){var sd=x.createRadialGradient(sx,sy,0,sx,sy,sr*1.5);sd.addColorStop(0,'#fffdf2');sd.addColorStop(.62,'#fff1c4');sd.addColorStop(.8,'rgba(255,226,150,.55)');sd.addColorStop(1,'rgba(255,220,140,0)');x.fillStyle=sd;x.beginPath();x.arc(sx,sy,sr*1.5,0,7);x.fill();}
       for(var i=0;i<6;i++)blob(.1+rnd()*.8,.08+rnd()*.5,.12+rnd()*.12,.04,'rgba(220,230,255,.05)');}
     else {/* sunset: violet top, purple, pink, red and gold at the horizon, with the sun itself sinking. pr runs 0 (70 min before sunset) to 1 (35 min after);
          the sun reaches the horizon line at the real sunset minute and then slips behind it, while the sky deepens. */
-      var pr=sunsetPr(),k=Math.min(1,pr/.667),late=Math.max(0,(pr-.667)/.333),hz=.735,sx2=.64*W,sy2=(.4+(hz-.4)*k+late*.09)*H,sr2=Math.min(W,H)*(.05+.012*k);
+      var pr=sunPr(false),vis=sunVis(),k=Math.min(1,pr/.667),late=Math.max(0,(pr-.667)/.333),hz=.735,sx2=.64*W,sy2=(.4+(hz-.4)*k+late*.09)*H,sr2=Math.min(W,H)*(.05+.012*k);
       grad([[0,'#1d2857'],[.28,'#35467f'],[.46,'#6c6690'],[.58,'#b07f7e'],[.67,'#e2935c'],[.715,'#f6ae62'],[hz,'#ffc47a'],[.75,'#c97a4c'],[.82,'#54455f'],[1,'#212d4a']]);
       blob(.2,.52,.26,.07,'rgba(255,190,190,.2)');blob(.84,.48,.22,.06,'rgba(255,200,190,.18)');
       /* glow round the sun: gold close in, then red, then pink-purple further out */
       /* the glow only ever adds light (screen), so it can never leave a muddy dark ring where it crosses the blue of the sky */
       x.globalCompositeOperation='screen';blob(.64,sy2/H,.36,.3,'rgba(255,170,110,'+(.34-.14*late).toFixed(2)+')');blob(.64,sy2/H,.17,.17,'rgba(255,190,120,'+(.46-.2*late).toFixed(2)+')');blob(.64,sy2/H,.08,.08,'rgba(255,210,150,.5)');x.globalCompositeOperation='source-over';
-      x.save();x.beginPath();x.rect(0,0,W,hz*H);x.clip(); /* the sun is hidden below the horizon line */
+      if(vis>.5){x.save();x.beginPath();x.rect(0,0,W,hz*H);x.clip(); /* the sun is hidden below the horizon line, and behind the cloud on an overcast or rainy evening */
       var sg=x.createRadialGradient(sx2,sy2,0,sx2,sy2,sr2*1.5);/* one plain reddish-orange disc, a touch redder as it gets low */var c0=k<.5?'#ffb766':'#ffa655',c1=k<.5?'#ff9344':'#ff7e3a',c2=k<.5?'#fb6f30':'#f25c2c';sg.addColorStop(0,c0);sg.addColorStop(.4,c1);sg.addColorStop(.64,c2);sg.addColorStop(.7,'rgba(240,84,44,.45)');sg.addColorStop(1,'rgba(240,84,44,0)');
-      x.fillStyle=sg;x.beginPath();x.arc(sx2,sy2,sr2*1.5,0,7);x.fill();x.restore();
+      x.fillStyle=sg;x.beginPath();x.arc(sx2,sy2,sr2*1.5,0,7);x.fill();x.restore();}
       /* its light lying on the water below the horizon */
       x.globalCompositeOperation='screen';blob(.64,.82,.1+.04*k,.1,'rgba(255,160,90,'+(.2-.13*late).toFixed(2)+')');x.globalCompositeOperation='source-over';
       if(late>0){x.fillStyle='rgba(18,14,52,'+(.34*late).toFixed(2)+')';x.fillRect(0,0,W,H);}}
@@ -176,6 +191,8 @@ try{
       D[k]=mix(sr,lr,l);D[k+1]=mix(sg,lg,l);D[k+2]=mix(sb,lb,l);D[k+3]=255*d*fade*.8;}}
     x.putImageData(im,0,0);return 'url('+c.toDataURL()+')';}
   function sunsetClouds(){if(scl||!ns)return;scl=document.createElement('div');scl.className='suncl';scl.style.backgroundImage=sunsetTile();ns.insertBefore(scl,ns.querySelector('.moon'));}
+  var ncl=null;
+  function nightClouds(){if(ncl||!ns)return;ncl=document.createElement('div');ncl.className='nightcl';ncl.style.backgroundImage=cloudTile(.57,.16,[150,162,196],[44,52,84]);ns.appendChild(ncl);}
   function dayClouds(){if(dcl||!ns)return;dcl=document.createElement('div');dcl.className='daycl';dcl.style.backgroundImage=cloudTile(.5,.2,[255,255,255],[205,215,232]);ns.insertBefore(dcl,ns.querySelector('.moon'));}
   /* ---- live weather behind the page: overcast, rain and thunderstorms follow the real weather in Mayapur (preview with ?wx=cloudy, ?wx=rain, ?wx=storm) ---- */
   var wxMode='clear',wxEl=null,wxRAF=0,wxDrops=[],wxBolt=null,wxNext=0,wxPrev=(location.search.match(/[?&]wx=(clear|cloudy|rain|storm)/)||[])[1];
@@ -235,7 +252,7 @@ try{
     wxBolt={t:now,img:c,pl:pl,end:end,g:0,k:pal[4],fk:blk?.8:.3};[wxEl.glow,wxEl.flash].forEach(function(el){el.style.setProperty('--bx',(gx/W*100)+'%');el.style.setProperty('--by',(gy/H*100)+'%');el.style.setProperty('--c1',pal[0]);el.style.setProperty('--c2',pal[1]);el.style.setProperty('--c3',pal[2]);el.style.setProperty('--c4',pal[3]);});
     if(wxSnd&&!wxMute&&!document.hidden){if(tb){wxBuild=tb/1000+.2;wxThunder(.02,.8,5,len);}else wxThunder(kind===2?.5+Math.random()*.4:.15+Math.random()*.3,len>4?.8:.64,kind,len);}}
   function wxAmbient(){var w=window.NK_WX,c=w&&w.current?w.current.weather_code:null,m=wxPrev||(c==null?'clear':c>=95?'storm':((c>=51&&c<=67)||(c>=80&&c<=82))?'rain':(c===3||c===45||c===48)?'cloudy':'clear');
-    if(m===wxMode)return;wxMode=m;if(m!=='clear')wxSetup();if((m==='rain'||m==='storm')&&wxEl&&!wxEl.heavyOn){wxEl.heavyOn=1;wxEl.heavy.style.backgroundImage=wxEl.black.style.backgroundImage=stormTile();}if(wxEl){wxEl.black.classList.remove('on');wxMoodT=0;}if(wxEl){wxBolt=null;wxEl.glow.style.opacity=wxEl.flash.style.opacity=0;}var de=document.documentElement;de.classList.remove('wx-cloudy','wx-rain','wx-storm');if(m!=='clear')de.classList.add('wx-'+m);wxNext=0;
+    if(m===wxMode)return;wxMode=m;if(cur&&ns)paint(cur);if(m!=='clear')wxSetup();if((m==='rain'||m==='storm')&&wxEl&&!wxEl.heavyOn){wxEl.heavyOn=1;wxEl.heavy.style.backgroundImage=wxEl.black.style.backgroundImage=stormTile();}if(wxEl){wxEl.black.classList.remove('on');wxMoodT=0;}if(wxEl){wxBolt=null;wxEl.glow.style.opacity=wxEl.flash.style.opacity=0;}var de=document.documentElement;de.classList.remove('wx-cloudy','wx-rain','wx-storm');if(m!=='clear')de.classList.add('wx-'+m);wxNext=0;
     if((m==='rain'||m==='storm')&&!wxRAF&&!RM)wxRAF=requestAnimationFrame(wxLoop);if(wxEl&&m!=='rain'&&m!=='storm'){var x=wxEl.rain.getContext('2d');x.clearRect(0,0,wxEl.rain.width,wxEl.rain.height);}if(wxRainN){var n0=wxRainN;wxRainN=null;n0.forEach(function(q){try{q.s.stop();}catch(e){}});}wxAudio();}
   /* soft rain and thunder sound for the live weather. Browsers only allow sound after the visitor's first tap or key press. */
   var wxSnd=false,wxMute=false,wxRainN=null,wxBtn=null,wxUnlockT=0;try{wxMute=localStorage.getItem('nk_wxmute2')==='1';}catch(e){}
@@ -295,13 +312,15 @@ try{
       addEventListener('resize',function(){if(cur)paint(cur);});drawMoon(ns.querySelector('.moon canvas'),moonPhase());}
     if(ph!=='night'&&ph!=='dusk')dayClouds();
     if(ph==='sunset')sunsetClouds();
+    if(ph==='night'||ph==='dusk')nightClouds();
     wxAmbient();
-    if(ph===cur){if(ph==='sunset')paint(ph);return;}cur=ph;paint(ph);var de=document.documentElement; /* during sunset the sky is painted again each time, so the sun keeps sinking */
+    if(ph===cur){if(ph==='sunset'||ph==='dawn')paint(ph);return;}cur=ph;paint(ph);var de=document.documentElement; /* during sunset the sky is painted again each time, so the sun keeps sinking */
     de.classList.remove('sky-dawn','sky-day','sky-sunset','sky-dusk','sky-night');de.classList.add('night-mood','sky-'+ph);}
   function night(force){ambient(force?'night':phase());}
   var pq=(location.search.match(/[?&]sky=(\w+)/)||[])[1];
   ambient(/^(dawn|day|sunset|dusk|night)$/.test(pq||'')?pq:phase());
-  if(!pq)setInterval(function(){if(!document.hidden)ambient(phase());},60000);
+  if(!pq)setInterval(function(){if(!document.hidden)ambient(phase());},20000); /* every 20 seconds, so the sun can be watched rising and setting */
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&!pq)ambient(phase());});
   var q=(location.search.match(/[?&]fx=(\w+)/)||[])[1];
   if(q==='night')ambient('night');
   if(q==='dusk'||q==='dawn')setTimeout(function(){sky(q);},900);if(q==='thunder')setTimeout(thunder,900);if(q==='rain')setTimeout(rain,900);if(q==='sunny')setTimeout(sunny,900);if(q==='partly')setTimeout(partly,900);if(q==='cloudy')setTimeout(cloudy,900);
