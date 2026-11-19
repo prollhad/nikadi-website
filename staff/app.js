@@ -94,7 +94,7 @@
   function dayKinds(d) { var k = [], h = hols(d); if (isGP(d)) k.push('gp'); h.forEach(function (x) { x.c.forEach(function (c) { c = c === 'wb' ? 'in' : c; if (k.indexOf(c) < 0) k.push(c); }); }); return k; }
   function dayWash(d) { var k = dayKinds(d); if (!k.length) return '';
     var n = k.length, g = k.map(function (c, i) { return 'rgba(' + DAYC[c][0] + ',var(--ha,.2)) ' + Math.round(i / n * 100) + '% ' + Math.round((i + 1) / n * 100) + '%'; }).join(',');
-    return 'background-image:linear-gradient(115deg,' + g + ')'; }
+    return '--hg:' + DAYC[k[0]][0] + ';--hg2:' + DAYC[k[n - 1]][0] + ';background-image:linear-gradient(115deg,' + g + ')'; }
   function dayTip(d) { var k = dayKinds(d), h = hols(d), L = []; if (!k.length) return '';
     L.push(dLong(d)); if (isFS(d)) L.push('• Friday / Saturday (busy night)'); if (isGP(d)) L.push('• Gaura Purnima festival');
     h.forEach(function (x) { L.push('• ' + x.c.map(function (c) { return c === 'wb' ? 'West Bengal holiday' : DAYC[c][1]; }).join(' + ') + ': ' + x.n); });
