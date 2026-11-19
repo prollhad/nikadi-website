@@ -210,23 +210,22 @@ try{
     if((m==='rain'||m==='storm')&&!wxRAF&&!RM)wxRAF=requestAnimationFrame(wxLoop);if(wxEl&&m!=='rain'&&m!=='storm'){var x=wxEl.rain.getContext('2d');x.clearRect(0,0,wxEl.rain.width,wxEl.rain.height);}if(wxRainN){var n0=wxRainN;wxRainN=null;n0.forEach(function(q){try{q.s.stop();}catch(e){}});}wxAudio();}
   /* soft rain and thunder sound for the live weather. Browsers only allow sound after the visitor's first tap or key press. */
   var wxSnd=false,wxMute=false,wxRainN=null,wxBtn=null,wxUnlockT=0;try{wxMute=localStorage.getItem('nk_wxmute2')==='1';}catch(e){}
-  var RAINVOL=.2,wxVol=1,wxMaster=null,wxSl=null,wxBuild=0;try{var v0=parseFloat(localStorage.getItem('nk_wxvol'));if(v0>=0&&v0<=1.6)wxVol=v0;}catch(e){}
+  var RAINVOL=.026,wxVol=1,wxMaster=null,wxSl=null,wxBuild=0;try{var v0=parseFloat(localStorage.getItem('nk_wxvol'));if(v0>=0&&v0<=1.6)wxVol=v0;}catch(e){}
   function wxOut(){if(!wxMaster){wxMaster=AC.createGain();wxMaster.gain.value=wxVol;wxMaster.connect(AC.destination);}return wxMaster;}
   function loopBuf(brown){var sr=AC.sampleRate,n=sr*8,f=sr*1,b=AC.createBuffer(1,n,sr),d=b.getChannelData(0),l=0,i;for(i=0;i<n+f;i++){var w=Math.random()*2-1,v;if(brown){l=(l+.02*w)/1.02;v=l*3.5;}else v=w;if(i<n)d[i]=v;else{var k=(i-n)/f;d[i-n]=d[i-n]*k+v*(1-k);}}return b;}
-  /* rain made of drops, not of hiss: thousands of tiny separate drop sounds (each with its own pitch, loudness and side),
-     slower "plip" drips, and only a very soft wash underneath. Built once as a 12 second stereo loop that joins without a seam. */
-  function rainBuf(){var sr=AC.sampleRate,n=Math.floor(sr*12),f=sr,b=AC.createBuffer(2,n,sr),TP=Math.PI*2;
-    for(var ch=0;ch<2;ch++){var d=b.getChannelData(ch),i,k,b0=0,b1=0,b2=0,l=0;
-      /* soft wash: pink noise (gentler than radio static), plus a low roof rumble, cross-faded at the loop point */
-      for(i=0;i<n+f;i++){var w=Math.random()*2-1;b0=.99765*b0+w*.099046;b1=.963*b1+w*.2965164;b2=.57*b2+w*1.0526913;var pk=(b0+b1+b2+w*.1848)*.05;l=(l+.02*w)/1.02;var v=pk*.3+l*.5;if(i<n)d[i]=v;else{k=(i-n)/f;d[i-n]=d[i-n]*k+v*(1-k);}}
-      /* fine drops: about 420 a second on each side */
-      var drops=Math.floor(420*12),q;for(q=0;q<drops;q++){var at=Math.floor(Math.random()*n),fr=1800+Math.pow(Math.random(),1.6)*4800,tau=sr*(.0008+Math.random()*.0028),a=.012+.16*Math.pow(Math.random(),5),ph=Math.random()*TP,len=Math.floor(tau*4.5),st=TP*fr/sr;
-        for(i=0;i<len;i++){var x=at+i;if(x>=n)x-=n;d[x]+=a*Math.exp(-i/tau)*Math.sin(ph+st*i);}}
-      /* fuller drops landing on leaves, roof and water: lower, a little longer, with the small upward "plip" of a water drop */
-      var drips=Math.floor(7*12);for(q=0;q<drips;q++){var at2=Math.floor(Math.random()*n),f0=420+Math.random()*900,tau2=sr*(.008+Math.random()*.016),a2=.02+.07*Math.random(),len2=Math.floor(tau2*5),ph2=0;
-        for(i=0;i<len2;i++){var x2=at2+i;if(x2>=n)x2-=n;ph2+=TP*f0*(1+.5*i/len2)/sr;d[x2]+=a2*Math.min(1,i/(sr*.002))*Math.exp(-i/tau2)*Math.sin(ph2);}}
-      /* the rain breathes: it swells and eases a little, in whole cycles so the loop stays seamless */
-      var p1=Math.random()*TP,p2=Math.random()*TP;for(i=0;i<n;i++){var tt=i/n;d[i]*=1+.13*Math.sin(TP*tt+p1)+.07*Math.sin(TP*3*tt+p2);}}
+  /* steady rain: no pitched "plip" drops at all (those sounded like a tap filling a pot). The sound is thousands of tiny, soft bursts of
+     shaped noise (rain hitting leaves, roof and ground) over a quiet, even wash. Stereo, built once as a 12 second loop that joins without a seam. */
+  function rainBuf(){var sr=AC.sampleRate,n=Math.floor(sr*12),f=sr,b=AC.createBuffer(2,n,sr),TP=Math.PI*2,i,k;
+    function band(lo,hi){var o=new Float32Array(n),a1=1-Math.exp(-TP*hi/sr),a2=1-Math.exp(-TP*lo/sr),y1=0,y2=0,z1=0,z2=0;for(var j=0;j<n+f;j++){var w=Math.random()*2-1;y1+=a1*(w-y1);z1+=a1*(y1-z1);y2+=a2*(z1-y2);z2+=a2*(y2-z2);var v=z1-z2;if(j<n)o[j]=v;else{var c=(j-n)/f;o[j-n]=o[j-n]*c+v*(1-c);}}return o;}
+    var B=[band(500,1500),band(1400,3600),band(3200,7500)],BW=[.9,1,.55];
+    for(var ch=0;ch<2;ch++){var d=b.getChannelData(ch),o1=Math.floor(Math.random()*n),o2=Math.floor(Math.random()*n);
+      /* the even wash of rain further away */
+      for(i=0;i<n;i++)d[i]=.5*B[0][(i+o1)%n]+.42*B[1][(i+o2)%n]+.16*B[2][(i+o1+o2)%n];
+      /* the rain close by: soft noise bursts, about 1100 a second on each side, most of them faint and a few a little clearer */
+      var grains=1100*12;for(var q=0;q<grains;q++){var r=Math.random(),bi=r<.3?0:r<.8?1:2,src=B[bi],at=Math.floor(Math.random()*n),off=Math.floor(Math.random()*n),tau=sr*(.002+Math.random()*.007),dec=Math.exp(-1/tau),len=Math.floor(tau*4),a=BW[bi]*(.5+3.2*Math.pow(Math.random(),4)),e=1,atk=sr*.0006;
+        for(i=0;i<len;i++){var x=at+i;if(x>=n)x-=n;var y=off+i;if(y>=n)y-=n;d[x]+=a*e*(i<atk?i/atk:1)*src[y];e*=dec;}}
+      /* the rain breathes a little, in whole cycles so the loop stays seamless */
+      var p1=Math.random()*TP,p2=Math.random()*TP;for(i=0;i<n;i++){var tt=i/n;d[i]*=1+.1*Math.sin(TP*tt+p1)+.06*Math.sin(TP*2*tt+p2);}}
     return b;}
   /* a deep, rolling thunder: soft crack, then a long low rumble that rolls two or three times and fades */
   /* real-sounding thunder, from short 1 to 2 second claps up to 6 second giants, five clearly different kinds:
@@ -255,7 +254,7 @@ try{
       pops(hit,.4,14,600,2800,.9);boom(hit+.02,82,1.15,1.7);boom(hit+.1,44,.8,2.1);subs(hit+.6,len*.75,Math.round(len/3),.5);}
     else{pops(0,Math.min(1.1,len*.5),34,900,3600,.75);pops(.2,.9,12,300,900,.6);layer(true,'lowpass',700,80,.4,function(k){return Math.min(1,k*8)*(.5*Math.exp(-k*2)+.8*Math.exp(-Math.pow((k-.42)/.14,2)))*(1-k*.4);});boom(.4*len,58,.6,1.5);}}
   function wxAudio(){var on=wxSnd&&!wxMute&&!document.hidden&&(wxMode==='rain'||wxMode==='storm');
-    if(on&&!wxRainN&&AC){var src=AC.createBufferSource();src.buffer=rainBuf();src.loop=true;var hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=90;var lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=6500;lp.Q.value=.3;var g=AC.createGain(),vol=RAINVOL*(wxMode==='storm'?1.3:1);g.gain.setValueAtTime(0,AC.currentTime);g.gain.linearRampToValueAtTime(vol,AC.currentTime+3);src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(wxOut());src.start();wxRainN=[{s:src,g:g}];}
+    if(on&&!wxRainN&&AC){var src=AC.createBufferSource();src.buffer=rainBuf();src.loop=true;var hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=220;var lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=5200;lp.Q.value=.3;var g=AC.createGain(),vol=RAINVOL*(wxMode==='storm'?1.3:1);g.gain.setValueAtTime(0,AC.currentTime);g.gain.linearRampToValueAtTime(vol,AC.currentTime+3);src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(wxOut());src.start();wxRainN=[{s:src,g:g}];}
     else if(!on&&wxRainN){var n=wxRainN;wxRainN=null;n.forEach(function(q){try{q.g.gain.cancelScheduledValues(AC.currentTime);q.g.gain.setValueAtTime(q.g.gain.value,AC.currentTime);q.g.gain.linearRampToValueAtTime(0,AC.currentTime+.8);q.s.stop(AC.currentTime+.9);}catch(e){}});}
     var need=wxMode==='rain'||wxMode==='storm';if(need&&!wxBtn){wxBtn=document.createElement('button');wxBtn.type='button';wxBtn.className='wx-mute';wxBtn.addEventListener('click',function(){if(Date.now()-wxUnlockT<700){wxAudio();return;}wxMute=!wxMute;try{localStorage.setItem('nk_wxmute2',wxMute?'1':'0');}catch(e){}if(!wxMute){ac();wxSnd=!!AC;}wxAudio();});document.body.appendChild(wxBtn);wxSl=document.createElement('input');wxSl.type='range';wxSl.min='0';wxSl.max='1.6';wxSl.step='0.05';wxSl.value=String(wxVol);wxSl.className='wx-vol';wxSl.setAttribute('aria-label','Rain and thunder volume');wxSl.addEventListener('input',function(){wxVol=+wxSl.value;if(wxMaster)wxMaster.gain.setTargetAtTime(wxVol,AC.currentTime,.05);try{localStorage.setItem('nk_wxvol',String(wxVol));}catch(e){}});document.body.appendChild(wxSl);}
     if(wxSl)wxSl.hidden=!need||wxMute||!wxSnd;if(wxBtn){wxBtn.hidden=!need;wxBtn.textContent=wxMute?'Rain sound off':(wxSnd?'Rain sound on':'Tap for rain sound');wxBtn.setAttribute('aria-pressed',String(!wxMute));}}
