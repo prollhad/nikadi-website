@@ -248,18 +248,32 @@ section.alt{background:var(--band)}
 .fx-tint{opacity:0;transition:opacity 1.6s ease}
 .fx-on .fx-tint{opacity:1}
 .fx-dusk .fx-tint{background:linear-gradient(180deg,rgba(84,50,150,.6) 0%,rgba(176,66,150,.44) 30%,rgba(236,72,96,.44) 55%,rgba(255,128,60,.5) 78%,rgba(255,208,100,.58) 100%);mix-blend-mode:soft-light}
-.fx-dusk .fx-glow{background:radial-gradient(75% 48% at 50% 105%,rgba(255,150,70,.6),rgba(236,72,110,.3) 42%,rgba(150,70,190,.14) 62%,transparent 76%);opacity:0;transition:opacity 1.8s ease}
+.fx-dusk .fx-glow{background:radial-gradient(75% 48% at 68% 105%,rgba(255,150,70,.45),rgba(236,72,110,.3) 42%,rgba(150,70,190,.14) 62%,transparent 76%);opacity:0;transition:opacity 1.8s ease}
 .fx-dawn .fx-tint{background:linear-gradient(0deg,rgba(255,196,150,.5) 0%,rgba(255,160,170,.32) 40%,rgba(150,170,220,.3) 100%);mix-blend-mode:soft-light}
-.fx-dawn .fx-glow{background:radial-gradient(65% 40% at 50% 104%,rgba(255,214,150,.6),rgba(255,170,150,.2) 45%,transparent 72%);opacity:0;transition:opacity 1.8s ease}
+.fx-dawn .fx-glow{background:radial-gradient(65% 40% at 30% 104%,rgba(255,214,150,.45),rgba(255,170,150,.2) 45%,transparent 72%);opacity:0;transition:opacity 1.8s ease}
 .fx-on .fx-glow{opacity:1}
-.fx-sun{inset:auto!important;left:calc(50% - min(11vw,90px))!important;width:min(22vw,180px);height:min(22vw,180px);border-radius:50%;opacity:0;
-  background:radial-gradient(circle,#fff6dc 0 34%,#ffd27a 48%,rgba(255,150,70,.55) 60%,rgba(255,120,60,0) 72%);filter:blur(.4px)}
-.fx-dawn .fx-sun{top:100vh!important;animation:fxUp 12s cubic-bezier(.4,.15,.5,1) forwards}
-/* sunset: the sun comes down from the top and sinks below the page: one plain reddish-orange disc, as the real setting sun looks */
-.fx-dusk .fx-sun{top:calc(-1 * min(22vw,180px))!important;animation:fxDown 12s cubic-bezier(.45,0,.6,.9) forwards;
-  background:radial-gradient(circle,#ff9a48 0 26%,#ff7a35 46%,#f4592c 60%,rgba(244,89,44,.4) 66%,rgba(244,89,44,0) 73%)}
-@keyframes fxDown{0%{opacity:0;transform:translateY(0) scale(.85)}10%{opacity:.95}82%{opacity:.95}100%{opacity:0;transform:translateY(calc(100vh + 100%)) scale(1.14)}}
-@keyframes fxUp{0%{opacity:0;transform:translateY(0) scale(.7)}10%{opacity:.95}70%{opacity:.95}100%{opacity:0;transform:translateY(calc(-100vh - 100%)) scale(1)}}
+/* the sun for the tapped sunrise / sunset lives in #fxb, a layer BEHIND the page (like the live sky), so it never covers text:
+   it glows softly through the cards instead of sitting on top of them. No hard disc edge, low brightness, off to one side. */
+#fxb{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+#fxb>*{position:absolute}
+.fx-sun{width:min(36vw,320px);aspect-ratio:1;border-radius:50%;opacity:0;margin-left:calc(-.5 * min(36vw,320px));
+  background:radial-gradient(circle,rgba(255,244,214,.9) 0 18%,rgba(255,214,140,.55) 32%,rgba(255,170,100,.22) 50%,rgba(255,150,90,.07) 64%,transparent 72%);filter:blur(2px)}
+.fx-sun::after{content:"";position:absolute;inset:0;border-radius:50%;opacity:0;
+  background:radial-gradient(circle,rgba(255,150,90,.85) 0 17%,rgba(240,96,70,.5) 31%,rgba(214,70,90,.2) 50%,rgba(180,60,120,.06) 64%,transparent 72%)}
+.fx-hz{left:0;right:0;bottom:0;height:46vh;opacity:0}
+/* sunrise: a pale gold sun climbs from below the page to about a third of the way up, then gently fades */
+.fx-dawn .fx-sun{left:30%;top:100vh;animation:fxUp 12s cubic-bezier(.3,.1,.4,1) forwards}
+.fx-dawn .fx-hz{background:radial-gradient(70% 70% at 30% 100%,rgba(255,214,150,.42),rgba(255,176,150,.16) 45%,transparent 72%);animation:fxHzUp 12s ease forwards}
+/* sunset: starts low in the evening sky on the right, turns from gold to deep red as it sinks behind the bottom edge,
+   while the horizon glows rose and gold after it and then fades */
+.fx-dusk .fx-sun{left:68%;top:34vh;animation:fxDown 12s cubic-bezier(.4,0,.55,1) forwards}
+.fx-dusk .fx-sun::after{animation:fxRed 12s ease forwards}
+.fx-dusk .fx-hz{background:radial-gradient(80% 75% at 68% 100%,rgba(255,150,80,.5),rgba(236,84,110,.24) 40%,rgba(150,70,190,.1) 62%,transparent 78%);animation:fxHzDown 12s ease forwards}
+@keyframes fxDown{0%{opacity:0;transform:translateY(0) scale(.92)}14%{opacity:.8}70%{opacity:.88}100%{opacity:0;transform:translateY(calc(66vh + 40%)) scale(1.12)}}
+@keyframes fxRed{0%,15%{opacity:0}75%{opacity:1}100%{opacity:1}}
+@keyframes fxHzDown{0%{opacity:0}25%{opacity:.5}72%{opacity:1}100%{opacity:.55}}
+@keyframes fxUp{0%{opacity:0;transform:translateY(0) scale(1.05)}18%{opacity:.75}72%{opacity:.82}100%{opacity:0;transform:translateY(calc(-68vh - 50%)) scale(.94)}}
+@keyframes fxHzUp{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 @keyframes fxSet{0%{opacity:0;transform:translateY(-6vh)}15%{opacity:.95}80%{opacity:.85}100%{opacity:0;transform:translateY(26vh)}}
 @keyframes fxRise{0%{opacity:0;transform:translateY(0)}20%{opacity:.95}85%{opacity:.85}100%{opacity:0;transform:translateY(-34vh)}}
 .fx-storm .fx-dark{background:rgba(6,10,24,.5);opacity:0;transition:opacity .5s}
@@ -321,7 +335,7 @@ html.sky-day .moon,html.sky-dawn .moon,html.sky-sunset .moon{display:none}
 html.sky-day .s:not(.alt) .head p,html.sky-sunset .s:not(.alt) .head p,html.sky-dawn .s:not(.alt) .head p{text-shadow:0 1px 12px rgba(5,8,22,.7)}
 .moon{position:absolute;top:118px;right:6vw;width:clamp(54px,7vw,96px);aspect-ratio:1}
 .moon canvas{position:static;width:100%;height:100%}
-@media (prefers-reduced-motion:reduce){.fx-sun,.fx-flash.go,.fx-bolt.go{animation:none}}
+@media (prefers-reduced-motion:reduce){.fx-sun,.fx-sun::after,.fx-hz,.fx-flash.go,.fx-bolt.go{animation:none}}
 .gal figure[data-more]{display:none}.gal.all figure[data-more]{display:block}.paybox{grid-column:1/-1;border:1px solid rgba(217,173,85,.45);border-radius:var(--r);background:var(--panel);overflow:hidden}.paybox>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px}.paybox>summary::-webkit-details-marker{display:none}.paybox>summary span{display:grid;gap:4px}.paybox>summary b{font-size:1.1rem}.paybox>summary small{color:var(--muted);font-size:.84rem}.paybox>summary i{font-style:normal;font-size:1.6rem;color:var(--gold-hi);transition:transform .2s}.paybox[open]>summary i{transform:rotate(45deg)}.paybox>.upi{margin:0 24px 24px}
 .gal-more{display:flex;justify-content:center;margin-top:18px}.gal.all+.gal-more{display:none}
 .gal img,.views img{width:100%;height:100%;max-width:100%;object-fit:cover;display:block;transition:transform .6s ease}

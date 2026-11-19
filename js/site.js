@@ -86,9 +86,12 @@ try{
   function rain(){scene({sky:STORM,cover:.92,tone:'dark',rain:1,dur:5500});}
   function thunder(){scene({sky:STORM,cover:.97,tone:'dark',rain:2,storm:1,dur:5800});}
   var fs=document.createElement('div');fs.id='fxs';fs.setAttribute('aria-hidden','true');document.body.appendChild(fs);var SKY=0;
-  function sky(kind){var id=++SKY,go=function(){if(id!==SKY)return;fs.className='fx-'+kind;fs.innerHTML='<div class="fx-tint"></div><div class="fx-glow"></div><div class="fx-sun"></div>';
+  /* the sun and horizon glow go in a layer behind the page, so they never sit on top of the text */
+  var fb=document.createElement('div');fb.id='fxb';fb.setAttribute('aria-hidden','true');document.body.appendChild(fb);
+  function sky(kind){var id=++SKY,go=function(){if(id!==SKY)return;fs.className='fx-'+kind;fs.innerHTML='<div class="fx-tint"></div><div class="fx-glow"></div>';
+      fb.className='fx-'+kind;fb.innerHTML='<div class="fx-hz"></div><div class="fx-sun"></div>';
       requestAnimationFrame(function(){requestAnimationFrame(function(){if(id===SKY)fs.classList.add('fx-on');});});
-      setTimeout(function(){if(id!==SKY)return;fs.classList.remove('fx-on');setTimeout(function(){if(id===SKY){fs.className='';fs.innerHTML='';}},1700);},10600);};
+      setTimeout(function(){if(id!==SKY)return;fs.classList.remove('fx-on');setTimeout(function(){if(id===SKY){fs.className='';fs.innerHTML='';fb.className='';fb.innerHTML='';}},1700);},10600);};
     if(fs.classList.contains('fx-on')){fs.classList.remove('fx-on');setTimeout(go,500);}else go();}
   function weatherMoment(){var w=window.NK_WX,c=w&&w.current?w.current.weather_code:null;
     if(c==null){partly();return;}
