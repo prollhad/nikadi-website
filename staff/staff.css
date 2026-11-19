@@ -222,7 +222,7 @@ main.view{padding-bottom:28px}
 .cal-h b{font-size:.92rem;font-weight:500;color:var(--ink);font-variant-numeric:lining-nums}
 .cal-h i{position:absolute;top:1px;right:3px;font-style:normal;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
 .cal-h.fs{background:#17202e;color:#9cc2ee}.cal-h.fs b{color:#cfe2fb}.cal-cell.fs{background:rgba(120,165,225,.06)}
-.cal-h{position:relative}.cal-h span i{position:static;font-size:.58rem;color:var(--gold)}.cal-h.hol{box-shadow:inset 0 3px 0 var(--hc)}.cal-h.hol.sel{box-shadow:inset 0 3px 0 var(--hc),inset 0 -3px 0 var(--gold)}.hdot{position:absolute;left:50%;bottom:2px;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:var(--hc)}
+.cal-h{position:relative}.cal-h span i{position:static;font-size:.58rem;color:var(--gold)}.hdot{position:absolute;left:50%;bottom:2px;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:var(--hc)}
 .h-f{--hc:#d9ad55}.h-in{--hc:#f3a35f}.h-x{--hc:#a9dcb8}.h-fs{--hc:#9cc2ee}
 .htag{display:inline-block;font-size:.62rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--hc);color:#17130f;margin:2px 4px 2px 0}
 .htag.h-busy{background:transparent;color:var(--gold);border:1px solid var(--gold)}
@@ -777,8 +777,11 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .ph-big{width:100%;max-height:60vh;object-fit:contain;border-radius:10px;background:#000}
 
 /* Gaura Purnima festival days + festival folders */
-.cal-h.gp{box-shadow:inset 0 -3px 0 #e8b64c}.daystrip .gp{box-shadow:inset 0 -3px 0 #e8b64c}
-.legend .k-gp i{background:#e8b64c}
+.cal-h.hol{--ha:.2;transition:filter .15s}.cal-h.hol b{color:#fff}.cal-h.hol:hover{--ha:.36}.cal-h.hol.sel{--ha:.48;box-shadow:inset 0 -3px 0 var(--gold),inset 0 0 0 1px rgba(255,255,255,.28)}
+.daystrip button.hol{--ha:.2}.daystrip button.hol[aria-pressed="true"]{background-image:none!important}
+.cal-h[data-tip]:hover{z-index:8}.cal-h[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:9;white-space:pre;text-align:left;font-size:.74rem;line-height:1.55;letter-spacing:0;text-transform:none;color:var(--ink);background:#0b1020;border:1px solid var(--gold);border-radius:10px;padding:9px 12px;box-shadow:0 14px 30px -10px rgba(0,0,0,.9);pointer-events:none}
+.cal-h.tl[data-tip]:hover::after{left:0;transform:none}.cal-h.tr[data-tip]:hover::after{left:auto;right:0;transform:none}
+.legend .k-gp i{background:rgba(255,150,190,.45);border:1px solid rgb(255,150,190)}.legend .k-hf i{background:rgba(217,173,85,.45)!important;border:1px solid rgb(217,173,85)}.legend .k-hin i{background:rgba(243,163,95,.45)!important;border:1px solid rgb(243,163,95)}.legend .k-hx i{background:rgba(150,225,175,.45)!important;border:1px solid rgb(150,225,175)}
 .panel.fest .ff{border:1px solid var(--line);border-radius:12px;margin-top:10px;overflow:hidden}
 .panel.fest .ff>summary{list-style:none;cursor:pointer;display:grid;gap:2px;padding:12px 14px;background:var(--panel)}.panel.fest .ff>summary::-webkit-details-marker{display:none}
 .panel.fest .ff>summary b::before{content:"▸ ";color:var(--gold-hi,#e8c77a)}.panel.fest .ff[open]>summary b::before{content:"▾ "}

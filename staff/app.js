@@ -88,6 +88,17 @@
   function holsIn(a, b) { return (window.NK_CAL || []).filter(function (x) { return x.d < b && (x.e || x.d) >= a; }); }
   function holDot(d) { var h = hols(d); return h.length ? '<em class="hdot ' + HKIND[h[0].c[0]] + '" title="' + esc(h.map(function (x) { return x.n; }).join(' · ')) + '"></em>' : ''; }
   function isGP(d) { var g = window.NK_GP; return !!g && d >= g.from && d <= g.to; }
+  /* festival days: the whole date square gets a light see-through wash in the colour of what falls on it (two to four colours side by side when several
+     things share a day). Pointing at the square lists everything on that day. */
+  var DAYC = { gp: ['255,150,190', 'Gaura Purnima festival'], f: ['217,173,85', 'Mayapur festival'], in: ['243,163,95', 'Indian holiday'], x: ['150,225,175', 'International'] };
+  function dayKinds(d) { var k = [], h = hols(d); if (isGP(d)) k.push('gp'); h.forEach(function (x) { x.c.forEach(function (c) { c = c === 'wb' ? 'in' : c; if (k.indexOf(c) < 0) k.push(c); }); }); return k; }
+  function dayWash(d) { var k = dayKinds(d); if (!k.length) return '';
+    var n = k.length, g = k.map(function (c, i) { return 'rgba(' + DAYC[c][0] + ',var(--ha,.2)) ' + Math.round(i / n * 100) + '% ' + Math.round((i + 1) / n * 100) + '%'; }).join(',');
+    return 'background-image:linear-gradient(115deg,' + g + ')'; }
+  function dayTip(d) { var k = dayKinds(d), h = hols(d), L = []; if (!k.length) return '';
+    L.push(dLong(d)); if (isFS(d)) L.push('• Friday / Saturday (busy night)'); if (isGP(d)) L.push('• Gaura Purnima festival');
+    h.forEach(function (x) { L.push('• ' + x.c.map(function (c) { return c === 'wb' ? 'West Bengal holiday' : DAYC[c][1]; }).join(' + ') + ': ' + x.n); });
+    return L.join('\n'); }
   function isFS(d) { var w = new Date(d + 'T00:00:00Z').getUTCDay(); return w === 5 || w === 6; }
   function holTags(x) { return x.c.map(function (c) { return '<span class="htag ' + HKIND[c] + '">' + HLBL[c] + '</span>'; }).join('') + (x.big ? '<span class="htag h-busy">Busy · expect calls</span>' : ''); }
   function holBox(list, title) {
@@ -2007,7 +2018,8 @@
       var cols = 'grid-template-columns:132px repeat(' + c.days + ',minmax(30px,1fr))';
       var g = '<div class="cal" style="' + cols + '"><div class="cal-corner">Room</div>' + days.map(function (d, j) {
         var dd = new Date(d + 'T00:00:00Z'), we = isFS(d);
-        return '<button type="button" class="cal-h' + (d === c.today ? ' today' : '') + (we ? ' fs' : '') + (isGP(d) ? ' gp' : '') + (hols(d).length ? ' hol ' + HKIND[hols(d)[0].c[0]] : '') + (d === X.day ? ' sel' : '') + '" data-day="' + d + '" style="grid-column:' + (j + 2) + '"' + (hols(d).length ? ' title="' + esc(hols(d).map(function (x) { return x.n; }).join(' · ')) + '"' : '') + '><span>' + (dd.getUTCDate() === 1 ? '<i>' + MON[dd.getUTCMonth()] + '</i>' : WD[dd.getUTCDay()].slice(0, 2)) + '</span><b>' + dd.getUTCDate() + '</b>' + holDot(d) + '</button>';
+        var wash = dayWash(d), tip = dayTip(d);
+        return '<button type="button" class="cal-h' + (d === c.today ? ' today' : '') + (we ? ' fs' : '') + (wash ? ' hol' : '') + (j < 5 ? ' tl' : j > days.length - 6 ? ' tr' : '') + (d === X.day ? ' sel' : '') + '" data-day="' + d + '" style="grid-column:' + (j + 2) + (wash ? ';' + wash : '') + '"' + (tip ? ' data-tip="' + esc(tip) + '" aria-label="' + esc(tip.replace(/\n/g, ', ')) + '"' : '') + '><span>' + (dd.getUTCDate() === 1 ? '<i>' + MON[dd.getUTCMonth()] + '</i>' : WD[dd.getUTCDay()].slice(0, 2)) + '</span><b>' + dd.getUTCDate() + '</b></button>';
       }).join('');
       c.rooms.forEach(function (r, ri) {
         var row = ri + 2;
@@ -2028,8 +2040,8 @@
     } else {
       body = '<div class="daystrip" id="ds">' + days.map(function (d) {
         var dd = new Date(d + 'T00:00:00Z'), n = c.rooms.filter(function (r) { return !nightOf(c, r.room, d); }).length;
-        var cl = (d === c.today ? 'today ' : '') + (isFS(d) ? 'fs ' : '') + (isGP(d) ? 'gp' : '');
-        return '<button type="button" data-day="' + d + '" aria-pressed="' + (d === X.day) + '"' + (cl ? ' class="' + cl.trim() + '"' : '') + '><span>' + WD[dd.getUTCDay()] + '</span><b>' + dd.getUTCDate() + '</b><small>' + n + ' free</small>' + holDot(d) + '</button>';
+        var wash = dayWash(d), cl = (d === c.today ? 'today ' : '') + (isFS(d) ? 'fs ' : '') + (wash ? 'hol' : '');
+        return '<button type="button" data-day="' + d + '" aria-pressed="' + (d === X.day) + '"' + (cl ? ' class="' + cl.trim() + '"' : '') + (wash ? ' style="' + wash + '"' : '') + '><span>' + WD[dd.getUTCDay()] + '</span><b>' + dd.getUTCDate() + '</b><small>' + n + ' free</small></button>';
       }).join('') + '</div>' + dayPanel(c, X.day) + pend;
     }
     v.innerHTML = head + body + festFolders(c);
