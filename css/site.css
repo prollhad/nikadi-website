@@ -870,8 +870,9 @@ body{background:radial-gradient(1200px 600px at 80% -10%,rgba(217,173,85,.08),tr
 /* page banner (sub pages) */
 .hero .slides picture{display:contents}
 nav.main a{white-space:nowrap}
-@media (max-width:1430px){nav.main{gap:18px!important;letter-spacing:.12em}nav.main a:nth-child(7),nav.main a:nth-child(8){display:none}}
-@media (max-width:1215px){nav.main a:nth-child(9){display:none}}
+@media (max-width:1560px){nav.main{gap:18px!important;letter-spacing:.12em}nav.main a:nth-child(6),nav.main a:nth-child(7){display:none}}
+@media (max-width:1390px){nav.main a:nth-child(3){display:none}}
+@media (max-width:1250px){nav.main a:nth-child(8){display:none}}
 @media (max-width:1120px){nav.main{gap:14px!important;letter-spacing:.09em}}
 @media (max-width:1090px){nav.main{gap:11px!important;letter-spacing:.06em}}
 #gourdham{scroll-margin-top:104px}

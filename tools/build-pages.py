@@ -18,7 +18,7 @@ PAGES = {
   'travel.html': {'url': '/travel.html', 'sections': ['location', 'transport'],
     'title': 'Location & travel: find us, trains, buses and cars from Kolkata · Nikadi Guest House',
     'desc': 'Every train and bus from Howrah and Sealdah to Mayapur, our own cars for airport and station pickups, and the Gourdham Travels desk: tickets, money exchange, Western Union and MoneyGram.',
-    'banner': ('Getting here', 'Location & travel', 'Where we are, the way in, live train times from Kolkata, our own cars and a full travel desk at the guest house.', 'img/view-street.jpg')},
+    'banner': ('Getting to Mayapur · travel desk', 'Location & travel', 'Where we are, the way in, live train times from Kolkata, our own cars and a full travel desk at the guest house.', 'img/view-street.jpg')},
   'about.html': {'url': '/about.html', 'sections': ['about', 'team', 'guests', 'rules'],
     'title': 'About Nikadi Guest House: our story, our team & house rules · Mayapur',
     'desc': 'Nikadi Guest House is a small, pure vegetarian guest house opposite ISKCON Gate No. 4 in Sri Dham Mayapur. Our story, the people who look after you, and the house rules.',
@@ -33,7 +33,7 @@ PAGES = {
     'banner': ('Members save up to 20%', 'Nikadi Membership', 'Four levels, member rates up to 20% off every night, and points on every stay. Free to join.', None)},
 }
 NAV = [('/#rooms', 'Rooms', None), ('/temple.html', 'Temple', 'temple.html'), ('/things-to-do.html', 'Things to do', 'things-to-do.html'),
-       ('/travel.html', 'Getting here', 'travel.html'), ('/travel.html#gourdham', 'Travel', None), ('/membership.html', 'Membership', 'membership.html'), ('/#reviews', 'Reviews', None),
+       ('/travel.html', 'Getting to Mayapur · travel desk', 'travel.html'), ('/membership.html', 'Membership', 'membership.html'), ('/#reviews', 'Reviews', None),
        ('/about.html', 'About', 'about.html'), ('/#contact', 'Contact', None)]
 
 # ---- split the master file ----
