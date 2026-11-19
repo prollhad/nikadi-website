@@ -33,7 +33,7 @@ PAGES = {
     'banner': ('Members save up to 20%', 'Nikadi Membership', 'Four levels, member rates up to 20% off every night, and points on every stay. Free to join.', None)},
 }
 NAV = [('/#rooms', 'Rooms', None), ('/temple.html', 'Temple', 'temple.html'), ('/things-to-do.html', 'Things to do', 'things-to-do.html'),
-       ('/travel.html', 'Getting here', 'travel.html'), ('/membership.html', 'Membership', 'membership.html'), ('/#reviews', 'Reviews', None),
+       ('/travel.html', 'Getting here', 'travel.html'), ('/travel.html#gourdham', 'Travel', None), ('/membership.html', 'Membership', 'membership.html'), ('/#reviews', 'Reviews', None),
        ('/about.html', 'About', 'about.html'), ('/#contact', 'Contact', None)]
 
 # ---- split the master file ----
