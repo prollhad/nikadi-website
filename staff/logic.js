@@ -2662,7 +2662,7 @@ function deskCore(db, hooks) {
     for (var i = 0; i < days; i++) {
       var av = api.availability({ _internal: true, checkin: d, checkout: addDays(d, 1) }), row = { d: d, t: {} };
       if (!names) names = av.types.map(function (t) { return t.type; });
-      av.types.forEach(function (t) { var o = show[d] && (show[d][t.type] || show[d]['*']); row.t[t.type] = o && SITE_SHOW[o] ? o : t.free <= 0 ? 'full' : t.free <= 2 ? 'few' : 'free'; });
+      av.types.forEach(function (t) { var o = show[d] && (show[d][t.type] || show[d]['*']); row.t[t.type] = o && SITE_SHOW[o] ? (o === 'few' ? 'fewset' : o) : t.free <= 0 ? 'full' : t.free <= 2 ? 'few' : 'free'; }); // 'fewset' = Almost full chosen by the front desk (the website always shows it); plain 'few' is counted from bookings
       out.push(row); d = addDays(d, 1);
     }
     return { from: today(), types: names || [], days: out, deal: tonightDeal() };

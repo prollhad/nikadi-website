@@ -4640,10 +4640,11 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
   function demand(d){if(d>DEMAND_UNTIL)return '';var p=d.split('-'),w=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])).getUTCDay(),h=hsh(d+type);
     var fest=(window.NK_CAL||[]).some(function(x){return x.big&&x.d<=d&&d<=(x.e||x.d);});
     /* a varied picture of how busy we expect each night to be: weekends and festivals lean busy, but not every one the same */
+    if(p[1]==='02'||p[1]==='03')return 'busy'; /* February and March (Gaura Purnima season): every night is in high demand */
     if(fest)return h<.72?'busy':'fill';
-    if(w===5||w===6)return h<.46?'busy':h<.8?'fill':'free';
-    if(w===0)return h<.2?'busy':h<.62?'fill':'free';
-    return h<.12?'busy':h<.45?'fill':'free';}
+    if(w===5||w===6)return h<.44?'busy':h<.74?'fill':'free';
+    if(w===0)return h<.16?'busy':h<.48?'fill':'free';
+    return h<.1?'busy':h<.38?'fill':'free';} /* overall about 40% of ordinary nights show green */
   function price(d){if(!R)return '';var r=R.rate(type,d);return '₹'+r.toLocaleString('en-IN');}
   function fullBetween(a,b){for(var d=a;d<b;d=addDay(d,1))if(stat(d)==='full')return d;return null;}
   function nice(d){var p=d.split('-'),x=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));return nkFmt(x,{weekday:'short',day:'numeric',month:'short'})||WD[x.getUTCDay()]+' '+(+p[2])+' '+MN[+p[1]-1].slice(0,3);}
@@ -4652,7 +4653,7 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
     (WDL||WD).forEach(function(w){h+='<span class="wd">'+(WDL?w:w.slice(0,2))+'</span>';});
     for(var i=0;i<first;i++)h+='<span class="avd a-blank"></span>';
     for(var d=1;d<=days;d++){
-      var k=ymd(y,m,d),c=['avd'],raw=stat(k),st=(raw==='busy'||raw==='fill'||raw==='open')?'free':raw,lbl=price(k),past=k<today;
+      var k=ymd(y,m,d),c=['avd'],raw=stat(k),twinFew=raw==='few'&&/Twin/.test(type),st=(raw==='busy'||raw==='fill'||raw==='open'||twinFew)?'free':raw==='fewset'?'few':raw,lbl=price(k),past=k<today; /* the Twin types have only one or two rooms, so 'few left' is their everyday state: they show the price and the usual colours. 'fewset' = the front desk chose Almost full for this date */
       var dm=past?'':raw==='busy'?'busy':raw==='fill'?'fill':raw==='open'?'free':st==='few'?'busy':st==='full'?'':demand(k); /* busy / fill / open: the front desk chose what this date shows */if(dm)c.push('a-dm-'+dm);
       if(past)c.push('a-past');else{if(st&&!(dm&&st==='free'))c.push('a-'+st);if(st==='few')lbl=nkT(/Twin/.test(type)?'Few rooms':'Almost full');if(st==='full')lbl=nkT('Sold out');if(R&&R.period(k).offer)c.push('a-offer');}
       if(k===today)c.push('a-today');
