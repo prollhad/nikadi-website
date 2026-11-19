@@ -276,10 +276,21 @@ html.night-mood .s.alt{background:rgba(11,17,38,.5)}
 #nightsky canvas{position:absolute;inset:0;width:100%;height:100%}
 #nightsky::after{content:"";position:absolute;inset:0;background:rgba(5,8,22,0);transition:background 2s}
 html.sky-day #nightsky::after{background:rgba(5,8,22,.04)}
-#nightsky .daycl{position:absolute;left:0;top:0;width:max(200%,2600px);height:72%;background-repeat:repeat-x;background-size:50% 100%;opacity:0;transition:opacity 3s ease;animation:dayDrift 420s linear infinite;will-change:transform}
+#nightsky .daycl{position:absolute;left:0;top:0;width:max(200%,2600px);height:72%;background-repeat:repeat-x;background-size:50% 100%;opacity:0;transition:opacity 3s ease;animation:dayDrift 130s linear infinite;will-change:transform}
+#nightsky .wxtint{position:absolute;inset:0;background:#3b4454;opacity:0;transition:opacity 3s ease,background 3s ease}
+#nightsky .wxdark{filter:blur(7px);position:absolute;left:0;top:-3%;width:max(200%,2600px);height:100%;background-repeat:repeat-x;background-size:50% 100%;opacity:0;transition:opacity 3s ease;animation:dayDrift 80s linear infinite;will-change:transform}
+#nightsky .wxrain{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 2s ease}
+#nightsky .wxflash{position:absolute;inset:0;opacity:0;background:radial-gradient(60% 70% at var(--bx,50%) 0%,rgba(225,235,255,.85),rgba(190,205,240,.3) 55%,rgba(190,205,240,.12))}
+#nightsky .wxflash.go{animation:wxFlash .9s ease-out}
+@keyframes wxFlash{0%{opacity:0}6%{opacity:.75}16%{opacity:.15}26%{opacity:.55}100%{opacity:0}}
+html.wx-cloudy #nightsky .wxtint{opacity:.62}html.wx-rain #nightsky .wxtint{opacity:.72;background:#2c3442}html.wx-storm #nightsky .wxtint{opacity:.82;background:#1b212d}
+html.wx-cloudy #nightsky .wxdark{opacity:.9}html.wx-rain #nightsky .wxdark,html.wx-storm #nightsky .wxdark{opacity:1}
+html.wx-rain #nightsky .wxrain,html.wx-storm #nightsky .wxrain{opacity:1}
+html.wx-cloudy #nightsky .daycl,html.wx-rain #nightsky .daycl,html.wx-storm #nightsky .daycl{opacity:0!important}
+html.wx-cloudy .moon,html.wx-rain .moon,html.wx-storm .moon{opacity:.25}
 @keyframes dayDrift{to{transform:translateX(-50%)}}
 html.sky-day #nightsky .daycl{opacity:.8}html.sky-dawn #nightsky .daycl{opacity:.4}html.sky-sunset #nightsky .daycl{opacity:.45}
-@media (prefers-reduced-motion:reduce){#nightsky .daycl{animation:none}}
+@media (prefers-reduced-motion:reduce){#nightsky .daycl,#nightsky .wxdark{animation:none}}
 html.sky-dawn #nightsky::after{background:rgba(5,8,22,.38)}
 html.sky-sunset #nightsky::after{background:rgba(5,8,22,.36)}
 html.sky-dusk #nightsky::after{background:rgba(5,8,22,.2)}
