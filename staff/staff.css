@@ -795,10 +795,11 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .panel.fest .fr .fd{color:var(--gold-hi,#e8c77a);font-weight:700;white-space:nowrap}.panel.fest .fr.main{background:rgba(232,182,76,.14)}.panel.fest .fr.main .fn{font-weight:800}
 @media (max-width:600px){.panel.fest .fr{grid-template-columns:1fr;gap:2px}}
 
-/* Calendar → a date → what the website shows for it */
-.sitebox{border:1px solid var(--line);border-left:3px solid #9cc2ee;border-radius:12px;padding:12px 14px;margin:0 0 14px;background:rgba(156,194,238,.05);display:grid;gap:8px}
-.sitebox.on{border-left-color:var(--gold);background:rgba(217,173,85,.07)}
-.sitetop{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}.sitetop .kicker{margin:0}
-.siterow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,220px);gap:10px;align-items:center;font-size:.88rem}.siterow.all{font-weight:700}
-.siterow select{width:100%;min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;padding:6px 10px}
-.sitebox .small{margin:0}
+/* Calendar: one slim line under the Earlier / Today / Later buttons: what the website shows for the selected date */
+.sitebar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 10px;font-size:.74rem;color:var(--muted)}
+.sitebar>b{font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:.66rem;color:var(--gold);margin-right:4px}
+.sitechip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 10px;background:var(--panel);cursor:pointer}
+.sitechip span{white-space:nowrap}
+.sitechip select{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;padding:3px 2px;border-radius:999px;cursor:pointer;max-width:120px}
+.sitechip select option{background:#14161d;color:#f1ece2}
+.sitechip.on{border-color:var(--gold);background:rgba(217,173,85,.1)}.sitechip.v-full{border-color:#e8705a;background:rgba(232,112,90,.14)}.sitechip.v-full select{color:#ffb3a3}
