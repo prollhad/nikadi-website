@@ -2576,13 +2576,13 @@ function deskCore(db, hooks) {
   };
 
   /* Public (website calendar, no login): for each night from today, whether each room type is
-     'free', 'few' (2 or fewer rooms left) or 'full'. Only these three words leave: no counts, no guest data. */
+     'free', 'few' (some booked, and at most 2 rooms and at most half of that type left) or 'full'. Only these three words leave: no counts, no guest data. */
   api.siteAvailability = function (req) {
     var days = Math.min(180, Math.max(7, Math.round(Number(req.days || 120)))), d = today(), out = [], names = null;
     for (var i = 0; i < days; i++) {
       var av = api.availability({ _internal: true, checkin: d, checkout: addDays(d, 1) }), row = { d: d, t: {} };
       if (!names) names = av.types.map(function (t) { return t.type; });
-      av.types.forEach(function (t) { row.t[t.type] = t.free <= 0 ? 'full' : t.free <= 2 ? 'few' : 'free'; });
+      av.types.forEach(function (t) { row.t[t.type] = t.free <= 0 ? 'full' : (t.free < t.total && t.free <= 2 && t.free * 2 <= t.total) ? 'few' : 'free'; });
       out.push(row); d = addDays(d, 1);
     }
     return { from: today(), types: names || [], days: out };
