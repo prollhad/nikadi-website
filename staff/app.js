@@ -870,7 +870,7 @@
       var groups = [], by = {};
       D.items.forEach(function (i) { if (!by[i.group]) { by[i.group] = []; groups.push(i.group); } by[i.group].push(i); });
       var r = cur();
-      body.innerHTML = '<p class="small">For a guest who is staying and asks for something extra: a towel, hand towel, bath mat, bedsheet, pillow, blanket or mattress. It is written on the room and counted out of the clean store. <b>It is not put on the bill.</b></p>' +
+      body.innerHTML = '<p class="small">For a guest who is staying and asks for something extra: a towel, hand towel, bath mat, bedsheet, pillow or blanket. It is written on the room and counted out of the clean store. <b>It is not put on the bill.</b> An extra mattress is charged: add it with Add item.</p>' +
         '<p class="kicker">Which room?</p>' + seg('ex-room', D.rooms.map(function (x) { return 'Room ' + x.room; }), pick) +
         (r && r.given.length ? '<p class="kicker" style="margin-top:14px">Already given to room ' + r.room + '</p><div class="list">' + r.given.map(function (g) {
           return '<div class="lc-row"><span>' + g.qty + ' × ' + esc(g.item) + '<small>' + esc(g.by) + ' · ' + esc(tShort(g.at)) + '</small></span><button class="btn btn-quiet sm" type="button" data-back="' + esc(g.id) + '">Take back</button></div>'; }).join('') + '</div>' : '') +

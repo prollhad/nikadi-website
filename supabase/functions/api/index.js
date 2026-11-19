@@ -3290,7 +3290,7 @@ function deskCore(db, hooks) {
     return api.housekeeping(req);
   };
   /* ---- Extra bedding and towels for a staying guest (everyone, housekeeping included) ----
-     An extra towel, hand towel, bath mat, bedsheet, pillow, pillow cover, blanket or mattress: taken from the clean store into that room,
+     An extra towel, hand towel, bath mat, bedsheet, pillow, pillow cover or blanket (not a mattress, which is charged): taken from the clean store into that room,
      written on the room's list as free, and never printed on the bill. Taking one back, or the guest checking out, returns it
      (things that get washed go to the laundry pile, the rest back to the store). */
   function extrasOf(sid) { return chargesOf(sid).filter(function (c) { return c.note === DESK_EXTRA_NOTE; }); }
@@ -3308,7 +3308,7 @@ function deskCore(db, hooks) {
       var r = room(req.room); if (r.status !== 'Occupied' || !r.stay) fail('room_not_occupied');
       var s = stay(r.stay), n = linenCounts(req.items);
       if (!linenSum(n)) fail('bad_qty');
-      Object.keys(n).forEach(function (k) { if (n[k] > 20) fail('bad_qty'); });
+      Object.keys(n).forEach(function (k) { if (n[k] > 20 || /mattress/i.test(k)) fail('bad_qty'); }); // an extra mattress is charged: it goes through Add item, never through this free list
       Object.keys(n).forEach(function (k) {
         linenMove(linenItem(k), n[k], 'store', 'rooms', 'Extra for the guest', r.room, me.name);
         db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: r.room, item: k, qty: n[k], price: 0, total: 0, free: 'Yes', note: DESK_EXTRA_NOTE, by: me.name, removed: '' });
@@ -3321,7 +3321,7 @@ function deskCore(db, hooks) {
       rooms.push({ room: r.room, guest: String(s.guest || '').split(/\s+/)[0], given: extrasOf(s.id).map(function (c) { return { id: c.id, item: c.item, qty: Number(c.qty), by: c.by, at: c.at }; }) });
     });
     rooms.sort(function (a, b) { return a.room - b.room; });
-    return { rooms: rooms, items: linenAll().filter(function (i) { return yes(i.active); }).map(function (i) { return { item: i.item, group: i.group || 'Other', store: Number(i.store || 0) }; }) };
+    return { rooms: rooms, items: linenAll().filter(function (i) { return yes(i.active) && !/mattress/i.test(i.item); }).map(function (i) { return { item: i.item, group: i.group || 'Other', store: Number(i.store || 0) }; }) };
   };
   /* Undo a mistaken "done" (the same person the same day, or a manager / owner). Puts the items back in stock. */
   api.serviceUndo = function (req) {

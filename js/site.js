@@ -256,7 +256,7 @@ try{
     if((m==='rain'||m==='storm')&&!wxRAF&&!RM)wxRAF=requestAnimationFrame(wxLoop);if(wxEl&&m!=='rain'&&m!=='storm'){var x=wxEl.rain.getContext('2d');x.clearRect(0,0,wxEl.rain.width,wxEl.rain.height);}if(wxRainN){var n0=wxRainN;wxRainN=null;n0.forEach(function(q){try{q.s.stop();}catch(e){}});}wxAudio();}
   /* soft rain and thunder sound for the live weather. Browsers only allow sound after the visitor's first tap or key press. */
   var wxSnd=false,wxMute=false,wxRainN=null,wxBtn=null,wxUnlockT=0;try{wxMute=localStorage.getItem('nk_wxmute2')==='1';}catch(e){}
-  var RAINVOL=.026,wxVol=1,wxMaster=null,wxSl=null,wxBuild=0;try{var v0=parseFloat(localStorage.getItem('nk_wxvol'));if(v0>=0&&v0<=1.6)wxVol=v0;}catch(e){}
+  var RAINVOL=.022,wxVol=1,wxMaster=null,wxSl=null,wxBuild=0;try{var v0=parseFloat(localStorage.getItem('nk_wxvol'));if(v0>=0&&v0<=1.6)wxVol=v0;}catch(e){}
   function wxOut(){if(!wxMaster){wxMaster=AC.createGain();wxMaster.gain.value=wxVol;wxMaster.connect(AC.destination);}return wxMaster;}
   function loopBuf(brown){var sr=AC.sampleRate,n=sr*8,f=sr*1,b=AC.createBuffer(1,n,sr),d=b.getChannelData(0),l=0,i;for(i=0;i<n+f;i++){var w=Math.random()*2-1,v;if(brown){l=(l+.02*w)/1.02;v=l*3.5;}else v=w;if(i<n)d[i]=v;else{var k=(i-n)/f;d[i-n]=d[i-n]*k+v*(1-k);}}return b;}
   /* steady rain: no pitched "plip" drops at all (those sounded like a tap filling a pot). The sound is thousands of tiny, soft bursts of
@@ -271,7 +271,13 @@ try{
       var grains=1100*12;for(var q=0;q<grains;q++){var r=Math.random(),bi=r<.3?0:r<.8?1:2,src=B[bi],at=Math.floor(Math.random()*n),off=Math.floor(Math.random()*n),tau=sr*(.002+Math.random()*.007),dec=Math.exp(-1/tau),len=Math.floor(tau*4),a=BW[bi]*(.5+3.2*Math.pow(Math.random(),4)),e=1,atk=sr*.0006;
         for(i=0;i<len;i++){var x=at+i;if(x>=n)x-=n;var y=off+i;if(y>=n)y-=n;d[x]+=a*e*(i<atk?i/atk:1)*src[y];e*=dec;}}
       /* the rain breathes a little, in whole cycles so the loop stays seamless */
-      var p1=Math.random()*TP,p2=Math.random()*TP;for(i=0;i<n;i++){var tt=i/n;d[i]*=1+.1*Math.sin(TP*tt+p1)+.06*Math.sin(TP*2*tt+p2);}}
+      var p1=Math.random()*TP,p2=Math.random()*TP;for(i=0;i<n;i++){var tt=i/n;d[i]*=.8*(1+.1*Math.sin(TP*tt+p1)+.06*Math.sin(TP*2*tt+p2));}
+      /* drops landing on leaves and branches, over the steady rain: separate taps you can pick out, some soft and some clearly louder.
+         Each is a short burst of noise (a dull "tup" from the leaf plus a crisp edge), never a musical "plip". Now and then two or three fall close together, as when a leaf tips its water. */
+      var hit=function(at,amp){var tb=sr*(.006+Math.random()*.012),tc=sr*(.0015+Math.random()*.003),db=Math.exp(-1/tb),dc=Math.exp(-1/tc),len=Math.floor(tb*5),ob=Math.floor(Math.random()*n),oc=Math.floor(Math.random()*n),eb=1,ec=1,wb=.5+Math.random()*.9,wc=.5+Math.random()*.8,hi=Math.random()<.5?B[1]:B[2],ak=sr*.0008;
+        for(var z=0;z<len;z++){var x=at+z;if(x>=n)x-=n;var y1=ob+z;if(y1>=n)y1-=n;var y2=oc+z;if(y2>=n)y2-=n;d[x]+=amp*(z<ak?z/ak:1)*(wb*eb*B[0][y1]*3.2+wc*ec*hi[y2]*2.2);eb*=db;ec*=dc;}};
+      var taps=Math.floor(14*12);for(var t2=0;t2<taps;t2++){var at3=Math.floor(Math.random()*n),r3=Math.random(),amp3=r3<.6?.9+Math.random()*1.3:r3<.9?2.4+Math.random()*2.2:4+Math.random()*2.6;hit(at3,amp3);
+        if(Math.random()<.16){var more=1+(Math.random()*2|0),gap=at3;for(var m2=0;m2<more;m2++){gap+=Math.floor(sr*(.07+Math.random()*.16));hit(gap%n,amp3*(.45+Math.random()*.4));}}}}
     return b;}
   /* a deep, rolling thunder: soft crack, then a long low rumble that rolls two or three times and fades */
   /* real-sounding thunder, from short 1 to 2 second claps up to 6 second giants, five clearly different kinds:
