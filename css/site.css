@@ -276,7 +276,7 @@ section.alt{background:var(--band)}
 html.night-mood #nightsky{opacity:1}
 html.night-mood body{background:#060a17}
 html.night-mood .s:not(.alt){background:transparent}
-html.night-mood .s.alt{background:rgba(11,17,38,.5)}
+html.night-mood .s.alt{background:transparent} /* no faded bands across the page: the live sky runs behind every section, and only the deep blue boxes sit on top of it */
 #nightsky canvas{position:absolute;inset:0;width:100%;height:100%}
 #nightsky::after{content:"";position:absolute;inset:0;background:rgba(5,8,22,0);transition:background 2s}
 html.sky-day #nightsky::after{background:rgba(5,8,22,.04)}

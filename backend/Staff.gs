@@ -672,14 +672,14 @@ function deskCore(db, hooks) {
   var DEAL_AFTER = 18, DEAL_ROOMS = 6, DEAL_PRICE = { double: 3000, twin: 2500 }, dealMemo = null, dealBusy = false;
   function tonightDeal() {
     var t = today(), now = Date.now();
-    if (dealMemo && dealMemo.day === t && now - dealMemo.at < 60000) return dealMemo.deal;
+    if (dealMemo && dealMemo.day === t && dealMemo.pm === (ist().getUTCHours() >= DEAL_AFTER) && now - dealMemo.at < 15 * 60000) return dealMemo.deal; // the empty rooms are counted again every 15 minutes (and at 6 pm sharp)
     if (dealBusy) return null;
     var deal = null;
     if (ist().getUTCHours() >= DEAL_AFTER) {
       var offer = false; DESK_RATE_PERIODS.forEach(function (p) { if (t >= p.from && t <= p.to && p.double < 5000) offer = true; });
       if (offer) { dealBusy = true; try { var free = 0; api.availability({ _internal: true, checkin: t, checkout: addDays(t, 1) }).types.forEach(function (x) { free += Number(x.free) || 0; }); if (free >= DEAL_ROOMS) deal = { date: t, double: DEAL_PRICE.double, twin: DEAL_PRICE.twin }; } catch (e) { deal = null; } dealBusy = false; }
     }
-    dealMemo = { day: t, at: now, deal: deal }; return deal;
+    dealMemo = { day: t, at: now, pm: ist().getUTCHours() >= DEAL_AFTER, deal: deal }; return deal;
   }
   function rateNow(type, ymd) { var r = deskRateOn(type, ymd); if (ymd !== today()) return r; var d = tonightDeal(); return d ? Math.min(r, d[/large/i.test(String(type || '')) ? 'double' : /twin/i.test(String(type || '')) ? 'twin' : 'double']) : r; }
   function quoteOf(type, ci, co, rooms) { var tot = 0, d = ci; for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { tot += rateNow(type, d); d = addDays(d, 1); } return tot * Math.max(1, rooms || 1); }
