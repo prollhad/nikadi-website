@@ -272,9 +272,14 @@ section.alt{background:var(--band)}
 html.night-mood #nightsky{opacity:1}
 html.night-mood body{background:#060a17}
 html.night-mood .s:not(.alt){background:transparent}
+html.night-mood .s.alt{background:rgba(11,17,38,.5)}
 #nightsky canvas{position:absolute;inset:0;width:100%;height:100%}
 #nightsky::after{content:"";position:absolute;inset:0;background:rgba(5,8,22,0);transition:background 2s}
-html.sky-day #nightsky::after{background:rgba(5,8,22,.08)}
+html.sky-day #nightsky::after{background:rgba(5,8,22,.04)}
+#nightsky .daycl{position:absolute;left:0;top:0;width:max(200%,2600px);height:72%;background-repeat:repeat-x;background-size:50% 100%;opacity:0;transition:opacity 3s ease;animation:dayDrift 420s linear infinite;will-change:transform}
+@keyframes dayDrift{to{transform:translateX(-50%)}}
+html.sky-day #nightsky .daycl{opacity:.8}html.sky-dawn #nightsky .daycl{opacity:.4}html.sky-sunset #nightsky .daycl{opacity:.45}
+@media (prefers-reduced-motion:reduce){#nightsky .daycl{animation:none}}
 html.sky-dawn #nightsky::after{background:rgba(5,8,22,.38)}
 html.sky-sunset #nightsky::after{background:rgba(5,8,22,.36)}
 html.sky-dusk #nightsky::after{background:rgba(5,8,22,.2)}
