@@ -2,7 +2,7 @@
    GST is worked out from every invoice exactly as the printed bill does (NikadiBill.compute, prices inclusive of GST).
    NkAccounts.open(ctx) where ctx = { app, post, tok, head, nav, wire, esc, login } from the admin page. */
 (function () {
-  var C = null, R = null, P = null, busy = false;
+  var C = null, R = null, P = null, busy = false, MODE = 'accounts', OWN = '19AAHCN7789F1ZR';
   var MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function ymd(y, m, d) { return y + '-' + pad(m) + '-' + pad(d); }
@@ -49,8 +49,8 @@
     r.payments.forEach(function (p) { var d = String(p.at).slice(0, 10), k = p.method || 'Not said';
       if (p.amount >= 0) { rec.in = r2(rec.in + p.amount); rec.by[k] = r2((rec.by[k] || 0) + p.amount); mon(d.slice(0, 7)).received = r2(mon(d.slice(0, 7)).received + p.amount); receipts.push(p); }
       else { rec.out = r2(rec.out - p.amount); mon(d.slice(0, 7)).refunded = r2(mon(d.slice(0, 7)).refunded - p.amount); refunds.push(p); } });
-    var ex = { total: 0, by: {}, withBill: 0 };
-    r.expenses.forEach(function (x) { ex.total = r2(ex.total + x.amount); var k = (x.group || 'Other') + ' › ' + (x.category || 'Other'); ex.by[k] = r2((ex.by[k] || 0) + x.amount); if (x.hasBill) ex.withBill++; mon(String(x.date).slice(0, 7)).expenses = r2(mon(String(x.date).slice(0, 7)).expenses + x.amount); });
+    var ex = { total: 0, by: {}, withBill: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, gstN: 0, unchecked: 0 };
+    r.expenses.forEach(function (x) { ex.total = r2(ex.total + x.amount); var k = (x.group || 'Other') + ' › ' + (x.category || 'Other'); ex.by[k] = r2((ex.by[k] || 0) + x.amount); if (x.hasBill) ex.withBill++; if (x.cgst + x.sgst + x.igst > 0 || x.gstin) { ex.gstN++; ex.taxable = r2(ex.taxable + x.taxable); ex.cgst = r2(ex.cgst + x.cgst); ex.sgst = r2(ex.sgst + x.sgst); ex.igst = r2(ex.igst + x.igst); if (/not checked/.test(x.gstBy)) ex.unchecked++; } mon(String(x.date).slice(0, 7)).expenses = r2(mon(String(x.date).slice(0, 7)).expenses + x.amount); });
     var com = 0; r.commissions.forEach(function (x) { com = r2(com + x.amount); mon(String(x.date).slice(0, 7)).commission = r2(mon(String(x.date).slice(0, 7)).commission + x.amount); });
     var lau = 0; r.laundry.forEach(function (x) { lau = r2(lau + x.total); });
     var kept = 0; r.kept.forEach(function (x) { kept = r2(kept + x.kept); });
@@ -64,13 +64,23 @@
   function tile(l, n, s) { return '<div class="tile"><div class="l">' + l + '</div><div class="n" style="font-size:1.7rem">' + n + '</div><div class="s">' + (s || '&nbsp;') + '</div></div>'; }
   function tbl(headers, rows, foot) { return '<div class="tw"><table><thead><tr>' + headers.map(function (h) { return '<th' + (h[1] ? ' class="n"' : '') + '>' + h[0] + '</th>'; }).join('') + '</tr></thead><tbody>' +
     rows.map(function (r) { return '<tr>' + r.map(function (c, i) { return '<td' + (headers[i][1] ? ' class="n"' : '') + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + (foot ? '<tr class="sub">' + foot.map(function (c, i) { return '<td' + (headers[i][1] ? ' class="n"' : '') + '>' + c + '</td>'; }).join('') + '</tr>' : '') + '</tbody></table></div>'; }
-  function draw() {
-    var e = C.esc, pr = presets(), h = C.head('Accounts for the CA', 'Sales with GST, money received, expenses and commission for any period. Make one PDF and the spreadsheet files to send.') + C.nav('accounts');
+  function chooser(pr) { var h = '';
     h += '<div class="card"><div class="ch"><h2>Choose the period</h2></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">' + pr.map(function (p, i) { return '<button class="btn' + (P && P[0] === p[1] && P[1] === p[2] ? ' btn-gold' : '') + '" type="button" data-pre="' + i + '">' + p[0] + '</button>'; }).join('') + '</div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end"><label class="small">One month<br><select class="in" id="acM" style="max-width:200px"><option value="">Pick a month</option>' + months().map(function (m) { return '<option value="' + m[0] + '">' + m[1] + '</option>'; }).join('') + '</select></label>' +
       '<label class="small">Financial year<br><select class="in" id="acF" style="max-width:200px"><option value="">Pick a year</option>' + [0, 1, 2, 3].map(function (i) { var y = fyOf(istToday()) - i; return '<option value="' + y + '">' + fyName(y) + ' (Apr ' + y + ' to Mar ' + (y + 1) + ')</option>'; }).join('') + '</select></label>' +
       '<label class="small">From<br><input class="in" id="acA" type="date" style="max-width:170px" value="' + (P ? P[0] : '') + '"></label><label class="small">To<br><input class="in" id="acB" type="date" style="max-width:170px" value="' + (P ? P[1] : '') + '"></label>' +
       '<button class="btn btn-gold" type="button" id="acGo">Show</button></div><p class="err" id="acErr" role="alert"></p></div>';
+    return h; }
+  function chooserWire(pr) {
+    function go(a, b) { var er = document.getElementById('acErr'); if (!a || !b) { er.textContent = 'Choose both dates.'; return; } if (a > b) { er.textContent = 'The first date is after the second.'; return; } load(a, b); }
+    [].forEach.call(C.app.querySelectorAll('[data-pre]'), function (b) { b.onclick = function () { var p = pr[b.dataset.pre]; go(p[1], p[2]); }; });
+    document.getElementById('acM').onchange = function () { var v = this.value; if (!v) return; var y = +v.slice(0, 4), m = +v.slice(5, 7), end = ymd(y, m, lastDay(y, m)), t = istToday(); go(ymd(y, m, 1), end > t ? t : end); };
+    document.getElementById('acF').onchange = function () { var y = +this.value; if (!y) return; var end = ymd(y + 1, 3, 31), t = istToday(); go(ymd(y, 4, 1), end > t ? t : end); };
+    document.getElementById('acGo').onclick = function () { go(document.getElementById('acA').value, document.getElementById('acB').value); };
+  }
+  function draw() { if (MODE === 'bills') return drawBills();
+    var e = C.esc, pr = presets(), h = C.head('Accounts for the CA', 'Sales with GST, money received, expenses and commission for any period. Make one PDF and the spreadsheet files to send.') + C.nav('accounts');
+    h += chooser(pr);
     if (busy) h += '<div class="card"><p class="empty">Collecting the records…</p></div>';
     else if (R) {
       var t = R.tot;
@@ -87,15 +97,11 @@
           ['Total', t.n, money(t.taxable), money(t.cgst), money(t.sgst), money(t.total), money(R.rec.in), money(R.rec.out), money(R.ex.total), money(R.com)]) : '<p class="empty">Nothing in this period.</p>') + '</div>' +
         '<div class="grid"><div class="card"><div class="ch"><h2>Money received, by mode</h2></div>' + (R.recBy.length ? tbl([['Mode'], ['Amount', 1]], R.recBy.map(function (x) { return [e(x[0]), money(x[1])]; }), ['Total', money(R.rec.in)]) : '<p class="empty">Nothing received.</p>') + '</div>' +
         '<div class="card"><div class="ch"><h2>Expenses, by kind</h2></div>' + (R.exBy.length ? tbl([['Group › category'], ['Amount', 1]], R.exBy.map(function (x) { return [e(x[0]), money(x[1])]; }), ['Total', money(R.ex.total)]) : '<p class="empty">No expenses entered.</p>') + '</div></div>' +
-        '<div class="card"><div class="ch"><h2>Also in the report</h2></div><div class="rows"><div class="row"><span class="t">Laundry bills</span><span class="v">' + rs(R.lau) + '</span></div><div class="row"><span class="t">Advances kept from no-shows and cancellations (no invoice was made)</span><span class="v">' + rs(R.kept) + '</span></div><div class="row"><span class="t">Expense entries with a bill photo on file</span><span class="v">' + R.ex.withBill + ' of ' + R.r.expenses.length + '</span></div></div>' +
-        '<p class="small" style="margin-top:12px">Sales are taken from the invoices made at check-out, by invoice date. A guest still in the house has no invoice yet. Expenses are the amounts entered in the staff app: the GST paid on purchases is not recorded separately, so your CA will need the purchase bills for input credit.</p></div>';
+        '<div class="card"><div class="ch"><h2>Also in the report</h2></div><div class="rows"><div class="row"><span class="t">Laundry bills</span><span class="v">' + rs(R.lau) + '</span></div><div class="row"><span class="t">Advances kept from no-shows and cancellations (no invoice was made)</span><span class="v">' + rs(R.kept) + '</span></div><div class="row"><span class="t">Expense entries with a bill photo on file</span><span class="v">' + R.ex.withBill + ' of ' + R.r.expenses.length + '</span></div><div class="row"><span class="t">GST paid on purchases, from the ' + R.ex.gstN + ' bills entered (input GST)</span><span class="v">' + rs(r2(R.ex.cgst + R.ex.sgst + R.ex.igst)) + '</span></div></div>' +
+        '<p class="small" style="margin-top:12px">Sales are taken from the invoices made at check-out, by invoice date. A guest still in the house has no invoice yet. GST on purchases comes from the bills entered on the <a class="lnk" href="#bills">Purchase bills</a> page; ' + (R.ex.unchecked ? R.ex.unchecked + ' of them were read by the computer and are not checked yet.' : 'purchases without GST details are shown with the amount only.') + '</p></div>';
     }
     C.app.innerHTML = h; C.wire(); window.scrollTo(0, 0);
-    function go(a, b) { var er = document.getElementById('acErr'); if (!a || !b) { er.textContent = 'Choose both dates.'; return; } if (a > b) { er.textContent = 'The first date is after the second.'; return; } load(a, b); }
-    [].forEach.call(C.app.querySelectorAll('[data-pre]'), function (b) { b.onclick = function () { var p = pr[b.dataset.pre]; go(p[1], p[2]); }; });
-    document.getElementById('acM').onchange = function () { var v = this.value; if (!v) return; var y = +v.slice(0, 4), m = +v.slice(5, 7), end = ymd(y, m, lastDay(y, m)), t = istToday(); go(ymd(y, m, 1), end > t ? t : end); };
-    document.getElementById('acF').onchange = function () { var y = +this.value; if (!y) return; var end = ymd(y + 1, 3, 31), t = istToday(); go(ymd(y, 4, 1), end > t ? t : end); };
-    document.getElementById('acGo').onclick = function () { go(document.getElementById('acA').value, document.getElementById('acB').value); };
+    chooserWire(pr);
     if (R && !busy) {
       document.getElementById('acPdf').onclick = function () { var b = this; b.disabled = true; b.textContent = 'Making the PDF…'; pdf().then(function () { b.disabled = false; b.textContent = 'Download the full PDF report'; }, function (er) { b.disabled = false; b.textContent = 'Could not make the PDF. Try again'; console.error(er); }); };
       [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { csv(b.dataset.csv); }; });
@@ -120,9 +126,9 @@
       rows = R.hsn.map(function (x) { return [x.hsn, x.gst, x.taxable.toFixed(2), x.cgst.toFixed(2), x.sgst.toFixed(2), '0.00', x.tax.toFixed(2), x.total.toFixed(2)]; }); }
     else if (kind === 'receipts') { name = 'Money-received'; head = ['Date and time', 'Amount', 'Received or refunded', 'Mode', 'Reference no.', 'Guest', 'Room', 'Booking', 'Note'];
       rows = R.r.payments.map(function (p) { return [p.at, p.amount.toFixed(2), p.amount < 0 ? 'Refunded' : 'Received', p.method, p.ref, p.guest, p.room, p.booking, p.note]; }); }
-    else if (kind === 'expenses') { name = 'Expenses'; head = ['Date', 'Group', 'Category', 'What was bought or paid for', 'Qty', 'Amount', 'Paid by', 'Bill / transaction no.', 'Shop or payee', 'Bill photo on file', 'Note'];
-      rows = R.r.expenses.map(function (x) { return [x.date, x.group, x.category, x.item, x.qty, x.amount.toFixed(2), x.method, x.ref, x.shop, x.hasBill ? 'Yes' : 'No', x.note]; })
-        .concat(R.r.laundry.map(function (x) { return [x.date, 'Laundry', 'Laundry bill', 'Laundry', '', x.total.toFixed(2), '', '', '', '', (x.paid ? 'Paid. ' : 'Not marked paid. ') + x.note]; })); }
+    else if (kind === 'expenses') { name = 'Expenses'; head = ['Expense no.', 'Date', 'Group', 'Category', 'What was bought or paid for', 'Qty', 'Amount', 'Paid by', 'Transaction no.', 'Shop or payee', 'Supplier GSTIN', 'Supplier bill no.', 'Taxable value', 'CGST', 'SGST', 'IGST', 'GST details', 'Bill photo on file', 'Note'];
+      rows = R.r.expenses.map(function (x) { var g = x.cgst + x.sgst + x.igst > 0 || x.gstin; return [x.id, x.date, x.group, x.category, x.item, x.qty, x.amount.toFixed(2), x.method, x.ref, x.shop, x.gstin, x.billNo, g ? x.taxable.toFixed(2) : '', g ? x.cgst.toFixed(2) : '', g ? x.sgst.toFixed(2) : '', g ? x.igst.toFixed(2) : '', x.gstBy, x.hasBill ? 'Yes' : 'No', x.note]; })
+        .concat(R.r.laundry.map(function (x) { return ['', x.date, 'Laundry', 'Laundry bill', 'Laundry', '', x.total.toFixed(2), '', '', '', '', '', '', '', '', '', '', '', (x.paid ? 'Paid. ' : 'Not marked paid. ') + x.note]; })); }
     else { name = 'Commission'; head = ['Date', 'Name', 'Driver or broker', 'Phone', 'Vehicle no.', 'For guest', 'Room / booking', 'Amount', 'Paid by', 'Transaction no.', 'Note'];
       rows = R.r.commissions.map(function (x) { return [x.date, x.name, x.type, x.phone, x.vehicle, x.guest, x.room, x.amount.toFixed(2), x.method, x.ref, x.note]; }); }
     save(new Blob([csvText(head, rows)], { type: 'text/csv;charset=utf-8' }), fname(name, 'csv'));
@@ -158,7 +164,7 @@
     table([['Particulars', 150], ['Amount (Rs)', 50, 'r'], ['Remarks', 77]], [
       ['Sales: total invoice value (inclusive of GST)', money(t.total), t.n + ' tax invoices'], ['Taxable value of sales', money(t.taxable), ''], ['CGST on sales', money(t.cgst), ''], ['SGST on sales', money(t.sgst), ''], ['Total GST on sales (output tax)', money(t.gst), 'IGST nil, cess nil'],
       ['Money received from guests', money(R.rec.in), R.receipts.length + ' receipts'], ['Refunds paid to guests', money(R.rec.out), R.refunds.length + ' refunds'], ['Advances kept from no-shows and cancellations', money(R.kept), R.r.kept.length + ' bookings, no invoice made'],
-      ['Expenses and purchases entered', money(R.ex.total), R.r.expenses.length + ' entries, ' + R.ex.withBill + ' with a bill photo'], ['Laundry bills', money(R.lau), R.r.laundry.length + ' bills'], ['Commission paid to drivers and brokers', money(R.com), R.r.commissions.length + ' entries']]);
+      ['Expenses and purchases entered', money(R.ex.total), R.r.expenses.length + ' entries, ' + R.ex.withBill + ' with a bill photo'], ['GST paid on purchases (input GST, from bills entered)', money(r2(R.ex.cgst + R.ex.sgst + R.ex.igst)), R.ex.gstN + ' bills' + (R.ex.unchecked ? ', ' + R.ex.unchecked + ' not checked yet' : '')], ['Laundry bills', money(R.lau), R.r.laundry.length + ' bills'], ['Commission paid to drivers and brokers', money(R.com), R.r.commissions.length + ' entries']]);
     h1('2. GST on outward supplies, by HSN / SAC (GSTR-1 table 12, GSTR-3B table 3.1)');
     table([['HSN / SAC', 40], ['GST rate', 25, 'r'], ['Taxable value', 45, 'r'], ['CGST', 38, 'r'], ['SGST', 38, 'r'], ['IGST', 25, 'r'], ['Total GST', 38, 'r'], ['Invoice value', 45, 'r']],
       R.hsn.map(function (x) { return [x.hsn, x.gst + '%', money(x.taxable), money(x.cgst), money(x.sgst), '0.00', money(x.tax), money(x.total)]; }), ['Total', '', money(t.taxable), money(t.cgst), money(t.sgst), '0.00', money(t.gst), money(t.total)]);
@@ -182,9 +188,9 @@
       para('No tax invoice was made for these amounts. Please decide the GST treatment of forfeited advances.', 8.5); }
     doc.addPage(); y = M; h1('9. Expenses and purchases');
     table([['Group > category', 110], ['Amount (Rs)', 50, 'r']], R.exBy.map(function (x) { return [x[0], money(x[1])]; }), ['Total', money(R.ex.total)]);
-    table([['Date', 22], ['Group', 30], ['Category', 32], ['What was bought or paid for', 62], ['Shop or payee', 40], ['Bill / txn no.', 30], ['Paid by', 20], ['Bill photo', 16], ['Amount', 26, 'r']], R.r.expenses.map(function (x) { return [nice(x.date), x.group, x.category, x.item + (x.qty ? ' x ' + x.qty : ''), x.shop, x.ref, x.method, x.hasBill ? 'Yes' : 'No', money(x.amount)]; }), ['Total', '', '', '', '', '', '', '', money(R.ex.total)]);
+    table([['Expense no.', 24], ['Date', 20], ['What was bought or paid for', 48], ['Shop or payee', 38], ['Bill no.', 24], ['Supplier GSTIN', 32], ['Taxable', 22, 'r'], ['CGST', 18, 'r'], ['SGST', 18, 'r'], ['IGST', 16, 'r'], ['Photo', 12], ['Amount', 24, 'r']], R.r.expenses.map(function (x) { var g = x.cgst + x.sgst + x.igst > 0 || x.gstin; return [x.id, nice(x.date), x.item + (x.qty ? ' x ' + x.qty : ''), x.shop, x.billNo || x.ref, x.gstin, g ? money(x.taxable) : '', g ? money(x.cgst) : '', g ? money(x.sgst) : '', g ? money(x.igst) : '', x.hasBill ? 'Yes' : 'No', money(x.amount)]; }), ['Total', '', '', '', '', R.ex.gstN + ' with GST', money(R.ex.taxable), money(R.ex.cgst), money(R.ex.sgst), money(R.ex.igst), '', money(R.ex.total)]);
     if (R.r.laundry.length) { table([['Laundry bill date', 40], ['Paid', 30], ['Note', 120], ['Amount', 36, 'r']], R.r.laundry.map(function (x) { return [nice(x.date), x.paid ? 'Yes' : 'Not marked', x.note, money(x.total)]; }), ['Total laundry', '', '', money(R.lau)]); }
-    para('GST paid on purchases is not recorded separately in these records. Input tax credit should be taken from the purchase bills themselves; bill photos are kept for the entries marked Yes.', 8.5);
+    para('GST on purchases (input GST) is shown for the ' + R.ex.gstN + ' purchases whose supplier bill details were entered: CGST ' + money(R.ex.cgst) + ', SGST ' + money(R.ex.sgst) + ', IGST ' + money(R.ex.igst) + '.' + (R.ex.unchecked ? ' ' + R.ex.unchecked + ' of these were read from the bill photo by the computer and have not been checked by a person yet.' : '') + ' Please confirm every credit against the bill itself; the bill copies are sent as a separate PDF, in the order of the expense numbers above.', 8.5);
     h1('10. Commission paid to drivers and brokers');
     table([['Date', 24], ['Name', 50], ['Driver / broker', 28], ['Phone', 30], ['Vehicle no.', 28], ['For guest', 44], ['Paid by', 22], ['Transaction no.', 30], ['Amount', 26, 'r']], R.r.commissions.map(function (x) { return [nice(x.date), x.name, x.type, x.phone, x.vehicle, x.guest, x.method, x.ref, money(x.amount)]; }), ['Total', '', '', '', '', '', '', '', money(R.com)]);
     h1('Notes');
@@ -197,5 +203,129 @@
     save(doc.output('blob'), fname('Accounts-for-CA', 'pdf'));
   }); }
 
-  window.NkAccounts = { open: function (ctx) { C = ctx; if (!P) { var p = presets()[0]; load(p[1], p[2]); } else draw(); }, _build: build };
+  /* ================= Purchase bills: GST from the supplier's bill, and the bill copies as PDF files ================= */
+  function hasGst(x) { return x.cgst + x.sgst + x.igst > 0 || !!x.gstin; }
+  function drawBills() {
+    var e = C.esc, pr = presets(), h = C.head('Purchase bills', 'The supplier bills behind your expenses: their GST for input credit, and the bill copies as PDF files for your CA.') + C.nav('bills') + chooser(pr);
+    if (busy) h += '<div class="card"><p class="empty">Collecting the records…</p></div>';
+    else if (R) {
+      var L = R.r.expenses, withPh = L.filter(function (x) { return x.photos > 0; }), toRead = withPh.filter(function (x) { return !hasGst(x); }), ex = R.ex;
+      h += '<div class="sec"><div><p class="kick">' + nice(P[0]) + ' to ' + nice(P[1]) + '</p><h2>Purchases in this period</h2></div></div>' +
+        '<div class="tiles">' + tile('Purchases', rs(ex.total), L.length + ' entries') + tile('With a bill photo', withPh.length + ' of ' + L.length, '') + tile('GST details entered', ex.gstN + ' of ' + L.length, ex.unchecked ? ex.unchecked + ' not checked yet' : 'all checked') + tile('GST paid on purchases', rs(r2(ex.cgst + ex.sgst + ex.igst)), 'CGST ' + rs(ex.cgst) + ' · SGST ' + rs(ex.sgst) + (ex.igst ? ' · IGST ' + rs(ex.igst) : '')) + '</div>' +
+        '<div class="card"><div class="ch"><h2>Read the GST from the bill photos</h2></div><p class="small">The computer reads each bill photo and fills in the supplier GSTIN, bill number and GST amounts. Photos of bills are often unclear, so every bill it reads is marked "not checked" until you open it, compare it with the photo and save.</p>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-gold" type="button" id="pbRead"' + (toRead.length ? '' : ' disabled') + '>Read ' + toRead.length + ' bill' + (toRead.length === 1 ? '' : 's') + ' not yet entered</button></div><p class="small" id="pbProg" style="margin-top:8px"></p></div>' +
+        '<div class="card"><div class="ch"><h2>Bill copies for your CA</h2><span class="small">made on this device</span></div><p class="small">Every page carries the expense number, the bill number, date, shop and amount, and each file starts with a list, so a bill can be found and matched quickly.</p>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-gold" type="button" id="pbOne"' + (withPh.length ? '' : ' disabled') + '>One PDF with all ' + withPh.length + ' bills</button><button class="btn" type="button" id="pbMon"' + (withPh.length ? '' : ' disabled') + '>One PDF for each month</button><button class="btn" type="button" data-csv="expenses">Purchases with GST (Excel)</button></div><p class="small" id="pbPdf" style="margin-top:8px"></p></div>' +
+        '<div class="card"><div class="ch"><h2>Every purchase</h2><span class="small">tap one to see its bill and enter or check the GST</span></div>' + (L.length ? '<div class="tw"><table><thead><tr><th>Expense no.</th><th>Date</th><th>Shop or payee</th><th>What</th><th>Bill no.</th><th class="n">Amount</th><th>Supplier GSTIN</th><th class="n">Taxable</th><th class="n">CGST</th><th class="n">SGST</th><th class="n">IGST</th><th>Bill photo</th><th>GST details</th></tr></thead><tbody>' +
+          L.slice().reverse().map(function (x) { var g = hasGst(x); return '<tr class="go" data-exp="' + e(x.id) + '"><td>' + e(x.id) + '</td><td>' + nice(x.date) + '</td><td>' + e(x.shop) + '</td><td class="w">' + e(x.item) + '</td><td>' + e(x.billNo || x.ref) + '</td><td class="n">' + money(x.amount) + '</td><td>' + e(x.gstin) + '</td><td class="n">' + (g ? money(x.taxable) : '') + '</td><td class="n">' + (g ? money(x.cgst) : '') + '</td><td class="n">' + (g ? money(x.sgst) : '') + '</td><td class="n">' + (g ? money(x.igst) : '') + '</td><td>' + (x.photos ? x.photos + ' photo' + (x.photos > 1 ? 's' : '') : '<span class="tag">none</span>') + '</td><td>' + (!g ? '<span class="tag">not entered</span>' : /not checked/.test(x.gstBy) ? '<span class="tag bad">read, not checked</span>' : '<span class="tag on">checked</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty">No purchases entered in this period.</p>') + '</div>';
+    }
+    C.app.innerHTML = h; C.wire(); chooserWire(pr);
+    if (R && !busy) {
+      [].forEach.call(C.app.querySelectorAll('tr[data-exp]'), function (r) { r.onclick = function () { editor(r.dataset.exp); }; });
+      [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { csv(b.dataset.csv); }; });
+      document.getElementById('pbRead').onclick = readAll; document.getElementById('pbOne').onclick = function () { billsPdf(false); }; document.getElementById('pbMon').onclick = function () { billsPdf(true); };
+    }
+  }
+  function expOf(id) { return R.r.expenses.filter(function (x) { return x.id === id; })[0]; }
+  function refresh() { R = build(R.r); }
+  var phCache = {};
+  function photosOf(id) { if (phCache[id]) return Promise.resolve(phCache[id]); return C.post({ action: 'deskExpensePhoto', token: C.tok(), id: id }).then(function (r) { if (!r.ok) throw new Error(r.error); var l = (r.photos || []).filter(function (p) { return p && p.data; }).map(function (p) { return /^data:/.test(p.data) ? p.data : 'data:image/jpeg;base64,' + p.data; }); phCache[id] = l; return l; }); }
+  function saveGst(x, v, auto) { return C.post({ action: 'deskExpenseGst', token: C.tok(), id: x.id, gstin: v.gstin, billNo: v.billNo, taxable: v.taxable, cgst: v.cgst, sgst: v.sgst, igst: v.igst, auto: auto ? 1 : 0, clear: v.clear ? 1 : 0 }).then(function (r) { if (!r.ok) throw new Error(r.error); ['gstin', 'billNo', 'taxable', 'cgst', 'sgst', 'igst', 'gstBy'].forEach(function (f) { x[f] = r[f]; }); refresh(); return r; }); }
+
+  /* ----- reading a bill photo ----- */
+  var ocrP = null, worker = null;
+  function ocr() { if (ocrP) return ocrP; ocrP = new Promise(function (ok, bad) { var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js'; s.onload = ok; s.onerror = function () { ocrP = null; bad(new Error('reader')); }; document.head.appendChild(s); })
+    .then(function () { return window.Tesseract.createWorker('eng'); }).then(function (w) { worker = w; }); ocrP.catch(function () { ocrP = null; }); return ocrP; }
+  function readText(urls) { return ocr().then(function () { var t = '', i = 0; function next() { if (i >= urls.length) return t; return worker.recognize(urls[i++]).then(function (r) { t += '\n' + ((r.data && r.data.text) || ''); return next(); }); } return next(); }); }
+  /* pick the GST details out of the words read from a bill; anything doubtful is left empty rather than guessed */
+  function parseGst(text, amount) {
+    var T = String(text || '').toUpperCase().replace(/[|]/g, ' '), lines = T.split(/\n+/), out = { gstin: '', billNo: '', taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+    var gs = (T.replace(/[ \t]/g, '').match(/\d{2}[A-Z]{5}\d{4}[A-Z][A-Z0-9]Z[A-Z0-9]/g) || []).filter(function (g) { return g !== OWN; }); if (gs.length) out.gstin = gs[0];
+    function nums(l) { var o = [], m, re = /(\d[\d,]*\.\d{1,2}|\d[\d,]*)(\s*%)?/g; while ((m = re.exec(l))) { if (m[2]) continue; var v = parseFloat(m[1].replace(/,/g, '')); if (!isNaN(v)) o.push(v); } return o; }
+    function amtOn(re, not) { var best = 0; lines.forEach(function (l) { if (!re.test(l) || (not && not.test(l))) return; var n = nums(l.replace(/\d{2}[A-Z]{5}\d{4}[A-Z][A-Z0-9]Z[A-Z0-9]/g, ' ')).filter(function (v) { return v > 0 && (!amount || v <= amount); }); if (n.length) best = Math.max(best, n[n.length - 1]); }); return best; }
+    out.cgst = amtOn(/C\.?\s?G\.?S\.?T/, /GSTIN/); out.sgst = amtOn(/(S|UT)\.?\s?G\.?S\.?T/, /GSTIN/); out.igst = amtOn(/I\.?\s?G\.?S\.?T/, /GSTIN/); out.taxable = amtOn(/TAXABLE|SUB\s*-?\s*TOTAL|BASIC\s+AMOUNT/);
+    if (out.cgst && !out.sgst) out.sgst = out.cgst; if (out.sgst && !out.cgst) out.cgst = out.sgst;
+    var g = out.cgst + out.sgst + out.igst;
+    if (amount && (g > amount * .3 || g <= 0)) { out.cgst = out.sgst = out.igst = 0; g = 0; }
+    if (g && amount && (!out.taxable || Math.abs(out.taxable + g - amount) > Math.max(2, amount * .02))) out.taxable = r2(amount - g);
+    if (!g) out.taxable = 0;
+    var m = T.match(/(?:INVOICE|BILL|INV|RECEIPT)\.?\s*(?:NO|NUMBER|NUM|#)\.?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\/\-]{2,20})/); if (m) out.billNo = m[1];
+    out.found = !!(out.gstin || g); return out;
+  }
+  function readAll() {
+    var todo = R.r.expenses.filter(function (x) { return x.photos > 0 && !hasGst(x); }), pg = document.getElementById('pbProg'), btn = document.getElementById('pbRead'), i = 0, got = 0; if (!todo.length) return;
+    btn.disabled = true; pg.textContent = 'Getting the reader ready (first time takes a little longer)…';
+    function next() { if (i >= todo.length) { pg.textContent = ''; drawBills(); var p2 = document.getElementById('pbProg'); if (p2) p2.textContent = 'Finished: GST details found on ' + got + ' of ' + todo.length + ' bills. Open each one to check it against the photo.'; return; }
+      var x = todo[i++]; if (document.getElementById('pbProg')) document.getElementById('pbProg').textContent = 'Reading bill ' + i + ' of ' + todo.length + ' (' + x.shop + ')…';
+      return photosOf(x.id).then(readText).then(function (t) { var v = parseGst(t, x.amount); if (!v.found) return; got++; return saveGst(x, v, true); }).catch(function () {}).then(next); }
+    ocr().then(next, function () { btn.disabled = false; pg.textContent = 'The reader could not be loaded. Check the internet and try again.'; });
+  }
+  /* ----- one purchase: its bill photos and its GST details ----- */
+  function editor(id) {
+    var x = expOf(id), e = C.esc, ov = document.createElement('div'); ov.style.cssText = 'position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.72);overflow:auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px';
+    ov.innerHTML = '<div class="card" style="max-width:1000px;margin:0 auto"><div class="ch"><h2>Expense ' + e(x.id) + '</h2><button class="btn" type="button" data-x>Close</button></div>' +
+      '<p class="small">' + nice(x.date) + ' · ' + e(x.shop || 'no shop given') + ' · ' + e(x.item) + ' · <b style="color:var(--ink)">' + rs(x.amount) + '</b> paid by ' + e(x.method) + (x.ref ? ' · ref ' + e(x.ref) : '') + '</p>' +
+      '<div class="grid" style="margin-top:14px"><div id="edPh"><p class="empty">' + (x.photos ? 'Opening the bill photo…' : 'No bill photo was attached to this expense. You can still type the GST details from the paper bill.') + '</p></div><div><div style="display:grid;gap:10px">' +
+      [['gstin', 'Supplier GSTIN', 'text'], ['billNo', 'Supplier bill no.', 'text'], ['taxable', 'Taxable value (₹)', 'number'], ['cgst', 'CGST (₹)', 'number'], ['sgst', 'SGST (₹)', 'number'], ['igst', 'IGST (₹)', 'number']].map(function (f) { return '<label class="small">' + f[1] + '<br><input class="in" style="max-width:none" id="ed_' + f[0] + '" type="' + f[2] + '"' + (f[2] === 'number' ? ' step="0.01" min="0" inputmode="decimal"' : ' autocapitalize="characters" spellcheck="false"') + ' value="' + e(f[2] === 'number' ? (x[f[0]] || '') : (x[f[0]] || (f[0] === 'billNo' ? '' : ''))) + '"></label>'; }).join('') +
+      '</div><p class="small" id="edSum" style="margin-top:8px"></p><p class="err" id="edErr" role="alert"></p><div style="display:flex;gap:8px;flex-wrap:wrap">' + (x.photos ? '<button class="btn" type="button" id="edRead">Read from the photo</button>' : '') + '<button class="btn btn-gold" type="button" id="edSave">Save as checked</button><button class="btn" type="button" id="edClear">Remove GST details</button></div>' +
+      '<p class="small" style="margin-top:10px">' + (x.gstBy ? 'Now: ' + e(x.gstBy) + '.' : 'No GST details entered yet.') + ' Leave the GST boxes empty for a bill with no GST on it.</p></div></div></div>';
+    document.body.appendChild(ov);
+    function q(k) { return ov.querySelector('#ed_' + k); }
+    function vals() { return { gstin: q('gstin').value.trim().toUpperCase(), billNo: q('billNo').value.trim(), taxable: Number(q('taxable').value) || 0, cgst: Number(q('cgst').value) || 0, sgst: Number(q('sgst').value) || 0, igst: Number(q('igst').value) || 0 }; }
+    function sum() { var v = vals(), g = r2(v.cgst + v.sgst + v.igst), t = r2(v.taxable + g); if (g && !v.taxable) { ov.querySelector('#edSum').textContent = 'Taxable value left empty: it will be saved as ' + rs(r2(x.amount - g)) + ' (the expense minus the GST).'; return; } ov.querySelector('#edSum').textContent = g ? 'Taxable + GST = ' + rs(t) + (Math.abs(t - x.amount) > 1 ? ' (the expense is ' + rs(x.amount) + ': check the figures)' : ' (matches the expense)') : ''; }
+    ['taxable', 'cgst', 'sgst', 'igst'].forEach(function (k) { q(k).oninput = sum; }); sum();
+    function close() { ov.remove(); drawBills(); }
+    ov.querySelector('[data-x]').onclick = close; ov.onclick = function (ev) { if (ev.target === ov) close(); };
+    function err(m) { ov.querySelector('#edErr').textContent = m; }
+    function why(c) { return c === 'bad_gstin' ? 'That GSTIN is not 15 characters in the right pattern.' : c === 'gst_too_big' ? 'The GST is more than the expense amount.' : c === 'not_allowed' ? 'Only the owner or manager can save this.' : 'Could not save (' + c + ').'; }
+    ov.querySelector('#edSave').onclick = function () { var v = vals(); err(''); if ((v.cgst || v.sgst || v.igst) && !v.taxable) { v.taxable = r2(x.amount - v.cgst - v.sgst - v.igst); } saveGst(x, v, false).then(close, function (er) { err(why(er.message)); }); };
+    ov.querySelector('#edClear').onclick = function () { saveGst(x, { clear: 1 }, false).then(close, function (er) { err(why(er.message)); }); };
+    if (x.photos) {
+      photosOf(id).then(function (l) { ov.querySelector('#edPh').innerHTML = l.length ? l.map(function (u) { return '<a href="' + u + '" target="_blank" rel="noopener"><img src="' + u + '" alt="Bill photo" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:10px"></a>'; }).join('') : '<p class="empty">The bill photo could not be opened.</p>'; }, function () { ov.querySelector('#edPh').innerHTML = '<p class="empty">The bill photo could not be opened.</p>'; });
+      ov.querySelector('#edRead').onclick = function () { var b = this; b.disabled = true; b.textContent = 'Reading…'; err('');
+        photosOf(id).then(readText).then(function (t) { var v = parseGst(t, x.amount); b.disabled = false; b.textContent = 'Read from the photo'; if (!v.found) { err('No GST details could be read from this photo. Please type them from the bill.'); return; }
+          if (v.gstin) q('gstin').value = v.gstin; if (v.billNo && !q('billNo').value) q('billNo').value = v.billNo; ['taxable', 'cgst', 'sgst', 'igst'].forEach(function (k) { if (v[k]) q(k).value = v[k]; }); sum(); err('Read from the photo. Compare with the bill, correct anything wrong, then save.'); },
+          function () { b.disabled = false; b.textContent = 'Read from the photo'; err('The reader could not be loaded. Check the internet and try again.'); }); };
+    }
+  }
+  /* ----- the bill copies as PDF: a list first, then every bill photo under a header that names it ----- */
+  function imgSize(u) { return new Promise(function (ok) { var im = new Image(); im.onload = function () { ok([im.naturalWidth, im.naturalHeight]); }; im.onerror = function () { ok(null); }; im.src = u; }); }
+  function billsPdf(perMonth) {
+    var note = document.getElementById('pbPdf'), all = R.r.expenses.filter(function (x) { return x.photos > 0; }), groups = [];
+    if (perMonth) { var by = {}; all.forEach(function (x) { (by[x.date.slice(0, 7)] = by[x.date.slice(0, 7)] || []).push(x); }); Object.keys(by).sort().forEach(function (k) { groups.push([k, by[k]]); }); } else groups.push(['', all]);
+    var done = 0, gi = 0; [].forEach.call(C.app.querySelectorAll('#pbOne,#pbMon'), function (b) { b.disabled = true; });
+    function finish(msg) { [].forEach.call(C.app.querySelectorAll('#pbOne,#pbMon'), function (b) { b.disabled = false; }); if (document.getElementById('pbPdf')) document.getElementById('pbPdf').textContent = msg; }
+    function one() { if (gi >= groups.length) return finish('Done: ' + groups.length + ' file' + (groups.length > 1 ? 's' : '') + ' with ' + all.length + ' bills saved to your downloads.');
+      var key = groups[gi][0], list = groups[gi][1]; gi++;
+      var H = (window.NikadiBill || {}).HOTEL || {}, doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' }), W = 210, Ht = 297, M = 12, PER = 46, idxPages = Math.ceil(list.length / PER), pageOf = {}, pno = idxPages + 1;
+      list.forEach(function (x) { pageOf[x.id] = pno; pno += x.photos; });
+      var title = 'Purchase bills: ' + (key ? mname(key) : nice(P[0]) + ' to ' + nice(P[1]));
+      function foot() { var n = doc.getNumberOfPages(); for (var i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120); doc.text(lat((H.company || '') + '  -  GSTIN ' + (H.gstin || '') + '  -  ' + title), M, Ht - 6); doc.text('Page ' + i + ' of ' + n, W - M, Ht - 6, { align: 'right' }); } }
+      function fit(t, w) { t = lat(t); if (doc.getTextWidth(t) <= w) return t; while (t.length > 1 && doc.getTextWidth(t + '..') > w) t = t.slice(0, -1); return t + '..'; }
+      /* the list */
+      for (var pi = 0; pi < idxPages; pi++) { if (pi) doc.addPage(); var y = M;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(20, 30, 60); doc.text(lat(H.company || 'Nikadi Projects Private Limited'), M, y + 5); y += 8;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(150, 110, 30); doc.text(lat(title + '   (' + list.length + ' bills)'), M, y + 4); y += 8;
+        var cols = [['Expense no.', 26], ['Date', 22], ['Shop or payee', 46], ['Bill no.', 28], ['Supplier GSTIN', 32], ['GST', 14], ['Amount', 22], ['Page', 10]], xs = [], xx = M; cols.forEach(function (c) { xs.push(xx); xx += c[1] * (186 / 200); });
+        doc.setFillColor(28, 40, 78); doc.rect(M, y, 186, 5.4, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.6); doc.setTextColor(255, 255, 255); cols.forEach(function (c, i) { doc.text(c[0], xs[i] + 1, y + 3.7); }); y += 5.4;
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+        list.slice(pi * PER, pi * PER + PER).forEach(function (x, ri) { if (ri % 2) { doc.setFillColor(245, 246, 249); doc.rect(M, y, 186, 5.2, 'F'); } var g = r2(x.cgst + x.sgst + x.igst), cells = [x.id, nice(x.date), x.shop, x.billNo || x.ref, x.gstin, g ? money(g) : '', money(x.amount), String(pageOf[x.id])];
+          cells.forEach(function (c, i) { doc.text(fit(c, cols[i][1] * (186 / 200) - 2), xs[i] + 1, y + 3.6); }); y += 5.2; }); }
+      /* the bills */
+      var xi = 0;
+      function nextExp() { if (xi >= list.length) { foot(); save(doc.output('blob'), 'Nikadi-Purchase-bills-' + (key || P[0] + '-to-' + P[1]) + '.pdf'); return setTimeout(one, 600); }
+        var x = list[xi++]; done++; if (document.getElementById('pbPdf')) document.getElementById('pbPdf').textContent = 'Collecting bill ' + done + ' of ' + all.length + '…';
+        return photosOf(x.id).then(function (urls) { var k = 0; function nextPh() { if (k >= Math.max(1, x.photos)) return nextExp(); var u = urls[k]; k++;
+            doc.addPage(); var y = M; doc.setFillColor(28, 40, 78); doc.rect(M, y, 186, 15, 'F'); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+            doc.text(lat('Expense no. ' + x.id + (x.billNo || x.ref ? '    Bill no. ' + (x.billNo || x.ref) : '') + (x.photos > 1 ? '    (photo ' + k + ' of ' + x.photos + ')' : '')), M + 3, y + 6); doc.setFont('helvetica', 'normal'); doc.setFontSize(8.6);
+            var g = r2(x.cgst + x.sgst + x.igst); doc.text(fit(nice(x.date) + '   ' + (x.shop || '') + '   ' + x.item + '   Rs ' + money(x.amount) + (x.gstin ? '   GSTIN ' + x.gstin : '') + (g ? '   Taxable ' + money(x.taxable) + '  CGST ' + money(x.cgst) + '  SGST ' + money(x.sgst) + (x.igst ? '  IGST ' + money(x.igst) : '') : ''), 180), M + 3, y + 11.5); y += 18;
+            if (!u) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be opened.', M, y + 8); return nextPh(); }
+            return imgSize(u).then(function (sz) { if (!sz) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be opened.', M, y + 8); return nextPh(); }
+              var mw = 186, mh = Ht - y - 12, sc = Math.min(mw / sz[0], mh / sz[1]), w = sz[0] * sc, hh = sz[1] * sc; try { doc.addImage(u, /png/.test(u.slice(0, 30)) ? 'PNG' : 'JPEG', M + (mw - w) / 2, y, w, hh, undefined, 'FAST'); } catch (er) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be placed on the page.', M, y + 8); } return nextPh(); }); }
+          return nextPh(); }, function () { for (var j = 0; j < x.photos; j++) { doc.addPage(); doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text(lat('Expense no. ' + x.id + ': the bill photo could not be fetched.'), M, M + 8); } return nextExp(); }); }
+      return nextExp(); }
+    note.textContent = 'Getting ready…'; tool().then(one, function () { finish('The PDF maker could not be loaded. Check the internet and try again.'); });
+  }
+
+  window.NkAccounts = { open: function (ctx, mode) { C = ctx; MODE = mode || 'accounts'; if (!P) { var p = presets()[0]; load(p[1], p[2]); } else draw(); }, _build: build, _parse: function (t, a) { return parseGst(t, a); } };
 })();

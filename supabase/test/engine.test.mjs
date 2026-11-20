@@ -288,3 +288,13 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('ca report', r.ok || r.error, no.error, bad.error, 'bills', r.bills && r.bills.length, r.bills && r.bills[0] && Object.keys(r.bills[0].d || {}).slice(0, 8).join(','), 'payments', r.payments && r.payments.length, 'expenses', r.expenses && r.expenses.length, 'commissions', r.commissions && r.commissions.length, 'kept', r.kept && r.kept.length, 'laundry', r.laundry && r.laundry.length);
   if (!r.ok || no.ok || bad.ok) throw new Error('ca report broken');
 }
+{ // GST details on a purchase
+  const t = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
+  const sv = await call('deskExpenseSave', { token: tok, date: t, category: 'Electricity bill', item: 'Test bill', amount: 1180, method: 'UPI', ref: 'INV-9', shop: 'Test Supplier' });
+  const id0 = sv.expense && sv.expense.id;
+  const bad = await call('deskExpenseGst', { token: tok, id: id0, gstin: 'NOTAGSTIN', cgst: 90, sgst: 90 }), big = await call('deskExpenseGst', { token: tok, id: id0, cgst: 900, sgst: 900 });
+  const ok = await call('deskExpenseGst', { token: tok, id: id0, gstin: '19abcde1234f1z5', billNo: 'INV-9', taxable: 1000, cgst: 90, sgst: 90, igst: 0 });
+  const r = await call('deskCaReport', { token: tok, from: t, to: t }), x = (r.expenses || []).filter(e => e.id === id0)[0];
+  console.log('expense gst', sv.ok || sv.error, bad.error, big.error, ok.ok || ok.error, JSON.stringify(x && { gstin: x.gstin, taxable: x.taxable, cgst: x.cgst, sgst: x.sgst, gstBy: x.gstBy.slice(0, 16) }));
+  if (!ok.ok || bad.ok || big.ok || !x || x.cgst !== 90 || x.gstin !== '19ABCDE1234F1Z5') throw new Error('expense gst broken');
+}

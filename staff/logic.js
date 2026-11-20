@@ -116,7 +116,8 @@ var DESK_SCHEMA = {
     ['phone', 'Phone', 's'], ['email', 'Email'], ['total', 'Total (₹)', 'n'], ['by', 'Made by'], ['sent', 'Emailed'], ['data', 'Bill (system)', 's'], ['sendAt', 'Email at', 't'], ['status', 'Email status'], ['pdf', 'PDF saved'], ['edited', 'Last changed'], ['wa', 'WhatsApp']] },
   expenses: { sheet: 'Expenses', lazy: true, cols: [['id', 'ID'], ['date', 'Date', 'd'], ['group', 'Group'], ['category', 'Category'], ['item', 'What was bought / paid for'], ['qty', 'Qty', 'n'],
     ['amount', 'Amount (₹)', 'n'], ['method', 'Paid by'], ['ref', 'Transaction / bill no.', 's'], ['shop', 'Shop / payee'], ['note', 'Note'], ['photos', 'Bill photos (Drive file IDs)', 's'],
-    ['stockItem', 'Added to stock: item'], ['stockQty', 'Added to stock: qty', 'n'], ['by', 'Entered by'], ['at', 'Entered at', 't'], ['edited', 'Last changed'], ['removed', 'Removed']] },
+    ['stockItem', 'Added to stock: item'], ['stockQty', 'Added to stock: qty', 'n'], ['by', 'Entered by'], ['at', 'Entered at', 't'], ['edited', 'Last changed'], ['removed', 'Removed'],
+    ['gstin', 'Supplier GSTIN', 's'], ['billNo', 'Supplier bill no.', 's'], ['taxable', 'Taxable value (₹)', 'n'], ['cgst', 'CGST (₹)', 'n'], ['sgst', 'SGST (₹)', 'n'], ['igst', 'IGST (₹)', 'n'], ['gstBy', 'GST details: how entered']] },
   commissions: { sheet: 'Commission', lazy: true, cols: [['id', 'ID'], ['date', 'Date', 'd'], ['name', 'Name'], ['type', 'Driver / broker'], ['phone', 'Phone', 's'], ['vehicle', 'Vehicle no.'],
     ['guest', 'For guest'], ['room', 'Room / booking', 's'], ['amount', 'Amount (₹)', 'n'], ['method', 'Paid by'], ['ref', 'Transaction no.', 's'], ['note', 'Note'],
     ['by', 'Entered by'], ['at', 'Entered at', 't'], ['edited', 'Last changed'], ['removed', 'Removed']] },
@@ -1520,6 +1521,19 @@ function deskCore(db, hooks) {
     db.set('expenses', e, { removed: stamp() + ' · ' + me.name });
     return {};
   };
+  /* GST details from the supplier's bill (for input credit). Entered on the admin page: typed in, or read from the bill photo and then checked. Owner and Manager. */
+  api.expenseGst = function (req) {
+    var me = auth(req); if (!canApprove(me)) fail('not_allowed');
+    var e = find('expenses', 'id', req.id) || fail('not_found'); if (e.removed) fail('not_found');
+    var g = String(req.gstin || '').toUpperCase().replace(/\s/g, ''); if (g && !/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/.test(g)) fail('bad_gstin');
+    function amt(v) { v = Math.round((Number(v) || 0) * 100) / 100; if (v < 0 || v > 1e8) fail('invalid_amount'); return v; }
+    var p = { gstin: g, billNo: text(req.billNo, 40), taxable: amt(req.taxable), cgst: amt(req.cgst), sgst: amt(req.sgst), igst: amt(req.igst) };
+    if (p.cgst + p.sgst + p.igst > Number(e.amount || 0) + 1) fail('gst_too_big');
+    p.gstBy = (req.auto ? 'Read from the bill photo, not checked yet' : 'Checked by ' + me.name) + ' · ' + stamp();
+    if (req.clear) p = { gstin: '', billNo: '', taxable: 0, cgst: 0, sgst: 0, igst: 0, gstBy: '' };
+    db.set('expenses', e, p);
+    return { id: e.id, gstin: p.gstin, billNo: p.billNo, taxable: p.taxable, cgst: p.cgst, sgst: p.sgst, igst: p.igst, gstBy: p.gstBy };
+  };
   api.expensePhoto = function (req) {
     var me = auth(req); needMgr(me);
     var e = find('expenses', 'id', req.id) || fail('not_found');
@@ -2840,7 +2854,8 @@ function deskCore(db, hooks) {
       ownBills: rowsOf('ownbills', 'at', 'id').filter(function (b) { return !yes(b.removed); }).map(function (b) { return { no: b.no, at: b.at, guest: b.guest, total: Number(b.total) || 0, d: js(b.data) }; }),
       payments: rowsOf('payments', 'at', 'id').filter(function (x) { return !yes(x.voided); }).map(function (x) { var st = stayOf[x.stay];
         return { at: x.at, amount: Number(x.amount) || 0, method: x.method || '', ref: x.ref || '', note: x.note || '', room: x.room, guest: st ? st.guest : '', booking: x.booking || '' }; }),
-      expenses: rowsOf('expenses', 'date', 'id').filter(function (x) { return !yes(x.removed); }).map(function (x) { return { date: x.date, group: x.group || '', category: x.category || '', item: x.item || '', qty: x.qty, amount: Number(x.amount) || 0, method: x.method || '', ref: x.ref || '', shop: x.shop || '', note: x.note || '', hasBill: !!x.photos }; }),
+      expenses: rowsOf('expenses', 'date', 'id').filter(function (x) { return !yes(x.removed); }).map(function (x) { return { date: x.date, group: x.group || '', category: x.category || '', item: x.item || '', qty: x.qty, amount: Number(x.amount) || 0, method: x.method || '', ref: x.ref || '', shop: x.shop || '', note: x.note || '', hasBill: !!x.photos, id: x.id, photos: String(x.photos || '').split(',').filter(Boolean).length,
+        gstin: x.gstin || '', billNo: x.billNo || '', taxable: Number(x.taxable) || 0, cgst: Number(x.cgst) || 0, sgst: Number(x.sgst) || 0, igst: Number(x.igst) || 0, gstBy: x.gstBy || '' }; }),
       commissions: rowsOf('commissions', 'date', 'id').filter(function (x) { return !yes(x.removed); }).map(function (x) { return { date: x.date, name: x.name || '', type: x.type || '', phone: x.phone || '', vehicle: x.vehicle || '', guest: x.guest || '', room: x.room || '', amount: Number(x.amount) || 0, method: x.method || '', ref: x.ref || '', note: x.note || '' }; }),
       laundry: db.all('laundry').filter(function (x) { return Number(x.total) > 0 && inR(x.outAt || x.at); }).map(function (x) { return { date: String(x.outAt || x.at).slice(0, 10), total: Number(x.total) || 0, paid: yes(x.paid), note: x.note || '' }; }),
       kept: db.all('bookings').filter(function (b) { return (b.status === 'No-show' || b.status === 'Cancelled') && Number(b.advancePaid || 0) - Number(b.refunded || 0) > 0 && inR(b.closedAt); })
