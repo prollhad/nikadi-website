@@ -151,6 +151,11 @@ var DESK_SCHEMA = {
     ['exitSet', 'Exit chosen by owner', 't'], ['exitBy', 'Exit chosen by'], ['recent', 'Recent app opens (system)', 's'], ['logs', 'Log-ins / log-outs (system)', 's']] },
   summary: { sheet: 'Monthly totals (old records)', lazy: true, cols: [['month', 'Month', 's'], ['rooms', 'Room sales (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['nights', 'Room nights', 'n'],
     ['stays', 'Stays', 'n'], ['guests', 'Guests', 'n'], ['collected', 'Collected (₹)', 'n'], ['refunds', 'Refunded (₹)', 'n'], ['byMethod', 'By payment method (system)', 's'], ['items', 'Items (system)', 's']] },
+  visits: { sheet: 'Website visits', lazy: true, cols: [['id', 'Visit'], ['day', 'Date', 'd'], ['at', 'Came', 't'], ['last', 'Last seen', 't'], ['vid', 'Visitor (anonymous)', 's'], ['isNew', 'First time'],
+    ['pages', 'Pages seen', 'n'], ['secs', 'Seconds on the site', 'n'], ['entry', 'First page'], ['paths', 'Pages (system)', 's'], ['ref', 'Came from'], ['dev', 'Device'], ['tz', 'Time zone'], ['lang', 'Language'],
+    ['member', 'Signed-in member'], ['ev', 'Taps (system)', 's']] },
+  visitdays: { sheet: 'Website visits by day (old)', lazy: true, cols: [['date', 'Date', 'd'], ['visits', 'Visits', 'n'], ['visitors', 'Visitors', 'n'], ['fresh', 'First-time visitors', 'n'], ['pages', 'Pages seen', 'n'],
+    ['secs', 'Seconds on the site', 'n'], ['mobile', 'On a phone', 'n'], ['data', 'Details (system)', 's']] },
   config: { sheet: 'Staff app settings', lazy: true, hidden: true, cols: [['key', 'Setting'], ['value', 'Value', 's']] }
 };
 
@@ -2750,6 +2755,102 @@ function deskCore(db, hooks) {
     if (Object.keys(row).length) m[d] = row; else delete m[d];
     cfgSet('siteShow', JSON.stringify(m));
     return { day: d, show: m[d] || {}, by: me.name };
+  };
+  /* ---- Website visitors (admin page). Nothing personal is kept: a random number for the browser, the pages, the time spent.
+     No name, no phone, no IP address. Visits older than 35 days are folded into one line per day. ---- */
+  var VISIT_KEEP = 35, VISIT_MAX_DAY = 6000, VISIT_EV = ['wa', 'call', 'book', 'join', 'avail'];
+  function vjson(v, d) { try { var o = JSON.parse(v || ''); return o && typeof o === 'object' ? o : d; } catch (e) { return d; } }
+  function vpath(p) { p = String(p || '/').split(/[?#]/)[0].toLowerCase().replace(/index\.html$/, '').replace(/\.html$/, ''); return /^\/[a-z0-9\-\/]{0,50}$/.test(p) ? p : '/'; }
+  function vday(list) { // one line for a day, from its visits
+    var o = { visits: list.length, visitors: 0, fresh: 0, pages: 0, secs: 0, mobile: 0, p: {}, r: {}, h: [], e: {} }, seen = {}, i;
+    for (i = 0; i < 24; i++) o.h.push(0);
+    list.forEach(function (v) {
+      if (!seen[v.vid]) { seen[v.vid] = 1; o.visitors++; if (yes(v.isNew)) o.fresh++; }
+      o.pages += Number(v.pages) || 0; o.secs += Number(v.secs) || 0; if (v.dev === 'mobile') o.mobile++;
+      vjson(v.paths, []).forEach(function (x) { o.p[x] = (o.p[x] || 0) + 1; });
+      var r = v.ref || 'Direct'; o.r[r] = (o.r[r] || 0) + 1;
+      var hh = Number(String(v.at).slice(11, 13)); if (hh >= 0 && hh < 24) o.h[hh]++;
+      var e = vjson(v.ev, {}); Object.keys(e).forEach(function (k) { o.e[k] = (o.e[k] || 0) + Number(e[k]); });
+    });
+    return o;
+  }
+  function visitRoll() {
+    var t = today(); if (cfgGet('visitRoll') === t) return; cfgSet('visitRoll', t);
+    if (!db.del) return;
+    var cut = addDays(t, -VISIT_KEEP), old = {}, all = db.all('visits').slice();
+    all.forEach(function (v) { if (String(v.day) < cut) (old[v.day] = old[v.day] || []).push(v); });
+    Object.keys(old).forEach(function (d) {
+      var o = vday(old[d]);
+      if (!find('visitdays', 'date', d)) db.add('visitdays', { date: d, visits: o.visits, visitors: o.visitors, fresh: o.fresh, pages: o.pages, secs: o.secs, mobile: o.mobile, data: JSON.stringify({ p: o.p, r: o.r, h: o.h, e: o.e }) });
+      old[d].forEach(function (v) { db.del('visits', v); });
+    });
+  }
+  api.siteHit = function (req) {
+    var sid = String(req.sid || ''), vid = String(req.vid || '');
+    if (!/^[a-z0-9]{10,24}$/.test(sid) || !/^[a-z0-9]{10,24}$/.test(vid)) return {};
+    var t = today(), all = db.all('visits'), v = null, n = 0, i;
+    for (i = all.length - 1; i >= 0 && String(all[i].day) >= t; i--) { n++; if (all[i].id === sid) { v = all[i]; break; } }
+    var path = vpath(req.path), secs = Math.max(0, Math.min(4 * 3600, Math.round(Number(req.secs) || 0))), ev = VISIT_EV.indexOf(req.ev) >= 0 ? req.ev : '';
+    if (!v) {
+      for (i = all.length - 1; i >= 0 && i > all.length - 400 && !v; i--) if (all[i].id === sid) v = all[i]; // a visit that runs past midnight
+    }
+    if (!v) {
+      if (n >= VISIT_MAX_DAY) return {};
+      visitRoll();
+      var ref = String(req.ref || '').toLowerCase().replace(/^www\./, ''); if (!/^[a-z0-9.\-]{3,60}$/.test(ref) || /nikadiguesthouse\.com$/.test(ref)) ref = '';
+      var e0 = {}; if (ev) e0[ev] = 1;
+      db.add('visits', { id: sid, day: t, at: stamp(), last: stamp(), vid: vid, isNew: req.first ? 'Yes' : '', pages: 1, secs: secs, entry: path, paths: JSON.stringify([path]), ref: ref,
+        dev: ['mobile', 'tablet', 'desktop'].indexOf(req.dev) >= 0 ? req.dev : 'desktop', tz: /^[A-Za-z_\/\-+0-9]{3,40}$/.test(String(req.tz || '')) ? String(req.tz) : '', lang: text(req.lang, 8).replace(/[^A-Za-z\-]/g, ''),
+        member: req.member ? 'Yes' : '', ev: JSON.stringify(e0) });
+      return {};
+    }
+    var patch = { last: stamp() };
+    if (secs > Number(v.secs || 0)) patch.secs = secs;
+    if (req.member && !yes(v.member)) patch.member = 'Yes';
+    if (req.page) { var ps = vjson(v.paths, []); if (ps.length < 40) { ps.push(path); patch.paths = JSON.stringify(ps); } patch.pages = (Number(v.pages) || 0) + 1; }
+    if (ev) { var e1 = vjson(v.ev, {}); e1[ev] = Math.min(50, (e1[ev] || 0) + 1); patch.ev = JSON.stringify(e1); }
+    db.set('visits', v, patch);
+    return {};
+  };
+  /* everything the admin page shows: Owner and Manager only */
+  api.siteStats = function (req) {
+    var me = auth(req); if (!canApprove(me)) fail('not_allowed');
+    var t = today(), now = stamp(), byDay = {}, days = [], i;
+    db.all('visits').forEach(function (v) { (byDay[v.day] = byDay[v.day] || []).push(v); });
+    var old = {}; db.all('visitdays').forEach(function (r) { old[r.date] = r; });
+    function dayOf(d) {
+      if (byDay[d]) { var o = vday(byDay[d]); o.d = d; return o; }
+      var r = old[d]; if (r) { var x = vjson(r.data, {}); return { d: d, visits: Number(r.visits), visitors: Number(r.visitors), fresh: Number(r.fresh), pages: Number(r.pages), secs: Number(r.secs), mobile: Number(r.mobile), p: x.p || {}, r: x.r || {}, h: x.h || [], e: x.e || {} }; }
+      return { d: d, visits: 0, visitors: 0, fresh: 0, pages: 0, secs: 0, mobile: 0, p: {}, r: {}, h: [], e: {} };
+    }
+    for (i = 89; i >= 0; i--) days.push(dayOf(addDays(t, -i)));
+    function sum(list) {
+      var o = { visits: 0, visitors: 0, fresh: 0, pages: 0, secs: 0, mobile: 0, p: {}, r: {}, h: [], e: {} }, k; for (k = 0; k < 24; k++) o.h.push(0);
+      list.forEach(function (x) { ['visits', 'visitors', 'fresh', 'pages', 'secs', 'mobile'].forEach(function (f) { o[f] += x[f]; });
+        ['p', 'r', 'e'].forEach(function (f) { Object.keys(x[f]).forEach(function (q) { o[f][q] = (o[f][q] || 0) + x[f][q]; }); }); (x.h || []).forEach(function (c, hh) { o.h[hh] += c || 0; }); });
+      return o;
+    }
+    function top(o, n) { return Object.keys(o).map(function (k) { return [k, o[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, n); }
+    function pack(o) { return { visits: o.visits, visitors: o.visitors, fresh: o.fresh, pages: o.pages, secs: o.secs, mobile: o.mobile, taps: o.e, avg: o.visits ? Math.round(o.secs / o.visits) : 0 }; }
+    var d7 = sum(days.slice(-7)), d30 = sum(days.slice(-30)), p7 = sum(days.slice(-14, -7)), p30 = sum(days.slice(-60, -30));
+    /* the same person on several days is one visitor for the week or month, where the single visits are still kept */
+    function uniq(n) { var s = {}, c = 0, from = addDays(t, -(n - 1)); db.all('visits').forEach(function (v) { if (String(v.day) >= from && !s[v.vid]) { s[v.vid] = 1; c++; } }); return c; }
+    d7.visitors = uniq(7); d30.visitors = uniq(30);
+    var nowMin = dayNum(t) * 1440 + Number(now.slice(11, 13)) * 60 + Number(now.slice(14, 16));
+    function ago(s) { s = String(s); return nowMin - (dayNum(s.slice(0, 10)) * 1440 + Number(s.slice(11, 13)) * 60 + Number(s.slice(14, 16))); }
+    var recent = db.all('visits').slice(-60).reverse().map(function (v) { var ps = vjson(v.paths, []);
+      return { at: v.at, last: v.last, secs: Number(v.secs) || 0, pages: Number(v.pages) || 0, entry: v.entry, lastPage: ps[ps.length - 1] || v.entry, ref: v.ref || '', dev: v.dev, tz: v.tz, isNew: yes(v.isNew), member: yes(v.member), ev: vjson(v.ev, {}), on: ago(v.last) <= 3 }; });
+    var live = recent.filter(function (v) { return v.on; });
+    var tz = {}; db.all('visits').forEach(function (v) { if (String(v.day) >= addDays(t, -29)) { var k = v.tz || 'Unknown'; tz[k] = (tz[k] || 0) + 1; } });
+    var from30 = addDays(t, -29), bk = db.all('bookings').filter(function (b) { return String(b.created).slice(0, 10) >= from30; }), src = {};
+    bk.forEach(function (b) { var k = b.source || 'Other'; src[k] = (src[k] || 0) + 1; });
+    var members = null; if (hooks.membersAll) try { members = hooks.membersAll(); } catch (e) { members = null; }
+    return { today: t, now: now, live: live.length, liveList: live.slice(0, 12),
+      day: pack(days[89]), yesterday: pack(days[88]), week: pack(d7), month: pack(d30), prevWeek: pack(p7), prevMonth: pack(p30),
+      days: days.map(function (x) { return { d: x.d, visits: x.visits, visitors: x.visitors, pages: x.pages, secs: x.secs }; }),
+      pages: top(d30.p, 12), refs: top(d30.r, 10), hours: d30.h, zones: top(tz, 10), recent: recent.slice(0, 40),
+      bookings: { total: bk.length, bySource: top(src, 8), regs: db.all('regs').filter(function (r) { return String(r.at).slice(0, 10) >= from30; }).length },
+      members: members };
   };
   api.tonightDeal = function () { return tonightDeal(); }; // internal: the member booking code asks for it
   api.siteAvailability = function (req) {

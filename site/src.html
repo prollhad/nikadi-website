@@ -3679,29 +3679,44 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   /* a deep, rolling thunder: soft crack, then a long low rumble that rolls two or three times and fades */
   /* real-sounding thunder, from short 1 to 2 second claps up to 6 second giants, five clearly different kinds:
      0 close strike (loud tearing crack, then a boom that fades) · 1 rolling thunder (three swells) · 2 deep boom (one heavy, low hit) · 3 crackling strike (long crackle, then a roll) · 4 giant (stays loud for 2 seconds, then slowly dies away) */
-  function wxThunder(delay,vol,kind,len){if(!AC)return;len=len||3.5;var PRE=.5,POST=1.4,t=AC.currentTime+delay,LS=Math.max(.45,Math.min(1.6,len/3.7)),out=AC.createGain();out.gain.value=vol*PRE;var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-20;cmp.knee.value=12;cmp.ratio.value=8;cmp.attack.value=.004;cmp.release.value=.3;var post=AC.createGain();post.gain.value=POST;out.connect(cmp);cmp.connect(post);post.connect(wxOut());
-    function layer(brown,type,f0,f1,q,env,rate){var src=AC.createBufferSource();src.buffer=noise(AC,len+.5,brown);src.playbackRate.value=rate||1;var f=AC.createBiquadFilter();f.type=type;f.Q.value=q;f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+len);
-      var g=AC.createGain(),N=64,cv=new Float32Array(N);for(var i=0;i<N;i++)cv[i]=Math.max(.0001,env(i/(N-1)));g.gain.setValueAtTime(.0001,t);g.gain.setValueCurveAtTime(cv,t+.01,len);src.connect(f);f.connect(g);g.connect(out);src.start(t);src.stop(t+len+.3);}
-    function pops(from,dur,n,fLo,fHi,amp){for(var i=0;i<n;i++){var at=t+from+Math.pow(Math.random(),1.6)*dur,p=AC.createBufferSource();p.buffer=noise(AC,.5,true);var f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=Math.min(1100,(fLo+Math.random()*(fHi-fLo))*.4);f.Q.value=.5;var g=AC.createGain(),a=amp*.75*(.4+Math.random()*.6)*(1-(at-t-from)/dur*.6);g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(a,at+.03);g.gain.exponentialRampToValueAtTime(.0001,at+.2+Math.random()*.25);p.connect(f);f.connect(g);g.connect(out);p.start(at);}}
-    function boom(at,f0,amp,dec){dec*=LS;var o=AC.createOscillator();o.type='sine';o.frequency.setValueAtTime(f0,t+at);o.frequency.exponentialRampToValueAtTime(f0*.5,t+at+dec);var g=AC.createGain();g.gain.setValueAtTime(.0001,t+at);g.gain.linearRampToValueAtTime(amp,t+at+.04);g.gain.exponentialRampToValueAtTime(.0001,t+at+dec);o.connect(g);g.connect(out);o.start(t+at);o.stop(t+at+dec+.1);}
-    /* an uneven, never-repeating swell: every long thunder gets its own random shape instead of the same hit played again */
+  function wxThunder(delay,vol,kind,len){if(!AC)return;len=len||3.5;var PRE=.5,POST=1.4,t=AC.currentTime+delay,out=AC.createGain();out.gain.value=vol*PRE;var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-20;cmp.knee.value=12;cmp.ratio.value=8;cmp.attack.value=.004;cmp.release.value=.3;var post=AC.createGain();post.gain.value=POST;out.connect(cmp);cmp.connect(post);post.connect(wxOut());
+    /* Real thunder is not a note, it is air tearing: many claps of plain noise arriving one after another from along the bolt,
+       smeared by a long dull echo off the clouds and the ground. So there are no tones here at all (a falling tone is what a bass drum is). */
+    var dry=AC.createGain();dry.gain.value=.5;dry.connect(out);var wet=AC.createGain();wet.gain.value=WETG;var cv=AC.createConvolver();cv.buffer=wxEcho();wet.connect(cv);cv.connect(out);
+    function burst(buf,at,dur){var s=AC.createBufferSource();s.buffer=buf;s.loop=true;s.start(t+at,Math.random()*3);s.stop(t+at+dur+.15);return s;}
+    function lp(f0,f1,at,dur){var f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=.5;f.frequency.setValueAtTime(f0,t+at);f.frequency.exponentialRampToValueAtTime(Math.max(60,f1),t+at+dur);return f;}
+    /* one clap: a burst of noise that starts fast, loses its brightness and dies away */
+    function clap(at,amp,dec,f0,atk){at=Math.max(0,at);var s=burst(f0>700?wxWhite():wxBrown(),at,dec),a=lp(f0,f0*.22,at,dec),b=lp(f0*1.6,f0*.4,at,dec),g=AC.createGain(),a0=amp*(f0>700?.55:1.25);
+      g.gain.setValueAtTime(.0001,t+at);g.gain.linearRampToValueAtTime(a0,t+at+atk);g.gain.exponentialRampToValueAtTime(a0*.3,t+at+atk+dec*.3);g.gain.exponentialRampToValueAtTime(.0001,t+at+dec);s.connect(a);a.connect(b);b.connect(g);g.connect(dry);g.connect(wet);}
+    function scatter(from,to,n,ampF,f0,dLo,dHi){for(var i=0;i<n;i++){var k=Math.random(),at=from+(to-from)*k;clap(at,ampF(k)*(.5+.5*Math.random()),dLo+Math.random()*(dHi-dLo),f0*(.6+.8*Math.random()),.025+Math.random()*.06);}}
+    /* the tearing, ripping start of a close strike: bright noise that flutters unevenly, never a click */
+    function tear(at,dur,amp){var s=burst(wxWhite(),at,dur),f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=1300+Math.random()*700;f.Q.value=.5;var l=lp(3200,900,at,dur),g=AC.createGain(),N=Math.max(8,Math.round(dur*55)),c=new Float32Array(N);
+      for(var i=0;i<N;i++){var k=i/(N-1);c[i]=amp*(.15+.85*Math.pow(Math.random(),1.6))*Math.min(1,k*8)*Math.pow(1-k,.8)+.0001;}c[0]=.0001;c[N-1]=.0001;g.gain.setValueAtTime(.0001,t+at);g.gain.setValueCurveAtTime(c,t+at+.005,dur);s.connect(f);f.connect(l);l.connect(g);g.connect(dry);g.connect(wet);}
+    /* the deep rolling underneath: low noise that swells and sinks unevenly */
     function wander(n,lo){var pts=[],i;for(i=0;i<=n+1;i++)pts.push(lo+(1-lo)*Math.random());return function(k){var x=Math.max(0,Math.min(.9999,k))*n,j=x|0,f=x-j;f=f*f*(3-2*f);return pts[j]+(pts[j+1]-pts[j])*f;};}
-    function subs(from,to,n,amp){for(var i=0;i<n;i++){var at=from+(to-from)*Math.pow(Math.random(),1.3);boom(at,42+Math.random()*46,amp*(.5+Math.random()*.5)*(1-.5*(at-from)/Math.max(.1,to-from)),1+Math.random()*.9);}}
-    if(kind===0){pops(0,.35,16,700,3200,.9);boom(.05,95,1,1.6);layer(true,'lowpass',900,90,.4,function(k){return Math.exp(-k*3.6)*Math.min(1,k*30)*1.1;});layer(false,'bandpass',420,160,.7,function(k){return .35*Math.exp(-k*4)*Math.min(1,k*30);});}
-    else if(kind===1){var w1=wander(Math.round(len*1.7),.3),w2=wander(Math.round(len*2.6),.15),w3=wander(Math.round(len*1.1),.35),pk=.12+Math.random()*.2;
-      var sh=function(k){return Math.min(1,k/pk)*Math.pow(Math.max(0,1-(k-pk)/(1-pk)),1.25);};
-      layer(true,'lowpass',380,60,.4,function(k){return 1.15*(k<pk?Math.pow(k/pk,1.5):sh(k))*w1(k);},.8);layer(false,'bandpass',240,100,.8,function(k){return .26*sh(k)*w2(k);});layer(true,'lowpass',150,45,.6,function(k){return .9*sh(Math.min(1,k*1.15))*w3(k);},.55);
-      subs(pk*len,len*.7,1+Math.round(len/2.4),.55);}
-    else if(kind===2){boom(0,70,1.2,2.8);boom(.06,38,.9,3.2);layer(true,'lowpass',220,50,.5,function(k){return Math.min(1,k*20)*Math.exp(-k*2.2)*1.3;},.7);pops(0,.12,5,300,900,.5);}
-    else if(kind===4){var hold=2/len,g1=wander(7,.78),g2=wander(Math.round(len*2.2),.35),g3=wander(Math.round(len*1.4),.3);pops(0,.45,14,600,3000,.9);pops(.3,1.5,12,300,1400,.5);boom(.04,88,1.1,1.5);
-      var tail=function(k){return k<hold?1:Math.pow(Math.max(0,1-(k-hold)/(1-hold)),1.6);};
-      layer(true,'lowpass',850,65,.4,function(k){return Math.min(1,k*40)*1.15*tail(k)*(k<hold?g1(k/hold):g2(k));});layer(false,'bandpass',380,120,.7,function(k){return .28*Math.min(1,k*40)*tail(k)*g2(k);});layer(true,'lowpass',170,42,.6,function(k){return .95*Math.min(1,k*12)*tail(Math.max(0,k-.04))*g3(k);},.55);
-      subs(.5,len*.6,1+Math.round(len/2.6),.6);}
-    else if(kind===5){var kb=Math.min(.5,(wxBuild||1.5)/len),h1=wander(Math.round(len*2),.4),h2=wander(Math.round(len*1.5),.3),hit=kb*len;
-      var mainE=function(k){return k<kb?.3*Math.pow(k/kb,2.2):Math.pow(Math.max(0,1-(k-kb)/(1-kb)),1.7);};
-      layer(true,'lowpass',300,60,.4,function(k){return 1.2*mainE(k)*(k<kb?1:h1(k));});layer(false,'bandpass',300,110,.7,function(k){return .3*(k<kb?.2*k/kb:mainE(k)*h2(k));});layer(true,'lowpass',160,42,.6,function(k){return k<kb?0:1.0*mainE(k)*h2(k);},.55);
-      pops(hit,.4,14,600,2800,.9);boom(hit+.02,82,1.15,1.7);boom(hit+.1,44,.8,2.1);subs(hit+.6,len*.75,Math.round(len/3),.5);}
-    else{pops(0,Math.min(1.1,len*.5),34,900,3600,.75);pops(.2,.9,12,300,900,.6);layer(true,'lowpass',700,80,.4,function(k){return Math.min(1,k*8)*(.5*Math.exp(-k*2)+.8*Math.exp(-Math.pow((k-.42)/.14,2)))*(1-k*.4);});boom(.4*len,58,.6,1.5);}}
+    function roll(env,amp,f0){var D=len+1.5,s=burst(wxBrown(),0,D),a=lp(f0||170,55,0,D),b=lp((f0||170)*1.5,80,0,D),g=AC.createGain(),N=96,c=new Float32Array(N),w=wander(Math.round(D*2.4),.3),w2=wander(Math.round(D*6),.55);
+      for(var i=0;i<N;i++){var k=i/(N-1);c[i]=Math.max(.0001,amp*env(k*D/len)*w(k)*w2(k));}c[N-1]=.0001;g.gain.setValueAtTime(.0001,t);g.gain.setValueCurveAtTime(c,t+.01,D);s.connect(a);a.connect(b);b.connect(g);g.connect(dry);g.connect(wet);}
+    function fade(p){return function(k){return Math.pow(Math.max(0,1-k),p);};}
+    function tail(from,p){return function(k){return k<from?1:Math.pow(Math.max(0,1-(k-from)/(1.25-from)),p);};}
+    var n=Math.round(len);
+    if(kind===0){tear(0,.28,.5);clap(0,1,.55,2300,.008);clap(.06+Math.random()*.05,.8,.8,900,.02);scatter(.15,len*.65,3+n,function(k){return .7*Math.pow(1-k,1.4);},480,.5,1.1);roll(function(k){return Math.min(1,k*30)*Math.exp(-k*2.6);},1.5);}
+    else if(kind===1){var pk=.15+Math.random()*.2,hump=function(k){return k<pk?Math.pow(k/pk,1.4):Math.pow(Math.max(0,1-(k-pk)/(1.2-pk)),1.3);};
+      scatter(0,len*.85,5+2*n,function(k){return .75*hump(k*.85);},400,.6,1.4);roll(hump,1.7);}
+    else if(kind===2){clap(0,1,1.2,330,.05);clap(.1+Math.random()*.12,.85,1.5,250,.06);scatter(.3,len*.7,2+n,function(k){return .6*(1-k);},260,.8,1.6);roll(function(k){return Math.min(1,k*14)*Math.exp(-k*2);},1.9,130);}
+    else if(kind===4){var hold=2/len;tear(0,.3,.5);clap(0,1,.55,2400,.008);scatter(.05,2,11,function(){return .8;},750,.35,.8);scatter(2,len*.9,3+n,function(k){return .6*Math.pow(1-k,1.4);},400,.6,1.3);roll(tail(hold,1.6),1.7);}
+    else if(kind===5){var hit=Math.min(.5*len,wxBuild||1.5),kb=hit/len;
+      scatter(0,hit*.9,3+Math.round(hit*3),function(k){return .06+.22*k*k;},360,.4,.9);tear(hit,.3,.5);clap(hit,1,.55,2300,.008);clap(hit+.07,.85,.8,900,.02);scatter(hit+.15,len*.9,4+n,function(k){return .7*Math.pow(1-k,1.4);},450,.6,1.3);
+      roll(function(k){return k<kb?.25*Math.pow(k/kb,2):Math.pow(Math.max(0,1-(k-kb)/(1.25-kb)),1.6);},1.7);}
+    else{var cr=Math.min(1.1,len*.35),h3=cr+.05;tear(0,cr,.4);scatter(0,cr,6,function(k){return .25+.3*k;},1300,.18,.4);clap(h3,1,.8,1500,.012);scatter(h3+.1,len*.9,4+n,function(k){return .7*Math.pow(1-k,1.3);},450,.6,1.2);
+      roll(function(k){var c=h3/len;return k<c?.3*k/c:Math.pow(Math.max(0,1-(k-c)/(1.25-c)),1.5);},1.6);}}
+  var wxIR=null,wxWN=null,wxBN=null,WETG=.9;
+  function wxWhite(){return wxWN||(wxWN=noise(AC,4,false));}
+  function wxBrown(){return wxBN||(wxBN=noise(AC,4,true));}
+  /* the echo of open sky: 5 seconds of noise that gets duller and quieter, in uneven waves */
+  function wxEcho(){if(wxIR)return wxIR;var sr=AC.sampleRate,L=Math.floor(sr*5),b=AC.createBuffer(2,L,sr),step=Math.floor(sr*.06);
+    for(var c=0;c<2;c++){var d=b.getChannelData(c),l1=0,l2=0,r=1,rt=1;for(var i=0;i<L;i++){var tt=i/sr;if(i%step===0)rt=.35+Math.random()*1.1;r+=(rt-r)*.0008;
+      var fc=2400*Math.exp(-tt*1.4)+130,a=1-Math.exp(-6.2832*fc/sr);l1+=a*((Math.random()*2-1)-l1);l2+=a*(l1-l2);d[i]=l2*Math.sqrt(2530/fc)*Math.exp(-tt/1.1)*r*Math.min(1,tt/.01)*Math.min(1,(5-tt)/.3);}}
+    return (wxIR=b);}
   function wxAudio(){var on=wxSnd&&!wxMute&&!document.hidden&&(wxMode==='rain'||wxMode==='storm');
     if(on&&!wxRainN&&AC){var src=AC.createBufferSource();src.buffer=rainBuf();src.loop=true;var hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=220;var lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=5200;lp.Q.value=.3;var g=AC.createGain(),vol=RAINVOL*(wxMode==='storm'?1.3:1);g.gain.setValueAtTime(0,AC.currentTime);g.gain.linearRampToValueAtTime(vol,AC.currentTime+3);src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(wxOut());src.start();wxRainN=[{s:src,g:g}];}
     else if(!on&&wxRainN){var n=wxRainN;wxRainN=null;n.forEach(function(q){try{q.g.gain.cancelScheduledValues(AC.currentTime);q.g.gain.setValueAtTime(q.g.gain.value,AC.currentTime);q.g.gain.linearRampToValueAtTime(0,AC.currentTime+.8);q.s.stop(AC.currentTime+.9);}catch(e){}});}
@@ -3913,7 +3928,7 @@ var WA = "917501101137";
     if(window.nkAvc){var n0=nights();window.nkAvc.show(rm.selectedIndex===2?'Large Twin':rm.selectedIndex===1?'Deluxe Twin':'Deluxe Double',n0>=1?ci.value:null,n0>=1?co.value:null);return;}
     sendWA();
   });
-  function sendWA(){
+  function sendWA(){if(window.nkTrack)window.nkTrack('book');
     var n=nights();if(n<1){update();return;}
     var txt='Hare Krishna! I would like to book at Nikadi Guest House.\n\nRoom: '+rm.value+'\nCheck-in: '+pretty(ci.value)+'\nCheck-out: '+pretty(co.value)+' ('+n+(n>1?' nights':' night')+')\nGuests: '+gu.value+'\nRooms: '+roomsFor(gu.value)+'\n\nIs it available?';
     var a=document.createElement('a');a.href='https://wa.me/'+WA+'?text='+encodeURIComponent(txt);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
@@ -4933,6 +4948,32 @@ setInterval(function(){if(document.hidden)return;im[i].classList.remove('on');i=
   var done=function(){document.documentElement.classList.remove('i18n-wait');};
   fetch('/data/i18n/'+cur+'.json?v=3').then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(D){try{apply(D);}catch(e){console.error(e);}done();try{document.dispatchEvent(new Event('nk:lang'));}catch(e){}}).catch(done);
 })();
+</script>
+<script>
+/* ---- Visit counter for the owner's admin page. Nothing personal: a random number for this browser, the pages opened and the time spent.
+        No name, no phone, no cookies. Devices signed in to the staff app are not counted. ---- */
+(function(){try{
+  var API="https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api",LS=localStorage,SS=sessionStorage,UA=navigator.userAgent||'';
+  if(!/(^|\.)nikadiguesthouse\.com$/.test(location.hostname)||navigator.webdriver||/bot|crawl|spider|headless|lighthouse|preview|monitor/i.test(UA))return;
+  if(/[?&](guest|sky|wx|fx|dark)=/.test(location.search)||LS.getItem('nk_notrack')||LS.getItem('nk-staff-token'))return;
+  function rid(){var a='abcdefghijklmnopqrstuvwxyz0123456789',o='';for(var i=0;i<16;i++)o+=a.charAt(Math.random()*36|0);return o;}
+  var first=false,vid=LS.getItem('nk_vid');if(!/^[a-z0-9]{16}$/.test(vid||'')){vid=rid();first=true;LS.setItem('nk_vid',vid);}
+  var now=Date.now(),sid=SS.getItem('nk_sid'),fresh=!sid||now-Number(SS.getItem('nk_sat')||0)>18e5;if(fresh){sid=rid();SS.setItem('nk_sid',sid);SS.setItem('nk_ss','0');}
+  var secs=Number(SS.getItem('nk_ss'))||0,sent=-1,W=Math.min(screen.width||9999,innerWidth||9999);
+  function send(x){var b={action:'deskSiteHit',sid:sid,vid:vid,path:location.pathname,secs:Math.round(secs)};for(var k in x)b[k]=x[k];sent=secs;SS.setItem('nk_sat',String(Date.now()));
+    var j=JSON.stringify(b);try{if(navigator.sendBeacon&&navigator.sendBeacon(API,j))return;}catch(e){}try{fetch(API,{method:'POST',body:j,keepalive:true}).catch(function(){});}catch(e){}}
+  var ref='';try{if(document.referrer)ref=new URL(document.referrer).hostname;}catch(e){}
+  if(fresh)send({first:first,ref:ref,dev:/iPad|Tablet/i.test(UA)||(W>=700&&W<1100&&'ontouchstart' in window)?'tablet':/Mobi|Android|iPhone/i.test(UA)||W<700?'mobile':'desktop',
+    tz:(function(){try{return Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){return '';}})(),lang:navigator.language||'',member:!!LS.getItem('nk_token')});
+  else send({page:true,member:!!LS.getItem('nk_token')});
+  /* time is counted only while the page is in front; a short note goes out now and then so "on the site now" is right */
+  setInterval(function(){if(document.hidden||secs>7200)return;secs+=5;SS.setItem('nk_ss',String(secs));if(secs===15||secs===45||(secs>45&&(secs-45)%60===0))send({});},5000);
+  function bye(){if(secs!==sent)send({});}
+  document.addEventListener('visibilitychange',function(){if(document.hidden)bye();});addEventListener('pagehide',bye);
+  window.nkTrack=function(ev){send({ev:ev});};
+  document.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;if(!a)return;var h=a.getAttribute('href')||'';
+    if(/wa\.me|whatsapp\.com/.test(h))send({ev:'wa'});else if(/^tel:/.test(h))send({ev:'call'});else if(/\/app\/|membership/.test(h))send({ev:'join'});},true);
+}catch(e){}})();
 </script>
 </body>
 </html>

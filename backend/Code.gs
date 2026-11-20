@@ -193,7 +193,7 @@ function doPost(e) {
   }
 }
 
-var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
+var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteStats: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
 var DESK_NO_LOCK_ = false;
 
 /* Error alerts: an email to the owner when something fails in the background (same problem at most once in 6 hours). */
@@ -417,6 +417,18 @@ function memberDesk_(phone) {
   return { name: m.name, email: m.email || '', tier: t.tier.name, tierKey: t.tier.key, discount: t.tier.discount, points: m.points,
     onsite: tierPerks_(t.tier).filter(function (p) { return p.onsite; }).map(function (p) { return p.text; }),
     rates: Object.keys(BASE_RATES).reduce(function (o, k) { o[k] = Math.round(rateFor_(k) * (100 - t.tier.discount) / 100); return o; }, {}) };
+}
+
+/* Admin page: every member with level, points and status (Owner / Manager only; the staff side checks who is asking). */
+function membersAdmin_() {
+  var sh = sheet_('members'), n = sh.getLastRow(), list = [];
+  if (n >= 2) sh.getRange(2, 1, n - 1, TABS.members.length).getValues().forEach(function (r) {
+    var ph = String(r[0]).replace(/^'/, ''); if (!ph) return;
+    var j = r[5] ? new Date(r[5]) : null;
+    list.push({ phone: ph, name: String(r[1] || ''), city: String(r[3] || ''), joined: j && !isNaN(j) ? Utilities.formatDate(j, 'Asia/Kolkata', 'yyyy-MM-dd') : '',
+      points: num_(r[6], 0), lifetime: num_(r[7], 0), status: String(r[8] || 'Active'), tier: String(r[11] || 'Silver'), nights2y: num_(r[13], 0), nightsAll: num_(r[14], 0), hasPassword: !!r[10], email: !!r[2] });
+  });
+  return { list: list, recent: history_(null, 15) };
 }
 
 /* ---------------- Passwords ---------------- */

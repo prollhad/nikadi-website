@@ -246,3 +246,14 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
     if (!pub.ok || pub.statement.total !== 24000 || pub.statement.paid !== 10000 || bad.ok || !msg || !msg.text.includes(url)) throw new Error('no-show statement broken');
   }
 }
+{ // website visitors + admin figures
+  const a = { sid: 'aaaaaaaaaaaa', vid: 'vvvvvvvvvvv1', path: '/index.html', ref: 'www.google.com', dev: 'mobile', tz: 'Asia/Kolkata', lang: 'en-IN', first: true };
+  await call('deskSiteHit', a);
+  await call('deskSiteHit', { sid: a.sid, vid: a.vid, path: '/temple.html?x=1', page: true, secs: 40 });
+  await call('deskSiteHit', { sid: a.sid, vid: a.vid, path: '/temple', secs: 95, ev: 'wa' });
+  await call('deskSiteHit', { sid: 'bbbbbbbbbbbb', vid: 'vvvvvvvvvvv2', path: '/membership.html', dev: 'desktop', tz: 'Europe/London', secs: 10 });
+  await call('deskSiteHit', { sid: '<script>', vid: 'x', path: '/' }); // junk is ignored
+  const no = await call('deskSiteStats', {}), mgr = await call('deskSiteStats', { token: tok });
+  console.log('site stats', no.error, '|', mgr.ok || mgr.error, JSON.stringify(mgr.day), 'live', mgr.live, 'pages', JSON.stringify(mgr.pages), 'refs', JSON.stringify(mgr.refs), 'zones', JSON.stringify(mgr.zones), 'members', mgr.members && mgr.members.list.length, 'bookings', JSON.stringify(mgr.bookings));
+  if (no.ok || !mgr.ok || mgr.day.visits !== 2 || mgr.day.visitors !== 2 || mgr.day.pages !== 3 || mgr.day.secs !== 105 || mgr.day.taps.wa !== 1 || mgr.live !== 2 || mgr.days.length !== 90 || !mgr.members) throw new Error('site stats broken');
+}

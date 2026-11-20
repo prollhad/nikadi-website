@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Nikadi · Website admin</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500&display=swap">
+<style>
+:root{--bg:#14110f;--band:#1b1714;--panel:#221d19;--panel-2:#2a241f;--ink:#efe7da;--muted:#b3a796;--line:#3a322b;--gold:#c9a35a;--gold-hi:#e0be7a;--gold-ink:#1a1206;--green:#74c08c;--red:#e86a5b;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 Jost,system-ui,sans-serif}
+h1,h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;margin:0;text-wrap:balance}
+h1{font-size:2rem;line-height:1.1}h2{font-size:1.35rem}
+.wrap{max-width:1180px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-right)) 60px max(16px,env(safe-area-inset-left))}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.kick{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 4px}
+.muted{color:var(--muted)}.small{font-size:.82rem;color:var(--muted)}
+.btn{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{border-color:var(--gold)}.btn-gold{background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:500}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+.tile,.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.tile .l{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tile .n{font-family:"Cormorant Garamond",serif;font-size:2.3rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .s{font-size:.82rem;color:var(--muted)}
+.tile.live{border-color:var(--gold)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);margin-right:7px;animation:p 1.6s infinite}
+.dot.off{background:var(--muted);animation:none}@keyframes p{50%{opacity:.35}}
+.up{color:var(--green)}.down{color:var(--red)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.card{margin-bottom:14px}.grid .card{margin:0}
+.ch{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:.82rem;background:none;border:0;color:var(--muted);padding:5px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--gold);color:var(--gold-ink)}
+.bars{display:flex;align-items:flex-end;gap:2px;height:190px;border-bottom:1px solid var(--line);position:relative}
+.bars .b{flex:1;min-width:0;height:100%;display:flex;align-items:flex-end;position:relative}
+.bars .b i{display:block;width:100%;background:var(--gold);border-radius:4px 4px 0 0;min-height:1px}
+.bars .b:hover i{background:var(--gold-hi)}.bars .b.z i{background:var(--line)}
+.bars.h{height:110px}
+.ax{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-top:6px}
+.tip{position:fixed;z-index:9;background:#0d0b0a;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:.82rem;pointer-events:none;white-space:nowrap}
+.tip b{display:block;font-weight:500}
+.rows{display:grid;gap:9px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:baseline}
+.row .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row .v{font-variant-numeric:tabular-nums;color:var(--muted)}
+.row .m{grid-column:1/-1;height:6px;background:var(--panel-2);border-radius:3px;overflow:hidden}.row .m i{display:block;height:100%;background:var(--gold);border-radius:3px}
+.tw{overflow-x:auto;margin:0 -4px}
+table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:560px}
+th{text-align:left;font-weight:400;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--muted);margin-left:4px}
+.tag.g{border-color:var(--gold);color:var(--gold-hi)}.tag.bad{border-color:var(--red);color:var(--red)}.tag.on{border-color:var(--green);color:var(--green)}
+input.in{font:inherit;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;max-width:320px}
+.sec{margin:34px 0 14px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.login{max-width:380px;margin:12vh auto;text-align:center}.login .card{text-align:left}
+.err{color:var(--red);min-height:1.4em;font-size:.88rem}
+.empty{color:var(--muted);font-size:.9rem;padding:8px 0}
+@media(max-width:760px){.grid{grid-template-columns:1fr}h1{font-size:1.6rem}.bars{height:150px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><p class="muted">Loading…</p></div>
+<div class="tip" id="tip" hidden></div>
+<script>
+(function(){
+  var API='https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api',app=document.getElementById('app'),tip=document.getElementById('tip'),D=null,RANGE=30,Q='',timer=null;
+  function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null;}}
+  ls('nk_notrack','1'); /* this device is the owner's: its own visits to the website are not counted */
+  function tok(){return ls('nk-admin-token')||ls('nk-staff-token')||'';}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function post(b){return fetch(API,{method:'POST',body:JSON.stringify(b)}).then(function(r){return r.json();});}
+  function num(n){return Number(n||0).toLocaleString('en-IN');}
+  function dur(s){s=Math.round(s||0);if(s<60)return s+' sec';var m=Math.floor(s/60);if(m<60)return m+' min'+(s%60&&m<10?' '+(s%60)+' sec':'');return Math.floor(m/60)+' h '+(m%60)+' min';}
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function dshort(d){var p=String(d).split('-');return Number(p[2])+' '+MON[p[1]-1];}
+  function dlong(d){var p=String(d).split('-'),x=new Date(Date.UTC(+p[0],p[1]-1,+p[2]));return WD[x.getUTCDay()]+' '+dshort(d);}
+  function clock(t){var h=Number(String(t).slice(11,13)),m=String(t).slice(14,16);return ((h%12)||12)+':'+m+(h<12?' am':' pm');}
+  function when(t){var d=String(t).slice(0,10);return (d===D.today?'Today':dshort(d))+', '+clock(t);}
+  var PAGE={'/':'Home','/temple':'Temple & darshan','/travel':'Getting to Mayapur','/things-to-do':'Things to do','/membership':'Membership','/about':'About us','/app/':'Member app','/app':'Member app'};
+  function page(p){return PAGE[p]||p;}
+  var REF={'google.com':'Google search','Direct':'Typed the address / link in an app','instagram.com':'Instagram','l.instagram.com':'Instagram','facebook.com':'Facebook','m.facebook.com':'Facebook','l.facebook.com':'Facebook','lm.facebook.com':'Facebook','bing.com':'Bing search','youtube.com':'YouTube','wa.me':'WhatsApp','web.whatsapp.com':'WhatsApp','api.whatsapp.com':'WhatsApp','maps.google.com':'Google Maps','duckduckgo.com':'DuckDuckGo','t.co':'X (Twitter)','chatgpt.com':'ChatGPT'};
+  function ref(r){if(!r)return 'Direct';if(REF[r])return REF[r];if(/^google\./.test(r)||/\.google\./.test(r))return 'Google';return r;}
+  var TZ={'Asia/Kolkata':'India','Asia/Calcutta':'India','Asia/Dhaka':'Bangladesh','Asia/Kathmandu':'Nepal','Asia/Dubai':'UAE','Asia/Singapore':'Singapore','Europe/London':'United Kingdom','Europe/Moscow':'Russia','Europe/Kyiv':'Ukraine','Europe/Kiev':'Ukraine','Europe/Berlin':'Germany','Europe/Paris':'France','Europe/Rome':'Italy','Europe/Madrid':'Spain','Asia/Shanghai':'China','Asia/Tokyo':'Japan','Australia/Sydney':'Australia','Australia/Melbourne':'Australia','America/Sao_Paulo':'Brazil','Asia/Colombo':'Sri Lanka','Asia/Kuala_Lumpur':'Malaysia','Asia/Bangkok':'Thailand','Asia/Jakarta':'Indonesia'};
+  function place(z){if(!z||z==='Unknown')return 'Unknown';if(TZ[z])return TZ[z];if(/^America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Detroit)/.test(z))return 'United States';if(/^America\/(Toronto|Vancouver|Edmonton|Winnipeg)/.test(z))return 'Canada';return z.split('/').pop().replace(/_/g,' ');}
+  function chg(a,b){if(!b)return a?'<span class="up">new</span>':'';var p=Math.round((a-b)/b*100);if(!p)return 'same as before';return '<span class="'+(p>0?'up':'down')+'">'+(p>0?'▲ ':'▼ ')+Math.abs(p)+'%</span> vs the '+'time before';}
+  function tile(l,n,s,cls){return '<div class="tile '+(cls||'')+'"><div class="l">'+l+'</div><div class="n">'+n+'</div><div class="s">'+(s||'&nbsp;')+'</div></div>';}
+  function list(a,name,max){if(!a.length)return '<p class="empty">Nothing yet.</p>';var top=a[0][1]||1,tot=0;a.forEach(function(x){tot+=x[1];});
+    return '<div class="rows">'+a.slice(0,max||10).map(function(x){return '<div class="row"><span class="t">'+esc(name(x[0]))+'</span><span class="v">'+num(x[1])+' · '+Math.round(x[1]/tot*100)+'%</span><span class="m"><i style="width:'+Math.max(2,x[1]/top*100)+'%"></i></span></div>';}).join('')+'</div>';}
+  function merge(a,name){var o={};a.forEach(function(x){var k=name(x[0]);o[k]=(o[k]||0)+x[1];});return Object.keys(o).map(function(k){return [k,o[k]];}).sort(function(x,y){return y[1]-x[1];});}
+
+  function login(msg){clearInterval(timer);
+    app.innerHTML='<div class="login"><p class="kick">Nikadi Guest House</p><h1>Website admin</h1><p class="muted">For the owner and manager. Enter your staff app PIN.</p>'+
+      '<div class="card"><form id="lf"><input class="in" id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="PIN" style="max-width:none;margin-bottom:10px">'+
+      '<p class="err" id="lerr" role="alert">'+esc(msg||'')+'</p><button class="btn btn-gold" type="submit" style="width:100%">Open</button></form></div></div>';
+    document.getElementById('lf').onsubmit=function(e){e.preventDefault();var er=document.getElementById('lerr');er.textContent='';
+      post({action:'deskLogin',pin:document.getElementById('pin').value}).then(function(r){
+        if(!r.ok){er.textContent=r.error==='wrong_pin'?'That PIN is not right.':r.error==='too_many_attempts'?'Too many wrong tries. Wait 15 minutes.':'Could not sign in ('+r.error+').';return;}
+        if(r.me.role!=='Owner'&&r.me.role!=='Manager'){er.textContent='Only the owner and manager can open this page.';return;}
+        ls('nk-admin-token',r.token);load();},function(){er.textContent='No connection. Try again.';});};}
+
+  function load(){if(!tok())return login();
+    post({action:'deskSiteStats',token:tok()}).then(function(r){
+      if(!r.ok){if(r.error==='not_allowed')return login('Only the owner and manager can open this page.');ls('nk-admin-token',null);return login(r.error==='session_expired'||r.error==='not_logged_in'?'':'Could not load ('+r.error+').');}
+      D=r;draw();clearInterval(timer);timer=setInterval(function(){if(!document.hidden)load();},60000);
+    },function(){if(!D)app.innerHTML='<p class="muted">No connection. <button class="btn" onclick="location.reload()">Try again</button></p>';});}
+
+  function draw(){var d=D,y=window.scrollY;
+    var days=d.days.slice(-RANGE),mx=Math.max.apply(null,days.map(function(x){return x.visitors;}).concat([1]));
+    var hx=Math.max.apply(null,d.hours.concat([1])),m=d.members,ml=m?m.list:[];
+    var tiers=['Silver','Gold','Platinum','Platinum Plus'],bt={},act=0,blk=0,pts=0,j30=0,from30=d.days[d.days.length-30].d;
+    ml.forEach(function(x){bt[x.tier]=(bt[x.tier]||0)+1;if(x.status==='Blocked')blk++;else act++;pts+=x.points;if(x.joined>=from30)j30++;});
+    var taps=d.month.taps||{},nw=d.month.visits?Math.round(d.month.fresh/Math.max(1,d.month.visitors)*100):0,mob=d.month.visits?Math.round(d.month.mobile/d.month.visits*100):0;
+    var q=Q.toLowerCase(),shown=ml.filter(function(x){return !q||(x.name+' '+x.phone+' '+x.city+' '+x.tier+' '+x.status).toLowerCase().indexOf(q)>=0;}).sort(function(a,b){return a.joined<b.joined?1:-1;});
+    var h='<div class="top"><div><p class="kick">Nikadi Guest House</p><h1>Website admin</h1><p class="small">Updated '+clock(d.now)+' · refreshes every minute</p></div>'+
+      '<div class="acts"><a class="btn" href="/" target="_blank" rel="noopener">Open website</a><a class="btn" href="/staff/">Staff app</a><button class="btn" id="rf" type="button">Refresh</button><button class="btn" id="lo" type="button">Sign out</button></div></div>'+
+      '<div class="tiles">'+
+      tile('On the site now','<span class="dot'+(d.live?'':' off')+'"></span>'+d.live,d.live?d.liveList.map(function(v){return esc(page(v.lastPage));}).filter(function(x,i,a){return a.indexOf(x)===i;}).slice(0,3).join(', '):'Nobody right now','live')+
+      tile('Visitors today',num(d.day.visitors),num(d.day.pages)+' pages · yesterday '+num(d.yesterday.visitors))+
+      tile('Last 7 days',num(d.week.visitors),chg(d.week.visits,d.prevWeek.visits))+
+      tile('Last 30 days',num(d.month.visitors),chg(d.month.visits,d.prevMonth.visits))+
+      tile('Time on the site',d.month.avg<60?d.month.avg+' sec':Math.floor(d.month.avg/60)+':'+('0'+d.month.avg%60).slice(-2)+' min','average per visit, 30 days')+
+      tile('Members',m?num(ml.length):'–',m?'+'+j30+' in 30 days':'')+'</div>'+
+      '<div class="card"><div class="ch"><h2>Visitors each day</h2><div class="seg" id="rg">'+[7,30,90].map(function(n){return '<button type="button" data-n="'+n+'" aria-pressed="'+(n===RANGE)+'">'+n+' days</button>';}).join('')+'</div></div>'+
+      '<div class="bars" id="bd">'+days.map(function(x,i){return '<div class="b'+(x.visitors?'':' z')+'" data-i="'+i+'"><i style="height:'+(x.visitors?Math.max(2,x.visitors/mx*100):0)+'%"></i></div>';}).join('')+'</div>'+
+      '<div class="ax"><span>'+dshort(days[0].d)+'</span><span>most in a day: '+num(mx===1&&!days.some(function(x){return x.visitors;})?0:mx)+'</span><span>Today</span></div></div>'+
+      '<div class="grid"><div class="card"><div class="ch"><h2>Pages people open</h2><span class="small">30 days</span></div>'+list(merge(d.pages,page),function(x){return x;},10)+'</div>'+
+      '<div class="card"><div class="ch"><h2>Where they come from</h2><span class="small">30 days</span></div>'+list(merge(d.refs,ref),function(x){return x;},8)+'</div></div>'+
+      '<div class="grid"><div class="card"><div class="ch"><h2>What they tap</h2><span class="small">30 days</span></div><div class="rows">'+
+        [['wa','WhatsApp buttons'],['book','Book on WhatsApp (from the calendar or form)'],['call','Call buttons'],['join','Membership / member app links']].map(function(x){return '<div class="row"><span class="t">'+x[1]+'</span><span class="v">'+num(taps[x[0]]||0)+'</span></div>';}).join('')+
+        '<div class="row"><span class="t">First-time visitors</span><span class="v">'+nw+'%</span></div><div class="row"><span class="t">On a phone</span><span class="v">'+mob+'%</span></div>'+
+        '<div class="row"><span class="t">Pages per visit</span><span class="v">'+(d.month.visits?(d.month.pages/d.month.visits).toFixed(1):'0')+'</span></div></div></div>'+
+      '<div class="card"><div class="ch"><h2>Countries</h2><span class="small">by the phone or computer\'s time zone, 30 days</span></div>'+list(merge(d.zones,place),function(x){return x;},8)+'</div></div>'+
+      '<div class="card"><div class="ch"><h2>Time of day</h2><span class="small">when visits start, India time, 30 days</span></div><div class="bars h" id="bh">'+d.hours.map(function(c,i){return '<div class="b'+(c?'':' z')+'" data-h="'+i+'"><i style="height:'+(c?Math.max(3,c/hx*100):0)+'%"></i></div>';}).join('')+'</div><div class="ax"><span>12 am</span><span>6 am</span><span>12 pm</span><span>6 pm</span><span>11 pm</span></div></div>'+
+      '<div class="card"><div class="ch"><h2>Latest visits</h2><span class="small">newest first</span></div>'+(d.recent.length?'<div class="tw"><table><thead><tr><th>When</th><th>Stayed</th><th class="n">Pages</th><th>Started on</th><th>Came from</th><th>Device</th><th>Country</th><th></th></tr></thead><tbody>'+
+        d.recent.map(function(v){var e=v.ev||{};return '<tr><td>'+when(v.at)+'</td><td>'+dur(v.secs)+'</td><td class="n">'+v.pages+'</td><td>'+esc(page(v.entry))+'</td><td>'+esc(ref(v.ref))+'</td><td>'+esc(v.dev==='mobile'?'Phone':v.dev==='tablet'?'Tablet':'Computer')+'</td><td>'+esc(place(v.tz))+'</td><td>'+
+          (v.on?'<span class="tag on">on the site</span>':'')+(v.isNew?'<span class="tag">first time</span>':'')+(v.member?'<span class="tag g">member</span>':'')+(e.wa||e.book?'<span class="tag g">WhatsApp</span>':'')+(e.call?'<span class="tag g">called</span>':'')+'</td></tr>';}).join('')+'</tbody></table></div>':'<p class="empty">No visits recorded yet. They start showing as soon as people open the website.</p>')+'</div>'+
+      '<div class="sec"><div><p class="kick">Membership</p><h2>Members</h2></div></div>';
+    if(!m)h+='<div class="card"><p class="empty">The member list could not be read just now.</p></div>';
+    else{h+='<div class="tiles">'+tile('All members',num(ml.length),act+' active'+(blk?' · '+blk+' blocked':''))+tiers.map(function(t){return tile(t,num(bt[t]||0),ml.length?Math.round((bt[t]||0)/ml.length*100)+'%':'');}).join('')+tile('Points held',num(pts),'not used yet, all members')+'</div>'+
+      '<div class="card"><div class="ch"><h2>Member list</h2><input class="in" id="mq" type="search" placeholder="Search name, phone, city, level" value="'+esc(Q)+'"></div>'+(shown.length?'<div class="tw"><table><thead><tr><th>Name</th><th>Phone</th><th>City</th><th>Level</th><th class="n">Points</th><th class="n">Nights (2 yrs)</th><th class="n">Nights (all)</th><th>Joined</th><th>Status</th></tr></thead><tbody>'+
+        shown.slice(0,200).map(function(x){return '<tr><td>'+esc(x.name)+'</td><td>'+esc(x.phone.length===10?'+91 '+x.phone.slice(0,5)+' '+x.phone.slice(5):'+'+x.phone)+'</td><td>'+esc(x.city)+'</td><td>'+esc(x.tier)+'</td><td class="n">'+num(x.points)+'</td><td class="n">'+x.nights2y+'</td><td class="n">'+x.nightsAll+'</td><td>'+(x.joined?dshort(x.joined)+' '+x.joined.slice(0,4):'')+'</td><td>'+(x.status==='Blocked'?'<span class="tag bad">Blocked</span>':'Active')+(x.hasPassword?'':'<span class="tag">no password yet</span>')+'</td></tr>';}).join('')+'</tbody></table></div>'+(shown.length>200?'<p class="small">Showing the newest 200 of '+shown.length+'. Search to find others.</p>':''):'<p class="empty">'+(ml.length?'No member matches that search.':'No members yet.')+'</p>')+'</div>'+
+      '<div class="card"><div class="ch"><h2>Latest points activity</h2></div>'+(m.recent&&m.recent.length?'<div class="tw"><table><thead><tr><th>When</th><th>Member</th><th>What</th><th class="n">Points</th><th class="n">Balance</th><th>Note</th></tr></thead><tbody>'+m.recent.map(function(t){return '<tr><td>'+esc(t.date)+'</td><td>'+esc(t.name)+'</td><td>'+esc(t.type)+'</td><td class="n">'+(t.points>0?'+':'')+num(t.points)+'</td><td class="n">'+num(t.balance)+'</td><td style="white-space:normal">'+esc(t.note)+'</td></tr>';}).join('')+'</tbody></table></div>':'<p class="empty">Nothing yet.</p>')+'</div>';}
+    h+='<div class="sec"><div><p class="kick">Bookings</p><h2>Last 30 days</h2></div></div><div class="grid"><div class="card"><div class="ch"><h2>New bookings by where they came from</h2><span class="small">'+d.bookings.total+' in all</span></div>'+list(d.bookings.bySource,function(x){return x;},8)+'</div>'+
+      '<div class="card"><div class="ch"><h2>Website forms</h2></div><div class="rows"><div class="row"><span class="t">Guest registration cards filled</span><span class="v">'+num(d.bookings.regs)+'</span></div></div><p class="small" style="margin-top:14px">Bookings, payments and guests are handled in the staff app.</p></div></div>'+
+      '<p class="small">Visits are counted without knowing who the person is: no names, phone numbers or IP addresses are kept. Phones and computers signed in to the staff app or this page are not counted. Search engines and other robots are left out.</p>';
+    app.innerHTML=h;window.scrollTo(0,y);
+    document.getElementById('rf').onclick=load;
+    document.getElementById('lo').onclick=function(){var t=ls('nk-admin-token');if(t)post({action:'deskLogout',token:t}).catch(function(){});ls('nk-admin-token',null);D=null;login();};
+    document.getElementById('rg').onclick=function(e){var b=e.target.closest('button');if(b){RANGE=Number(b.dataset.n);draw();}};
+    var mq=document.getElementById('mq');if(mq)mq.oninput=function(){Q=mq.value;var p=mq.selectionStart;draw();var n=document.getElementById('mq');n.focus();try{n.setSelectionRange(p,p);}catch(e){}};
+    function hov(el,fn){el.onmousemove=el.ontouchstart=function(e){var b=e.target.closest('.b');if(!b){tip.hidden=true;return;}tip.innerHTML=fn(b);tip.hidden=false;var p=e.touches?e.touches[0]:e,w=tip.offsetWidth;tip.style.left=Math.max(6,Math.min(innerWidth-w-6,p.clientX-w/2))+'px';tip.style.top=Math.max(6,p.clientY-tip.offsetHeight-14)+'px';};el.onmouseleave=function(){tip.hidden=true;};}
+    hov(document.getElementById('bd'),function(b){var x=days[b.dataset.i];return '<b>'+dlong(x.d)+'</b>'+num(x.visitors)+' visitors · '+num(x.visits)+' visits · '+num(x.pages)+' pages'+(x.visits?'<br>'+dur(x.secs/x.visits)+' each':'');});
+    hov(document.getElementById('bh'),function(b){var i=Number(b.dataset.h);return '<b>'+((i%12)||12)+(i<12?' am':' pm')+' to '+(((i+1)%12)||12)+((i+1)%24<12?' am':' pm')+'</b>'+num(d.hours[i])+' visits';});
+  }
+  load();
+})();
+</script>
+</body>
+</html>
