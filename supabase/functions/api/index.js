@@ -579,7 +579,7 @@ function doPost(e) {
   }
 }
 
-var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteStats: 1, deskSiteHistory: 1, deskCaReport: 1, deskAdminHasLogin: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
+var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteStats: 1, deskSiteHistory: 1, deskCaReport: 1, deskBackupAll: 1, deskAdminHasLogin: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
 var DESK_NO_LOCK_ = false;
 
 /* Error alerts: an email to the owner when something fails in the background (same problem at most once in 6 hours). */
@@ -3064,6 +3064,7 @@ function deskCore(db, hooks) {
     var reqs = db.all('requests');
     me.canApprove = canApprove(me);
     var out = { me: me, today: t, now: stamp(), hk: { stay: DESK_HK_STAY, out: DESK_HK_OUT }, compHosts: DESK_COMP_HOSTS, lateOut: DESK_LATE_OUT, fine: { item: DESK_FINE_ITEM, amount: DESK_FINE_AMOUNT, text: DESK_FINE_TEXT }, rooms: rooms, items: items, methods: METHODS, policy: DESK_POLICY,
+      pinWarn: pinWarnings(me),
       approvals: canApprove(me) ? reqs.filter(function (r) { return r.status === 'Pending'; }).length : 0,
       backToReady: true, waAuto: waAutoOn(), waConsent: true, waToSend: mgr ? waKitCount() : 0,
       laundryNew: mgr ? db.all('laundry').filter(function (x) { return x.status === 'Waiting for approval' || x.status === 'Return to check'; }).length : 0,
@@ -4435,6 +4436,20 @@ function deskCore(db, hooks) {
     return { team: db.all('staff').map(function (p) { return { name: p.name, pin: p.pin, role: p.role, active: yes(p.active) }; }) };
   };
 
+  /* PINs that are easy to guess. The starter PINs are written in the public code, so they must never stay in use. */
+  function pinWeak(pin, role) {
+    pin = String(pin || '');
+    if (['1111', '2222', '3333', '7777', '0000', '1234', '4321', '123456', '654321', '000000', '111111', '112233'].indexOf(pin) >= 0 || /^(\d)\1+$/.test(pin)) return 'pin_easy';
+    var up = '0123456789012345', dn = '9876543210987654'; if (up.indexOf(pin) >= 0 || dn.indexOf(pin) >= 0) return 'pin_easy';
+    if ((role === 'Owner' || role === 'Manager') && pin.length < 6) return 'pin_short';
+    return '';
+  }
+  function pinWarnings(me) {
+    var out = [];
+    db.all('staff').forEach(function (p) { if (!yes(p.active)) return; var w = pinWeak(p.pin, p.role); if (!w) return;
+      if (me.role === 'Owner' || p.name === me.name) out.push({ name: p.name, role: p.role, why: w === 'pin_short' ? 'short' : 'easy' }); });
+    return out;
+  }
   api.teamSave = function (req) {
     var me = auth(req); needOwner(me);
     var name = text(req.name, 40); if (!name) fail('name_required');
@@ -4442,6 +4457,8 @@ function deskCore(db, hooks) {
     if (!/^\d{4,6}$/.test(pin)) fail('bad_pin');
     if (ROLES.indexOf(req.role) < 0) fail('bad_role');
     var old = req.original ? find('staff', 'name', req.original) : null;
+    /* a new or changed PIN must not be an easy one; Owner and Manager (money and accounts) need the full 6 digits. An unchanged PIN is left alone, and the app keeps warning about it. */
+    if (!old || String(old.pin) !== pin || old.role !== req.role) { var why = pinWeak(pin, req.role); if (why) fail(why); }
     if (!old && find('staff', 'name', name)) fail('name_taken');
     if (old && name !== old.name && find('staff', 'name', name)) fail('name_taken');
     var clash = db.all('staff').filter(function (p) { return String(p.pin) === pin && p !== old && yes(p.active); })[0];
@@ -4817,6 +4834,26 @@ function deskCore(db, hooks) {
       laundry: db.all('laundry').filter(function (x) { return Number(x.total) > 0 && inR(x.outAt || x.at); }).map(function (x) { return { date: String(x.outAt || x.at).slice(0, 10), total: Number(x.total) || 0, paid: yes(x.paid), note: x.note || '' }; }),
       kept: db.all('bookings').filter(function (b) { return (b.status === 'No-show' || b.status === 'Cancelled') && Number(b.advancePaid || 0) - Number(b.refunded || 0) > 0 && inR(b.closedAt); })
         .map(function (b) { return { date: String(b.closedAt).slice(0, 10), id: b.id, guest: b.guest, status: b.status, advance: Number(b.advancePaid) || 0, refunded: Number(b.refunded) || 0, kept: Number(b.advancePaid || 0) - Number(b.refunded || 0), checkin: b.checkin }; }) };
+  };
+
+  /* Full backup for the owner: every record the system holds, as one file. Logins are left out (PINs, sessions, password hashes, keys);
+     photos and PDFs are not in it either, they live in Google Drive. */
+  api.backupAll = function (req) {
+    var me = auth(req); needOwner(me);
+    var skip = { sessions: 1, billpdfs: 1 }, out = {};
+    Object.keys(DESK_SCHEMA).forEach(function (t) { if (skip[t]) return; var sc = DESK_SCHEMA[t], cols = sc.cols.map(function (c) { return c[0]; });
+      var live = db.all(t), all = live;
+      /* older records that were moved to the archive come back in, so the file is complete */
+      if (db.oldRows && t !== 'config' && t !== 'staff') { var seen = {}; live.forEach(function (r) { seen[r[cols[0]]] = 1; }); var old = db.oldRows(t, cols[0], '', 'zzzzzzzz').filter(function (r) { return !seen[r[cols[0]]]; }); if (old.length) all = old.concat(live); }
+      var rows = all.filter(function (r) { return t !== 'config' || !/login|key|token|secret|hash/i.test(String(r[cols[0]] || '')); })
+        .map(function (r) { return cols.map(function (c) { return t === 'staff' && c === 'pin' ? '(not in the backup)' : (r[c] == null ? '' : r[c]); }); });
+      out[t] = { name: sc.sheet, cols: sc.cols.map(function (c) { return c[1] || c[0]; }), keys: cols, rows: rows }; });
+    var m = null; if (hooks.membersAll) try { m = hooks.membersAll(); } catch (e) { m = null; }
+    if (m) { out.members = { name: 'Members', cols: ['Phone', 'Name', 'City', 'Joined', 'Points', 'Lifetime points', 'Status', 'Level', 'Nights (2 years)', 'Nights (all)'], keys: ['phone', 'name', 'city', 'joined', 'points', 'lifetime', 'status', 'tier', 'nights2y', 'nightsAll'],
+        rows: m.list.map(function (x) { return [x.phone, x.name, x.city, x.joined, x.points, x.lifetime, x.status, x.tier, x.nights2y, x.nightsAll]; }) };
+      var tx = []; if (hooks.memberTxAll) try { tx = hooks.memberTxAll() || []; } catch (e) { tx = []; }
+      out.memberPoints = { name: 'Member points history', cols: ['Date', 'Phone', 'Name', 'Type', 'Amount', 'Points', 'Balance', 'Note'], keys: ['date', 'phone', 'name', 'type', 'amount', 'points', 'balance', 'note'], rows: tx.map(function (x) { return [x.date, x.phone, x.name, x.type, x.amount, x.points, x.balance, x.note]; }) }; }
+    return { made: stamp(), by: me.name, tables: out };
   };
 
   /* guests who walked in and were checked in straight away never had a booking made, so they are stays with no booking behind them; the admin page lists them with the bookings */
@@ -5859,6 +5896,7 @@ function deskHandle_(req) {
     membersAll: typeof membersAdmin_ === 'function' ? membersAdmin_ : null,
     hash: typeof hash_ === 'function' ? hash_ : null,
     memberHistory: typeof history_ === 'function' ? function (ph) { return history_(String(ph), 300); } : null,
+    memberTxAll: typeof history_ === 'function' ? function () { return history_(null, 200000); } : null,
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     onCheckoutUndo: typeof memberCheckoutUndo_ === 'function' ? memberCheckoutUndo_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
@@ -5921,6 +5959,7 @@ function deskTimerCore_() {
     membersAll: typeof membersAdmin_ === 'function' ? membersAdmin_ : null,
     hash: typeof hash_ === 'function' ? hash_ : null,
     memberHistory: typeof history_ === 'function' ? function (ph) { return history_(String(ph), 300); } : null,
+    memberTxAll: typeof history_ === 'function' ? function () { return history_(null, 200000); } : null,
     archive: deskArchive_, stayFolder: deskStayFolder_, trashFile: deskTrash_, laundryFile: deskLaundryFile_ });
 }
 

@@ -298,3 +298,14 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('expense gst', sv.ok || sv.error, bad.error, big.error, ok.ok || ok.error, JSON.stringify(x && { gstin: x.gstin, taxable: x.taxable, cgst: x.cgst, sgst: x.sgst, gstBy: x.gstBy.slice(0, 16) }));
   if (!ok.ok || bad.ok || big.ok || !x || x.cgst !== 90 || x.gstin !== '19ABCDE1234F1Z5') throw new Error('expense gst broken');
 }
+{ // PIN rules, PIN warnings and the full backup
+  const st = await call('deskState', { token: tok });
+  const easy = await call('deskTeamSave', { token: tok, name: 'Pin Test', role: 'Staff', pin: '1234', active: true });
+  const short = await call('deskTeamSave', { token: tok, name: 'Pin Test', role: 'Manager', pin: '8351', active: true });
+  const hk = await call('deskTeamSave', { token: tok, name: 'Pin Test', role: 'Staff', pin: '8351', active: true });
+  const mg = await call('deskTeamSave', { token: tok, name: 'Pin Test2', role: 'Manager', pin: '835197', active: true });
+  const b = await call('deskBackupAll', { token: tok }), no = await call('deskBackupAll', {});
+  const txt = JSON.stringify(b);
+  console.log('pins', JSON.stringify(st.pinWarn), easy.error, short.error, hk.ok || hk.error, mg.ok || mg.error, '| backup', b.ok || b.error, no.error, b.tables && Object.keys(b.tables).length, b.tables && b.tables.staff.rows.length, txt.length);
+  if (!st.pinWarn.length || easy.error !== 'pin_easy' || short.error !== 'pin_short' || !hk.ok || !mg.ok || !b.ok || no.ok || txt.indexOf('835197') >= 0 || b.tables.sessions || /adminLogin/.test(txt)) throw new Error('pin or backup broken');
+}

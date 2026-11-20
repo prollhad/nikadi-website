@@ -32,7 +32,7 @@
     room_not_occupied: 'There is no guest in this room.', name_required: 'Please enter a name.', max_guests: 'A room takes 1 to 3 guests. For 4 or more, use two rooms.',
     bad_dates: 'The check-out date must be after the check-in date.', rate_required: 'Please enter the rate per night.', invalid_amount: 'Please enter an amount in rupees.',
     method_required: 'Choose how they paid: Cash, UPI or Card.', invalid_phone: 'Please check the phone number and its country code (+91 for India).', bad_qty: 'Please check the quantity.',
-    bad_nights: 'Please check the number of nights.', not_in_house: 'This guest has already checked out.', bad_pin: 'The PIN must be 4 to 6 digits.',
+    bad_nights: 'Please check the number of nights.', not_in_house: 'This guest has already checked out.', bad_pin: 'The PIN must be 4 to 6 digits.', pin_easy: 'That PIN is too easy to guess. Please choose another one, not a repeat or a run like 1111 or 1234.', pin_short: 'The Owner and Manager need a 6 digit PIN, because they can see the money and accounts.',
     pin_taken: 'Someone else already uses this PIN. Choose another.', name_taken: 'That name is already used.', last_owner: 'There must always be at least one active Owner.',
     no_item: 'This item is not available.', not_tracked: 'Stock is not counted for this item.', bad_status: 'The room status has changed. Pull to refresh.',
     network: 'No internet connection. Please try again.', server_error: 'Something went wrong. Please try again.',
@@ -356,7 +356,18 @@
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
     ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, regs: viewRegs, photos: viewPhotos, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog, laundry: viewLaundry }[S.tab] || (S.me.role === 'Laundry' ? viewLaundry : viewRooms))(v);
-    waBanner(v);
+    waBanner(v); pinBanner(v);
+  }
+  /* an easy PIN (a starter one, a repeat or a run) is shown on every page until it is changed */
+  function pinBanner(v) {
+    var w = S.st.pinWarn || []; if (!w.length || S.tab === 'settings' || v.querySelector('#pinwarn')) return;
+    var me = S.me && S.me.name, mine = w.filter(function (x) { return x.name === me; })[0], own = owner();
+    var txt = own ? w.map(function (x) { return esc(x.name) + ' (' + esc(x.role) + (x.why === 'short' ? ', needs 6 digits' : ', easy to guess') + ')'; }).join(', ') : '';
+    var d = document.createElement('div'); d.id = 'pinwarn'; d.className = 'note'; d.setAttribute('role', 'status'); d.style.marginBottom = '12px';
+    d.innerHTML = '<b>' + (own ? 'PIN' + (w.length > 1 ? 's' : '') + ' to change' : 'Your PIN is too easy to guess') + '</b>' +
+      (own ? txt + '. An easy PIN lets anyone open the app. <button class="linkbtn" type="button" id="pinfix">Change in Team and PINs →</button>' : (mine && mine.why === 'short' ? 'A Manager needs a 6 digit PIN. ' : '') + 'Please ask the owner to give you a new PIN.');
+    v.insertBefore(d, v.firstChild);
+    var b = d.querySelector('#pinfix'); if (b) b.onclick = function () { go('settings'); };
   }
   /* ---------- Photos of GH: the website photos, ready to share on WhatsApp ----------
      Pick a folder, tap photos to select, then Share: on a phone the share sheet opens (choose WhatsApp).
@@ -3232,7 +3243,7 @@
     function editPerson(p) {
       var b2 = openSheet(p ? 'Edit ' + p.name : 'Add a person');
       b2.innerHTML = field('Name', '<input class="input" id="t-name" maxlength="40" value="' + esc(p ? p.name : '') + '">', true) +
-        field('PIN (4–6 digits)', '<input class="input" id="t-pin" inputmode="numeric" maxlength="6" value="' + esc(p ? p.pin : '') + '">', true) +
+        field('PIN (6 digits for Owner and Manager, 4 to 6 for others)', '<input class="input" id="t-pin" inputmode="numeric" maxlength="6" value="' + esc(p ? p.pin : '') + '">', true) +
         '<div class="field"><span>Role</span>' + seg('role', ['Owner', 'Manager', 'Receptionist', 'Staff', 'Laundry'], p ? p.role : 'Staff') + '</div>' +
         '<label class="toggle"><span>Active (can log in)</span><input type="checkbox" id="t-act"' + (!p || p.active ? ' checked' : '') + '></label>' +
         '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">Save</button>';
