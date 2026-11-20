@@ -277,3 +277,8 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('history', no.error, days.days.length, JSON.stringify(days.days[0]), '| day', day.visits.length, JSON.stringify(day.visits[day.visits.length - 1].paths), JSON.stringify(day.sum.pages_), '| range', rng.visits, JSON.stringify(rng.refs), JSON.stringify(rng.zones), '| bookings', bk.month, bk.list.length, JSON.stringify(bk.months), '| member', mem.error);
   if (no.ok || !days.ok || days.days[0].visits !== 2 || day.visits.length !== 2 || rng.visits !== 2 || !bk.ok || mem.ok) throw new Error('admin history broken');
 }
+{ // walk-ins show with the bookings in admin
+  const bk = await call('deskSiteHistory', { token: tok, what: 'bookings' }), st = await call('deskSiteStats', { token: tok });
+  const w = bk.list.filter(x => x.walkin);
+  console.log('walk-ins', bk.list.length, 'of which walk-in', w.length, JSON.stringify(w[0] || null), JSON.stringify(st.bookings));
+}

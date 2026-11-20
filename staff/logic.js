@@ -2818,6 +2818,12 @@ function deskCore(db, hooks) {
        range   pages, sources, hours and taps added up over a period
        member  one member: points history, bookings and stays
        bookings  the bookings made in one month */
+  /* guests who walked in and were checked in straight away never had a booking made, so they are stays with no booking behind them; the admin page lists them with the bookings */
+  function walkIns() {
+    return db.all('stays').filter(function (x) { return !x.booking && x.status !== 'Reversed' && !x.comp; }).map(function (x) {
+      return { id: x.id, walkin: true, status: x.status === 'Checked out' ? 'Checked out' : x.status || 'Checked in', source: 'Walk-in', guest: x.guest, phone: x.phone, rooms: String(x.room), roomType: '', guests: Number(x.guests) || 0,
+        checkin: x.checkin, checkout: x.checkout, nights: Number(x.nights) || 0, total: Number(x.roomTotal) || 0, advancePaid: Number(x.paid) || 0, refunded: 0, created: String(x.inAt || x.checkin || ''), by: x.inBy || '' }; });
+  }
   api.siteHistory = function (req) {
     var me = auth(req); if (!canApprove(me)) fail('not_allowed');
     var what = String(req.what || ''), t = today();
@@ -2857,8 +2863,10 @@ function deskCore(db, hooks) {
     if (what === 'bookings') {
       var mo = String(req.month || t.slice(0, 7)); if (!/^\d{4}-\d{2}$/.test(mo)) fail('bad_month');
       var months = {}; db.all('bookings').forEach(function (b) { var k = String(b.created).slice(0, 7); if (/^\d{4}-\d{2}$/.test(k)) months[k] = (months[k] || 0) + 1; });
+      walkIns().forEach(function (w) { var k = w.created.slice(0, 7); if (/^\d{4}-\d{2}$/.test(k)) months[k] = (months[k] || 0) + 1; });
       return { today: t, month: mo, months: Object.keys(months).sort().reverse().map(function (k) { return [k, months[k]]; }),
-        list: db.all('bookings').filter(function (b) { return String(b.created).slice(0, 7) === mo; }).reverse().map(function (b) { return { id: b.id, status: b.status, source: b.source || 'Other', guest: b.guest, phone: b.phone, rooms: b.rooms, roomType: b.roomType, guests: Number(b.guests) || 0, checkin: b.checkin, checkout: b.checkout, nights: Number(b.nights) || 0, total: Number(b.total) || 0, advancePaid: Number(b.advancePaid) || 0, refunded: Number(b.refunded) || 0, created: b.created, by: b.createdBy || '' }; }) };
+        list: db.all('bookings').filter(function (b) { return String(b.created).slice(0, 7) === mo; }).reverse().map(function (b) { return { id: b.id, status: b.status, source: b.source || 'Other', guest: b.guest, phone: b.phone, rooms: b.rooms, roomType: b.roomType, guests: Number(b.guests) || 0, checkin: b.checkin, checkout: b.checkout, nights: Number(b.nights) || 0, total: Number(b.total) || 0, advancePaid: Number(b.advancePaid) || 0, refunded: Number(b.refunded) || 0, created: b.created, by: b.createdBy || '' }; })
+          .concat(walkIns().filter(function (w) { return w.created.slice(0, 7) === mo; })).sort(function (a, b) { return String(a.created) < String(b.created) ? 1 : -1; }) };
     }
     fail('bad_request');
   };
@@ -2919,12 +2927,13 @@ function deskCore(db, hooks) {
     var tz = {}; db.all('visits').forEach(function (v) { if (String(v.day) >= addDays(t, -29)) { var k = v.tz || 'Unknown'; tz[k] = (tz[k] || 0) + 1; } });
     var from30 = addDays(t, -29), bk = db.all('bookings').filter(function (b) { return String(b.created).slice(0, 10) >= from30; }), src = {};
     bk.forEach(function (b) { var k = b.source || 'Other'; src[k] = (src[k] || 0) + 1; });
+    var wk = walkIns().filter(function (w) { return w.created.slice(0, 10) >= from30; }); if (wk.length) src['Walk-in'] = (src['Walk-in'] || 0) + wk.length;
     var members = null; if (hooks.membersAll) try { members = hooks.membersAll(); } catch (e) { members = null; }
     return { today: t, now: now, live: live.length, liveList: live.slice(0, 12),
       day: pack(days[89]), yesterday: pack(days[88]), week: pack(d7), month: pack(d30), prevWeek: pack(p7), prevMonth: pack(p30),
       days: days.map(function (x) { return { d: x.d, visits: x.visits, visitors: x.visitors, pages: x.pages, secs: x.secs }; }),
       pages: top(d30.p, 12), refs: top(d30.r, 10), hours: d30.h, zones: top(tz, 10), recent: recent.slice(0, 40),
-      bookings: { total: bk.length, bySource: top(src, 8), regs: db.all('regs').filter(function (r) { return String(r.at).slice(0, 10) >= from30; }).length },
+      bookings: { total: bk.length + wk.length, bySource: top(src, 8), regs: db.all('regs').filter(function (r) { return String(r.at).slice(0, 10) >= from30; }).length },
       members: members };
   };
   api.tonightDeal = function () { return tonightDeal(); }; // internal: the member booking code asks for it
