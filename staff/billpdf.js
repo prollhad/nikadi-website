@@ -24,7 +24,7 @@
         f.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + W + 'px;height:1200px;border:0;visibility:hidden';
         document.body.appendChild(f);
         var doc = f.contentDocument;
-        doc.open(); doc.write(NikadiBill.billHTML(d, { pdf: true, logo: opt.logo || (base + '../img/brand/logo.png') })); doc.close();
+        doc.open(); doc.write(opt.html ? opt.html({ pdf: true, logo: opt.logo || (base + '../img/brand/logo.png') }) : NikadiBill.billHTML(d, { pdf: true, logo: opt.logo || (base + '../img/brand/logo.png') })); doc.close(); // opt.html: another document in the same style (e.g. the no-show statement)
         function go() {
           var sheet = doc.querySelector('.sheet');
           var imgs = Array.prototype.slice.call(doc.images);
@@ -32,7 +32,7 @@
             return root.html2canvas(sheet, { scale: 2.6, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: W });
           }).then(function (canvas) {
             var J = root.jspdf.jsPDF, pdf = new J({ unit: 'mm', format: 'a4', compress: true });
-            pdf.setProperties({ title: 'Tax Invoice ' + d.no, subject: 'Nikadi Guest House bill', author: 'Nikadi Guest House', creator: 'Nikadi Staff' });
+            pdf.setProperties({ title: (opt.title || 'Tax Invoice') + ' ' + d.no, subject: 'Nikadi Guest House bill', author: 'Nikadi Guest House', creator: 'Nikadi Staff' });
             var mx = 10, my = 9, pw = 210 - mx * 2, ph = 297 - my * 2;
             var pxPerMm = canvas.width / pw, pageH = Math.floor(ph * pxPerMm), y = 0, first = true;
             while (y < canvas.height) {
@@ -46,7 +46,7 @@
             }
             var blob = pdf.output('blob');
             document.body.removeChild(f);
-            ok({ blob: blob, name: fileName(d), base64: function () { return pdf.output('datauristring').split(',')[1]; } });
+            ok({ blob: blob, name: opt.name || fileName(d), base64: function () { return pdf.output('datauristring').split(',')[1]; } });
           }).catch(function (e) { if (f.parentNode) document.body.removeChild(f); bad(e); });
         }
         if (doc.readyState === 'complete') setTimeout(go, 50); else f.onload = function () { setTimeout(go, 50); };

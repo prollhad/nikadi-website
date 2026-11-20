@@ -2171,7 +2171,7 @@
   });
 
   /* ---------- Bookings list ---------- */
-  var BSTAT = { Pending: 'pend', Confirmed: 'conf', 'Checked in': 'done', Cancelled: 'canc', 'No-show': 'canc' };
+  var BSTAT = { Pending: 'pend', Confirmed: 'conf', 'Checked in': 'done', Cancelled: 'canc', 'No-show': 'nosh' };
   function viewBookings(v) {
     if (!mgr()) { S.tab = 'rooms'; return render(); }
     var r = X.bookings;
@@ -2247,6 +2247,12 @@
     }
     if (b.status === 'Checked in' && b.undoIn && mgr()) h += undoInBox(b.undoIn, b.undoInRooms, true);
     if (b.status === 'Cancelled' && b.phone) h += '<div class="btns"><button class="btn btn-line" id="k-wcan" type="button">WhatsApp: cancellation message</button></div>';
+    if (b.status === 'No-show') {
+      var kept = Math.max(0, b.advancePaid - b.refunded);
+      h += '<div class="bstat k-bad"><span><b>Guest did not come.</b> ' + (kept > 0 ? 'The advance of ' + inr(kept) + ' is with us and is not refundable (cancellation policy). ' : 'No advance is held. ') + 'The balance of ' + inr(Math.max(0, b.total - b.advancePaid)) + ' is no longer due.</span></div>' +
+        '<div class="btns">' + (b.phone ? '<button class="btn btn-line" id="k-wns" type="button">WhatsApp: no-show message</button>' : '') + '<button class="btn btn-line" id="k-nspdf" type="button">Booking statement (PDF)</button></div>' +
+        '<p class="small">Send the WhatsApp message first, then share the statement PDF in the same chat. On a phone the PDF button opens the share list; on a computer it downloads the file.</p>';
+    }
     if ((b.status === 'Cancelled' || b.status === 'No-show') && b.advancePaid - b.refunded > 0) h += '<div class="btns"><button class="btn btn-quiet" id="k-ref" type="button">Refund money (' + inr(b.advancePaid - b.refunded) + ' kept)</button></div>';
     if (b.payments.length) h += '<p class="small">Tap a payment to correct a mistake.' + (rcp() ? ' Changes go to the manager for approval.' : '') + '</p>';
     if (open && !b.comp) h += '<div class="policy"><b>Cancellation policy</b>' + esc(S.st.policy.text) + '</div>';
@@ -2255,6 +2261,17 @@
     if (q('#k-conf')) q('#k-conf').onclick = function () { openConfirm(b, body); };
     if (q('#k-wadv')) q('#k-wadv').onclick = function () { WK.open = b.id; openWaSend('enq'); };
     if (q('#k-wcan')) q('#k-wcan').onclick = function () { WK.open = b.id; openWaSend('enq'); };
+    if (q('#k-wns')) q('#k-wns').onclick = function () { WK.open = b.id; openWaSend('enq'); };
+    if (q('#k-nspdf')) q('#k-nspdf').onclick = function () {
+      var x = this, d = { no: b.id, date: S.st.today, closed: String(b.closedAt || '').slice(0, 10), guest: { name: b.guest, phone: b.phone ? nkPhoneShow(b.phone) : '', email: b.email || '' }, checkin: b.checkin, checkout: b.checkout, nights: b.nights,
+        rooms: b.rooms, roomType: b.roomType, guests: b.guests, rate: b.rate, total: b.total, paid: b.advancePaid, refunded: b.refunded, policy: S.st.policy.text,
+        payments: (b.payments || []).slice().reverse().map(function (p) { return { date: String(p.at).slice(0, 10), method: p.method, ref: p.ref, amount: p.amount }; }) };
+      busy(x, true);
+      NikadiBillPdf.make(d, { base: '', title: 'Booking statement', name: 'Nikadi-No-show-statement-' + b.id + '.pdf', html: function (o) { return NikadiBill.noShowHTML(d, o); } }).then(function (r) {
+        busy(x, false);
+        return NikadiBillPdf.share(r, 'Booking statement ' + b.id + ' · Nikadi Guest House').then(function (ok) { if (ok !== true && ok !== 'cancel') { NikadiBillPdf.download(r); toast('Statement PDF downloaded'); } });
+      }, function (e) { busy(x, false); toast(errText(e)); });
+    };
     if (open && mgr() && !b.comp) q('#k-adv').onclick = function () { openAdvance(b, body); };
     if (q('#k-edit')) q('#k-edit').onclick = function () { openBookingForm(b, body); };
     if (q('#k-cancel')) q('#k-cancel').onclick = function () { openCancel(b, body); };

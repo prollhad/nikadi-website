@@ -162,7 +162,7 @@ main.view{padding-bottom:28px}
 .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .pill.gold{border-color:var(--gold);color:var(--gold-hi)}
 .st-pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;font-weight:500;border:1px solid currentColor;white-space:nowrap}
-.s-pend{color:var(--amber)}.s-conf{color:var(--green)}.s-done{color:var(--blue)}.s-canc{color:var(--past)}
+.s-pend{color:var(--amber)}.s-conf{color:var(--green)}.s-done{color:var(--blue)}.s-canc{color:var(--past)}.s-nosh{color:#ff6b5e;font-weight:700} /* no-show: red, the advance is with us but the guest did not come */
 .muted{color:var(--muted)}
 .seg.narrow{max-width:320px}
 .label{display:block;margin:0}

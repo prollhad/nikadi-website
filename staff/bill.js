@@ -249,6 +249,56 @@
     '@media print{' + PRINT + '@page{size:A4;margin:9mm 10mm}}'
   ].join('');
 
+  /* ---- Booking statement for a no-show ----
+     One page for the guest: what the booking was, the advance we received, the balance that would have been paid at check-in,
+     and that the advance is kept under the cancellation policy. It is a statement and a receipt for the advance, not a tax invoice.
+     d: { no, date, closed, guest:{name,phone,email}, checkin, checkout, nights, rooms:[..], roomType, guests, rate, total,
+          payments:[{date,method,ref,amount}], paid, refunded, policy } */
+  function noShowHTML(d, opt) {
+    opt = opt || {};
+    var g = d.guest || {}, paid = Number(d.paid || 0), back = Number(d.refunded || 0), kept = Math.max(0, paid - back), total = Number(d.total || 0), bal = Math.max(0, total - paid);
+    var nr = (d.rooms || []).length || 1; if (!d.roomType || /^any$/i.test(d.roomType)) d.roomType = 'Room';
+    var pays = (d.payments || []).map(function (p) {
+      return '<tr><td>' + day(p.date) + '</td><td>' + (Number(p.amount) < 0 ? 'Refund to guest' : 'Advance received') + '</td><td>' + esc(p.method || '') + '</td><td class="mono">' + esc(p.ref || '—') + '</td><td class="r">' + num(Number(p.amount)) + '</td></tr>';
+    }).join('');
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<meta name="robots" content="noindex,nofollow"><title>Booking statement ' + esc(d.no) + ' · ' + HOTEL.name + '</title>' +
+      '<style>' + CSS + (opt.pdf ? PRINT : '') + '.top{grid-template-columns:1fr 1.25fr!important}.ns{margin-top:16px;border:1.5px solid #c0262d;background:#fdf0f0;padding:12px 14px;color:#3d474b;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ns b{color:#c0262d}.ns .big{font-size:14px;font-weight:800;color:#c0262d;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}.srow.kept{font-weight:800;color:#c0262d}</style></head><body' + (opt.pdf ? ' class="pdf"' : '') + '><div class="sheet">' +
+      '<img class="wm" src="' + esc(opt.logo || HOTEL.logo) + '" alt="" aria-hidden="true">' +
+      '<header class="top"><div class="brand"><img class="logo" src="' + esc(opt.logo || HOTEL.logo) + '" alt="' + HOTEL.name + '" width="150"></div>' +
+        '<div class="doc"><h1>BOOKING STATEMENT</h1><div class="orig">No-show · advance receipt</div><table class="kv">' +
+          kv('Booking No.', '<b class="mono">' + esc(d.no) + '</b>') + kv('Statement Date', day(d.date)) + kv('Booked Arrival', day(d.checkin)) + kv('Booked Departure', day(d.checkout)) +
+          kv('Rooms', esc(nr + ' × ' + (d.roomType || 'room') + ((d.rooms || []).length ? ' (No. ' + d.rooms.join(', ') + ')' : ''))) + kv('Guests (Pax)', d.guests) +
+        '</table></div></header>' +
+      '<section class="parties"><div class="party"><div class="lbl">Booked by</div><div class="who">' + esc(g.name || '') + '</div>' +
+          (g.phone ? '<div>Mobile: ' + esc(g.phone) + '</div>' : '') + (g.email ? '<div>Email: ' + esc(g.email) + '</div>' : '') + '</div>' +
+        '<div class="party"><div class="lbl">Guest house</div><div class="who">' + HOTEL.company + '</div><div>' + HOTEL.name + '</div>' +
+          HOTEL.address.map(function (l) { return '<div>' + l + '</div>'; }).join('') + '<div>' + HOTEL.phone + ' · ' + HOTEL.email + '</div>' +
+          '<table class="kv sm">' + kv('GSTIN', '<span class="mono">' + HOTEL.gstin + '</span>') + '</table></div></section>' +
+      '<div class="tbl-wrap"><table class="lines"><thead><tr><th>Booking</th><th class="c">Nights</th><th class="c">Rooms</th><th class="r">Rate per night (₹)</th><th class="r">Amount (₹)</th></tr></thead><tbody>' +
+        '<tr><td><b>Room accommodation, as booked</b><small>' + esc(d.roomType || '') + ' · ' + day(d.checkin) + ' to ' + day(d.checkout) + '</small></td><td class="c">' + d.nights + '</td><td class="c">' + nr + '</td><td class="r">' + num(Number(d.rate || 0)) + '</td><td class="r">' + num(total) + '</td></tr>' +
+        '</tbody><tfoot><tr><td colspan="4">Booking total (inclusive of GST)</td><td class="r">' + num(total) + '</td></tr></tfoot></table></div>' +
+      '<div class="split"><div>' +
+        (pays ? '<div class="lbl">Payments on this booking</div><table class="ptab"><thead><tr><th>Date</th><th>Details</th><th>Method</th><th>Reference</th><th class="r">Amount (₹)</th></tr></thead><tbody>' + pays + '</tbody></table>' : '') +
+        '<div class="ns"><div class="big">No-show</div>The guest did not arrive on the booked check-in date' + (d.closed ? ' and the booking was closed on <b>' + day(d.closed) + '</b>' : '') + '. ' +
+          'As per the cancellation policy of ' + HOTEL.name + ', the advance of <b>' + inr(kept) + '</b> is <b>not refundable</b>. ' +
+          'The balance of ' + inr(bal) + ' that would have been paid at check-in is no longer payable.' +
+          (d.policy ? '<div style="margin-top:6px;font-size:11px">Policy: ' + esc(d.policy) + '</div>' : '') + '</div>' +
+      '</div><div class="totals">' +
+        '<div class="srow"><span>Booking total</span><span>' + inr(total) + '</span></div>' +
+        '<div class="srow"><span>Advance received</span><span>' + inr(paid) + '</span></div>' +
+        (back > 0 ? '<div class="srow"><span>Refunded to guest</span><span>' + inr(-back) + '</span></div>' : '') +
+        '<div class="srow tot"><span>Balance at check-in</span><span>' + inr(bal) + '</span></div>' +
+        '<div class="srow"><span>Balance now payable</span><span>' + inr(0) + '</span></div>' +
+        '<div class="srow bal kept"><span>Advance kept (not refundable)</span><span>' + inr(kept) + '</span></div>' +
+        '<div class="words">Advance kept: Rupees ' + words(Math.round(kept)) + ' only</div>' +
+      '</div></div>' +
+      '<div class="decl"><p>This is a statement of the booking and a receipt for the advance received. It is not a tax invoice. For any question, please call or WhatsApp ' + HOTEL.phone + '.</p></div>' +
+      '<div class="foot">' + HOTEL.name + ' · a unit of ' + HOTEL.company + ' · ' + HOTEL.address.join(', ') + '<br>' + HOTEL.phone + ' · ' + HOTEL.email + ' · ' + HOTEL.web +
+        '<div class="thanks">We hope to welcome you in Sri Dham Mayapur another time.</div></div>' +
+      '</div></body></html>';
+  }
+
   /* Email body: plain tables + inline styles so it looks right in Gmail and Outlook. The PDF bill is attached. */
   function billEmail(d) {
     var c = compute(d), g = d.guest || {}, m = d.member, paid = Math.abs(c.due) < .5;
@@ -295,6 +345,6 @@
       'With warm regards,\nTeam Nikadi Guest House\n' + HOTEL.phone;
   }
 
-  root.NikadiBill = { billHTML: billHTML, billEmail: billEmail, billEmailSubject: billEmailSubject, greetName: greetName, TITLES: TITLES, billWhatsApp: billWhatsApp, compute: compute, words: words, inr: inr, HOTEL: HOTEL, ROOM_HSN: ROOM_HSN, ROOM_GST: ROOM_GST };
+  root.NikadiBill = { noShowHTML: noShowHTML, billHTML: billHTML, billEmail: billEmail, billEmailSubject: billEmailSubject, greetName: greetName, TITLES: TITLES, billWhatsApp: billWhatsApp, compute: compute, words: words, inr: inr, HOTEL: HOTEL, ROOM_HSN: ROOM_HSN, ROOM_GST: ROOM_GST };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.NikadiBill;
 })(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);

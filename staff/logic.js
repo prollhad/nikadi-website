@@ -678,6 +678,14 @@ function deskCore(db, hooks) {
     dealMemo = { day: t, at: now, pm: ist().getUTCHours() >= DEAL_AFTER, deal: deal }; return deal;
   }
   function rateNow(type, ymd) { var r = deskRateOn(type, ymd); if (ymd !== today()) return r; var d = tonightDeal(); return d ? Math.min(r, d[/large/i.test(String(type || '')) ? 'double' : /twin/i.test(String(type || '')) ? 'twin' : 'double']) : r; }
+  /* WhatsApp text for a no-show: what was booked, what was paid, what was still due, and that the advance is kept under the policy */
+  function noShowText(b, sal) {
+    var paid = Number(b.advancePaid || 0), back = Number(b.refunded || 0), kept = Math.max(0, paid - back), total = Number(b.total || 0), bal = Math.max(0, total - paid), n = roomList(b.rooms).length || Number(b.roomsNeeded || 1);
+    return sal + ', Hare Krishna! We kept ' + (n > 1 ? n + ' rooms' : 'your room') + ' ready at Nikadi Guest House for your booking ' + b.id + ' (' + dd(b.checkin) + ' to ' + dd(b.checkout) + '), but you did not arrive on the check-in day, so the booking has been closed as a no-show.\n\n' +
+      'Booking statement\nBooking total: ' + rupees(total) + '\nAdvance received: ' + rupees(paid) + (back > 0 ? '\nRefunded to you: ' + rupees(back) : '') + '\nBalance that was due at check-in: ' + rupees(bal) + ' (no longer payable)\n\n' +
+      (kept > 0 ? 'As per our cancellation policy, shared when you booked, the advance of ' + rupees(kept) + ' is not refundable for a no-show and cannot be moved to another date.\n' : '') +
+      'We are sending the booking statement with this message. We hope to welcome you in Sri Dham Mayapur another time: for a new booking, just message us here.\nNikadi Guest House · +91 75011 01137';
+  }
   function quoteOf(type, ci, co, rooms) { var tot = 0, d = ci; for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { tot += rateNow(type, d); d = addDays(d, 1); } return tot * Math.max(1, rooms || 1); }
   function enqMsgs(o) {
     var n = o.first || 'Dear Sir/Ma\'am', out = [];
@@ -784,6 +792,16 @@ function deskCore(db, hooks) {
       ]);
       msgs.forEach(function (m) { m.text = waSafe(m.text); m.sent = sent[b.id + '|' + m.kind] || ''; });
       folders.enq.push({ done: sent[b.id + '|doneenq'] || '', key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'Cancelled ' + dd(String(b.closedAt).slice(0, 10)) + ' · booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout), msgs: msgs, booking: b.id, cancelled: true,
+        todo: !msgs.some(function (m) { return m.sent; }) && !light });
+    });
+    /* No-show in the last 14 days: the message that tells the guest the booking is closed and the advance is kept, with the figures */
+    db.all('bookings').forEach(function (b) {
+      if (b.status !== 'No-show' || !b.phone || waOptedOut(b.phone) || String(b.closedAt || '').slice(0, 10) < addDays(t, -14)) return;
+      var sal = salute(b.guest);
+      var msgs = light ? [] : [{ kind: 'noshow', label: 'No-show: booking closed, advance not refundable', text: noShowText(b, sal) },
+        { kind: 'cancelagain', label: 'Book again another time', text: sal + ', Hare Krishna! Whenever you plan your next visit to Sri Dham Mayapur, message us here and we will give you our best rate. Nikadi Guest House, opposite ISKCON Gate No. 4 · +91 75011 01137' }];
+      msgs.forEach(function (m) { m.text = waSafe(m.text); m.sent = sent[b.id + '|' + m.kind] || ''; });
+      folders.enq.push({ done: sent[b.id + '|doneenq'] || '', key: b.id, name: b.guest, phone: waPhone(b.phone), room: '', sub: 'No-show ' + dd(String(b.closedAt).slice(0, 10)) + ' · booking ' + b.id + ' · ' + dd(b.checkin) + ' to ' + dd(b.checkout), msgs: msgs, booking: b.id, cancelled: true,
         todo: !msgs.some(function (m) { return m.sent; }) && !light });
     });
     folders.enq.reverse();
