@@ -199,6 +199,7 @@ function deskHandle_(req) {
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     membersAll: typeof membersAdmin_ === 'function' ? membersAdmin_ : null,
     hash: typeof hash_ === 'function' ? hash_ : null,
+    memberHistory: typeof history_ === 'function' ? function (ph) { return history_(String(ph), 300); } : null,
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     onCheckoutUndo: typeof memberCheckoutUndo_ === 'function' ? memberCheckoutUndo_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
@@ -260,6 +261,7 @@ function deskTimerCore_() {
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     membersAll: typeof membersAdmin_ === 'function' ? membersAdmin_ : null,
     hash: typeof hash_ === 'function' ? hash_ : null,
+    memberHistory: typeof history_ === 'function' ? function (ph) { return history_(String(ph), 300); } : null,
     archive: deskArchive_, stayFolder: deskStayFolder_, trashFile: deskTrash_, laundryFile: deskLaundryFile_ });
 }
 

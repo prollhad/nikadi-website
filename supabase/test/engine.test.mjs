@@ -268,3 +268,12 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('admin login', h0.set, bad.error, set.ok || set.error, h1.set, wrong.error, !!good.token, st.ok || st.error);
   if (h0.set || bad.ok || !set.ok || !h1.set || wrong.ok || !good.token || !st.ok) throw new Error('admin login broken');
 }
+{ // admin history screens
+  const days = await call('deskSiteHistory', { token: tok, what: 'days' }), no = await call('deskSiteHistory', { what: 'days' });
+  const day = await call('deskSiteHistory', { token: tok, what: 'day', day: days.days[0].d });
+  const rng = await call('deskSiteHistory', { token: tok, what: 'range', days: 30 });
+  const bk = await call('deskSiteHistory', { token: tok, what: 'bookings' });
+  const mem = await call('deskSiteHistory', { token: tok, what: 'member', phone: '0000000000' });
+  console.log('history', no.error, days.days.length, JSON.stringify(days.days[0]), '| day', day.visits.length, JSON.stringify(day.visits[day.visits.length - 1].paths), JSON.stringify(day.sum.pages_), '| range', rng.visits, JSON.stringify(rng.refs), JSON.stringify(rng.zones), '| bookings', bk.month, bk.list.length, JSON.stringify(bk.months), '| member', mem.error);
+  if (no.ok || !days.ok || days.days[0].visits !== 2 || day.visits.length !== 2 || rng.visits !== 2 || !bk.ok || mem.ok) throw new Error('admin history broken');
+}

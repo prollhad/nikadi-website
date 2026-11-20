@@ -268,13 +268,15 @@ section.alt{background:var(--band)}
 .fx-dawn .fx-hz{background:radial-gradient(70% 70% at 30% 100%,rgba(255,214,150,.42),rgba(255,176,150,.16) 45%,transparent 72%);animation:fxHzUp 12s ease forwards}
 /* sunset: starts low in the evening sky on the right, turns from gold to deep red as it sinks behind the bottom edge,
    while the horizon glows rose and gold after it and then fades */
-.fx-dusk .fx-sun{left:68%;top:34vh;animation:fxDown 12s cubic-bezier(.4,0,.55,1) forwards}
+.fx-dusk .fx-sun{left:68%;top:0;animation:fxDown 12s cubic-bezier(.4,0,.55,1) forwards}
 .fx-dusk .fx-sun::after{animation:fxRed 12s ease forwards}
 .fx-dusk .fx-hz{background:radial-gradient(80% 75% at 68% 100%,rgba(255,150,80,.5),rgba(236,84,110,.24) 40%,rgba(150,70,190,.1) 62%,transparent 78%);animation:fxHzDown 12s ease forwards}
-@keyframes fxDown{0%{opacity:0;transform:translateY(0) scale(.92)}14%{opacity:.8}70%{opacity:.88}100%{opacity:0;transform:translateY(calc(66vh + 40%)) scale(1.12)}}
+/* the setting sun comes in over the very top edge of the screen and goes out through the very bottom edge */
+@keyframes fxDown{0%{opacity:.85;transform:translateY(-100%) scale(.92)}50%{opacity:.88}100%{opacity:.88;transform:translateY(100vh) scale(1.12)}}
 @keyframes fxRed{0%,15%{opacity:0}75%{opacity:1}100%{opacity:1}}
 @keyframes fxHzDown{0%{opacity:0}25%{opacity:.5}72%{opacity:1}100%{opacity:.55}}
-@keyframes fxUp{0%{opacity:0;transform:translateY(0) scale(1.05)}18%{opacity:.75}72%{opacity:.82}100%{opacity:0;transform:translateY(calc(-68vh - 50%)) scale(.94)}}
+/* the rising sun comes up from the very bottom edge of the screen and leaves through the very top edge */
+@keyframes fxUp{0%{opacity:.8;transform:translateY(0) scale(1.05)}50%{opacity:.82}100%{opacity:.82;transform:translateY(calc(-100vh - 100%)) scale(.94)}}
 @keyframes fxHzUp{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 @keyframes fxSet{0%{opacity:0;transform:translateY(-6vh)}15%{opacity:.95}80%{opacity:.85}100%{opacity:0;transform:translateY(26vh)}}
 @keyframes fxRise{0%{opacity:0;transform:translateY(0)}20%{opacity:.95}85%{opacity:.85}100%{opacity:0;transform:translateY(-34vh)}}

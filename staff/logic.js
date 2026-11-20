@@ -2812,6 +2812,56 @@ function deskCore(db, hooks) {
     db.set('visits', v, patch);
     return {};
   };
+  /* Admin page, history and detail screens (Owner and Manager only):
+       days    every day since counting began
+       day     one day: each visit with the pages it opened, in order (kept 35 days; older days have totals only)
+       range   pages, sources, hours and taps added up over a period
+       member  one member: points history, bookings and stays
+       bookings  the bookings made in one month */
+  api.siteHistory = function (req) {
+    var me = auth(req); if (!canApprove(me)) fail('not_allowed');
+    var what = String(req.what || ''), t = today();
+    function top(o, n) { return Object.keys(o).map(function (k) { return [k, o[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, n); }
+    function allDays() {
+      var by = {}, out = [];
+      db.all('visits').forEach(function (v) { (by[v.day] = by[v.day] || []).push(v); });
+      db.all('visitdays').forEach(function (r) { if (by[r.date]) return; var x = vjson(r.data, {});
+        out.push({ d: String(r.date), visits: Number(r.visits), visitors: Number(r.visitors), fresh: Number(r.fresh), pages: Number(r.pages), secs: Number(r.secs), mobile: Number(r.mobile), p: x.p || {}, r: x.r || {}, h: x.h || [], e: x.e || {}, full: false }); });
+      Object.keys(by).forEach(function (d) { var o = vday(by[d]); o.d = String(d); o.full = true; out.push(o); });
+      return out.sort(function (a, b) { return a.d < b.d ? 1 : -1; });
+    }
+    if (what === 'days') return { today: t, keep: VISIT_KEEP, days: allDays().map(function (x) { return { d: x.d, visits: x.visits, visitors: x.visitors, fresh: x.fresh, pages: x.pages, secs: x.secs, mobile: x.mobile, taps: x.e, full: x.full }; }) };
+    if (what === 'day') {
+      var d = String(req.day || ''); if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) fail('bad_date');
+      var raw = db.all('visits').filter(function (v) { return String(v.day) === d; }), one = allDays().filter(function (x) { return x.d === d; })[0] || null;
+      return { today: t, day: d, full: raw.length > 0, sum: one ? { visits: one.visits, visitors: one.visitors, fresh: one.fresh, pages: one.pages, secs: one.secs, mobile: one.mobile, taps: one.e, pages_: top(one.p, 40), refs: top(one.r, 30), hours: one.h } : null,
+        visits: raw.slice().reverse().map(function (v) { return { at: v.at, last: v.last, secs: Number(v.secs) || 0, pages: Number(v.pages) || 0, paths: vjson(v.paths, []), ref: v.ref || '', dev: v.dev, tz: v.tz, lang: v.lang, isNew: yes(v.isNew), member: yes(v.member), ev: vjson(v.ev, {}) }; }) };
+    }
+    if (what === 'range') {
+      var n = Math.max(1, Math.min(3660, Number(req.days) || 30)), from = addDays(t, -(n - 1)), o = { visits: 0, visitors: 0, fresh: 0, pages: 0, secs: 0, mobile: 0, p: {}, r: {}, e: {}, h: [] }, i, zones = {};
+      for (i = 0; i < 24; i++) o.h.push(0);
+      allDays().forEach(function (x) { if (x.d < from) return; ['visits', 'visitors', 'fresh', 'pages', 'secs', 'mobile'].forEach(function (f) { o[f] += x[f]; });
+        ['p', 'r', 'e'].forEach(function (f) { Object.keys(x[f]).forEach(function (q) { o[f][q] = (o[f][q] || 0) + x[f][q]; }); }); (x.h || []).forEach(function (c, hh) { o.h[hh] += c || 0; }); });
+      db.all('visits').forEach(function (v) { if (String(v.day) >= from) { var k = v.tz || 'Unknown'; zones[k] = (zones[k] || 0) + 1; } });
+      return { today: t, days: n, from: from, visits: o.visits, visitorDays: o.visitors, fresh: o.fresh, pageViews: o.pages, secs: o.secs, mobile: o.mobile, taps: o.e, pages: top(o.p, 200), refs: top(o.r, 200), hours: o.h, zones: top(zones, 60), zonesKept: VISIT_KEEP };
+    }
+    function p10(x) { return String(x || '').replace(/\D/g, '').slice(-10); }
+    if (what === 'member') {
+      var ph = p10(req.phone); if (ph.length < 10) fail('bad_phone');
+      var all = hooks.membersAll ? hooks.membersAll() : null, m = all ? all.list.filter(function (x) { return p10(x.phone) === ph; })[0] : null; if (!m) fail('not_found');
+      var tx = []; if (hooks.memberHistory) try { tx = hooks.memberHistory(m.phone) || []; } catch (e) { tx = []; }
+      return { today: t, member: m, tx: tx,
+        bookings: db.all('bookings').filter(function (b) { return p10(b.phone) === ph; }).reverse().map(function (b) { return { id: b.id, status: b.status, source: b.source, rooms: b.rooms, roomType: b.roomType, checkin: b.checkin, checkout: b.checkout, nights: Number(b.nights) || 0, total: Number(b.total) || 0, advancePaid: Number(b.advancePaid) || 0, created: b.created }; }),
+        stays: db.all('stays').filter(function (x) { return p10(x.phone) === ph; }).reverse().map(function (x) { return { id: x.id, room: x.room, checkin: x.checkin, checkout: x.checkout, nights: Number(x.nights) || 0, status: x.status, roomTotal: Number(x.roomTotal) || 0, extras: Number(x.extras) || 0, paid: Number(x.paid) || 0, bill: x.bill || '' }; }) };
+    }
+    if (what === 'bookings') {
+      var mo = String(req.month || t.slice(0, 7)); if (!/^\d{4}-\d{2}$/.test(mo)) fail('bad_month');
+      var months = {}; db.all('bookings').forEach(function (b) { var k = String(b.created).slice(0, 7); if (/^\d{4}-\d{2}$/.test(k)) months[k] = (months[k] || 0) + 1; });
+      return { today: t, month: mo, months: Object.keys(months).sort().reverse().map(function (k) { return [k, months[k]]; }),
+        list: db.all('bookings').filter(function (b) { return String(b.created).slice(0, 7) === mo; }).reverse().map(function (b) { return { id: b.id, status: b.status, source: b.source || 'Other', guest: b.guest, phone: b.phone, rooms: b.rooms, roomType: b.roomType, guests: Number(b.guests) || 0, checkin: b.checkin, checkout: b.checkout, nights: Number(b.nights) || 0, total: Number(b.total) || 0, advancePaid: Number(b.advancePaid) || 0, refunded: Number(b.refunded) || 0, created: b.created, by: b.createdBy || '' }; }) };
+    }
+    fail('bad_request');
+  };
   /* ---- Admin page login: a user name and password of its own. Only a scrambled form of the password is kept (never the password itself),
      and only the Owner can set or change it. ---- */
   function admHash(salt, pass) { var h = salt + ':' + pass, i; for (i = 0; i < 600; i++) h = hooks.hash(h + salt); return h; }

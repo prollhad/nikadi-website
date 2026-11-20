@@ -377,9 +377,27 @@
 },
 {
 "cat": "Other",
+"name": "Deluxe Double 01.jpg",
+"src": "/img/rooms/c/double-01.jpg",
+"thumb": "/img/rooms/c/double-01.jpg"
+},
+{
+"cat": "Other",
+"name": "Deluxe Twin 01.jpg",
+"src": "/img/rooms/c/twin-01.jpg",
+"thumb": "/img/rooms/c/twin-01.jpg"
+},
+{
+"cat": "Other",
 "name": "Kit 01.jpg",
 "src": "/img/rooms/kit-01.jpg",
 "thumb": "/img/rooms/t/kit-01.jpg"
+},
+{
+"cat": "Other",
+"name": "Large Twin 01.jpg",
+"src": "/img/rooms/c/large-01.jpg",
+"thumb": "/img/rooms/c/large-01.jpg"
 }
 ]
 }
