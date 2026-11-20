@@ -323,6 +323,7 @@ section.alt{background:var(--band)}
 html.night-mood #nightsky{opacity:1}
 html.night-mood body{background:#060a17}
 html.night-mood .s:not(.alt){background:transparent}
+html.night-mood .hero .slides{opacity:.8} /* the photos blend 20% into the sky behind them */
 html.night-mood .hero{background:transparent}html.night-mood .hero::before{display:none} /* the opening section is open too: the live sky and weather show around the photos */
 html.night-mood .s.alt{background:transparent} /* no faded bands across the page: the live sky runs behind every section, and only the deep blue boxes sit on top of it */
 #nightsky canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -350,7 +351,9 @@ html.wx-rain #nightsky .wxrain,html.wx-storm #nightsky .wxrain{opacity:1}
 html.wx-cloudy #nightsky .daycl,html.wx-rain #nightsky .daycl,html.wx-storm #nightsky .daycl{opacity:0!important}
 html.wx-cloudy .moon,html.wx-rain .moon,html.wx-storm .moon{opacity:.25}
 /* ---- Snow (preview: ?wx=snow): falling flakes, a pale winter sky, snow lying on the letters, the buttons and the boxes ---- */
-#snowfall{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+#snowfall,#windfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+/* windy day (preview: ?wx=windy): the clouds race, and leaves and dust blow across in gusts */
+html.windy #nightsky .daycl{animation-duration:34s}html.windy #nightsky .nightcl{animation-duration:42s}html.windy #nightsky .suncl{animation-duration:50s}html.windy #nightsky .wxdark{animation-duration:26s}
 html.snowy #nightsky .wxtint{background:#aab9cf!important;opacity:.5!important}
 html.snowy #nightsky .wxdark{opacity:.55!important;filter:brightness(1.5) saturate(.6)}
 html.snowy .snowtx{filter:drop-shadow(0 -1.4px .7px rgba(255,255,255,.8))}
@@ -1378,7 +1381,7 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
   .hero{background:transparent}
   .hero::before{display:none}
   .hero>.wrap.hero-grid{grid-template-columns:minmax(0,43%) 1fr}
-  .hero-media{left:auto;right:clamp(16px,4vw,72px);top:26px;bottom:148px;width:min(50%,900px);-webkit-mask-image:none;mask-image:none;border-radius:30px!important;overflow:hidden;box-shadow:0 40px 90px -40px rgba(0,0,0,.85),0 0 0 1px rgba(217,173,85,.35)}
+  .hero-media{left:auto;right:clamp(16px,4vw,72px);top:clamp(56px,9vh,120px);bottom:auto;width:min(46%,800px);aspect-ratio:16/10;-webkit-mask-image:none;mask-image:none;border-radius:30px!important;overflow:hidden;box-shadow:0 40px 90px -40px rgba(0,0,0,.85),0 0 0 1px rgba(217,173,85,.35)}
   .hero .slides{border-radius:30px!important}
   .hero .slides::after{inset:0;height:auto;background:linear-gradient(0deg,rgba(5,8,18,.82) 0%,rgba(5,8,18,0) 42%),linear-gradient(180deg,rgba(5,8,18,.45) 0%,rgba(5,8,18,0) 26%)}
   .hero-cap{left:auto;right:28px;bottom:30px;width:min(420px,60%)}
@@ -3621,7 +3624,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   function nightClouds(){if(ncl||!ns)return;ncl=document.createElement('div');ncl.className='nightcl';ncl.style.backgroundImage=cloudTile(.57,.16,[150,162,196],[44,52,84]);ns.appendChild(ncl);}
   function dayClouds(){if(dcl||!ns)return;dcl=document.createElement('div');dcl.className='daycl';dcl.style.backgroundImage=cloudTile(.5,.2,[255,255,255],[205,215,232]);ns.insertBefore(dcl,ns.querySelector('.moon'));}
   /* ---- live weather behind the page: overcast, rain and thunderstorms follow the real weather in Mayapur (preview with ?wx=cloudy, ?wx=rain, ?wx=storm) ---- */
-  var wxMode='clear',wxEl=null,wxRAF=0,wxDrops=[],wxBolt=null,wxNext=0,wxPrev=(location.search.match(/[?&]wx=(clear|cloudy|rain|storm|snow)/)||[])[1];if(wxPrev==='snow')wxPrev='cloudy'; /* snow (preview only, ?wx=snow) uses the overcast sky; the flakes and the snow caps are drawn by the snow block at the end of the page */
+  var wxMode='clear',wxEl=null,wxRAF=0,wxDrops=[],wxBolt=null,wxNext=0,wxPrev=(location.search.match(/[?&]wx=(clear|cloudy|rain|storm|snow|windy)/)||[])[1];if(wxPrev==='snow')wxPrev='cloudy';if(wxPrev==='windy')wxPrev='clear'; /* snow (preview only, ?wx=snow) uses the overcast sky; the flakes and the snow caps are drawn by the snow block at the end of the page */
   function wxSetup(){if(wxEl||!ns)return;wxEl={};var mk=function(tag,cls){var e=document.createElement(tag);e.className=cls;ns.insertBefore(e,ns.querySelector('.moon'));return e;};
     wxEl.tint=mk('div','wxtint');wxEl.dark=mk('div','wxdark');wxEl.dark.style.backgroundImage=cloudTile(.36,.26,[150,158,172],[52,58,72],1);wxEl.glow=mk('div','wxglow');wxEl.heavy=mk('div','wxheavy');wxEl.black=mk('div','wxblack');wxEl.rain=mk('canvas','wxrain');wxEl.flash=mk('div','wxflash');}
   /* heavy storm cloud: big dark billowing masses, thick overhead and breaking up lower down, with paler edges so the lightning glows through the gaps */
@@ -5068,6 +5071,37 @@ setInterval(function(){if(document.hidden)return;im[i].classList.remove('on');i=
         if(f.y>Ht+30||f.x<-170||f.x>W+170){F[i]=f=mk(false);if(Math.random()<.25*Math.abs(wind)){f.x=wind>0?-30:W+30;f.y=Math.random()*Ht*.8;}}
         x.globalAlpha=f.a;if(f.cr){f.rot+=f.dr*dt;x.save();x.translate(f.x,f.y);x.rotate(f.rot);x.scale(1,.75+.25*Math.sin(f.p*1.7));x.drawImage(f.cr,-f.r,-f.r,f.r*2,f.r*2);x.restore();}
         else x.drawImage(DOT,f.x-f.r,f.y-f.r,f.r*2,f.r*2);}
+      x.globalAlpha=1;})(0);}
+  if(document.readyState==='complete')start();else addEventListener('load',start);
+})();
+</script>
+<script>
+/* ---- Windy day preview (?wx=windy). Wind itself cannot be seen, so it is shown the way it is seen outdoors: clouds moving fast,
+        and leaves and dust carried across in gusts that rise and die away. ---- */
+(function(){if(!/[?&]wx=windy\b/.test(location.search))return;document.documentElement.classList.add('windy');
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  function start(){var DPR=Math.min(2,window.devicePixelRatio||1);
+    /* leaf pictures: a few shapes and colours (fresh green, dry yellow, brown), each with a midrib and soft shading */
+    function leaf(c1,c2,slim){var S=64,c=document.createElement('canvas');c.width=c.height=S;var x=c.getContext('2d');x.translate(S/2,S/2);var L=26,Wd=slim?7:11;
+      x.beginPath();x.moveTo(-L,0);x.bezierCurveTo(-L*.4,-Wd*1.5,L*.5,-Wd*1.2,L,0);x.bezierCurveTo(L*.5,Wd*1.2,-L*.4,Wd*1.5,-L,0);x.closePath();
+      var g=x.createLinearGradient(0,-Wd,0,Wd);g.addColorStop(0,c1);g.addColorStop(1,c2);x.fillStyle=g;x.fill();
+      x.strokeStyle='rgba(30,30,10,.35)';x.lineWidth=1;x.beginPath();x.moveTo(-L-4,0);x.lineTo(L*.92,0);x.stroke();x.lineWidth=.5;x.strokeStyle='rgba(30,30,10,.22)';
+      for(var i=-3;i<=3;i++){var px=i*L*.24;x.beginPath();x.moveTo(px,0);x.lineTo(px+L*.16,-Wd*.62*(1-Math.abs(i)/5));x.moveTo(px,0);x.lineTo(px+L*.16,Wd*.62*(1-Math.abs(i)/5));x.stroke();}
+      return c;}
+    var LV=[leaf('#7fa348','#4f7a2c'),leaf('#93b356','#5d8a35',1),leaf('#c9a53c','#9a7422'),leaf('#b98a3a','#7c5420',1),leaf('#8a5a2c','#5c3a1a'),leaf('#6f9440','#3f6a26',1)];
+    var cv=document.createElement('canvas');cv.id='windfx';cv.setAttribute('aria-hidden','true');document.body.appendChild(cv);var x=cv.getContext('2d'),W=0,Ht=0,last=0,L=[],D=[],gust=.3,goal=.3,gt=0;
+    function size(){W=innerWidth;Ht=innerHeight;cv.width=W*DPR;cv.height=Ht*DPR;x.setTransform(DPR,0,0,DPR,0,0);var n=Math.round(Math.min(90,W/14));while(D.length<n)D.push(dust(true));D.length=n;}
+    function dust(any){return {x:any?Math.random()*W:-10,y:Math.random()*Ht,r:.5+Math.random()*1.1,v:2.5+Math.random()*4,a:.1+Math.random()*.22,p:Math.random()*6.28};}
+    function newLeaf(){var z=.45+Math.random()*.9;return {im:LV[Math.random()*LV.length|0],x:-40-Math.random()*200,y:Ht*(.05+Math.random()*.85),z:z,v:(3+Math.random()*3)*z,vy:(Math.random()-.4)*.8,rot:Math.random()*6.28,dr:(Math.random()-.5)*.25,fl:Math.random()*6.28,df:.08+Math.random()*.16,p:Math.random()*6.28};}
+    size();addEventListener('resize',size);
+    (function loop(t){requestAnimationFrame(loop);if(document.hidden)return;var dt=Math.min(50,t-last||16)/16;last=t;
+      if(t>gt){gt=t+2500+Math.random()*5000;goal=Math.random()<.4?.15+Math.random()*.2:.6+Math.random()*.4;}gust+=(goal-gust)*.012*dt;
+      /* more leaves are torn loose when a gust rises */
+      var want=Math.round((W<700?2:4)+gust*(W<700?7:14));if(L.length<want&&Math.random()<.06*dt*(.3+gust))L.push(newLeaf());
+      x.clearRect(0,0,W,Ht);var sp=.35+gust*1.5;
+      x.fillStyle='#e9e2d0';for(var i=0;i<D.length;i++){var d=D[i];d.p+=.05*dt;d.x+=d.v*sp*dt;d.y+=Math.sin(d.p)*.5*dt;if(d.x>W+10)D[i]=d=dust(false);x.globalAlpha=d.a*(.25+gust*.45);x.fillRect(d.x,d.y,d.r*(1.5+gust*3),d.r*.8);}
+      for(i=L.length-1;i>=0;i--){var f=L[i];f.p+=.045*dt;f.x+=f.v*sp*dt;f.y+=(f.vy+Math.sin(f.p)*1.5*f.z+(.5-gust)*.5)*dt;f.rot+=f.dr*sp*dt;f.fl+=f.df*sp*dt;
+        if(f.x>W+60||f.y>Ht+60||f.y<-80){L.splice(i,1);continue;}var s=.5*f.z;x.save();x.translate(f.x,f.y);x.rotate(f.rot);x.scale(s,s*(.25+.75*Math.abs(Math.cos(f.fl))));x.globalAlpha=Math.min(1,.55+f.z*.4);x.drawImage(f.im,-32,-32);x.restore();}
       x.globalAlpha=1;})(0);}
   if(document.readyState==='complete')start();else addEventListener('load',start);
 })();

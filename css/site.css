@@ -292,6 +292,7 @@ section.alt{background:var(--band)}
 html.night-mood #nightsky{opacity:1}
 html.night-mood body{background:#060a17}
 html.night-mood .s:not(.alt){background:transparent}
+html.night-mood .hero .slides{opacity:.8} /* the photos blend 20% into the sky behind them */
 html.night-mood .hero{background:transparent}html.night-mood .hero::before{display:none} /* the opening section is open too: the live sky and weather show around the photos */
 html.night-mood .s.alt{background:transparent} /* no faded bands across the page: the live sky runs behind every section, and only the deep blue boxes sit on top of it */
 #nightsky canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -319,7 +320,9 @@ html.wx-rain #nightsky .wxrain,html.wx-storm #nightsky .wxrain{opacity:1}
 html.wx-cloudy #nightsky .daycl,html.wx-rain #nightsky .daycl,html.wx-storm #nightsky .daycl{opacity:0!important}
 html.wx-cloudy .moon,html.wx-rain .moon,html.wx-storm .moon{opacity:.25}
 /* ---- Snow (preview: ?wx=snow): falling flakes, a pale winter sky, snow lying on the letters, the buttons and the boxes ---- */
-#snowfall{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+#snowfall,#windfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+/* windy day (preview: ?wx=windy): the clouds race, and leaves and dust blow across in gusts */
+html.windy #nightsky .daycl{animation-duration:34s}html.windy #nightsky .nightcl{animation-duration:42s}html.windy #nightsky .suncl{animation-duration:50s}html.windy #nightsky .wxdark{animation-duration:26s}
 html.snowy #nightsky .wxtint{background:#aab9cf!important;opacity:.5!important}
 html.snowy #nightsky .wxdark{opacity:.55!important;filter:brightness(1.5) saturate(.6)}
 html.snowy .snowtx{filter:drop-shadow(0 -1.4px .7px rgba(255,255,255,.8))}
@@ -1347,7 +1350,7 @@ header.top nav.main{flex:1 1 auto;justify-content:center;min-width:0;gap:18px;fo
   .hero{background:transparent}
   .hero::before{display:none}
   .hero>.wrap.hero-grid{grid-template-columns:minmax(0,43%) 1fr}
-  .hero-media{left:auto;right:clamp(16px,4vw,72px);top:26px;bottom:148px;width:min(50%,900px);-webkit-mask-image:none;mask-image:none;border-radius:30px!important;overflow:hidden;box-shadow:0 40px 90px -40px rgba(0,0,0,.85),0 0 0 1px rgba(217,173,85,.35)}
+  .hero-media{left:auto;right:clamp(16px,4vw,72px);top:clamp(56px,9vh,120px);bottom:auto;width:min(46%,800px);aspect-ratio:16/10;-webkit-mask-image:none;mask-image:none;border-radius:30px!important;overflow:hidden;box-shadow:0 40px 90px -40px rgba(0,0,0,.85),0 0 0 1px rgba(217,173,85,.35)}
   .hero .slides{border-radius:30px!important}
   .hero .slides::after{inset:0;height:auto;background:linear-gradient(0deg,rgba(5,8,18,.82) 0%,rgba(5,8,18,0) 42%),linear-gradient(180deg,rgba(5,8,18,.45) 0%,rgba(5,8,18,0) 26%)}
   .hero-cap{left:auto;right:28px;bottom:30px;width:min(420px,60%)}

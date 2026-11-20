@@ -200,7 +200,7 @@ try{
   function nightClouds(){if(ncl||!ns)return;ncl=document.createElement('div');ncl.className='nightcl';ncl.style.backgroundImage=cloudTile(.57,.16,[150,162,196],[44,52,84]);ns.appendChild(ncl);}
   function dayClouds(){if(dcl||!ns)return;dcl=document.createElement('div');dcl.className='daycl';dcl.style.backgroundImage=cloudTile(.5,.2,[255,255,255],[205,215,232]);ns.insertBefore(dcl,ns.querySelector('.moon'));}
   /* ---- live weather behind the page: overcast, rain and thunderstorms follow the real weather in Mayapur (preview with ?wx=cloudy, ?wx=rain, ?wx=storm) ---- */
-  var wxMode='clear',wxEl=null,wxRAF=0,wxDrops=[],wxBolt=null,wxNext=0,wxPrev=(location.search.match(/[?&]wx=(clear|cloudy|rain|storm|snow)/)||[])[1];if(wxPrev==='snow')wxPrev='cloudy'; /* snow (preview only, ?wx=snow) uses the overcast sky; the flakes and the snow caps are drawn by the snow block at the end of the page */
+  var wxMode='clear',wxEl=null,wxRAF=0,wxDrops=[],wxBolt=null,wxNext=0,wxPrev=(location.search.match(/[?&]wx=(clear|cloudy|rain|storm|snow|windy)/)||[])[1];if(wxPrev==='snow')wxPrev='cloudy';if(wxPrev==='windy')wxPrev='clear'; /* snow (preview only, ?wx=snow) uses the overcast sky; the flakes and the snow caps are drawn by the snow block at the end of the page */
   function wxSetup(){if(wxEl||!ns)return;wxEl={};var mk=function(tag,cls){var e=document.createElement(tag);e.className=cls;ns.insertBefore(e,ns.querySelector('.moon'));return e;};
     wxEl.tint=mk('div','wxtint');wxEl.dark=mk('div','wxdark');wxEl.dark.style.backgroundImage=cloudTile(.36,.26,[150,158,172],[52,58,72],1);wxEl.glow=mk('div','wxglow');wxEl.heavy=mk('div','wxheavy');wxEl.black=mk('div','wxblack');wxEl.rain=mk('canvas','wxrain');wxEl.flash=mk('div','wxflash');}
   /* heavy storm cloud: big dark billowing masses, thick overhead and breaking up lower down, with paler edges so the lightning glows through the gaps */
@@ -1718,6 +1718,40 @@ try{
 /* part 29 */
 try{
 
+/* ---- Windy day preview (?wx=windy). Wind itself cannot be seen, so it is shown the way it is seen outdoors: clouds moving fast,
+        and leaves and dust carried across in gusts that rise and die away. ---- */
+(function(){if(!/[?&]wx=windy\b/.test(location.search))return;document.documentElement.classList.add('windy');
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  function start(){var DPR=Math.min(2,window.devicePixelRatio||1);
+    /* leaf pictures: a few shapes and colours (fresh green, dry yellow, brown), each with a midrib and soft shading */
+    function leaf(c1,c2,slim){var S=64,c=document.createElement('canvas');c.width=c.height=S;var x=c.getContext('2d');x.translate(S/2,S/2);var L=26,Wd=slim?7:11;
+      x.beginPath();x.moveTo(-L,0);x.bezierCurveTo(-L*.4,-Wd*1.5,L*.5,-Wd*1.2,L,0);x.bezierCurveTo(L*.5,Wd*1.2,-L*.4,Wd*1.5,-L,0);x.closePath();
+      var g=x.createLinearGradient(0,-Wd,0,Wd);g.addColorStop(0,c1);g.addColorStop(1,c2);x.fillStyle=g;x.fill();
+      x.strokeStyle='rgba(30,30,10,.35)';x.lineWidth=1;x.beginPath();x.moveTo(-L-4,0);x.lineTo(L*.92,0);x.stroke();x.lineWidth=.5;x.strokeStyle='rgba(30,30,10,.22)';
+      for(var i=-3;i<=3;i++){var px=i*L*.24;x.beginPath();x.moveTo(px,0);x.lineTo(px+L*.16,-Wd*.62*(1-Math.abs(i)/5));x.moveTo(px,0);x.lineTo(px+L*.16,Wd*.62*(1-Math.abs(i)/5));x.stroke();}
+      return c;}
+    var LV=[leaf('#7fa348','#4f7a2c'),leaf('#93b356','#5d8a35',1),leaf('#c9a53c','#9a7422'),leaf('#b98a3a','#7c5420',1),leaf('#8a5a2c','#5c3a1a'),leaf('#6f9440','#3f6a26',1)];
+    var cv=document.createElement('canvas');cv.id='windfx';cv.setAttribute('aria-hidden','true');document.body.appendChild(cv);var x=cv.getContext('2d'),W=0,Ht=0,last=0,L=[],D=[],gust=.3,goal=.3,gt=0;
+    function size(){W=innerWidth;Ht=innerHeight;cv.width=W*DPR;cv.height=Ht*DPR;x.setTransform(DPR,0,0,DPR,0,0);var n=Math.round(Math.min(90,W/14));while(D.length<n)D.push(dust(true));D.length=n;}
+    function dust(any){return {x:any?Math.random()*W:-10,y:Math.random()*Ht,r:.5+Math.random()*1.1,v:2.5+Math.random()*4,a:.1+Math.random()*.22,p:Math.random()*6.28};}
+    function newLeaf(){var z=.45+Math.random()*.9;return {im:LV[Math.random()*LV.length|0],x:-40-Math.random()*200,y:Ht*(.05+Math.random()*.85),z:z,v:(3+Math.random()*3)*z,vy:(Math.random()-.4)*.8,rot:Math.random()*6.28,dr:(Math.random()-.5)*.25,fl:Math.random()*6.28,df:.08+Math.random()*.16,p:Math.random()*6.28};}
+    size();addEventListener('resize',size);
+    (function loop(t){requestAnimationFrame(loop);if(document.hidden)return;var dt=Math.min(50,t-last||16)/16;last=t;
+      if(t>gt){gt=t+2500+Math.random()*5000;goal=Math.random()<.4?.15+Math.random()*.2:.6+Math.random()*.4;}gust+=(goal-gust)*.012*dt;
+      /* more leaves are torn loose when a gust rises */
+      var want=Math.round((W<700?2:4)+gust*(W<700?7:14));if(L.length<want&&Math.random()<.06*dt*(.3+gust))L.push(newLeaf());
+      x.clearRect(0,0,W,Ht);var sp=.35+gust*1.5;
+      x.fillStyle='#e9e2d0';for(var i=0;i<D.length;i++){var d=D[i];d.p+=.05*dt;d.x+=d.v*sp*dt;d.y+=Math.sin(d.p)*.5*dt;if(d.x>W+10)D[i]=d=dust(false);x.globalAlpha=d.a*(.25+gust*.45);x.fillRect(d.x,d.y,d.r*(1.5+gust*3),d.r*.8);}
+      for(i=L.length-1;i>=0;i--){var f=L[i];f.p+=.045*dt;f.x+=f.v*sp*dt;f.y+=(f.vy+Math.sin(f.p)*1.5*f.z+(.5-gust)*.5)*dt;f.rot+=f.dr*sp*dt;f.fl+=f.df*sp*dt;
+        if(f.x>W+60||f.y>Ht+60||f.y<-80){L.splice(i,1);continue;}var s=.5*f.z;x.save();x.translate(f.x,f.y);x.rotate(f.rot);x.scale(s,s*(.25+.75*Math.abs(Math.cos(f.fl))));x.globalAlpha=Math.min(1,.55+f.z*.4);x.drawImage(f.im,-32,-32);x.restore();}
+      x.globalAlpha=1;})(0);}
+  if(document.readyState==='complete')start();else addEventListener('load',start);
+})();
+
+}catch(e){console.error("[nikadi part 29]",e);}
+/* part 30 */
+try{
+
 /* ---- Visit counter for the owner's admin page. Nothing personal: a random number for this browser, the pages opened and the time spent.
         No name, no phone, no cookies. Devices signed in to the staff app are not counted. ---- */
 (function(){try{
@@ -1743,4 +1777,4 @@ try{
     if(/wa\.me|whatsapp\.com/.test(h))send({ev:'wa'});else if(/^tel:/.test(h))send({ev:'call'});else if(/\/app\/|membership/.test(h))send({ev:'join'});},true);
 }catch(e){}})();
 
-}catch(e){console.error("[nikadi part 29]",e);}
+}catch(e){console.error("[nikadi part 30]",e);}
