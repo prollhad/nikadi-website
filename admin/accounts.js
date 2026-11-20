@@ -95,18 +95,19 @@
     function img(o, x, y, w, h) { try { doc.addImage(o.u, /png/.test(o.u.slice(0, 30)) ? 'PNG' : 'JPEG', x, y, w, h, undefined, 'FAST'); } catch (er) {} }
     function put(o, mw, mh, right, bottom) { if (!o) return 0; var sc = Math.min(mw / o.w, mh / o.h), w = o.w * sc, h = o.h * sc; img(o, right - w, bottom - h, w, h); return w; }
     /* a stamp with the name on top and the title below: the signature goes in the space between them */
-    function signed(st, right, mw) { var sw0 = mw, sh0 = sw0 * st.h / st.w; if (sh0 > 17.5) { sh0 = 17.5; sw0 = sh0 * st.w / st.h; } var top = B - sh0, left = right - sw0; img(st, left, top, sw0, sh0);
+    function signed(st, right, mw, fromLeft) { var sw0 = mw, sh0 = sw0 * st.h / st.w; if (sh0 > 17.5) { sh0 = 17.5; sw0 = sh0 * st.w / st.h; } var top = B - sh0, left = fromLeft ? right : right - sw0; img(st, left, top, sw0, sh0);
       if (g.sign) { var w0 = sw0 * .751, h0 = sh0 * .58, sc = Math.min(w0 / g.sign.w, h0 / g.sign.h), w2 = g.sign.w * sc, h2 = g.sign.h * sc; img(g.sign, left + sw0 * .178 + (w0 - w2) / 2, top + sh0 * .225 + (h0 - h2) / 2, w2, h2); } }
-    function lines(right, head, rest) { var y = B + 3.2; doc.setFont('helvetica', 'bold'); doc.setFontSize(7.6); doc.setTextColor(30, 30, 30); doc.text(lat(head), right, y, { align: 'right' }); y += 3.1;
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(6.6); doc.setTextColor(60, 60, 60); rest.forEach(function (t) { doc.splitTextToSize(lat(t), bw).forEach(function (l) { doc.text(l, right, y, { align: 'right' }); y += 2.9; }); }); }
+    function lines(right, head, rest, fromLeft) { var y = B + 3.2, al = { align: fromLeft ? 'left' : 'right' }; doc.setFont('helvetica', 'bold'); doc.setFontSize(7.6); doc.setTextColor(30, 30, 30); doc.text(lat(head), right, y, al); y += 3.1;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(6.6); doc.setTextColor(60, 60, 60); rest.forEach(function (t) { doc.splitTextToSize(lat(t), bw).forEach(function (l) { doc.text(l, right, y, al); y += 2.9; }); }); }
     /* right: the company */
     if (own.both && g.both) put(g.both, 58, 18, x1, B);
     else if (g.stamp && !own.stamp) signed(g.stamp, x1, 56);
     else { var sw = put(g.sign, 40, 14, x1, B - 1); put(g.stamp, 22, 18, x1 - (sw ? sw + 4 : 0), B); }
     var L = coLines(); lines(x1, SIGNER.name + ', ' + SIGNER.title, L.concat(['Accounts sent by one of the directors']));
     /* left of it: the guest house, a unit of the company */
-    var x2 = x1 - bw - 8; if (g.gh) signed(g.gh, x2, 50);
-    lines(x2, H.name || 'Nikadi Guest House', ['A unit of ' + SIGNER.company, 'GSTIN ' + (H.gstin || ''), (H.name || 'Nikadi Guest House') + ', ' + (H.address || []).join(', ')]); }
+    /* the guest house sits at the left margin, mirrored, so the two signed stamps face each other across the page */
+    if (g.gh) signed(g.gh, M, 50, true);
+    lines(M, H.name || 'Nikadi Guest House', ['A unit of ' + SIGNER.company, 'GSTIN ' + (H.gstin || ''), (H.name || 'Nikadi Guest House') + ', ' + (H.address || []).join(', ')], true); }
   /* a photo or scan is made small enough to store; a white paper background is made see-through so only the ink shows */
   function sgPrep(file) { return new Promise(function (ok, bad) { var fr = new FileReader(); fr.onerror = bad; fr.onload = function () { var im = new Image(); im.onerror = bad; im.onload = function () {
     function make(max) { var sc = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * sc)); c.height = Math.max(1, Math.round(im.naturalHeight * sc)); var x = c.getContext('2d'); x.drawImage(im, 0, 0, c.width, c.height);
