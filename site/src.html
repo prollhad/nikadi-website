@@ -25,7 +25,9 @@
 <meta property="og:url" content="https://www.nikadiguesthouse.com/">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Lato:wght@300;400;700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Lato:wght@300;400;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Lato:wght@300;400;700&display=swap"></noscript>
 <style>
 /* Layout: single committed dark look. Full-bleed photo hero with a booking bar, then alternating espresso and deeper-ink bands; brass gold reserved for prices, rules and actions */
 :root{
@@ -3589,29 +3591,31 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   }
   /* slow drifting clouds for the daytime sky: painted once, then moved by the browser (cheap) */
   var dcl=null;
-  function cloudTile(th,soft,lit,shade,full){var Wc=1024,Hc=384,c=document.createElement('canvas');c.width=Wc;c.height=Hc;var x=c.getContext('2d'),im=x.createImageData(Wc,Hc),D=im.data,gr={},sd=th*91.7;
-    function h2(i,j,p){i=((i%p)+p)%p;var k=i+','+j+','+p;if(gr[k]===undefined){var n=Math.sin(i*127.1+j*311.7+p*74.7+sd)*43758.5453;gr[k]=n-Math.floor(n);}return gr[k];}
+  /* the cloud pictures are worked out at half size and enlarged smoothly: clouds are soft anyway, and this keeps phones from freezing while the page opens */
+  function tileOut(c,x,im,W,H){x.putImageData(im,0,0);var o=document.createElement('canvas');o.width=W;o.height=H;var y=o.getContext('2d');y.imageSmoothingEnabled=true;y.imageSmoothingQuality='high';y.drawImage(c,0,0,W,H);return 'url('+o.toDataURL()+')';}
+  function cloudTile(th,soft,lit,shade,full){var Wc=512,Hc=192,c=document.createElement('canvas');c.width=Wc;c.height=Hc;var x=c.getContext('2d'),im=x.createImageData(Wc,Hc),D=im.data,gr={},sd=th*91.7;
+    function h2(i,j,p){i=((i%p)+p)%p;var n=Math.sin(i*127.1+j*311.7+p*74.7+sd)*43758.5453;return n-Math.floor(n);}
     function vn(u,v,p){var xi=Math.floor(u),yi=Math.floor(v),xf=u-xi,yf=v-yi,a=xf*xf*(3-2*xf),b=yf*yf*(3-2*yf),q=h2(xi,yi,p),r=h2(xi+1,yi,p),s=h2(xi,yi+1,p),t=h2(xi+1,yi+1,p);return q+(r-q)*a+(s-q)*b+(q-r-s+t)*a*b;}
     function fb(u,v){var t=0,am=.5,p=5;for(var o=0;o<5;o++){t+=am*vn(u*p,v*p*.55,p);p*=2;am*=.5;}return t;}
     for(var j=0;j<Hc;j++){var vy=j/Hc,fade=full?Math.min(1,vy*8)*(1-.55*vy):Math.min(1,vy*6)*Math.pow(Math.max(0,1-vy),1.2);for(var i=0;i<Wc;i++){var u=i/Wc,n=fb(u,vy),d=(n-th)/soft;d=Math.max(0,Math.min(1,d));d=d*d*(3-2*d);
       var up=fb(u,vy-.02),l=Math.max(0,Math.min(1,.55+(n-up)*7)),k=(j*Wc+i)*4;D[k]=shade[0]+(lit[0]-shade[0])*l;D[k+1]=shade[1]+(lit[1]-shade[1])*l;D[k+2]=shade[2]+(lit[2]-shade[2])*l;D[k+3]=255*d*fade;}}
-    x.putImageData(im,0,0);return 'url('+c.toDataURL()+')';}
+    return tileOut(c,x,im,1024,384);}
   /* clouds for the sunset sky: broad, streaky banks. The low sun lights them from underneath, so the undersides and thin edges glow
      (gold and orange low down, red and pink higher up) while the thick middles and tops stay dusky purple. */
   var scl=null;
-  function sunsetTile(){var Wc=1100,Hc=560,c=document.createElement('canvas');c.width=Wc;c.height=Hc;var x=c.getContext('2d'),im=x.createImageData(Wc,Hc),D=im.data,Nn=new Float32Array(Wc*Hc);
+  function sunsetTile(){var Wc=550,Hc=280,c=document.createElement('canvas');c.width=Wc;c.height=Hc;var x=c.getContext('2d'),im=x.createImageData(Wc,Hc),D=im.data,Nn=new Float32Array(Wc*Hc);
     function h2(i,j,p){i=((i%p)+p)%p;var n=Math.sin(i*127.1+j*311.7+p*74.7+41.3)*43758.5453;return n-Math.floor(n);}
     function vn(u,v,p){var xi=Math.floor(u),yi=Math.floor(v),xf=u-xi,yf=v-yi,a=xf*xf*(3-2*xf),b=yf*yf*(3-2*yf),q=h2(xi,yi,p),r=h2(xi+1,yi,p),s=h2(xi,yi+1,p),t=h2(xi+1,yi+1,p);return q+(r-q)*a+(s-q)*b+(q-r-s+t)*a*b;}
     function fb(u,v,oc){var t=0,am=.5,p=3;for(var o=0;o<oc;o++){t+=am*vn(u*p,v*p*1.25,p);p*=2;am*=.5;}return t;}
     var i,j,Hu=new Float32Array(Wc*Hc);for(j=0;j<Hc;j++)for(i=0;i<Wc;i++){var u=i/Wc,v=j/Hc,w=fb(u+.21,v+.47,2)-.36;Hu[j*Wc+i]=w;Nn[j*Wc+i]=fb(u+w*.22,v+w*.12,7);}
     function mix(a,b,t){return a+(b-a)*t;}
     for(j=0;j<Hc;j++){var vy=j/Hc,th=.47+.03*Math.cos(vy*5.2),fade=Math.min(1,vy*9)*Math.min(1,(1-vy)*5);for(i=0;i<Wc;i++){var n=Nn[j*Wc+i],d=Math.max(0,Math.min(1,(n-th)/.075));d=d*d*(3-2*d);if(!d){continue;}
-      var dep=Math.max(0,Math.min(1,(n-th)/.2)),nb=Nn[Math.min(Hc-1,j+12)*Wc+i],und=Math.max(0,Math.min(1,.42+(n-nb)*15)),rim=Math.pow(1-dep,2.4),l=Math.max(0,Math.min(1,Math.pow(und,1.4)*(.82-dep*.4)+rim*.3)),k=(j*Wc+i)*4;
+      var dep=Math.max(0,Math.min(1,(n-th)/.2)),nb=Nn[Math.min(Hc-1,j+6)*Wc+i],und=Math.max(0,Math.min(1,.42+(n-nb)*15)),rim=Math.pow(1-dep,2.4),l=Math.max(0,Math.min(1,Math.pow(und,1.4)*(.82-dep*.4)+rim*.3)),k=(j*Wc+i)*4;
       /* colour of the light: red and hot pink up high, orange in the middle, gold near the horizon, varied a little from cloud to cloud */
       var hu=Math.max(0,Math.min(1,vy*1.1+Hu[j*Wc+i]*.8)),lr=252,lg=mix(158,196,hu),lb=mix(140,118,hu);
       var sr=mix(78,104,vy),sg=mix(76,84,vy),sb=mix(112,108,vy);
       D[k]=mix(sr,lr,l);D[k+1]=mix(sg,lg,l);D[k+2]=mix(sb,lb,l);D[k+3]=255*d*fade*.8;}}
-    x.putImageData(im,0,0);return 'url('+c.toDataURL()+')';}
+    return tileOut(c,x,im,1100,560);}
   function sunsetClouds(){if(scl||!ns)return;scl=document.createElement('div');scl.className='suncl';scl.style.backgroundImage=sunsetTile();ns.insertBefore(scl,ns.querySelector('.moon'));}
   var ncl=null;
   function nightClouds(){if(ncl||!ns)return;ncl=document.createElement('div');ncl.className='nightcl';ncl.style.backgroundImage=cloudTile(.57,.16,[150,162,196],[44,52,84]);ns.appendChild(ncl);}
@@ -3621,15 +3625,15 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   function wxSetup(){if(wxEl||!ns)return;wxEl={};var mk=function(tag,cls){var e=document.createElement(tag);e.className=cls;ns.insertBefore(e,ns.querySelector('.moon'));return e;};
     wxEl.tint=mk('div','wxtint');wxEl.dark=mk('div','wxdark');wxEl.dark.style.backgroundImage=cloudTile(.36,.26,[150,158,172],[52,58,72],1);wxEl.glow=mk('div','wxglow');wxEl.heavy=mk('div','wxheavy');wxEl.black=mk('div','wxblack');wxEl.rain=mk('canvas','wxrain');wxEl.flash=mk('div','wxflash');}
   /* heavy storm cloud: big dark billowing masses, thick overhead and breaking up lower down, with paler edges so the lightning glows through the gaps */
-  function stormTile(){var Wc=880,Hc=512,c=document.createElement('canvas');c.width=Wc;c.height=Hc;var x=c.getContext('2d'),im=x.createImageData(Wc,Hc),D=im.data,Nn=new Float32Array(Wc*Hc);
+  function stormTile(){var Wc=440,Hc=256,c=document.createElement('canvas');c.width=Wc;c.height=Hc;var x=c.getContext('2d'),im=x.createImageData(Wc,Hc),D=im.data,Nn=new Float32Array(Wc*Hc);
     function h2(i,j,p){i=((i%p)+p)%p;var n=Math.sin(i*127.1+j*311.7+p*74.7+13.7)*43758.5453;return n-Math.floor(n);}
     function vn(u,v,p){var xi=Math.floor(u),yi=Math.floor(v),xf=u-xi,yf=v-yi,a=xf*xf*(3-2*xf),b=yf*yf*(3-2*yf),q=h2(xi,yi,p),r=h2(xi+1,yi,p),s=h2(xi,yi+1,p),t=h2(xi+1,yi+1,p);return q+(r-q)*a+(s-q)*b+(q-r-s+t)*a*b;}
     function fb(u,v,oc){var t=0,am=.5,p=3;for(var o=0;o<oc;o++){t+=am*vn(u*p,v*p*.62,p);p*=2;am*=.5;}return t;}
     var i,j;for(j=0;j<Hc;j++)for(i=0;i<Wc;i++){var u=i/Wc,v=j/Hc,w=fb(u+.37,v+.61,2)-.36;Nn[j*Wc+i]=fb(u+w*.16,v+w*.22,6);}
     for(j=0;j<Hc;j++){var vy=j/Hc,sm=vy*vy*(3-2*vy),th=.33+.27*sm,fade=Math.min(1,(1-vy)*7);for(i=0;i<Wc;i++){var n=Nn[j*Wc+i],d=Math.max(0,Math.min(1,(n-th)/.07));d=d*d*(3-2*d);
-      var dep=Math.max(0,Math.min(1,(n-th)/.2)),nb=Nn[Math.min(Hc-1,j+9)*Wc+i],tx=Math.max(-1,Math.min(1,(n-nb)*16)),e=Math.pow(1-dep,1.6),k=(j*Wc+i)*4,sh=tx*16*dep;
+      var dep=Math.max(0,Math.min(1,(n-th)/.2)),nb=Nn[Math.min(Hc-1,j+5)*Wc+i],tx=Math.max(-1,Math.min(1,(n-nb)*16)),e=Math.pow(1-dep,1.6),k=(j*Wc+i)*4,sh=tx*16*dep;
       D[k]=12+96*e+sh;D[k+1]=14+98*e+sh;D[k+2]=21+108*e+sh*1.1;D[k+3]=255*d*fade;}}
-    x.putImageData(im,0,0);return 'url('+c.toDataURL()+')';}
+    return tileOut(c,x,im,880,512);}
   /* lightning shapes: jagged channels made by repeated mid-point shifts, with forks */
   function wxPath(x0,y0,x1,y1,rough){var p=[[x0,y0],[x1,y1]],d=Math.hypot(x1-x0,y1-y0)*rough;for(var it=0;it<6;it++){var q=[p[0]];for(var i=1;i<p.length;i++){var a=p[i-1],b=p[i],nx=-(b[1]-a[1]),ny=b[0]-a[0],nl=Math.hypot(nx,ny)||1,o=(Math.random()-.5)*d;q.push([(a[0]+b[0])/2+nx/nl*o,(a[1]+b[1])/2+ny/nl*o],b);}p=q;d*=.56;}return p;}
   function wxFork(list,p,w,depth){list.push({p:p,w:w});if(depth>1)return;var n=depth?(Math.random()<.5?1:0):2+(Math.random()*4|0),last=p[p.length-1];for(var k=0;k<n;k++){var i=(p.length*(.12+Math.random()*.62))|0,a=p[i],b=p[Math.min(p.length-1,i+8)],ang=Math.atan2(b[1]-a[1],b[0]-a[0])+(Math.random()<.5?-1:1)*(.3+Math.random()*.65),len=Math.hypot(last[0]-a[0],last[1]-a[1])*(.25+Math.random()*.45);if(len<36)continue;wxFork(list,wxPath(a[0],a[1],a[0]+Math.cos(ang)*len,a[1]+Math.sin(ang)*len,.24),w*.45,depth+1);}}
