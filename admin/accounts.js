@@ -85,8 +85,8 @@
     else if (R) {
       var t = R.tot;
       h += '<div class="sec"><div><p class="kick">' + nice(P[0]) + ' to ' + nice(P[1]) + '</p><h2>Figures for this period</h2></div></div>' +
-        '<div class="card"><div class="ch"><h2>Files for your CA</h2><span class="small">made on this device, nothing is sent anywhere</span></div><div style="display:flex;gap:8px;flex-wrap:wrap">' +
-        '<button class="btn btn-gold" type="button" id="acPdf">Download the full PDF report</button><button class="btn" type="button" data-csv="sales">Sales register (Excel)</button><button class="btn" type="button" data-csv="hsn">GST summary by HSN (Excel)</button><button class="btn" type="button" data-csv="receipts">Money received (Excel)</button><button class="btn" type="button" data-csv="expenses">Expenses (Excel)</button><button class="btn" type="button" data-csv="commission">Commission (Excel)</button><button class="btn" type="button" id="acAll">All files at once</button></div>' +
+        '<div class="card"><div class="ch"><h2>Files for your CA</h2><span class="small">each file opens on screen first; you download it only if it looks right</span></div><div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-gold" type="button" id="acPdf">See the full PDF report</button><button class="btn" type="button" data-csv="sales">Sales register (Excel)</button><button class="btn" type="button" data-csv="hsn">GST summary by HSN (Excel)</button><button class="btn" type="button" data-csv="receipts">Money received (Excel)</button><button class="btn" type="button" data-csv="expenses">Expenses (Excel)</button><button class="btn" type="button" data-csv="commission">Commission (Excel)</button><button class="btn" type="button" id="acAll">See all files together</button></div>' +
         '<p class="small" style="margin-top:10px">The Excel files are CSV files: they open in Excel, Google Sheets and Tally imports. Send them by WhatsApp or email from your downloads.</p></div>' +
         '<div class="tiles">' + tile('Sales (invoice value)', rs(t.total), t.n + ' invoices') + tile('Taxable value', rs(t.taxable), 'before GST') + tile('GST collected', rs(t.gst), 'CGST ' + rs(t.cgst) + ' · SGST ' + rs(t.sgst)) + tile('Money received', rs(R.rec.in), R.rec.out ? 'refunded ' + rs(R.rec.out) : 'no refunds') + tile('Expenses', rs(R.ex.total), R.r.expenses.length + ' entries') + tile('Commission paid', rs(R.com), R.r.commissions.length + ' entries') + '</div>' +
         '<div class="card"><div class="ch"><h2>GST on sales, by HSN / SAC</h2><span class="small">for GSTR-1 and GSTR-3B</span></div>' + (R.hsn.length ? tbl([['HSN / SAC'], ['GST rate', 1], ['Taxable value', 1], ['CGST', 1], ['SGST', 1], ['Total GST', 1], ['Invoice value', 1]],
@@ -103,9 +103,9 @@
     C.app.innerHTML = h; C.wire(); window.scrollTo(0, 0);
     chooserWire(pr);
     if (R && !busy) {
-      document.getElementById('acPdf').onclick = function () { var b = this; b.disabled = true; b.textContent = 'Making the PDF…'; pdf().then(function () { b.disabled = false; b.textContent = 'Download the full PDF report'; }, function (er) { b.disabled = false; b.textContent = 'Could not make the PDF. Try again'; console.error(er); }); };
-      [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { csv(b.dataset.csv); }; });
-      document.getElementById('acAll').onclick = function () { var list = ['sales', 'hsn', 'receipts', 'expenses', 'commission'], i = 0; pdf().then(function next() { if (i < list.length) { csv(list[i++]); setTimeout(next, 500); } }); };
+      document.getElementById('acPdf').onclick = function () { var b = this; b.disabled = true; b.textContent = 'Making the PDF…'; pdf().then(function (f) { b.disabled = false; b.textContent = 'See the full PDF report'; preview([f]); }, function (er) { b.disabled = false; b.textContent = 'Could not make the PDF. Try again'; console.error(er); }); };
+      [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { preview([csv(b.dataset.csv)]); }; });
+      document.getElementById('acAll').onclick = function () { var b = this; b.disabled = true; pdf().then(function (f) { b.disabled = false; preview([f].concat(['sales', 'hsn', 'receipts', 'expenses', 'commission'].map(csv))); }, function () { b.disabled = false; }); };
     }
   }
   function load(a, b) { P = [a, b]; R = null; busy = true; draw();
@@ -131,8 +131,32 @@
         .concat(R.r.laundry.map(function (x) { return ['', x.date, 'Laundry', 'Laundry bill', 'Laundry', '', x.total.toFixed(2), '', '', '', '', '', '', '', '', '', '', '', (x.paid ? 'Paid. ' : 'Not marked paid. ') + x.note]; })); }
     else { name = 'Commission'; head = ['Date', 'Name', 'Driver or broker', 'Phone', 'Vehicle no.', 'For guest', 'Room / booking', 'Amount', 'Paid by', 'Transaction no.', 'Note'];
       rows = R.r.commissions.map(function (x) { return [x.date, x.name, x.type, x.phone, x.vehicle, x.guest, x.room, x.amount.toFixed(2), x.method, x.ref, x.note]; }); }
-    save(new Blob([csvText(head, rows)], { type: 'text/csv;charset=utf-8' }), fname(name, 'csv'));
+    return { name: fname(name, 'csv'), kind: 'csv', label: name.replace(/-/g, ' '), head: head, rows: rows, blob: new Blob([csvText(head, rows)], { type: 'text/csv;charset=utf-8' }) };
   }
+  /* Look before you download: every file opens here first. PDFs are shown page by page as they will print; Excel files as a table. */
+  function preview(files) {
+    files = files.filter(Boolean); if (!files.length) return; var e = C.esc, cur = 0, urls = [], ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:60;background:#0d0b0a;display:flex;flex-direction:column';
+    ov.innerHTML = '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:max(10px,env(safe-area-inset-top)) 14px 10px;border-bottom:1px solid var(--line)"><b id="pvName" style="font-weight:500;flex:1;min-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b>' +
+      '<button class="btn btn-gold" type="button" id="pvGet">Download this file</button>' + (files.length > 1 ? '<button class="btn" type="button" id="pvAll">Download all ' + files.length + '</button>' : '') + '<button class="btn" type="button" id="pvX">Close</button></div>' +
+      (files.length > 1 ? '<div id="pvTabs" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--line)"></div>' : '') + '<div id="pvBody" style="flex:1;min-height:0;overflow:auto;background:#1b1714"></div>';
+    document.body.appendChild(ov); var body = ov.querySelector('#pvBody'), prevOv = document.documentElement.style.overflow; document.documentElement.style.overflow = 'hidden';
+    function close() { urls.forEach(function (u) { URL.revokeObjectURL(u); }); document.documentElement.style.overflow = prevOv; ov.remove(); document.removeEventListener('keydown', key); }
+    function key(ev) { if (ev.key === 'Escape') close(); } document.addEventListener('keydown', key);
+    function show(i) { cur = i; var f = files[i]; ov.querySelector('#pvName').textContent = f.name + '  ·  ' + (f.blob.size > 1048576 ? (f.blob.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(f.blob.size / 1024)) + ' KB');
+      if (files.length > 1) ov.querySelector('#pvTabs').innerHTML = files.map(function (x, k) { return '<button class="btn' + (k === i ? ' btn-gold' : '') + '" type="button" data-k="' + k + '" style="padding:5px 12px;font-size:.86rem">' + e(x.label || x.name) + '</button>'; }).join('');
+      if (f.kind === 'csv') { var max = 500; body.innerHTML = '<div style="padding:14px"><p class="small" style="margin:0 0 10px">' + f.rows.length + ' rows' + (f.rows.length > max ? ', the first ' + max + ' shown here; the file has all of them' : '') + '. This is exactly what the file contains.</p>' + (f.rows.length ? '<div class="tw"><table><thead><tr>' + f.head.map(function (h) { return '<th>' + e(h) + '</th>'; }).join('') + '</tr></thead><tbody>' + f.rows.slice(0, max).map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + e(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty">This file has only its heading row: there is nothing of this kind in the period.</p>') + '</div>'; return; }
+      body.innerHTML = '<p class="empty" style="padding:14px">Opening the pages…</p>'; pages(f).then(function (ok) { if (cur !== i) return; if (!ok) { var u = URL.createObjectURL(f.blob); urls.push(u); body.innerHTML = '<iframe title="' + e(f.name) + '" src="' + u + '" style="width:100%;height:100%;border:0;background:#fff"></iframe>'; } }); }
+    /* each PDF page is drawn as a picture, so it shows the same on a phone as on a computer */
+    function pages(f) { if (!pdfjs) pdfjs = import('/staff/vendor/pdf.min.mjs').then(function (m) { m.GlobalWorkerOptions.workerSrc = '/staff/vendor/pdf.worker.min.mjs'; return m; }); var my = cur;
+      return pdfjs.then(function (m) { return f.blob.arrayBuffer().then(function (ab) { return m.getDocument({ data: ab }).promise; }).then(function (doc) { if (cur !== my) return true; body.innerHTML = '<p class="small" style="text-align:center;margin:10px 0 0">' + doc.numPages + ' page' + (doc.numPages > 1 ? 's' : '') + '</p><div id="pvPages" style="display:grid;gap:12px;justify-items:center;padding:12px"></div>'; var box = body.querySelector('#pvPages'), n = 0;
+          function next() { if (cur !== my || n >= doc.numPages || !box.isConnected) return true; n++; return doc.getPage(n).then(function (pg) { var w = Math.min(1100, body.clientWidth - 24), v0 = pg.getViewport({ scale: 1 }), sc = w / v0.width, dpr = Math.min(2, window.devicePixelRatio || 1), v = pg.getViewport({ scale: sc * dpr }), cv = document.createElement('canvas'); cv.width = v.width; cv.height = v.height; cv.style.cssText = 'width:' + Math.round(v.width / dpr) + 'px;max-width:100%;height:auto;background:#fff;border-radius:4px;box-shadow:0 6px 24px rgba(0,0,0,.5)'; box.appendChild(cv); return pg.render({ canvasContext: cv.getContext('2d'), viewport: v }).promise; }).then(next); }
+          return next(); }); }).then(function () { return true; }, function () { pdfjs = null; return false; }); }
+    ov.querySelector('#pvX').onclick = close; ov.querySelector('#pvGet').onclick = function () { save(files[cur].blob, files[cur].name); };
+    if (files.length > 1) { ov.querySelector('#pvAll').onclick = function () { var k = 0; (function nx() { if (k < files.length) { save(files[k].blob, files[k].name); k++; setTimeout(nx, 500); } })(); }; ov.querySelector('#pvTabs').onclick = function (ev) { var b = ev.target.closest('[data-k]'); if (b) show(Number(b.dataset.k)); }; }
+    show(0);
+  }
+  var pdfjs = null;
   var jsp = null;
   function tool() { if (jsp) return jsp; jsp = new Promise(function (ok, bad) { if (window.jspdf) return ok(); var s = document.createElement('script'); s.src = '/staff/vendor/jspdf.umd.min.js'; s.onload = function () { ok(); }; s.onerror = function () { jsp = null; bad(new Error('pdf_tool')); }; document.head.appendChild(s); }); return jsp; }
   /* the PDF uses the built-in Latin font, so names in other scripts are shown as they can be */
@@ -200,7 +224,7 @@
     para('4. All supplies are within West Bengal (state code 19): CGST and SGST only. This statement is prepared from the guest house records for the use of the Chartered Accountant; it is not a return.', 8.5);
     if (R.sales.some(function (s) { return s.est; })) para('5. A few invoices had no line details on record; their GST is estimated at 5% of the invoice value. They are marked in the sales register file.', 8.5);
     var n = doc.getNumberOfPages(); for (var i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120); doc.text(lat((H.company || '') + '  -  GSTIN ' + (H.gstin || '') + '  -  ' + nice(P[0]) + ' to ' + nice(P[1])), M, Ht - 7); doc.text('Page ' + i + ' of ' + n, W - M, Ht - 7, { align: 'right' }); }
-    save(doc.output('blob'), fname('Accounts-for-CA', 'pdf'));
+    return { name: fname('Accounts-for-CA', 'pdf'), kind: 'pdf', label: 'Full report (PDF)', blob: doc.output('blob') };
   }); }
 
   /* ================= Purchase bills: GST from the supplier's bill, and the bill copies as PDF files ================= */
@@ -214,15 +238,15 @@
         '<div class="tiles">' + tile('Purchases', rs(ex.total), L.length + ' entries') + tile('With a bill photo', withPh.length + ' of ' + L.length, '') + tile('GST details entered', ex.gstN + ' of ' + L.length, ex.unchecked ? ex.unchecked + ' not checked yet' : 'all checked') + tile('GST paid on purchases', rs(r2(ex.cgst + ex.sgst + ex.igst)), 'CGST ' + rs(ex.cgst) + ' · SGST ' + rs(ex.sgst) + (ex.igst ? ' · IGST ' + rs(ex.igst) : '')) + '</div>' +
         '<div class="card"><div class="ch"><h2>Read the GST from the bill photos</h2></div><p class="small">The computer reads each bill photo and fills in the supplier GSTIN, bill number and GST amounts. Photos of bills are often unclear, so every bill it reads is marked "not checked" until you open it, compare it with the photo and save.</p>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-gold" type="button" id="pbRead"' + (toRead.length ? '' : ' disabled') + '>Read ' + toRead.length + ' bill' + (toRead.length === 1 ? '' : 's') + ' not yet entered</button></div><p class="small" id="pbProg" style="margin-top:8px"></p></div>' +
-        '<div class="card"><div class="ch"><h2>Bill copies for your CA</h2><span class="small">made on this device</span></div><p class="small">Every page carries the expense number, the bill number, date, shop and amount, and each file starts with a list, so a bill can be found and matched quickly.</p>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-gold" type="button" id="pbOne"' + (withPh.length ? '' : ' disabled') + '>One PDF with all ' + withPh.length + ' bills</button><button class="btn" type="button" id="pbMon"' + (withPh.length ? '' : ' disabled') + '>One PDF for each month</button><button class="btn" type="button" data-csv="expenses">Purchases with GST (Excel)</button></div><p class="small" id="pbPdf" style="margin-top:8px"></p></div>' +
+        '<div class="card"><div class="ch"><h2>Bill copies for your CA</h2><span class="small">opens on screen first, then you choose to download</span></div><p class="small">Every page carries the expense number, the bill number, date, shop and amount, and each file starts with a list, so a bill can be found and matched quickly.</p>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-gold" type="button" id="pbOne"' + (withPh.length ? '' : ' disabled') + '>See one PDF with all ' + withPh.length + ' bills</button><button class="btn" type="button" id="pbMon"' + (withPh.length ? '' : ' disabled') + '>See one PDF for each month</button><button class="btn" type="button" data-csv="expenses">Purchases with GST (Excel)</button></div><p class="small" id="pbPdf" style="margin-top:8px"></p></div>' +
         '<div class="card"><div class="ch"><h2>Every purchase</h2><span class="small">tap one to see its bill and enter or check the GST</span></div>' + (L.length ? '<div class="tw"><table><thead><tr><th>Expense no.</th><th>Date</th><th>Shop or payee</th><th>What</th><th>Bill no.</th><th class="n">Amount</th><th>Supplier GSTIN</th><th class="n">Taxable</th><th class="n">CGST</th><th class="n">SGST</th><th class="n">IGST</th><th>Bill photo</th><th>GST details</th></tr></thead><tbody>' +
           L.slice().reverse().map(function (x) { var g = hasGst(x); return '<tr class="go" data-exp="' + e(x.id) + '"><td>' + e(x.id) + '</td><td>' + nice(x.date) + '</td><td>' + e(x.shop) + '</td><td class="w">' + e(x.item) + '</td><td>' + e(x.billNo || x.ref) + '</td><td class="n">' + money(x.amount) + '</td><td>' + e(x.gstin) + '</td><td class="n">' + (g ? money(x.taxable) : '') + '</td><td class="n">' + (g ? money(x.cgst) : '') + '</td><td class="n">' + (g ? money(x.sgst) : '') + '</td><td class="n">' + (g ? money(x.igst) : '') + '</td><td>' + (x.photos ? x.photos + ' photo' + (x.photos > 1 ? 's' : '') : '<span class="tag">none</span>') + '</td><td>' + (!g ? '<span class="tag">not entered</span>' : /not checked/.test(x.gstBy) ? '<span class="tag bad">read, not checked</span>' : '<span class="tag on">checked</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty">No purchases entered in this period.</p>') + '</div>';
     }
     C.app.innerHTML = h; C.wire(); chooserWire(pr);
     if (R && !busy) {
       [].forEach.call(C.app.querySelectorAll('tr[data-exp]'), function (r) { r.onclick = function () { editor(r.dataset.exp); }; });
-      [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { csv(b.dataset.csv); }; });
+      [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { preview([csv(b.dataset.csv)]); }; });
       document.getElementById('pbRead').onclick = readAll; document.getElementById('pbOne').onclick = function () { billsPdf(false); }; document.getElementById('pbMon').onclick = function () { billsPdf(true); };
     }
   }
@@ -293,9 +317,9 @@
   function billsPdf(perMonth) {
     var note = document.getElementById('pbPdf'), all = R.r.expenses.filter(function (x) { return x.photos > 0; }), groups = [];
     if (perMonth) { var by = {}; all.forEach(function (x) { (by[x.date.slice(0, 7)] = by[x.date.slice(0, 7)] || []).push(x); }); Object.keys(by).sort().forEach(function (k) { groups.push([k, by[k]]); }); } else groups.push(['', all]);
-    var done = 0, gi = 0; [].forEach.call(C.app.querySelectorAll('#pbOne,#pbMon'), function (b) { b.disabled = true; });
+    var done = 0, gi = 0, files = []; [].forEach.call(C.app.querySelectorAll('#pbOne,#pbMon'), function (b) { b.disabled = true; });
     function finish(msg) { [].forEach.call(C.app.querySelectorAll('#pbOne,#pbMon'), function (b) { b.disabled = false; }); if (document.getElementById('pbPdf')) document.getElementById('pbPdf').textContent = msg; }
-    function one() { if (gi >= groups.length) return finish('Done: ' + groups.length + ' file' + (groups.length > 1 ? 's' : '') + ' with ' + all.length + ' bills saved to your downloads.');
+    function one() { if (gi >= groups.length) { finish(groups.length + ' file' + (groups.length > 1 ? 's' : '') + ' with ' + all.length + ' bills ready. Look through them, then download.'); return preview(files); }
       var key = groups[gi][0], list = groups[gi][1]; gi++;
       var H = (window.NikadiBill || {}).HOTEL || {}, doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' }), W = 210, Ht = 297, M = 12, PER = 46, idxPages = Math.ceil(list.length / PER), pageOf = {}, pno = idxPages + 1;
       list.forEach(function (x) { pageOf[x.id] = pno; pno += x.photos; });
@@ -313,7 +337,7 @@
           cells.forEach(function (c, i) { doc.text(fit(c, cols[i][1] * (186 / 200) - 2), xs[i] + 1, y + 3.6); }); y += 5.2; }); }
       /* the bills */
       var xi = 0;
-      function nextExp() { if (xi >= list.length) { foot(); save(doc.output('blob'), 'Nikadi-Purchase-bills-' + (key || P[0] + '-to-' + P[1]) + '.pdf'); return setTimeout(one, 600); }
+      function nextExp() { if (xi >= list.length) { foot(); files.push({ name: 'Nikadi-Purchase-bills-' + (key || P[0] + '-to-' + P[1]) + '.pdf', kind: 'pdf', label: key ? mname(key) + ' bills' : 'All bills', blob: doc.output('blob') }); return setTimeout(one, 50); }
         var x = list[xi++]; done++; if (document.getElementById('pbPdf')) document.getElementById('pbPdf').textContent = 'Collecting bill ' + done + ' of ' + all.length + '…';
         return photosOf(x.id).then(function (urls) { var k = 0; function nextPh() { if (k >= Math.max(1, x.photos)) return nextExp(); var u = urls[k]; k++;
             doc.addPage(); var y = M; doc.setFillColor(28, 40, 78); doc.rect(M, y, 186, 15, 'F'); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
