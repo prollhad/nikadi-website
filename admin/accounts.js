@@ -218,7 +218,7 @@
   function pdf() { return Promise.all([tool(), signLoad()]).then(function () {
     var H = (window.NikadiBill || {}).HOTEL || {}, doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' }), W = 297, Ht = 210, M = 12, y = M, t = R.tot;
     function need(h) { if (y + h > Ht - 50) { doc.addPage(); y = M; } }
-    function h1(s) { need(14); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(20, 30, 60); doc.text(lat(s), M, y + 5); y += 8; doc.setDrawColor(190, 150, 70); doc.setLineWidth(.5); doc.line(M, y, W - M, y); y += 4; }
+    function h1(s) { need(34); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(20, 30, 60); doc.text(lat(s), M, y + 5); y += 8; doc.setDrawColor(190, 150, 70); doc.setLineWidth(.5); doc.line(M, y, W - M, y); y += 4; }
     function para(s, size) { doc.setFont('helvetica', 'normal'); doc.setFontSize(size || 9); doc.setTextColor(50, 50, 50); var l = doc.splitTextToSize(lat(s), W - 2 * M); need(l.length * 4 + 2); doc.text(l, M, y + 3); y += l.length * 4 + 2; }
     /* cols: [title, width mm, 'r' for right-aligned]; long text is cut to its column */
     function table(cols, rows, foot) {
