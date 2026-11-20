@@ -318,6 +318,19 @@ html.wx-cloudy #nightsky .wxdark{opacity:.9}html.wx-rain #nightsky .wxdark,html.
 html.wx-rain #nightsky .wxrain,html.wx-storm #nightsky .wxrain{opacity:1}
 html.wx-cloudy #nightsky .daycl,html.wx-rain #nightsky .daycl,html.wx-storm #nightsky .daycl{opacity:0!important}
 html.wx-cloudy .moon,html.wx-rain .moon,html.wx-storm .moon{opacity:.25}
+/* ---- Snow (preview: ?wx=snow): falling flakes, a pale winter sky, snow lying on the letters, the buttons and the boxes ---- */
+#snowfall{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+html.snowy #nightsky .wxtint{background:#aab9cf!important;opacity:.5!important}
+html.snowy #nightsky .wxdark{opacity:.55!important;filter:brightness(1.5) saturate(.6)}
+html.snowy h1,html.snowy h2,html.snowy .brand-logo{filter:drop-shadow(0 -2px 0 rgba(255,255,255,.96)) drop-shadow(0 -1px 1.5px rgba(255,255,255,.9))}
+html.snowy h3{filter:drop-shadow(0 -1.2px 0 rgba(255,255,255,.92))}
+.snowcap{position:absolute;left:5px;right:5px;top:-8px;height:15px;pointer-events:none;z-index:6;border-radius:9px 9px 2px 2px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 15' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M0 6C8 0 16 1 24 4C32 0 44-1 52 3C60 0 72 1 80 4C86 1 92 2 96 6L96 9C90 9 91 15 85 14C80 13 81 9 72 9C64 9 66 12 60 12C54 12 56 9 46 9C38 9 40 14 33 14C28 14 29 9 20 9C12 9 12 11 8 11C4 11 4 9 0 9Z'/%3E%3C/svg%3E") repeat-x 0 0/96px 15px;
+  filter:drop-shadow(0 1.5px 1px rgba(110,140,185,.55))}
+.snowcap.in{top:-3px;left:0;right:0;border-radius:0}
+.snowcap.big{height:22px;top:-12px;background-size:150px 22px}
+.snowcap.big.in{top:-4px}
+
 @keyframes dayDrift{to{transform:translateX(-50%)}}
 html.sky-day #nightsky .daycl{opacity:.8}html.sky-dawn #nightsky .daycl{opacity:.4}html.sky-sunset #nightsky .daycl{opacity:0}
 /* night clouds: a few thin moonlit clouds drifting across the stars and the moon */

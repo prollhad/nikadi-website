@@ -198,7 +198,7 @@ try{
   function nightClouds(){if(ncl||!ns)return;ncl=document.createElement('div');ncl.className='nightcl';ncl.style.backgroundImage=cloudTile(.57,.16,[150,162,196],[44,52,84]);ns.appendChild(ncl);}
   function dayClouds(){if(dcl||!ns)return;dcl=document.createElement('div');dcl.className='daycl';dcl.style.backgroundImage=cloudTile(.5,.2,[255,255,255],[205,215,232]);ns.insertBefore(dcl,ns.querySelector('.moon'));}
   /* ---- live weather behind the page: overcast, rain and thunderstorms follow the real weather in Mayapur (preview with ?wx=cloudy, ?wx=rain, ?wx=storm) ---- */
-  var wxMode='clear',wxEl=null,wxRAF=0,wxDrops=[],wxBolt=null,wxNext=0,wxPrev=(location.search.match(/[?&]wx=(clear|cloudy|rain|storm)/)||[])[1];
+  var wxMode='clear',wxEl=null,wxRAF=0,wxDrops=[],wxBolt=null,wxNext=0,wxPrev=(location.search.match(/[?&]wx=(clear|cloudy|rain|storm|snow)/)||[])[1];if(wxPrev==='snow')wxPrev='cloudy'; /* snow (preview only, ?wx=snow) uses the overcast sky; the flakes and the snow caps are drawn by the snow block at the end of the page */
   function wxSetup(){if(wxEl||!ns)return;wxEl={};var mk=function(tag,cls){var e=document.createElement(tag);e.className=cls;ns.insertBefore(e,ns.querySelector('.moon'));return e;};
     wxEl.tint=mk('div','wxtint');wxEl.dark=mk('div','wxdark');wxEl.dark.style.backgroundImage=cloudTile(.36,.26,[150,158,172],[52,58,72],1);wxEl.glow=mk('div','wxglow');wxEl.heavy=mk('div','wxheavy');wxEl.black=mk('div','wxblack');wxEl.rain=mk('canvas','wxrain');wxEl.flash=mk('div','wxflash');}
   /* heavy storm cloud: big dark billowing masses, thick overhead and breaking up lower down, with paler edges so the lightning glows through the gaps */
@@ -1659,6 +1659,32 @@ try{
 /* part 28 */
 try{
 
+/* ---- Snow preview (?wx=snow). Mayapur does not get snow, so this never comes from the live weather; it is a look that can be switched on. ---- */
+(function(){if(!/[?&]wx=snow\b/.test(location.search))return;var H=document.documentElement;H.classList.add('snowy');
+  /* snow lying on top of buttons and boxes */
+  function caps(){var list=document.querySelectorAll('.btn,.offer-card,form.book,.hero-media,.rd-book,.wx-mute,.qrail a,.qrail button,.gad>*,.ex>*,.sites>*,.mem-card,.review,.card,.top');
+    for(var i=0;i<list.length&&i<260;i++){var e=list[i];if(e.querySelector(':scope>.snowcap')||!e.offsetParent&&getComputedStyle(e).position!=='fixed')continue;var cs=getComputedStyle(e),w=e.offsetWidth;if(w<70)continue;
+      if(cs.position==='static')e.style.position='relative';var c=document.createElement('span');c.className='snowcap'+(cs.overflow!=='visible'||e.classList.contains('top')?' in':'')+(w>420?' big':'');c.setAttribute('aria-hidden','true');
+      if(e.classList.contains('top')){c.style.top='auto';c.style.bottom='-9px';}
+      c.style.backgroundPositionX=(-Math.random()*96|0)+'px';e.appendChild(c);}}
+  function start(){caps();setTimeout(caps,1800);setTimeout(caps,5000);
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    var cv=document.createElement('canvas');cv.id='snowfall';cv.setAttribute('aria-hidden','true');document.body.appendChild(cv);var x=cv.getContext('2d'),F=[],W=0,Ht=0,last=0,wind=0,wt=0;
+    function size(){W=cv.width=innerWidth;Ht=cv.height=innerHeight;var N=Math.round(Math.min(260,W*Ht/7000));while(F.length<N)F.push(mk(true));F.length=N;}
+    function mk(any){var d=Math.random();return {x:Math.random()*(W+200)-100,y:any?Math.random()*Ht:-10,r:.8+d*d*3.4,v:.35+d*1.5+Math.random()*.4,p:Math.random()*6.28,s:.6+Math.random()*1.2,a:.45+Math.random()*.5};}
+    size();addEventListener('resize',size);
+    (function loop(t){requestAnimationFrame(loop);if(document.hidden)return;var dt=Math.min(50,t-last||16)/16;last=t;if(t>wt){wt=t+4000+Math.random()*5000;wind=(Math.random()-.4)*.9;}
+      x.clearRect(0,0,W,Ht);x.fillStyle='#fff';for(var i=0;i<F.length;i++){var f=F[i];f.p+=.012*f.s*dt;f.y+=f.v*dt;f.x+=(Math.sin(f.p)*.45+wind*(.4+f.r*.2))*dt;
+        if(f.y>Ht+8||f.x<-120||f.x>W+120){F[i]=f=mk(false);if(Math.abs(wind)>.3&&Math.random()<.3){f.x=wind>0?-20:W+20;f.y=Math.random()*Ht*.7;}}
+        x.globalAlpha=f.a;x.beginPath();x.arc(f.x,f.y,f.r,0,6.283);x.fill();if(f.r>3){x.globalAlpha=f.a*.25;x.beginPath();x.arc(f.x,f.y,f.r*1.9,0,6.283);x.fill();}}
+      x.globalAlpha=1;})(0);}
+  if(document.readyState==='complete')start();else addEventListener('load',start);
+})();
+
+}catch(e){console.error("[nikadi part 28]",e);}
+/* part 29 */
+try{
+
 /* ---- Visit counter for the owner's admin page. Nothing personal: a random number for this browser, the pages opened and the time spent.
         No name, no phone, no cookies. Devices signed in to the staff app are not counted. ---- */
 (function(){try{
@@ -1684,4 +1710,4 @@ try{
     if(/wa\.me|whatsapp\.com/.test(h))send({ev:'wa'});else if(/^tel:/.test(h))send({ev:'call'});else if(/\/app\/|membership/.test(h))send({ev:'join'});},true);
 }catch(e){}})();
 
-}catch(e){console.error("[nikadi part 28]",e);}
+}catch(e){console.error("[nikadi part 29]",e);}
