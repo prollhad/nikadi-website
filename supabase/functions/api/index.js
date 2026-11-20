@@ -4839,10 +4839,11 @@ function deskCore(db, hooks) {
   /* Full backup for the owner: every record the system holds, as one file. Logins are left out (PINs, sessions, password hashes, keys);
      photos and PDFs are not in it either, they live in Google Drive. */
   /* the director's stamp and signature, placed on the CA files. Kept on the server and given only to the owner after login; never in the public code or the backup. */
-  api.caSignGet = function (req) { var me = auth(req); needOwner(me); return { stamp: cfgGet('caSignStamp'), sign: cfgGet('caSignImage'), both: cfgGet('caSignBoth'), cin: cfgGet('caSignCin') }; };
+  api.caSignGet = function (req) { var me = auth(req); needOwner(me); return { stamp: cfgGet('caSignStamp'), sign: cfgGet('caSignImage'), both: cfgGet('caSignBoth'), cin: cfgGet('caSignCin'), addr: cfgGet('caSignAddr') }; };
   api.caSignSave = function (req) {
     var me = auth(req); needOwner(me);
     var d = String(req.data || '');
+    if (req.which === 'addr') { d = text(d.replace(/\s+/g, ' '), 200); cfgSet('caSignAddr', d); return { saved: true, addr: d }; }
     if (req.which === 'cin') { d = d.toUpperCase().replace(/[^A-Z0-9]/g, ''); if (d && !/^[UL]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6}$/.test(d)) fail('bad_cin'); cfgSet('caSignCin', d); return { saved: true, cin: d }; }
     var which = req.which === 'stamp' ? 'caSignStamp' : req.which === 'sign' ? 'caSignImage' : req.which === 'both' ? 'caSignBoth' : ''; if (!which) fail('bad_request');
     if (d && (!/^data:image\/(png|jpeg);base64,[A-Za-z0-9+\/=]+$/.test(d) || d.length > 400000)) fail('bad_image');
