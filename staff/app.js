@@ -3063,7 +3063,7 @@
   var GUIDE = [
     ['Everyone', [
       ['Log in', 'Type your PIN. The app stays logged in on your phone; press Log out when you hand the phone to someone else.'],
-      ['Room colours', 'Green = ready · Blue = guest staying · Gold = leaves today / arriving · Red = needs cleaning. Tap a room to see or do everything for it.'],
+      ['Room colours', 'Green = ready · Blue = guest staying · Purple = leaves today · Gold = booked, arriving today · Red = needs cleaning. Tap a room to see or do everything for it.'],
       ['Slow internet?', 'The app keeps working: wait for "Saved" before closing. If something says "Try again", tap the button again; nothing is saved twice.'],
       ['Mistakes', 'Money mistakes (payments, refunds, rates) are corrected, never deleted: tap the payment or item and choose the correction. The owner sees every change.']]],
     ['Housekeeping', [

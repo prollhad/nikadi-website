@@ -1,5 +1,5 @@
 /* Nikadi Staff — builds on ../app/app.css (same espresso + brass identity). */
-:root{--green:#74c08c;--blue:#6fa6e6;--red:#e86a5b;--amber:#e8b04f}
+:root{--green:#74c08c;--blue:#6fa6e6;--red:#e86a5b;--amber:#e8b04f;--leave:#b693ea}
 .shell{max-width:760px}
 .bar .who{display:flex;align-items:center;gap:8px}
 .chip-me{font-size:.74rem;color:var(--muted);letter-spacing:.04em;text-align:right;line-height:1.25}
@@ -18,7 +18,7 @@ main.view{padding-bottom:28px}
 .count{border:1px solid var(--line);background:var(--panel);padding:10px 10px 9px;display:grid;gap:2px;border-top:3px solid var(--c,var(--line))}
 .count b{font-family:var(--display);font-size:1.9rem;line-height:1;font-weight:600;font-variant-numeric:lining-nums tabular-nums}
 .count span{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.c-ready{--c:var(--green)}.c-occ{--c:var(--blue)}.c-out{--c:var(--amber)}.c-dirty{--c:var(--red)}
+.c-ready{--c:var(--green)}.c-occ{--c:var(--blue)}.c-out{--c:var(--leave)}.c-dirty{--c:var(--red)}
 
 /* room board */
 .board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -33,7 +33,7 @@ main.view{padding-bottom:28px}
 .tile .st{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--k);display:flex;justify-content:space-between;gap:6px}
 .tile .bal{color:var(--gold-hi);letter-spacing:.02em;text-transform:none;font-size:.7rem;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tile .st{flex-wrap:wrap}
-.k-ready{--k:var(--green)}.k-occ{--k:var(--blue)}.k-out{--k:var(--amber)}.k-dirty{--k:var(--red)}
+.k-ready{--k:var(--green)}.k-occ{--k:var(--blue)}.k-out{--k:var(--leave)}.k-dirty{--k:var(--red)}
 @supports not (background:color-mix(in srgb,red 10%,transparent)){.tile{background:var(--panel)}}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.74rem;color:var(--muted)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--k);margin-right:6px;vertical-align:-1px}
