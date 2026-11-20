@@ -251,7 +251,7 @@ td.w{white-space:normal}
   /* the accounts part (sales, GST, the PDF maker) is a separate file that is fetched only after sign-in, and only when this tab is opened */
   var accP=null;function need(src){return new Promise(function(ok,bad){var s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=function(){bad(new Error(src));};document.head.appendChild(s);});}
   function accounts(mode){app.innerHTML=head(mode==='bills'?'Purchase bills':mode==='backup'?'Backup':'Accounts for the CA','')+nav(mode)+'<div class="card"><p class="empty">Opening…</p></div>';wire();
-    accP=accP||Promise.all([need('/staff/bill.js?v=96'),need('accounts.js?v=11')]);
+    accP=accP||Promise.all([need('/staff/bill.js?v=96'),need('accounts.js?v=12')]);
     accP.then(function(){if(view()[0]===mode)NkAccounts.open({app:app,post:post,tok:tok,head:head,nav:nav,wire:wire,esc:esc,login:login},mode);},function(){accP=null;app.innerHTML=head('Could not open','')+nav(mode)+'<div class="card"><p class="empty">Could not open this page. Check the internet and try again.</p></div>';wire();});}
   addEventListener('hashchange',route);
   if(view()[0])route();else load();
