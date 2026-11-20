@@ -882,6 +882,9 @@ try{
     main.addEventListener('touchend',function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>45)show(i+(dx<0?1:-1));sx=null;});
     document.addEventListener('keydown',function(e){var sh=g.closest('.sheet');if(!sh||sh.hidden)return;if(e.key==='ArrowLeft')show(i-1);if(e.key==='ArrowRight')show(i+1);if(e.key==='Escape')location.hash='rooms';});
     th[0].setAttribute('aria-current','true');
+    /* the big photo is fetched only when the room's page is actually opened, not on every visit to the home page */
+    var first=function(){var u=img.getAttribute('data-src');if(u){img.removeAttribute('data-src');img.src=u;}};
+    var sh0=g.closest('.sheet');if(!sh0||!sh0.hidden||!('MutationObserver' in window))first();else{var o=new MutationObserver(function(){if(!sh0.hidden){first();o.disconnect();}});o.observe(sh0,{attributes:true,attributeFilter:['hidden']});}
   });
 })();
 
