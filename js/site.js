@@ -318,7 +318,8 @@ try{
     var g=AC.createGain();g.gain.setValueAtTime(.0001,t);
     if(hit>.2){g.gain.linearRampToValueAtTime(.4,t+Math.min(.5,hit*.5));g.gain.setValueAtTime(.4,t+hit-.06);g.gain.linearRampToValueAtTime(1,t+hit);}else g.gain.linearRampToValueAtTime(1,t+.02);
     g.gain.setValueAtTime(1,t+hit+.6);g.gain.exponentialRampToValueAtTime(.14,t+real-fo);g.gain.linearRampToValueAtTime(.0001,t+real);
-    s.connect(sh);sh.connect(lp);lp.connect(dr);dr.connect(cmp);cmp.connect(pg);pg.connect(ws);ws.connect(g);g.connect(wxOut());s.start(t,st,dur);
+    s.connect(sh);sh.connect(lp);lp.connect(dr);dr.connect(cmp);cmp.connect(pg);/* same sound and bass, only quieter: the level is turned down after everything else */
+    var soft=AC.createGain();soft.gain.value=.55;pg.connect(ws);ws.connect(g);g.connect(soft);soft.connect(wxOut());s.start(t,st,dur);
     /* the rain steps back while the thunder speaks, comes down a little harder after it, then settles */
     if(wxRainN)wxRainN.forEach(function(q){try{var base=RAINVOL*(wxMode==='storm'?1.3:1),p=q.g.gain;p.cancelScheduledValues(t+hit);p.setTargetAtTime(base*.45,t+hit,.12);p.setTargetAtTime(base*(1.25+Math.random()*.25),t+hit+2.2,1.3);p.setTargetAtTime(base,t+hit+6+Math.random()*3,2.5);}catch(e){}});}
   function wxThunderSynth(delay,vol,kind,len){if(!AC)return;len=len||3.5;var PRE=.5,POST=1.4,t=AC.currentTime+delay,out=AC.createGain();out.gain.value=vol*PRE;var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-20;cmp.knee.value=12;cmp.ratio.value=8;cmp.attack.value=.004;cmp.release.value=.3;var post=AC.createGain();post.gain.value=POST;out.connect(cmp);cmp.connect(post);post.connect(wxOut());
