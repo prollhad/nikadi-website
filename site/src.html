@@ -3679,7 +3679,24 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   /* a deep, rolling thunder: soft crack, then a long low rumble that rolls two or three times and fades */
   /* real-sounding thunder, from short 1 to 2 second claps up to 6 second giants, five clearly different kinds:
      0 close strike (loud tearing crack, then a boom that fades) · 1 rolling thunder (three swells) · 2 deep boom (one heavy, low hit) · 3 crackling strike (long crackle, then a roll) · 4 giant (stays loud for 2 seconds, then slowly dies away) */
-  function wxThunder(delay,vol,kind,len){if(!AC)return;len=len||3.5;var PRE=.5,POST=1.4,t=AC.currentTime+delay,out=AC.createGain();out.gain.value=vol*PRE;var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-20;cmp.knee.value=12;cmp.ratio.value=8;cmp.attack.value=.004;cmp.release.value=.3;var post=AC.createGain();post.gain.value=POST;out.connect(cmp);cmp.connect(post);post.connect(wxOut());
+  /* Thunder is REAL: three public-domain field recordings of thunderstorms from Wikimedia Commons (Tonitrus.ogg, Rain and thunder.ogg,
+     Thunder and rain on a v.ogg). Different parts of them are played, at slightly different speeds, so no two strikes sound the same.
+     Only fetched when the storm sound is on. If a browser cannot play them, the built sound below is used instead. */
+  var WXR='https://upload.wikimedia.org/wikipedia/commons/',wxRec=[{u:'c/c8/Tonitrus.ogg',g:1.1},{u:'4/42/Rain_and_thunder.ogg',g:1.6},{u:'e/e7/Thunder_and_rain_on_a_v.ogg',g:1.5}],wxRecSt=0,wxLastClip=-1,
+    /* [recording, start, peak, end, deep] in seconds */
+    wxClips=[[0,.7,1,4.6,1],[0,11.6,12.4,15.6,1],[0,14.5,16.8,19.2,1],[0,19,19.6,25,1],[0,11.6,12.4,21.5,1],[0,4,5,10,1],[1,2.5,3.6,9.5,0],[2,4.2,6.6,9.8,0],[2,9.4,10.2,14.5,0],[2,4.2,6.6,14.5,0]];
+  function wxRecLoad(){if(wxRecSt||!AC)return;wxRecSt=1;var left=wxRec.length,ok=0;wxRec.forEach(function(r){fetch(WXR+r.u).then(function(x){if(!x.ok)throw 0;return x.arrayBuffer();}).then(function(ab){return new Promise(function(res,rej){AC.decodeAudioData(ab,res,rej);});})
+    .then(function(b){r.b=b;ok++;},function(){}).then(function(){if(!--left)wxRecSt=ok?2:3;});});}
+  function wxThunder(delay,vol,kind,len){if(!AC)return;len=len||3.5;wxRecLoad();
+    if(wxRecSt===3)return wxThunderSynth(delay,vol,kind,len);
+    var want=len+1.2,c=[],i;for(i=0;i<wxClips.length;i++){var q=wxClips[i];if(!wxRec[q[0]].b||i===wxLastClip)continue;var D=q[3]-q[1],sc=1/(1+Math.abs(D-want));if(kind===2&&q[4])sc*=2;if(kind===0&&!q[4])sc*=2;if(kind===5&&q[2]-q[1]>.7)sc*=1.6;c.push([sc*(.6+Math.random()*.8),i]);}
+    if(!c.length)return; /* still loading: stay quiet rather than play something that is not thunder */
+    c.sort(function(a,b){return b[0]-a[0];});wxLastClip=c[0][1];var k=wxClips[wxLastClip],r=wxRec[k[0]],rate=.88+Math.random()*.2;
+    var st=k[1],t=AC.currentTime+delay;if(kind===5){var lead=(wxBuild||1.5)*rate;st=Math.max(0,k[2]-lead-.1);}
+    var dur=Math.min(k[3]-st,(want+(kind===5?(wxBuild||1.5):0))*rate),real=dur/rate,fo=Math.min(1.6,real*.4);
+    var s=AC.createBufferSource();s.buffer=r.b;s.playbackRate.value=rate;var g=AC.createGain(),top=vol*.5*r.g;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(top,t+.12);g.gain.setValueAtTime(top,t+real-fo);g.gain.linearRampToValueAtTime(.0001,t+real);
+    var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-20;cmp.knee.value=12;cmp.ratio.value=8;cmp.attack.value=.004;cmp.release.value=.3;var post=AC.createGain();post.gain.value=1.4;s.connect(g);g.connect(cmp);cmp.connect(post);post.connect(wxOut());s.start(t,st,dur);}
+  function wxThunderSynth(delay,vol,kind,len){if(!AC)return;len=len||3.5;var PRE=.5,POST=1.4,t=AC.currentTime+delay,out=AC.createGain();out.gain.value=vol*PRE;var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-20;cmp.knee.value=12;cmp.ratio.value=8;cmp.attack.value=.004;cmp.release.value=.3;var post=AC.createGain();post.gain.value=POST;out.connect(cmp);cmp.connect(post);post.connect(wxOut());
     /* Real thunder is not a note, it is air tearing: many claps of plain noise arriving one after another from along the bolt,
        smeared by a long dull echo off the clouds and the ground. So there are no tones here at all (a falling tone is what a bass drum is). */
     var dry=AC.createGain();dry.gain.value=.5;dry.connect(out);var wet=AC.createGain();wet.gain.value=WETG;var cv=AC.createConvolver();cv.buffer=wxEcho();wet.connect(cv);cv.connect(out);
@@ -3717,7 +3734,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
     for(var c=0;c<2;c++){var d=b.getChannelData(c),l1=0,l2=0,r=1,rt=1;for(var i=0;i<L;i++){var tt=i/sr;if(i%step===0)rt=.35+Math.random()*1.1;r+=(rt-r)*.0008;
       var fc=2400*Math.exp(-tt*1.4)+130,a=1-Math.exp(-6.2832*fc/sr);l1+=a*((Math.random()*2-1)-l1);l2+=a*(l1-l2);d[i]=l2*Math.sqrt(2530/fc)*Math.exp(-tt/1.1)*r*Math.min(1,tt/.01)*Math.min(1,(5-tt)/.3);}}
     return (wxIR=b);}
-  function wxAudio(){var on=wxSnd&&!wxMute&&!document.hidden&&(wxMode==='rain'||wxMode==='storm');
+  function wxAudio(){var on=wxSnd&&!wxMute&&!document.hidden&&(wxMode==='rain'||wxMode==='storm');if(on&&wxMode==='storm'&&AC)wxRecLoad();
     if(on&&!wxRainN&&AC){var src=AC.createBufferSource();src.buffer=rainBuf();src.loop=true;var hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=220;var lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=5200;lp.Q.value=.3;var g=AC.createGain(),vol=RAINVOL*(wxMode==='storm'?1.3:1);g.gain.setValueAtTime(0,AC.currentTime);g.gain.linearRampToValueAtTime(vol,AC.currentTime+3);src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(wxOut());src.start();wxRainN=[{s:src,g:g}];}
     else if(!on&&wxRainN){var n=wxRainN;wxRainN=null;n.forEach(function(q){try{q.g.gain.cancelScheduledValues(AC.currentTime);q.g.gain.setValueAtTime(q.g.gain.value,AC.currentTime);q.g.gain.linearRampToValueAtTime(0,AC.currentTime+.8);q.s.stop(AC.currentTime+.9);}catch(e){}});}
     var need=wxMode==='rain'||wxMode==='storm';if(need&&!wxBtn){wxBtn=document.createElement('button');wxBtn.type='button';wxBtn.className='wx-mute';wxBtn.addEventListener('click',function(){if(Date.now()-wxUnlockT<700){wxAudio();return;}wxMute=!wxMute;try{localStorage.setItem('nk_wxmute2',wxMute?'1':'0');}catch(e){}if(!wxMute){ac();wxSnd=!!AC;}wxAudio();});document.body.appendChild(wxBtn);wxSl=document.createElement('input');wxSl.type='range';wxSl.min='0';wxSl.max='1.6';wxSl.step='0.05';wxSl.value=String(wxVol);wxSl.className='wx-vol';wxSl.setAttribute('aria-label','Rain and thunder volume');wxSl.addEventListener('input',function(){wxVol=+wxSl.value;if(wxMaster)wxMaster.gain.setTargetAtTime(wxVol,AC.currentTime,.05);try{localStorage.setItem('nk_wxvol',String(wxVol));}catch(e){}});document.body.appendChild(wxSl);}
