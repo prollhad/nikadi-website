@@ -70,7 +70,7 @@ input.in{font:inherit;color:var(--ink);background:var(--panel-2);border:1px soli
   var API='https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api',app=document.getElementById('app'),tip=document.getElementById('tip'),D=null,RANGE=30,Q='',timer=null;
   function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null;}}
   ls('nk_notrack','1'); /* this device is the owner's: its own visits to the website are not counted */
-  function tok(){return ls('nk-admin-token')||ls('nk-staff-token')||'';}
+  function tok(){return ls('nk-admin-token')||'';}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function post(b){return fetch(API,{method:'POST',body:JSON.stringify(b)}).then(function(r){return r.json();});}
   function num(n){return Number(n||0).toLocaleString('en-IN');}
@@ -92,19 +92,38 @@ input.in{font:inherit;color:var(--ink);background:var(--panel-2);border:1px soli
     return '<div class="rows">'+a.slice(0,max||10).map(function(x){return '<div class="row"><span class="t">'+esc(name(x[0]))+'</span><span class="v">'+num(x[1])+' · '+Math.round(x[1]/tot*100)+'%</span><span class="m"><i style="width:'+Math.max(2,x[1]/top*100)+'%"></i></span></div>';}).join('')+'</div>';}
   function merge(a,name){var o={};a.forEach(function(x){var k=name(x[0]);o[k]=(o[k]||0)+x[1];});return Object.keys(o).map(function(k){return [k,o[k]];}).sort(function(x,y){return y[1]-x[1];});}
 
-  function login(msg){clearInterval(timer);
-    app.innerHTML='<div class="login"><p class="kick">Nikadi Guest House</p><h1>Website admin</h1><p class="muted">For the owner and manager. Enter your staff app PIN.</p>'+
-      '<div class="card"><form id="lf"><input class="in" id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="PIN" style="max-width:none;margin-bottom:10px">'+
-      '<p class="err" id="lerr" role="alert">'+esc(msg||'')+'</p><button class="btn btn-gold" type="submit" style="width:100%">Open</button></form></div></div>';
+  function errOf(e){return e==='wrong_login'?'The user name or password is not right.':e==='wrong_pin'?'That PIN is not right.':e==='too_many_attempts'?'Too many wrong tries. Wait 15 minutes.':e==='bad_user'?'User name: 3 to 30 letters or numbers, no spaces.':e==='bad_pass'?'Password: at least 8 characters.':e==='not_allowed'?'Only the owner can do this.':'Could not do that ('+e+').';}
+  function shell(inner){clearInterval(timer);app.innerHTML='<div class="login"><p class="kick">Nikadi Guest House</p><h1>Website admin</h1>'+inner+'</div>';}
+  function login(msg){
+    shell('<p class="muted">Sign in to see the website figures.</p><div class="card"><form id="lf"><input class="in" id="au" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" placeholder="User name" style="max-width:none;margin-bottom:10px">'+
+      '<input class="in" id="ap" type="password" autocomplete="current-password" maxlength="64" placeholder="Password" style="max-width:none;margin-bottom:10px"><p class="err" id="lerr" role="alert">'+esc(msg||'')+'</p><button class="btn btn-gold" type="submit" style="width:100%">Sign in</button></form></div>'+
+      '<p class="small" style="margin-top:14px"><button class="btn" id="setb" type="button">Set or change the admin login</button></p>');
+    document.getElementById('setb').onclick=function(){setup(false);};
     document.getElementById('lf').onsubmit=function(e){e.preventDefault();var er=document.getElementById('lerr');er.textContent='';
-      post({action:'deskLogin',pin:document.getElementById('pin').value}).then(function(r){
-        if(!r.ok){er.textContent=r.error==='wrong_pin'?'That PIN is not right.':r.error==='too_many_attempts'?'Too many wrong tries. Wait 15 minutes.':'Could not sign in ('+r.error+').';return;}
-        if(r.me.role!=='Owner'&&r.me.role!=='Manager'){er.textContent='Only the owner and manager can open this page.';return;}
-        ls('nk-admin-token',r.token);load();},function(){er.textContent='No connection. Try again.';});};}
+      post({action:'deskAdminLogin',user:document.getElementById('au').value,pass:document.getElementById('ap').value}).then(function(r){
+        if(!r.ok){if(r.error==='no_login')return setup(true);er.textContent=errOf(r.error);return;}ls('nk-admin-token',r.token);load();},function(){er.textContent='No connection. Try again.';});};}
+  /* the owner chooses the user name and password here, proving who they are with the staff app PIN; the password is never stored as written */
+  function setup(first){
+    shell('<p class="muted">'+(first?'First time: choose the user name and password for this page.':'Choose a new user name and password for this page.')+' Only the owner can do this.</p><div class="card"><form id="sf">'+
+      '<input class="in" id="spin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="Your staff app PIN (owner)" style="max-width:none;margin-bottom:10px">'+
+      '<input class="in" id="su" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" placeholder="New user name" style="max-width:none;margin-bottom:10px">'+
+      '<input class="in" id="sp" type="password" autocomplete="new-password" maxlength="64" placeholder="New password (8 characters or more)" style="max-width:none;margin-bottom:10px">'+
+      '<input class="in" id="sp2" type="password" autocomplete="new-password" maxlength="64" placeholder="Password again" style="max-width:none;margin-bottom:10px">'+
+      '<p class="err" id="serr" role="alert"></p><button class="btn btn-gold" type="submit" style="width:100%">Save and open</button></form></div><p class="small" style="margin-top:14px"><button class="btn" id="bk" type="button">Back to sign in</button></p>');
+    document.getElementById('bk').onclick=function(){login();};
+    document.getElementById('sf').onsubmit=function(e){e.preventDefault();var er=document.getElementById('serr'),u=document.getElementById('su').value.trim(),p1=document.getElementById('sp').value;er.textContent='';
+      if(p1!==document.getElementById('sp2').value){er.textContent='The two passwords are not the same.';return;}
+      post({action:'deskLogin',pin:document.getElementById('spin').value}).then(function(r){
+        if(!r.ok){er.textContent=errOf(r.error);return;}
+        if(r.me.role!=='Owner'){post({action:'deskLogout',token:r.token}).catch(function(){});er.textContent='Only the owner can set the admin login.';return;}
+        return post({action:'deskAdminSetLogin',token:r.token,user:u,pass:p1}).then(function(x){post({action:'deskLogout',token:r.token}).catch(function(){});
+          if(!x.ok){er.textContent=errOf(x.error);return;}
+          return post({action:'deskAdminLogin',user:u,pass:p1}).then(function(y){if(!y.ok){login('Saved. Now sign in.');return;}ls('nk-admin-token',y.token);load();});});
+      }).catch(function(){er.textContent='No connection. Try again.';});};}
 
   function load(){if(!tok())return login();
     post({action:'deskSiteStats',token:tok()}).then(function(r){
-      if(!r.ok){if(r.error==='not_allowed')return login('Only the owner and manager can open this page.');ls('nk-admin-token',null);return login(r.error==='session_expired'||r.error==='not_logged_in'?'':'Could not load ('+r.error+').');}
+      if(!r.ok){ls('nk-admin-token',null);return login(r.error==='session_expired'||r.error==='not_logged_in'||r.error==='not_allowed'?'':'Could not load ('+r.error+').');}
       D=r;draw();clearInterval(timer);timer=setInterval(function(){if(!document.hidden)load();},60000);
     },function(){if(!D)app.innerHTML='<p class="muted">No connection. <button class="btn" onclick="location.reload()">Try again</button></p>';});}
 

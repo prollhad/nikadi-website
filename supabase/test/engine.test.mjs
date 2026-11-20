@@ -257,3 +257,14 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('site stats', no.error, '|', mgr.ok || mgr.error, JSON.stringify(mgr.day), 'live', mgr.live, 'pages', JSON.stringify(mgr.pages), 'refs', JSON.stringify(mgr.refs), 'zones', JSON.stringify(mgr.zones), 'members', mgr.members && mgr.members.list.length, 'bookings', JSON.stringify(mgr.bookings));
   if (no.ok || !mgr.ok || mgr.day.visits !== 2 || mgr.day.visitors !== 2 || mgr.day.pages !== 3 || mgr.day.secs !== 105 || mgr.day.taps.wa !== 1 || mgr.live !== 2 || mgr.days.length !== 90 || !mgr.members) throw new Error('site stats broken');
 }
+{ // admin page login
+  const h0 = await call('deskAdminHasLogin', {});
+  const bad = await call('deskAdminSetLogin', { user: 'boss', pass: 'Test#Pass99' });
+  const set = await call('deskAdminSetLogin', { token: tok, user: 'boss', pass: 'Test#Pass99' });
+  const h1 = await call('deskAdminHasLogin', {});
+  const wrong = await call('deskAdminLogin', { user: 'boss', pass: 'nope-nope' });
+  const good = await call('deskAdminLogin', { user: 'BOSS', pass: 'Test#Pass99' });
+  const st = good.token ? await call('deskSiteStats', { token: good.token }) : {};
+  console.log('admin login', h0.set, bad.error, set.ok || set.error, h1.set, wrong.error, !!good.token, st.ok || st.error);
+  if (h0.set || bad.ok || !set.ok || !h1.set || wrong.ok || !good.token || !st.ok) throw new Error('admin login broken');
+}

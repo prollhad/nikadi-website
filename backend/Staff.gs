@@ -2818,6 +2818,31 @@ function deskCore(db, hooks) {
     db.set('visits', v, patch);
     return {};
   };
+  /* ---- Admin page login: a user name and password of its own. Only a scrambled form of the password is kept (never the password itself),
+     and only the Owner can set or change it. ---- */
+  function admHash(salt, pass) { var h = salt + ':' + pass, i; for (i = 0; i < 600; i++) h = hooks.hash(h + salt); return h; }
+  function admGet() { try { var o = JSON.parse(cfgGet('adminLogin') || ''); return o && o.user && o.hash ? o : null; } catch (e) { return null; } }
+  api.adminHasLogin = function () { return { set: !!admGet() }; };
+  api.adminSetLogin = function (req) {
+    var me = auth(req); if (me.role !== 'Owner') fail('not_allowed');
+    if (!hooks.hash) fail('not_ready');
+    var user = String(req.user || '').trim(), pass = String(req.pass || '');
+    if (!/^[A-Za-z0-9._\-]{3,30}$/.test(user)) fail('bad_user');
+    if (pass.length < 8 || pass.length > 64) fail('bad_pass');
+    var salt = id('S') + Math.random().toString(36).slice(2);
+    cfgSet('adminLogin', JSON.stringify({ user: user, salt: salt, hash: admHash(salt, pass), at: stamp() }));
+    return { user: user };
+  };
+  api.adminLogin = function (req) {
+    var fails = Number(db.kvGet('adm_fails') || 0); if (fails >= 8) fail('too_many_attempts');
+    var a = admGet(); if (!a || !hooks.hash) fail('no_login');
+    var user = String(req.user || '').trim(), pass = String(req.pass || '');
+    if (user.toLowerCase() !== String(a.user).toLowerCase() || pass.length > 64 || admHash(a.salt, pass) !== a.hash) { db.kvSet('adm_fails', String(fails + 1), 900); fail('wrong_login'); }
+    var owner = db.all('staff').filter(function (p) { return yes(p.active) && p.role === 'Owner'; })[0]; if (!owner) fail('no_owner');
+    var token = id('T') + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2), d = ist(Date.now() + 7 * 864e5);
+    db.add('sessions', { token: token, name: owner.name, role: 'Owner', expires: d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + ' 00:00' });
+    return { token: token };
+  };
   /* everything the admin page shows: Owner and Manager only */
   api.siteStats = function (req) {
     var me = auth(req); if (!canApprove(me)) fail('not_allowed');
@@ -3778,6 +3803,7 @@ function deskHandle_(req) {
   var api = deskCore(deskDb_(), { onCheckout: typeof memberStayPoints_ === 'function' ? memberStayPoints_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     membersAll: typeof membersAdmin_ === 'function' ? membersAdmin_ : null,
+    hash: typeof hash_ === 'function' ? hash_ : null,
     onStayChange: typeof memberStayAdjust_ === 'function' ? memberStayAdjust_ : null,
     onCheckoutUndo: typeof memberCheckoutUndo_ === 'function' ? memberCheckoutUndo_ : null,
     newId: function () { return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); },
@@ -3838,6 +3864,7 @@ function deskTimerCore_() {
   return deskCore(deskDb_(), { sendBill: deskSendBill_, waReady: deskWaReady_, waSend: deskWaSend_, claim: typeof nkClaim_ === 'function' ? nkClaim_ : null, alert: typeof nkAlert_ === 'function' ? nkAlert_ : null,
     memberInfo: typeof memberDesk_ === 'function' ? memberDesk_ : null,
     membersAll: typeof membersAdmin_ === 'function' ? membersAdmin_ : null,
+    hash: typeof hash_ === 'function' ? hash_ : null,
     archive: deskArchive_, stayFolder: deskStayFolder_, trashFile: deskTrash_, laundryFile: deskLaundryFile_ });
 }
 
