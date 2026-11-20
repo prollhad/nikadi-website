@@ -320,6 +320,7 @@ html.wx-rain #nightsky .wxrain,html.wx-storm #nightsky .wxrain{opacity:1}
 html.wx-cloudy #nightsky .daycl,html.wx-rain #nightsky .daycl,html.wx-storm #nightsky .daycl{opacity:0!important}
 html.wx-cloudy .moon,html.wx-rain .moon,html.wx-storm .moon{opacity:.25}
 /* ---- Snow (preview: ?wx=snow): falling flakes, a pale winter sky, snow lying on the letters, the buttons and the boxes ---- */
+#sunfx{position:fixed;left:0;top:0;border-radius:50%;pointer-events:none;z-index:39;mix-blend-mode:screen;opacity:0;will-change:transform;transition:transform 20s linear,opacity 1.5s ease}
 #snowfall,#windfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
 /* windy day (preview: ?wx=windy): the clouds race, and leaves and dust blow across in gusts */
 html.windy #nightsky .daycl{animation-duration:34s}html.windy #nightsky .nightcl{animation-duration:42s}html.windy #nightsky .suncl{animation-duration:50s}html.windy #nightsky .wxdark{animation-duration:26s}

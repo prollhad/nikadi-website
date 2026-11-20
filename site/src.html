@@ -351,6 +351,7 @@ html.wx-rain #nightsky .wxrain,html.wx-storm #nightsky .wxrain{opacity:1}
 html.wx-cloudy #nightsky .daycl,html.wx-rain #nightsky .daycl,html.wx-storm #nightsky .daycl{opacity:0!important}
 html.wx-cloudy .moon,html.wx-rain .moon,html.wx-storm .moon{opacity:.25}
 /* ---- Snow (preview: ?wx=snow): falling flakes, a pale winter sky, snow lying on the letters, the buttons and the boxes ---- */
+#sunfx{position:fixed;left:0;top:0;border-radius:50%;pointer-events:none;z-index:39;mix-blend-mode:screen;opacity:0;will-change:transform;transition:transform 20s linear,opacity 1.5s ease}
 #snowfall,#windfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
 /* windy day (preview: ?wx=windy): the clouds race, and leaves and dust blow across in gusts */
 html.windy #nightsky .daycl{animation-duration:34s}html.windy #nightsky .nightcl{animation-duration:42s}html.windy #nightsky .suncl{animation-duration:50s}html.windy #nightsky .wxdark{animation-duration:26s}
@@ -3558,7 +3559,12 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
   /* can the sun be seen in Mayapur right now? 1 on a clear or partly cloudy sky, 0 when it is overcast, raining or stormy (then only a soft glow shows through) */
   function sunVis(){return typeof wxMode==='string'&&wxMode!=='clear'?0:1;}
   var ns=null,cur=null;
-  function paint(ph){var c=ns.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1),W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;
+  /* the rising and setting sun is drawn in front of the page (it only adds light), so it is seen all the way from the very top edge of the screen to the very bottom edge, over the header and the bars too */
+  var sunEl=null;function sunFx(xp,yp,rp,css){if(xp==null){if(sunEl){sunEl.style.opacity='0';sunEl.dataset.on='';}return;}
+    if(!sunEl){sunEl=document.createElement('div');sunEl.id='sunfx';sunEl.setAttribute('aria-hidden','true');document.body.appendChild(sunEl);}
+    var fresh=sunEl.dataset.on!=='1';if(fresh)sunEl.style.transition='none';sunEl.style.width=sunEl.style.height=(rp*2)+'px';sunEl.style.background=css;sunEl.style.transform='translate('+(xp-rp)+'px,'+(yp-rp)+'px)';sunEl.style.opacity='1';
+    if(fresh){void sunEl.offsetWidth;sunEl.style.transition='';sunEl.dataset.on='1';}}
+  function paint(ph){sunFx(null);var c=ns.querySelector('canvas'),x=c.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1),W=c.width=innerWidth*dpr,H=c.height=innerHeight*dpr;
     var seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
     /* on computers the photos fill the right side, so the sun stays in the open sky on the left; phones keep it on the right, clear of the words */
     var wide=innerWidth>1000,SX=wide?.43:.78,SX2=wide?.43:.64;
@@ -3573,25 +3579,21 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       function mx(a,b,t){var o='#';for(var q=1;q<7;q+=2){var u=parseInt(a.substr(q,2),16),v=parseInt(b.substr(q,2),16);o+=('0'+Math.round(u+(v-u)*t).toString(16)).slice(-2);}return o;}
       grad([[0,mx('#0f1538','#27407e',dp)],[.54,mx('#262b63','#4a6aa8',dp)],[.8,mx('#5c4d86','#9aa0c4',dp)],[.93,mx('#b47f88','#efc8a2',dp)],[1,mx('#eeb488','#ffe2a8',dp)]]);
       stars(.34*(1-dp));
-      var dx=.36*W,dy=(up>0?hzd-(hzd-TOP)*up:hzd+.07*(1-pre))*H,dr=Math.min(W,H)*(.056-.01*up);
+      var dx=.36*W,dy=(up>0?1.07-(1.07-TOP)*up:1.09)*H,dr=Math.min(W,H)*(.056-.01*up);
       x.globalCompositeOperation='screen';blob(.36,Math.min(hzd,dy/H),.4,.3,'rgba(255,214,150,'+((.16+.2*pre)*(.35+.65*vis)).toFixed(2)+')');blob(.36,Math.min(hzd,dy/H),.18,.18,'rgba(255,226,170,'+((.2+.3*pre)*vis).toFixed(2)+')');x.globalCompositeOperation='source-over';
-      if(vis>.5){x.save();x.beginPath();x.rect(0,0,W,hzd*H);x.clip();var dg=x.createRadialGradient(dx,dy,0,dx,dy,dr*1.5);dg.addColorStop(0,up<.35?'#ffe9a8':'#fffbe6');dg.addColorStop(.5,up<.35?'#ffd070':'#fff0b8');dg.addColorStop(.66,up<.35?'#ffb04a':'#ffe08a');dg.addColorStop(.72,'rgba(255,200,110,.45)');dg.addColorStop(1,'rgba(255,200,110,0)');
-        x.fillStyle=dg;x.beginPath();x.arc(dx,dy,dr*1.5,0,7);x.fill();x.restore();
-        }}
+      if(vis>.5)sunFx(dx/dpr,dy/dpr,dr*1.5/dpr,'radial-gradient(circle,'+(up<.35?'#ffe9a8':'#fffbe6')+' 0,'+(up<.35?'#ffd070':'#fff0b8')+' 50%,'+(up<.35?'#ffb04a':'#ffe08a')+' 66%,rgba(255,200,110,.45) 72%,rgba(255,200,110,0) 100%)');}
     else if(ph==='day'){grad([[0,'#2d5cad'],[.4,'#27508f'],[.75,'#1d3a6c'],[1,'#16294f']]);var sx=SX*W,sy=(wide?.165:.2)*H,sr=Math.min(W,H)*.042;blob(SX,wide?.165:.2,.5,.5,'rgba(255,228,170,.3)');blob(SX,wide?.165:.2,.16,.16,'rgba(255,240,205,.45)');
       if(sunVis()>.5){var sd=x.createRadialGradient(sx,sy,0,sx,sy,sr*1.5);sd.addColorStop(0,'#fffdf2');sd.addColorStop(.62,'#fff1c4');sd.addColorStop(.8,'rgba(255,226,150,.55)');sd.addColorStop(1,'rgba(255,220,140,0)');x.fillStyle=sd;x.beginPath();x.arc(sx,sy,sr*1.5,0,7);x.fill();}
       for(var i=0;i<6;i++)blob(.1+rnd()*.8,.08+rnd()*.5,.12+rnd()*.12,.04,'rgba(220,230,255,.05)');}
     else {/* sunset: violet top, purple, pink, red and gold at the horizon, with the sun itself sinking. pr runs 0 (70 min before sunset) to 1 (35 min after);
          the sun reaches the horizon line at the real sunset minute and then slips behind it, while the sky deepens. */
-      var pr=sunPr(false),vis=sunVis(),k=Math.min(1,pr/.667),late=Math.max(0,(pr-.667)/.333),hz=1,sx2=SX2*W,sy2=(.14+(hz-.14)*k+late*.1)*H, /* the horizon is the bottom edge of the page: the sun starts at the top and goes down to the bottom */ sr2=Math.min(W,H)*(.05+.012*k);
+      var pr=sunPr(false),vis=sunVis(),k=Math.min(1,pr/.667),late=Math.max(0,(pr-.667)/.333),hz=1,sx2=SX2*W,sy2=(-.07+1.14*k+late*.05)*H, /* the horizon is the bottom edge of the page: the sun starts at the top and goes down to the bottom */ sr2=Math.min(W,H)*(.05+.012*k);
       grad([[0,'#1d2857'],[.38,'#35467f'],[.63,'#6c6690'],[.79,'#b07f7e'],[.91,'#e2935c'],[.97,'#f6ae62'],[1,'#ffc47a']]);
       blob(.2,.7,.26,.07,'rgba(255,190,190,.2)');blob(.84,.66,.22,.06,'rgba(255,200,190,.18)');
       /* glow round the sun: gold close in, then red, then pink-purple further out */
       /* the glow only ever adds light (screen), so it can never leave a muddy dark ring where it crosses the blue of the sky */
       x.globalCompositeOperation='screen';blob(SX2,sy2/H,.36,.3,'rgba(255,170,110,'+(.34-.14*late).toFixed(2)+')');blob(SX2,sy2/H,.17,.17,'rgba(255,190,120,'+(.46-.2*late).toFixed(2)+')');blob(SX2,sy2/H,.08,.08,'rgba(255,210,150,.5)');x.globalCompositeOperation='source-over';
-      if(vis>.5){x.save();x.beginPath();x.rect(0,0,W,hz*H);x.clip(); /* the sun is hidden below the horizon line, and behind the cloud on an overcast or rainy evening */
-      var sg=x.createRadialGradient(sx2,sy2,0,sx2,sy2,sr2*1.5);/* one plain reddish-orange disc, a touch redder as it gets low */var c0=k<.5?'#ffb766':'#ffa655',c1=k<.5?'#ff9344':'#ff7e3a',c2=k<.5?'#fb6f30':'#f25c2c';sg.addColorStop(0,c0);sg.addColorStop(.4,c1);sg.addColorStop(.64,c2);sg.addColorStop(.7,'rgba(240,84,44,.45)');sg.addColorStop(1,'rgba(240,84,44,0)');
-      x.fillStyle=sg;x.beginPath();x.arc(sx2,sy2,sr2*1.5,0,7);x.fill();x.restore();}
+      if(vis>.5){var c0=k<.5?'#ffb766':'#ffa655',c1=k<.5?'#ff9344':'#ff7e3a',c2=k<.5?'#fb6f30':'#f25c2c';/* one plain reddish-orange disc, a touch redder as it gets low */sunFx(sx2/dpr,sy2/dpr,sr2*1.5/dpr,'radial-gradient(circle,'+c0+' 0,'+c1+' 40%,'+c2+' 64%,rgba(240,84,44,.45) 70%,rgba(240,84,44,0) 100%)');}
       if(late>0){x.fillStyle='rgba(18,14,52,'+(.34*late).toFixed(2)+')';x.fillRect(0,0,W,H);}}
   }
   /* slow drifting clouds for the daytime sky: painted once, then moved by the browser (cheap) */
