@@ -290,7 +290,7 @@ try{
   /* Thunder is REAL: three public-domain field recordings of thunderstorms from Wikimedia Commons (Tonitrus.ogg, Rain and thunder.ogg,
      Thunder and rain on a v.ogg). Different parts of them are played, at slightly different speeds, so no two strikes sound the same.
      Only fetched when the storm sound is on. If a browser cannot play them, the built sound below is used instead. */
-  var WXR='https://upload.wikimedia.org/wikipedia/commons/',wxRec=[{u:'c/c8/Tonitrus.ogg',g:.85,sh:0,fl:450},{u:'4/42/Rain_and_thunder.ogg',g:1,sh:7,fl:280},{u:'e/e7/Thunder_and_rain_on_a_v.ogg',g:1,sh:7,fl:280}],wxRecSt=0,wxLastClip=-1,
+  var WXR='https://upload.wikimedia.org/wikipedia/commons/',wxRec=[{u:'c/c8/Tonitrus.ogg',g:.85,sh:0,fl:450},{u:'4/42/Rain_and_thunder.ogg',g:1,sh:7,fl:280},{u:'e/e7/Thunder_and_rain_on_a_v.ogg',g:1,sh:7,fl:280}],wxRecSt=0,wxLastClip=-1,wxSharpAt=20000+Math.random()*10000,
     /* [recording, the moment the clap begins, where that thunder has died away, deep, loudness] in seconds. Every clip starts exactly on its clap
        (so the sound lands with the flash) and stops where the thunder ends, before the recording's own rain and background take over. */
     wxClips=[[0,18.88,22.2,1,1],[0,16.72,22,1,2],[1,2.9,8.2,0,1],[2,7.05,10.3,0,1],[2,10.38,14.6,0,1],[2,7.05,14.6,0,1]],
@@ -303,16 +303,18 @@ try{
     if(wxRecSt===3)return wxThunderSynth(delay,vol,kind,len);
     var now=AC.currentTime,k,r,st,hit,end,cg=1,bright=false,rate;
     if(kind===5){var bl=wxBuilds.filter(function(q){return wxRec[q[0]].b;});if(!bl.length)return;k=bl[Math.random()*bl.length|0];r=wxRec[k[0]];rate=.9+Math.random()*.1;hit=Math.max(.3,(wxBuild||1.5)-.2);st=Math.max(k[1],k[2]-hit*rate);hit=(k[2]-st)/rate;end=k[3];}
-    else{var c=[],i;for(i=0;i<wxClips.length;i++){var q=wxClips[i];if(!wxRec[q[0]].b||i===wxLastClip)continue;var D0=q[2]-q[1],sc=.5+Math.random();if(kind===2&&q[3])sc*=2.2;if(kind===0&&!q[3])sc*=1.7;if(len>4&&D0>5)sc*=1.6;if(len<2.5&&D0<4)sc*=1.5;c.push([sc,i]);}
+    else{/* the sharp, high crack is rare, like in a real storm: one some 20 to 30 seconds after the page opens, then about once a minute. Every other strike is the ordinary low rolling kind. */
+      var due=kind!==2&&performance.now()>=wxSharpAt,c=[],i;for(i=0;i<wxClips.length;i++){var q=wxClips[i];if(!wxRec[q[0]].b||i===wxLastClip)continue;var D0=q[2]-q[1],sc=.5+Math.random();if(due&&(q[3]||D0>=6))continue;if(kind===2&&q[3])sc*=2.2;if(kind===0&&!q[3])sc*=1.7;if(len>4&&D0>5)sc*=1.6;if(len<2.5&&D0<4)sc*=1.5;c.push([sc,i]);}
+      if(!c.length&&due){due=false;for(i=0;i<wxClips.length;i++)if(wxRec[wxClips[i][0]].b&&i!==wxLastClip)c.push([Math.random(),i]);}
       if(!c.length)return; /* still loading: stay quiet rather than play something that is not thunder */
       c.sort(function(a,b){return b[0]-a[0];});wxLastClip=c[0][1];k=wxClips[wxLastClip];r=wxRec[k[0]];cg=k[4];
       /* some strikes are the sharp, high, cracking kind: the same real claps, played brighter and a little faster */
-      bright=!k[3]&&k[2]-k[1]<6&&kind!==2&&(kind===0?Math.random()<.85:Math.random()<.45);rate=bright?1.12+Math.random()*.16:.88+Math.random()*.14;st=k[1]-.04*rate;hit=.04;end=k[2];}
+      bright=due&&!k[3]&&k[2]-k[1]<6;if(bright)wxSharpAt=performance.now()+55000+Math.random()*15000;rate=bright?1.12+Math.random()*.14:.86+Math.random()*.12;st=k[1]-.04*rate;hit=.04;end=k[2];}
     /* the clap lands with the flash (a deep, far one a moment later), loud, then it rolls away slowly. As it fades the sound is made duller and duller,
        which is how thunder dies away and also takes out the rain and hiss that are in the recordings. */
-    var t=now+(kind===2?.25:.05),dur=end-st,real=dur/rate,fo=Math.min(1.4,(real-hit)*.3),top=vol*r.g*cg*(bright?1.5:1)*1.7;
+    var t=now+(kind===2?.25:.05),dur=end-st,real=dur/rate,fo=Math.min(1.4,(real-hit)*.3),top=vol*r.g*cg*(bright?1.5:.8)*1.7;
     var s=AC.createBufferSource();s.buffer=r.b;s.playbackRate.value=rate;var sh=AC.createBiquadFilter();sh.type=bright?'highshelf':'lowshelf';sh.frequency.value=bright?1200:140;sh.gain.value=bright?12:r.sh;
-    var lp=AC.createBiquadFilter();lp.type='lowpass';lp.Q.value=.5;lp.frequency.setValueAtTime(hit>.2?260:(bright?14000:5000),t);if(hit>.2){lp.frequency.setValueAtTime(260,t+hit-.06);lp.frequency.exponentialRampToValueAtTime(5000,t+hit);}
+    var lp=AC.createBiquadFilter();lp.type='lowpass';lp.Q.value=.5;lp.frequency.setValueAtTime(hit>.2?260:(bright?14000:3200),t);if(hit>.2){lp.frequency.setValueAtTime(260,t+hit-.06);lp.frequency.exponentialRampToValueAtTime(3200,t+hit);}
     lp.frequency.exponentialRampToValueAtTime(bright?500:r.fl,t+hit+(real-hit)*.7);
     /* driven hard into a limiter and a soft ceiling so the clap is as loud as it can be without distorting; the fade comes after, so the quiet tail is never pumped up */
     var dr=AC.createGain();dr.gain.value=top;var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-10;cmp.knee.value=6;cmp.ratio.value=6;cmp.attack.value=.003;cmp.release.value=.12;
