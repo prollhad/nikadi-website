@@ -153,8 +153,10 @@ nav.main{gap:24px}.top .btn{white-space:nowrap}
 .oc-p b{font-family:var(--display);font-size:2rem;font-weight:500;color:var(--gold-hi);font-variant-numeric:lining-nums}
 .oc-foot{font-size:.8rem;color:var(--muted)}
 @media (max-width:1000px){
-  .hero-grid{grid-template-columns:minmax(0,1fr);padding-block:0 36px;gap:28px}
-  .hero-media{order:-1;justify-self:stretch;width:auto;max-width:none;margin-left:calc(-1*max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1*max(16px,env(safe-area-inset-right,0px)))}
+  .hero-grid{grid-template-columns:minmax(0,1fr);padding-block:26px 36px;gap:28px}
+  /* phones: the words and the availability form come first, then the photos in a curved box; the sky stays open behind everything */
+  .hero-media{order:9;justify-self:stretch;width:auto;max-width:none;margin:0;border-radius:26px;overflow:hidden;box-shadow:0 30px 60px -34px rgba(0,0,0,.85),0 0 0 1px rgba(217,173,85,.35)}
+  .hero .slides{border-radius:26px}
   .hero-copy .rule::after{display:none}
   .hero-media::before{display:none}
   .hero .slides{aspect-ratio:auto;height:min(62vh,520px);height:min(62svh,520px)}
