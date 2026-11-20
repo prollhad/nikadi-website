@@ -579,7 +579,7 @@ function doPost(e) {
   }
 }
 
-var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteStats: 1, deskSiteHistory: 1, deskCaReport: 1, deskBackupAll: 1, deskAdminHasLogin: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
+var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteStats: 1, deskSiteHistory: 1, deskCaReport: 1, deskBackupAll: 1, deskCaSignGet: 1, deskAdminHasLogin: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
 var DESK_NO_LOCK_ = false;
 
 /* Error alerts: an email to the owner when something fails in the background (same problem at most once in 6 hours). */
@@ -4838,6 +4838,16 @@ function deskCore(db, hooks) {
 
   /* Full backup for the owner: every record the system holds, as one file. Logins are left out (PINs, sessions, password hashes, keys);
      photos and PDFs are not in it either, they live in Google Drive. */
+  /* the director's stamp and signature, placed on the CA files. Kept on the server and given only to the owner after login; never in the public code or the backup. */
+  api.caSignGet = function (req) { var me = auth(req); needOwner(me); return { stamp: cfgGet('caSignStamp'), sign: cfgGet('caSignImage') }; };
+  api.caSignSave = function (req) {
+    var me = auth(req); needOwner(me);
+    var which = req.which === 'stamp' ? 'caSignStamp' : req.which === 'sign' ? 'caSignImage' : ''; if (!which) fail('bad_request');
+    var d = String(req.data || '');
+    if (d && (!/^data:image\/(png|jpeg);base64,[A-Za-z0-9+\/=]+$/.test(d) || d.length > 400000)) fail('bad_image');
+    cfgSet(which, d);
+    return { saved: true };
+  };
   api.backupAll = function (req) {
     var me = auth(req); needOwner(me);
     var skip = { sessions: 1, billpdfs: 1 }, out = {};
@@ -4845,7 +4855,7 @@ function deskCore(db, hooks) {
       var live = db.all(t), all = live;
       /* older records that were moved to the archive come back in, so the file is complete */
       if (db.oldRows && t !== 'config' && t !== 'staff') { var seen = {}; live.forEach(function (r) { seen[r[cols[0]]] = 1; }); var old = db.oldRows(t, cols[0], '', 'zzzzzzzz').filter(function (r) { return !seen[r[cols[0]]]; }); if (old.length) all = old.concat(live); }
-      var rows = all.filter(function (r) { return t !== 'config' || !/login|key|token|secret|hash/i.test(String(r[cols[0]] || '')); })
+      var rows = all.filter(function (r) { return t !== 'config' || !/login|key|token|secret|hash|sign/i.test(String(r[cols[0]] || '')); })
         .map(function (r) { return cols.map(function (c) { return t === 'staff' && c === 'pin' ? '(not in the backup)' : (r[c] == null ? '' : r[c]); }); });
       out[t] = { name: sc.sheet, cols: sc.cols.map(function (c) { return c[1] || c[0]; }), keys: cols, rows: rows }; });
     var m = null; if (hooks.membersAll) try { m = hooks.membersAll(); } catch (e) { m = null; }

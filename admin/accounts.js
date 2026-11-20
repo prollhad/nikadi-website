@@ -78,9 +78,36 @@
     document.getElementById('acF').onchange = function () { var y = +this.value; if (!y) return; var end = ymd(y + 1, 3, 31), t = istToday(); go(ymd(y, 4, 1), end > t ? t : end); };
     document.getElementById('acGo').onclick = function () { go(document.getElementById('acA').value, document.getElementById('acB').value); };
   }
+  /* ---- who sends the accounts: one director, with the company stamp and signature on every page ---- */
+  var SIGNER = { name: 'Prollhad Paul', title: 'Director', company: 'Nikadi Projects Private Limited' };
+  var SENT = 'Accounts sent by one of the directors: ' + SIGNER.name + ', ' + SIGNER.title + ', ' + SIGNER.company;
+  var SG = null, sgP = null;
+  function sgOne(u) { return u ? imgSize(u).then(function (z) { return z ? { u: u, w: z[0], h: z[1] } : null; }) : Promise.resolve(null); }
+  function signLoad() { if (sgP) return sgP; sgP = C.post({ action: 'deskCaSignGet', token: C.tok() }).then(function (r) { if (!r.ok) throw new Error(r.error); return Promise.all([sgOne(r.stamp), sgOne(r.sign)]); }).then(function (a) { SG = { stamp: a[0], sign: a[1] }; return SG; }, function () { sgP = null; SG = SG || { stamp: null, sign: null }; return SG; }); return sgP; }
+  /* bottom right corner of a page: stamp, signature, then the director's name. The page keeps this corner free. */
+  function signPage(doc, W, Ht, M) { var x1 = W - M, g = SG || {};
+    function put(o, bw, bh, right, bottom) { if (!o) return 0; var sc = Math.min(bw / o.w, bh / o.h), w = o.w * sc, h = o.h * sc; try { doc.addImage(o.u, /png/.test(o.u.slice(0, 30)) ? 'PNG' : 'JPEG', right - w, bottom - h, w, h, undefined, 'FAST'); } catch (er) { return 0; } return w; }
+    var sw = put(g.sign, 40, 15, x1, Ht - 18.5); put(g.stamp, 19, 19, x1 - (sw ? sw + 3 : 0), Ht - 17.5);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.8); doc.setTextColor(30, 30, 30); doc.text(lat(SIGNER.name + ', ' + SIGNER.title), x1, Ht - 14.6, { align: 'right' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(70, 70, 70); doc.text(lat(SIGNER.company + ' - sent by one of the directors'), x1, Ht - 11.4, { align: 'right' }); }
+  /* a photo or scan is made small enough to store; a white paper background is made see-through so only the ink shows */
+  function sgPrep(file) { return new Promise(function (ok, bad) { var fr = new FileReader(); fr.onerror = bad; fr.onload = function () { var im = new Image(); im.onerror = bad; im.onload = function () {
+    function make(max) { var sc = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * sc)); c.height = Math.max(1, Math.round(im.naturalHeight * sc)); var x = c.getContext('2d'); x.drawImage(im, 0, 0, c.width, c.height);
+      try { var d = x.getImageData(0, 0, c.width, c.height), p = d.data; for (var i = 0; i < p.length; i += 4) { var m = Math.min(p[i], p[i + 1], p[i + 2]); if (m > 205) p[i + 3] = Math.round(p[i + 3] * Math.max(0, (255 - m) / 50)); } x.putImageData(d, 0, 0); } catch (er) {}
+      return c.toDataURL('image/png'); }
+    var u = make(640); if (u.length > 380000) u = make(420); if (u.length > 380000) u = make(280); ok(u); }; im.src = fr.result; }; fr.readAsDataURL(file); }); }
+  function signCard() { var g = SG; function slot(k, t) { var o = g && g[k]; return '<div style="flex:1;min-width:210px"><b style="font-weight:500">' + t + '</b><div style="margin:8px 0;height:86px;border:1px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fff">' + (o ? '<img alt="' + t + ' on file" src="' + o.u + '" style="max-height:78px;max-width:92%">' : '<span style="color:#666;font-size:.86rem">' + (g ? 'Not added yet' : 'Checking…') + '</span>') + '</div>' +
+      '<label class="btn" style="cursor:pointer">' + (o ? 'Change' : 'Add a photo or scan') + '<input type="file" accept="image/*" data-sg="' + k + '" style="position:absolute;width:1px;height:1px;opacity:0"></label>' + (o ? ' <button class="btn" type="button" data-sgx="' + k + '">Remove</button>' : '') + '</div>'; }
+    return '<div class="card" id="sgCard"><div class="ch"><h2>Stamp and signature on the files</h2><span class="small">bottom corner of every PDF page</span></div><p class="small" style="margin-top:0">Every file says: ' + C.esc(SENT) + '. Add the company stamp and your signature once, on white paper, and they are placed on each page. They are stored privately on the server and only open after this login.' + (g && !g.stamp && !g.sign ? ' Until you add them, the corner is left empty so you can stamp and sign a print by hand.' : '') + '</p><div style="display:flex;gap:16px;flex-wrap:wrap">' + slot('stamp', 'Company stamp') + slot('sign', 'Signature') + '</div><p class="small" id="sgMsg" role="status"></p></div>'; }
+  function signWire() { var card = document.getElementById('sgCard'); if (!card) return;
+    function redo(msg) { var c = document.getElementById('sgCard'); if (!c) return; var d = document.createElement('div'); d.innerHTML = signCard(); c.replaceWith(d.firstChild); signWire(); if (msg) document.getElementById('sgMsg').textContent = msg; }
+    function send(k, data) { var m = document.getElementById('sgMsg'); m.textContent = 'Saving…'; return C.post({ action: 'deskCaSignSave', token: C.tok(), which: k, data: data }).then(function (r) { if (!r.ok) { m.textContent = r.error === 'bad_image' ? 'That picture could not be used. Try a clear photo on white paper.' : 'Could not save. Please try again.'; return; } return sgOne(data).then(function (o) { SG = SG || {}; SG[k] = o; redo(data ? 'Saved. It will be on every PDF you make from now.' : 'Removed.'); }); }, function () { m.textContent = 'No connection. Please try again.'; }); }
+    card.querySelectorAll('[data-sg]').forEach(function (i) { i.onchange = function () { var f = i.files && i.files[0]; if (!f) return; sgPrep(f).then(function (u) { send(i.dataset.sg, u); }, function () { document.getElementById('sgMsg').textContent = 'That picture could not be opened.'; }); }; });
+    card.querySelectorAll('[data-sgx]').forEach(function (b) { b.onclick = function () { send(b.dataset.sgx, ''); }; });
+    if (!SG) signLoad().then(function () { redo(); }); }
   function draw() { if (MODE === 'bills') return drawBills();
     var e = C.esc, pr = presets(), h = C.head('Accounts for the CA', 'Sales with GST, money received, expenses and commission for any period. Make one PDF and the spreadsheet files to send.') + C.nav('accounts');
-    h += chooser(pr);
+    h += chooser(pr) + signCard();
     if (busy) h += '<div class="card"><p class="empty">Collecting the records…</p></div>';
     else if (R) {
       var t = R.tot;
@@ -100,7 +127,7 @@
         '<div class="card"><div class="ch"><h2>Also in the report</h2></div><div class="rows"><div class="row"><span class="t">Laundry bills</span><span class="v">' + rs(R.lau) + '</span></div><div class="row"><span class="t">Advances kept from no-shows and cancellations (no invoice was made)</span><span class="v">' + rs(R.kept) + '</span></div><div class="row"><span class="t">Expense entries with a bill photo on file</span><span class="v">' + R.ex.withBill + ' of ' + R.r.expenses.length + '</span></div><div class="row"><span class="t">GST paid on purchases, from the ' + R.ex.gstN + ' bills entered (input GST)</span><span class="v">' + rs(r2(R.ex.cgst + R.ex.sgst + R.ex.igst)) + '</span></div></div>' +
         '<p class="small" style="margin-top:12px">Sales are taken from the invoices made at check-out, by invoice date. A guest still in the house has no invoice yet. GST on purchases comes from the bills entered on the <a class="lnk" href="#bills">Purchase bills</a> page; ' + (R.ex.unchecked ? R.ex.unchecked + ' of them were read by the computer and are not checked yet.' : 'purchases without GST details are shown with the amount only.') + '</p></div>';
     }
-    C.app.innerHTML = h; C.wire(); window.scrollTo(0, 0);
+    C.app.innerHTML = h; C.wire(); signWire(); window.scrollTo(0, 0);
     chooserWire(pr);
     if (R && !busy) {
       document.getElementById('acPdf').onclick = function () { var b = this; b.disabled = true; b.textContent = 'Making the PDF…'; pdf().then(function (f) { b.disabled = false; b.textContent = 'See the full PDF report'; preview([f]); }, function (er) { b.disabled = false; b.textContent = 'Could not make the PDF. Try again'; console.error(er); }); };
@@ -131,7 +158,7 @@
         .concat(R.r.laundry.map(function (x) { return ['', x.date, 'Laundry', 'Laundry bill', 'Laundry', '', x.total.toFixed(2), '', '', '', '', '', '', '', '', '', '', '', (x.paid ? 'Paid. ' : 'Not marked paid. ') + x.note]; })); }
     else { name = 'Commission'; head = ['Date', 'Name', 'Driver or broker', 'Phone', 'Vehicle no.', 'For guest', 'Room / booking', 'Amount', 'Paid by', 'Transaction no.', 'Note'];
       rows = R.r.commissions.map(function (x) { return [x.date, x.name, x.type, x.phone, x.vehicle, x.guest, x.room, x.amount.toFixed(2), x.method, x.ref, x.note]; }); }
-    return { name: fname(name, 'csv'), kind: 'csv', label: name.replace(/-/g, ' '), head: head, rows: rows, blob: new Blob([csvText(head, rows)], { type: 'text/csv;charset=utf-8' }) };
+    return { name: fname(name, 'csv'), kind: 'csv', label: name.replace(/-/g, ' '), head: head, rows: rows, note: SENT, blob: new Blob([csvText(head, rows.concat([[], [SENT]]))], { type: 'text/csv;charset=utf-8' }) };
   }
   /* Look before you download: every file opens here first. PDFs are shown page by page as they will print; Excel files as a table. */
   function preview(files) {
@@ -145,7 +172,7 @@
     function key(ev) { if (ev.key === 'Escape') close(); } document.addEventListener('keydown', key);
     function show(i) { cur = i; var f = files[i]; ov.querySelector('#pvName').textContent = f.name + '  ·  ' + (f.blob.size > 1048576 ? (f.blob.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(f.blob.size / 1024)) + ' KB');
       if (files.length > 1) ov.querySelector('#pvTabs').innerHTML = files.map(function (x, k) { return '<button class="btn' + (k === i ? ' btn-gold' : '') + '" type="button" data-k="' + k + '" style="padding:5px 12px;font-size:.86rem">' + e(x.label || x.name) + '</button>'; }).join('');
-      if (f.kind === 'csv') { var max = 500; body.innerHTML = '<div style="padding:14px"><p class="small" style="margin:0 0 10px">' + f.rows.length + ' rows' + (f.rows.length > max ? ', the first ' + max + ' shown here; the file has all of them' : '') + '. This is exactly what the file contains.</p>' + (f.rows.length ? '<div class="tw"><table><thead><tr>' + f.head.map(function (h) { return '<th>' + e(h) + '</th>'; }).join('') + '</tr></thead><tbody>' + f.rows.slice(0, max).map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + e(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty">This file has only its heading row: there is nothing of this kind in the period.</p>') + '</div>'; return; }
+      if (f.kind === 'csv') { var max = 500; body.innerHTML = '<div style="padding:14px"><p class="small" style="margin:0 0 10px">' + f.rows.length + ' rows' + (f.rows.length > max ? ', the first ' + max + ' shown here; the file has all of them' : '') + '. This is exactly what the file contains.</p>' + (f.rows.length ? '<div class="tw"><table><thead><tr>' + f.head.map(function (h) { return '<th>' + e(h) + '</th>'; }).join('') + '</tr></thead><tbody>' + f.rows.slice(0, max).map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + e(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty">This file has only its heading row: there is nothing of this kind in the period.</p>') + (f.note ? '<p class="small" style="margin-top:12px">Last line of the file: ' + e(f.note) + '</p>' : '') + '</div>'; return; }
       body.innerHTML = '<p class="empty" style="padding:14px">Opening the pages…</p>'; pages(f).then(function (ok) { if (cur !== i) return; if (!ok) { var u = URL.createObjectURL(f.blob); urls.push(u); body.innerHTML = '<iframe title="' + e(f.name) + '" src="' + u + '" style="width:100%;height:100%;border:0;background:#fff"></iframe>'; } }); }
     /* each PDF page is drawn as a picture, so it shows the same on a phone as on a computer */
     function pages(f) { if (!pdfjs) pdfjs = import('/staff/vendor/pdf.min.mjs').then(function (m) { m.GlobalWorkerOptions.workerSrc = '/staff/vendor/pdf.worker.min.mjs'; return m; }); var my = cur;
@@ -161,9 +188,9 @@
   function tool() { if (jsp) return jsp; jsp = new Promise(function (ok, bad) { if (window.jspdf) return ok(); var s = document.createElement('script'); s.src = '/staff/vendor/jspdf.umd.min.js'; s.onload = function () { ok(); }; s.onerror = function () { jsp = null; bad(new Error('pdf_tool')); }; document.head.appendChild(s); }); return jsp; }
   /* the PDF uses the built-in Latin font, so names in other scripts are shown as they can be */
   function lat(v) { return String(v == null ? '' : v).replace(/₹/g, 'Rs ').replace(/[›→]/g, '>').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/·/g, '-').replace(/[^\x20-\x7e\xa0-\xff]/g, '?'); }
-  function pdf() { return tool().then(function () {
+  function pdf() { return Promise.all([tool(), signLoad()]).then(function () {
     var H = (window.NikadiBill || {}).HOTEL || {}, doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' }), W = 297, Ht = 210, M = 12, y = M, t = R.tot;
-    function need(h) { if (y + h > Ht - 14) { doc.addPage(); y = M; } }
+    function need(h) { if (y + h > Ht - 36) { doc.addPage(); y = M; } }
     function h1(s) { need(14); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(20, 30, 60); doc.text(lat(s), M, y + 5); y += 8; doc.setDrawColor(190, 150, 70); doc.setLineWidth(.5); doc.line(M, y, W - M, y); y += 4; }
     function para(s, size) { doc.setFont('helvetica', 'normal'); doc.setFontSize(size || 9); doc.setTextColor(50, 50, 50); var l = doc.splitTextToSize(lat(s), W - 2 * M); need(l.length * 4 + 2); doc.text(l, M, y + 3); y += l.length * 4 + 2; }
     /* cols: [title, width mm, 'r' for right-aligned]; long text is cut to its column */
@@ -174,8 +201,8 @@
         cells.forEach(function (c, i) { var w = cols[i][1] * sc, s = fit(c, w); if (cols[i][2] === 'r') doc.text(s, xs[i] + w - 1.2, y + 3.6, { align: 'right' }); else doc.text(s, xs[i] + 1.2, y + 3.6); }); y += 5.2; }
       function head() { line(cols.map(function (c) { return c[0]; }), 2, [28, 40, 78]); }
       need(16); head();
-      rows.forEach(function (r, i) { if (y + 5.2 > Ht - 14) { doc.addPage(); y = M; head(); } line(r, false, i % 2 ? [245, 246, 249] : null); });
-      if (foot) { if (y + 5.2 > Ht - 14) { doc.addPage(); y = M; head(); } line(foot, 1, [236, 226, 200]); }
+      rows.forEach(function (r, i) { if (y + 5.2 > Ht - 36) { doc.addPage(); y = M; head(); } line(r, false, i % 2 ? [245, 246, 249] : null); });
+      if (foot) { if (y + 5.2 > Ht - 36) { doc.addPage(); y = M; head(); } line(foot, 1, [236, 226, 200]); }
       y += 5;
     }
     /* cover */
@@ -223,7 +250,7 @@
     para('3. Money received is by the date it was received, so it will not equal sales for the same period (advances, and balances paid later).', 8.5);
     para('4. All supplies are within West Bengal (state code 19): CGST and SGST only. This statement is prepared from the guest house records for the use of the Chartered Accountant; it is not a return.', 8.5);
     if (R.sales.some(function (s) { return s.est; })) para('5. A few invoices had no line details on record; their GST is estimated at 5% of the invoice value. They are marked in the sales register file.', 8.5);
-    var n = doc.getNumberOfPages(); for (var i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120); doc.text(lat((H.company || '') + '  -  GSTIN ' + (H.gstin || '') + '  -  ' + nice(P[0]) + ' to ' + nice(P[1])), M, Ht - 7); doc.text('Page ' + i + ' of ' + n, W - M, Ht - 7, { align: 'right' }); }
+    var n = doc.getNumberOfPages(); for (var i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120); doc.text(lat((H.company || '') + '  -  GSTIN ' + (H.gstin || '') + '  -  ' + nice(P[0]) + ' to ' + nice(P[1])), M, Ht - 7); doc.text('Page ' + i + ' of ' + n, W - M, Ht - 7, { align: 'right' }); signPage(doc, W, Ht, M); }
     return { name: fname('Accounts-for-CA', 'pdf'), kind: 'pdf', label: 'Full report (PDF)', blob: doc.output('blob') };
   }); }
 
@@ -321,10 +348,10 @@
     function finish(msg) { [].forEach.call(C.app.querySelectorAll('#pbOne,#pbMon'), function (b) { b.disabled = false; }); if (document.getElementById('pbPdf')) document.getElementById('pbPdf').textContent = msg; }
     function one() { if (gi >= groups.length) { finish(groups.length + ' file' + (groups.length > 1 ? 's' : '') + ' with ' + all.length + ' bills ready. Look through them, then download.'); return preview(files); }
       var key = groups[gi][0], list = groups[gi][1]; gi++;
-      var H = (window.NikadiBill || {}).HOTEL || {}, doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' }), W = 210, Ht = 297, M = 12, PER = 46, idxPages = Math.ceil(list.length / PER), pageOf = {}, pno = idxPages + 1;
+      var H = (window.NikadiBill || {}).HOTEL || {}, doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' }), W = 210, Ht = 297, M = 12, PER = 42, idxPages = Math.ceil(list.length / PER), pageOf = {}, pno = idxPages + 1;
       list.forEach(function (x) { pageOf[x.id] = pno; pno += x.photos; });
       var title = 'Purchase bills: ' + (key ? mname(key) : nice(P[0]) + ' to ' + nice(P[1]));
-      function foot() { var n = doc.getNumberOfPages(); for (var i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120); doc.text(lat((H.company || '') + '  -  GSTIN ' + (H.gstin || '') + '  -  ' + title), M, Ht - 6); doc.text('Page ' + i + ' of ' + n, W - M, Ht - 6, { align: 'right' }); } }
+      function foot() { var n = doc.getNumberOfPages(); for (var i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120); doc.text(lat((H.company || '') + '  -  GSTIN ' + (H.gstin || '') + '  -  ' + title), M, Ht - 6); doc.text('Page ' + i + ' of ' + n, W - M, Ht - 6, { align: 'right' }); signPage(doc, W, Ht, M); } }
       function fit(t, w) { t = lat(t); if (doc.getTextWidth(t) <= w) return t; while (t.length > 1 && doc.getTextWidth(t + '..') > w) t = t.slice(0, -1); return t + '..'; }
       /* the list */
       for (var pi = 0; pi < idxPages; pi++) { if (pi) doc.addPage(); var y = M;
@@ -345,10 +372,10 @@
             var g = r2(x.cgst + x.sgst + x.igst); doc.text(fit(nice(x.date) + '   ' + (x.shop || '') + '   ' + x.item + '   Rs ' + money(x.amount) + (x.gstin ? '   GSTIN ' + x.gstin : '') + (g ? '   Taxable ' + money(x.taxable) + '  CGST ' + money(x.cgst) + '  SGST ' + money(x.sgst) + (x.igst ? '  IGST ' + money(x.igst) : '') : ''), 180), M + 3, y + 11.5); y += 18;
             if (!u) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be opened.', M, y + 8); return nextPh(); }
             return imgSize(u).then(function (sz) { if (!sz) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be opened.', M, y + 8); return nextPh(); }
-              var mw = 186, mh = Ht - y - 12, sc = Math.min(mw / sz[0], mh / sz[1]), w = sz[0] * sc, hh = sz[1] * sc; try { doc.addImage(u, /png/.test(u.slice(0, 30)) ? 'PNG' : 'JPEG', M + (mw - w) / 2, y, w, hh, undefined, 'FAST'); } catch (er) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be placed on the page.', M, y + 8); } return nextPh(); }); }
+              var mw = 186, mh = Ht - y - 36, sc = Math.min(mw / sz[0], mh / sz[1]), w = sz[0] * sc, hh = sz[1] * sc; try { doc.addImage(u, /png/.test(u.slice(0, 30)) ? 'PNG' : 'JPEG', M + (mw - w) / 2, y, w, hh, undefined, 'FAST'); } catch (er) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be placed on the page.', M, y + 8); } return nextPh(); }); }
           return nextPh(); }, function () { for (var j = 0; j < x.photos; j++) { doc.addPage(); doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text(lat('Expense no. ' + x.id + ': the bill photo could not be fetched.'), M, M + 8); } return nextExp(); }); }
       return nextExp(); }
-    note.textContent = 'Getting ready…'; tool().then(one, function () { finish('The PDF maker could not be loaded. Check the internet and try again.'); });
+    note.textContent = 'Getting ready…'; Promise.all([tool(), signLoad()]).then(one, function () { finish('The PDF maker could not be loaded. Check the internet and try again.'); });
   }
 
   /* ---- Backup: one file with every record, kept by the owner outside the system ---- */

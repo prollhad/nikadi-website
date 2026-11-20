@@ -309,3 +309,10 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('pins', JSON.stringify(st.pinWarn), easy.error, short.error, hk.ok || hk.error, mg.ok || mg.error, '| backup', b.ok || b.error, no.error, b.tables && Object.keys(b.tables).length, b.tables && b.tables.staff.rows.length, txt.length);
   if (!st.pinWarn.length || easy.error !== 'pin_easy' || short.error !== 'pin_short' || !hk.ok || !mg.ok || !b.ok || no.ok || txt.indexOf('835197') >= 0 || b.tables.sessions || /adminLogin/.test(txt)) throw new Error('pin or backup broken');
 }
+{ // stamp and signature for the CA files
+  const png = 'data:image/png;base64,iVBORw0KGgo=';
+  const a = await call('deskCaSignSave', { token: tok, which: 'stamp', data: png }), bad = await call('deskCaSignSave', { token: tok, which: 'sign', data: 'javascript:1' }), no = await call('deskCaSignGet', {});
+  const g = await call('deskCaSignGet', { token: tok }), b = await call('deskBackupAll', { token: tok });
+  console.log('ca sign', a.ok || a.error, bad.error, no.error, g.stamp === png, g.sign === '');
+  if (!a.ok || bad.ok || no.ok || g.stamp !== png || JSON.stringify(b).indexOf('iVBORw0KGgo') >= 0) throw new Error('ca sign broken');
+}

@@ -193,7 +193,7 @@ function doPost(e) {
   }
 }
 
-var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteStats: 1, deskSiteHistory: 1, deskCaReport: 1, deskBackupAll: 1, deskAdminHasLogin: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
+var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteStats: 1, deskSiteHistory: 1, deskCaReport: 1, deskBackupAll: 1, deskCaSignGet: 1, deskAdminHasLogin: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
 var DESK_NO_LOCK_ = false;
 
 /* Error alerts: an email to the owner when something fails in the background (same problem at most once in 6 hours). */
