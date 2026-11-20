@@ -124,6 +124,12 @@ function nkDb(base, ctx, opt) {
       list.forEach(function (o) { var i = a.indexOf(o); if (i >= 0) a.splice(i, 1); if (!o._new) ctx.ops.push({ op: 'arch', t: t, rid: o._rid }); });
       return list.length;
     },
+    /* archived rows of one tab whose date field falls in a period (accounts report for the CA: bills leave the live tab after a few months) */
+    oldRows: function (t, field, lo, hi) {
+      var k = 'oldrows|' + t + '|' + field + '|' + lo + '|' + hi;
+      if (!(k in ctx.memo)) { ctx.pend.push({ key: k, kind: 'oldRows', t: t, field: field, lo: String(lo), hi: String(hi) }); return []; }
+      return (ctx.memo[k] || []).map(function (o) { var c = Object.assign({}, o); c._old = true; return c; });
+    },
     findOld: function (t, key, field) {
       var k = 'old|' + t + '|' + (field || '') + '|' + key;
       if (!(k in ctx.memo)) { ctx.pend.push({ key: k, kind: 'findOld', t: t, field: field || (opt.firstCol ? opt.firstCol(t) : 'id'), val: String(key) }); return null; }
@@ -573,7 +579,7 @@ function doPost(e) {
   }
 }
 
-var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteStats: 1, deskSiteHistory: 1, deskAdminHasLogin: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
+var DESK_READ_ONLY_ = { deskStatementView: 1, deskSiteStats: 1, deskSiteHistory: 1, deskCaReport: 1, deskAdminHasLogin: 1, deskSiteAvailability: 1, deskState: 1, deskCalendar: 1, deskBookings: 1, deskWaChats: 1, deskWaChat: 1, deskWaPhoto: 1, config: 1, me: 1, deskBeat: 1, deskLive: 1 };
 var DESK_NO_LOCK_ = false;
 
 /* Error alerts: an email to the owner when something fails in the background (same problem at most once in 6 hours). */
@@ -4769,6 +4775,35 @@ function deskCore(db, hooks) {
        range   pages, sources, hours and taps added up over a period
        member  one member: points history, bookings and stays
        bookings  the bookings made in one month */
+  /* ---- Accounts for the CA (GST filing): everything in a period, owner only. Reads the live records and the archive, so old months are complete too.
+       The page works out the GST from each invoice exactly as the printed bill does. ---- */
+  api.caReport = function (req) {
+    var me = auth(req); needOwner(me);
+    var from = String(req.from || ''), to = String(req.to || '');
+    if (!isYmd(from) || !isYmd(to) || from > to) fail('bad_date');
+    if (dayNum(to) - dayNum(from) > 1100) fail('too_long');
+    var hi = addDays(to, 1);
+    function inR(v) { v = String(v || '').slice(0, 10); return v >= from && v <= to; }
+    function rowsOf(t, field, key) {
+      var seen = {}, out = [];
+      db.all(t).forEach(function (x) { if (inR(x[field])) { seen[x[key]] = 1; out.push(x); } });
+      if (db.oldRows) db.oldRows(t, field, from, hi).forEach(function (x) { if (!seen[x[key]] && inR(x[field])) { seen[x[key]] = 1; out.push(x); } });
+      return out.sort(function (a, b) { return String(a[field]) < String(b[field]) ? -1 : 1; });
+    }
+    function js(v) { try { return JSON.parse(v || '') || null; } catch (e) { return null; } }
+    var stayOf = {}; db.all('stays').forEach(function (x) { stayOf[x.id] = x; });
+    return { from: from, to: to, made: stamp(), by: me.name,
+      bills: rowsOf('bills', 'at', 'id').map(function (b) { return { no: b.no, at: b.at, guest: b.guest, room: b.room, total: Number(b.total) || 0, d: js(b.data) }; }),
+      ownBills: rowsOf('ownbills', 'at', 'id').filter(function (b) { return !yes(b.removed); }).map(function (b) { return { no: b.no, at: b.at, guest: b.guest, total: Number(b.total) || 0, d: js(b.data) }; }),
+      payments: rowsOf('payments', 'at', 'id').filter(function (x) { return !yes(x.voided); }).map(function (x) { var st = stayOf[x.stay];
+        return { at: x.at, amount: Number(x.amount) || 0, method: x.method || '', ref: x.ref || '', note: x.note || '', room: x.room, guest: st ? st.guest : '', booking: x.booking || '' }; }),
+      expenses: rowsOf('expenses', 'date', 'id').filter(function (x) { return !yes(x.removed); }).map(function (x) { return { date: x.date, group: x.group || '', category: x.category || '', item: x.item || '', qty: x.qty, amount: Number(x.amount) || 0, method: x.method || '', ref: x.ref || '', shop: x.shop || '', note: x.note || '', hasBill: !!x.photos }; }),
+      commissions: rowsOf('commissions', 'date', 'id').filter(function (x) { return !yes(x.removed); }).map(function (x) { return { date: x.date, name: x.name || '', type: x.type || '', phone: x.phone || '', vehicle: x.vehicle || '', guest: x.guest || '', room: x.room || '', amount: Number(x.amount) || 0, method: x.method || '', ref: x.ref || '', note: x.note || '' }; }),
+      laundry: db.all('laundry').filter(function (x) { return Number(x.total) > 0 && inR(x.outAt || x.at); }).map(function (x) { return { date: String(x.outAt || x.at).slice(0, 10), total: Number(x.total) || 0, paid: yes(x.paid), note: x.note || '' }; }),
+      kept: db.all('bookings').filter(function (b) { return (b.status === 'No-show' || b.status === 'Cancelled') && Number(b.advancePaid || 0) - Number(b.refunded || 0) > 0 && inR(b.closedAt); })
+        .map(function (b) { return { date: String(b.closedAt).slice(0, 10), id: b.id, guest: b.guest, status: b.status, advance: Number(b.advancePaid) || 0, refunded: Number(b.refunded) || 0, kept: Number(b.advancePaid || 0) - Number(b.refunded || 0), checkin: b.checkin }; }) };
+  };
+
   /* guests who walked in and were checked in straight away never had a booking made, so they are stays with no booking behind them; the admin page lists them with the bookings */
   function walkIns() {
     return db.all('stays').filter(function (x) { return !x.booking && x.status !== 'Reversed' && !x.comp; }).map(function (x) {
@@ -6123,6 +6158,8 @@ async function nkDo(p, memo) {
       nkLoadRows(p.t, (r.rows || {})[p.t] || []);
       Object.assign(NK_BASE.versions, r.versions || {});
       memo[p.key] = true;
+    } else if (p.kind === 'oldRows') {
+      try { memo[p.key] = (await nkRpc('nk_old_rows', { t: p.t, field: p.field, lo: p.lo, hi: p.hi })) || []; } catch (e) { memo[p.key] = []; }
     } else if (p.kind === 'findOld') {
       memo[p.key] = await nkRpc('nk_find_old', { t: p.t, field: p.field, val: p.val });
     } else if (p.kind === 'fetch') {
@@ -6218,7 +6255,7 @@ async function nkHandle(body, query, entry, actName) {
       if (!ctx.pend.length) break;
       /* do the FIRST thing it waited for (anything after it may come from a branch that assumed it failed);
          database reads are safe to do together */
-      var reads = ctx.pend.filter(function (p) { return p.kind === 'load' || p.kind === 'findOld' || p.kind === 'changelog'; });
+      var reads = ctx.pend.filter(function (p) { return p.kind === 'load' || p.kind === 'findOld' || p.kind === 'oldRows' || p.kind === 'changelog'; });
       if (reads.length) { for (var i = 0; i < reads.length; i++) await nkDo(reads[i], memo); }
       else await nkDo(ctx.pend[0], memo);
     }

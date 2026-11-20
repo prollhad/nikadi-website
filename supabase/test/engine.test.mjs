@@ -282,3 +282,9 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   const w = bk.list.filter(x => x.walkin);
   console.log('walk-ins', bk.list.length, 'of which walk-in', w.length, JSON.stringify(w[0] || null), JSON.stringify(st.bookings));
 }
+{ // accounts report for the CA
+  const t = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10), y = +t.slice(0, 4), fy = +t.slice(5, 7) >= 4 ? y : y - 1;
+  const r = await call('deskCaReport', { token: tok, from: fy + '-04-01', to: (fy + 1) + '-03-31' }), no = await call('deskCaReport', { from: t, to: t }), bad = await call('deskCaReport', { token: tok, from: t, to: '2020-01-01' });
+  console.log('ca report', r.ok || r.error, no.error, bad.error, 'bills', r.bills && r.bills.length, r.bills && r.bills[0] && Object.keys(r.bills[0].d || {}).slice(0, 8).join(','), 'payments', r.payments && r.payments.length, 'expenses', r.expenses && r.expenses.length, 'commissions', r.commissions && r.commissions.length, 'kept', r.kept && r.kept.length, 'laundry', r.laundry && r.laundry.length);
+  if (!r.ok || no.ok || bad.ok) throw new Error('ca report broken');
+}

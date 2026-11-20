@@ -107,7 +107,13 @@ returns jsonb language sql stable security definer set search_path = public as $
   select jsonb_build_array(rid, data) from records_archive where tbl = t and data->>field = val order by rid desc limit 1;
 $$;
 
-revoke all on function public.nk_load, public.nk_commit, public.nk_kv, public.nk_find_old from anon, authenticated, public;
+-- archived rows of one tab whose date field falls in a period (accounts report for the CA)
+create or replace function public.nk_old_rows(t text, field text, lo text, hi text)
+returns jsonb language sql stable security definer set search_path = public as $$
+  select coalesce(jsonb_agg(data order by rid), '[]'::jsonb) from records_archive where tbl = t and data->>field >= lo and data->>field < hi;
+$$;
+
+revoke all on function public.nk_load, public.nk_commit, public.nk_kv, public.nk_find_old, public.nk_old_rows from anon, authenticated, public;
 grant execute on function public.nk_load, public.nk_commit, public.nk_kv, public.nk_find_old to service_role;
 
 -- nk_sync: one round trip at the start of every request.

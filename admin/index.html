@@ -73,6 +73,8 @@ td.w{white-space:normal}
 <body>
 <div class="wrap" id="app"><p class="muted">Loading…</p></div>
 <div class="tip" id="tip" hidden></div>
+<script src="/staff/bill.js?v=95"></script>
+<script src="accounts.js?v=1"></script>
 <script>
 (function(){
   var API='https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api',app=document.getElementById('app'),tip=document.getElementById('tip'),D=null,RANGE=30,Q='',timer=null;
@@ -188,7 +190,7 @@ td.w{white-space:normal}
 
   /* ---------- history and detail pages ---------- */
   function view(){var h=decodeURIComponent(location.hash.slice(1)),i=h.indexOf('=');return i<0?[h,'']:[h.slice(0,i),h.slice(i+1)];}
-  function nav(cur){return '<nav class="tabs" aria-label="Admin pages">'+[['','Overview'],['visitors','Visitors: every day'],['pages','Pages and sources'],['members','Members'],['bookings','Bookings']].map(function(t){return '<a href="#'+t[0]+'"'+(t[0]===cur?' aria-current="page"':'')+'>'+t[1]+'</a>';}).join('')+'</nav>';}
+  function nav(cur){return '<nav class="tabs" aria-label="Admin pages">'+[['','Overview'],['visitors','Visitors: every day'],['pages','Pages and sources'],['members','Members'],['bookings','Bookings'],['accounts','Accounts for the CA']].map(function(t){return '<a href="#'+t[0]+'"'+(t[0]===cur?' aria-current="page"':'')+'>'+t[1]+'</a>';}).join('')+'</nav>';}
   function head(title,sub){return '<div class="top"><div><p class="kick">Nikadi Guest House · Website admin</p><h1>'+title+'</h1>'+(sub?'<p class="small">'+sub+'</p>':'')+'</div><div class="acts"><a class="btn" href="/" target="_blank" rel="noopener">Open website</a><button class="btn" id="lo2" type="button">Sign out</button></div></div>';}
   function wire(){[].forEach.call(document.querySelectorAll('tr.go[data-ph]'),function(r){r.onclick=function(){location.hash='member='+r.dataset.ph;};});[].forEach.call(document.querySelectorAll('tr.go[data-day]'),function(r){r.onclick=function(){location.hash='day='+r.dataset.day;};});
     var l=document.getElementById('lo2');if(l)l.onclick=function(){var t=ls('nk-admin-token');if(t)post({action:'deskLogout',token:t}).catch(function(){});ls('nk-admin-token',null);D=null;location.hash='';login();};}
@@ -245,7 +247,7 @@ td.w{white-space:normal}
         '<div class="grid"><div class="card"><div class="ch"><h2>Where they came from</h2></div>'+list(top(src),function(x){return x;},20)+'</div><div class="card"><div class="ch"><h2>What happened to them</h2></div>'+list(top(st),function(x){return x;},20)+'</div></div>'+
         '<div class="card"><div class="ch"><h2>Every booking</h2><span class="small">newest first</span></div>'+(r.list.length?bkTable(r.list,false):'<p class="empty">No bookings were made in this month.</p>')+'<p class="small" style="margin-top:12px">Walk-in guests who were checked in directly, without a booking, are included and marked "no booking". Each of their rooms is one line, and the date is the day they checked in. To change a booking, use the staff app.</p></div>';});}
   function route(){if(!tok())return login();clearInterval(timer);var v=view();
-    if(v[0]==='visitors')vVisitors();else if(v[0]==='day')vDay(v[1]);else if(v[0]==='pages')vPages();else if(v[0]==='members')vMembers();else if(v[0]==='member')vMember(v[1]);else if(v[0]==='bookings')vBookings(v[1]);
+    if(v[0]==='visitors')vVisitors();else if(v[0]==='day')vDay(v[1]);else if(v[0]==='pages')vPages();else if(v[0]==='members')vMembers();else if(v[0]==='member')vMember(v[1]);else if(v[0]==='bookings')vBookings(v[1]);else if(v[0]==='accounts')NkAccounts.open({app:app,post:post,tok:tok,head:head,nav:nav,wire:wire,esc:esc,login:login});
     else{if(D){draw();window.scrollTo(0,0);}load();return;}
     if(!D)post({action:'deskSiteStats',token:tok()}).then(function(r){if(r.ok){D=r;if(view()[0]==='members')vMembers();}});}
   addEventListener('hashchange',route);

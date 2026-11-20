@@ -53,6 +53,8 @@ async function nkDo(p, memo) {
       nkLoadRows(p.t, (r.rows || {})[p.t] || []);
       Object.assign(NK_BASE.versions, r.versions || {});
       memo[p.key] = true;
+    } else if (p.kind === 'oldRows') {
+      try { memo[p.key] = (await nkRpc('nk_old_rows', { t: p.t, field: p.field, lo: p.lo, hi: p.hi })) || []; } catch (e) { memo[p.key] = []; }
     } else if (p.kind === 'findOld') {
       memo[p.key] = await nkRpc('nk_find_old', { t: p.t, field: p.field, val: p.val });
     } else if (p.kind === 'fetch') {
@@ -148,7 +150,7 @@ async function nkHandle(body, query, entry, actName) {
       if (!ctx.pend.length) break;
       /* do the FIRST thing it waited for (anything after it may come from a branch that assumed it failed);
          database reads are safe to do together */
-      var reads = ctx.pend.filter(function (p) { return p.kind === 'load' || p.kind === 'findOld' || p.kind === 'changelog'; });
+      var reads = ctx.pend.filter(function (p) { return p.kind === 'load' || p.kind === 'findOld' || p.kind === 'oldRows' || p.kind === 'changelog'; });
       if (reads.length) { for (var i = 0; i < reads.length; i++) await nkDo(reads[i], memo); }
       else await nkDo(ctx.pend[0], memo);
     }

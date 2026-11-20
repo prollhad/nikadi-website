@@ -64,6 +64,12 @@ export function nkDb(base, ctx, opt) {
       list.forEach(function (o) { var i = a.indexOf(o); if (i >= 0) a.splice(i, 1); if (!o._new) ctx.ops.push({ op: 'arch', t: t, rid: o._rid }); });
       return list.length;
     },
+    /* archived rows of one tab whose date field falls in a period (accounts report for the CA: bills leave the live tab after a few months) */
+    oldRows: function (t, field, lo, hi) {
+      var k = 'oldrows|' + t + '|' + field + '|' + lo + '|' + hi;
+      if (!(k in ctx.memo)) { ctx.pend.push({ key: k, kind: 'oldRows', t: t, field: field, lo: String(lo), hi: String(hi) }); return []; }
+      return (ctx.memo[k] || []).map(function (o) { var c = Object.assign({}, o); c._old = true; return c; });
+    },
     findOld: function (t, key, field) {
       var k = 'old|' + t + '|' + (field || '') + '|' + key;
       if (!(k in ctx.memo)) { ctx.pend.push({ key: k, kind: 'findOld', t: t, field: field || (opt.firstCol ? opt.firstCol(t) : 'id'), val: String(key) }); return null; }
