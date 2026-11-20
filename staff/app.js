@@ -2265,6 +2265,17 @@
     function nsLink(x, then) { if (b.stmtUrl) return then(b.stmtUrl); busy(x, true); api('deskNoShowLink', { id: b.id }).then(function (r) { busy(x, false); b.stmtUrl = r.url; WK.data = null; then(r.url); }, function (e) { busy(x, false); toast(errText(e)); }); }
     if (q('#k-wns')) q('#k-wns').onclick = function () { nsLink(this, function () { WK.open = b.id; openWaSend('enq'); }); };
     if (q('#k-nspdf')) q('#k-nspdf').onclick = function () { var w = window.open('', '_blank'); nsLink(this, function (u) { if (w) w.location = u; else location.href = u; }); };
+    if (open && mgr() && !b.comp) q('#k-adv').onclick = function () { openAdvance(b, body); };
+    if (q('#k-edit')) q('#k-edit').onclick = function () { openBookingForm(b, body); };
+    if (q('#k-cancel')) q('#k-cancel').onclick = function () { openCancel(b, body); };
+    if (q('#k-pay')) q('#k-pay').onclick = function () { openBookingPay(b, body); };
+    if (q('#k-ref')) q('#k-ref').onclick = function () { openRefund('booking', b, body); };
+    $$('[data-pay]', body).forEach(function (row) { row.onclick = function () { var p = b.payments.filter(function (x) { return x.id === row.dataset.pay; })[0]; if (p) openVoid(p, 'booking', body); }; });
+    if (q('#k-in')) q('#k-in').onclick = function () {
+      var x = this; busy(x, true);
+      api('deskBookingCheckIn', { id: b.id }).then(function (r) { vibrate(); toast(b.guest + ' checked in to room ' + b.rooms.join(', ')); after(sheets.length); void r; },
+        function (e) { busy(x, false); toast(errText(e)); });
+    };
     if (q('#b-undoin')) q('#b-undoin').onclick = function () { openUndoCheckin({ booking: b.id }, b.guest, b.undoInRooms || b.rooms, true, 2); };
     if (q('#k-ns')) q('#k-ns').onclick = function () {
       var x = this;
