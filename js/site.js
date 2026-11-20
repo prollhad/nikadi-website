@@ -259,7 +259,7 @@ try{
     if((m==='rain'||m==='storm')&&!wxRAF&&!RM)wxRAF=requestAnimationFrame(wxLoop);if(wxEl&&m!=='rain'&&m!=='storm'){var x=wxEl.rain.getContext('2d');x.clearRect(0,0,wxEl.rain.width,wxEl.rain.height);}if(wxRainN){var n0=wxRainN;wxRainN=null;n0.forEach(function(q){try{q.s.stop();}catch(e){}});}wxAudio();}
   /* soft rain and thunder sound for the live weather. Browsers only allow sound after the visitor's first tap or key press. */
   var wxSnd=false,wxMute=false,wxRainN=null,wxBtn=null,wxUnlockT=0;try{wxMute=localStorage.getItem('nk_wxmute2')==='1';}catch(e){}
-  var RAINVOL=.022,wxVol=1,wxMaster=null,wxSl=null,wxBuild=0;try{var v0=parseFloat(localStorage.getItem('nk_wxvol'));if(v0>=0&&v0<=1.6)wxVol=v0;}catch(e){}
+  var RAINVOL=.014,wxVol=1,wxMaster=null,wxSl=null,wxBuild=0;try{var v0=parseFloat(localStorage.getItem('nk_wxvol'));if(v0>=0&&v0<=1.6)wxVol=v0;}catch(e){}
   function wxOut(){if(!wxMaster){wxMaster=AC.createGain();wxMaster.gain.value=wxVol;wxMaster.connect(AC.destination);}return wxMaster;}
   function loopBuf(brown){var sr=AC.sampleRate,n=sr*8,f=sr*1,b=AC.createBuffer(1,n,sr),d=b.getChannelData(0),l=0,i;for(i=0;i<n+f;i++){var w=Math.random()*2-1,v;if(brown){l=(l+.02*w)/1.02;v=l*3.5;}else v=w;if(i<n)d[i]=v;else{var k=(i-n)/f;d[i-n]=d[i-n]*k+v*(1-k);}}return b;}
   /* steady rain: no pitched "plip" drops at all (those sounded like a tap filling a pot). The sound is thousands of tiny, soft bursts of
@@ -294,6 +294,7 @@ try{
     wxClips=[[0,18.88,22.2,1,1],[0,16.72,22,1,2],[1,2.9,8.2,0,1],[2,7.05,10.3,0,1],[2,10.38,14.6,0,1],[2,7.05,14.6,0,1]],
     /* for the slow strikes: [recording, earliest start, the big clap, end]; the low rumble before the clap plays while the bolt grows */
     wxBuilds=[[2,4.55,7.2,10.3],[0,11.6,12.8,16.6]];
+  var wxCeilC=null;function wxCeil(){if(!wxCeilC){wxCeilC=new Float32Array(2049);for(var i=0;i<2049;i++)wxCeilC[i]=Math.tanh((i-1024)/1024*2.2)*.94;}return wxCeilC;}
   function wxRecLoad(){if(wxRecSt||!AC)return;wxRecSt=1;var left=wxRec.length,ok=0;wxRec.forEach(function(r){fetch(WXR+r.u).then(function(x){if(!x.ok)throw 0;return x.arrayBuffer();}).then(function(ab){return new Promise(function(res,rej){AC.decodeAudioData(ab,res,rej);});})
     .then(function(b){r.b=b;ok++;},function(){}).then(function(){if(!--left)wxRecSt=ok?2:3;});});}
   function wxThunder(delay,vol,kind,len){if(!AC)return;len=len||3.5;wxRecLoad();
@@ -304,20 +305,22 @@ try{
       if(!c.length)return; /* still loading: stay quiet rather than play something that is not thunder */
       c.sort(function(a,b){return b[0]-a[0];});wxLastClip=c[0][1];k=wxClips[wxLastClip];r=wxRec[k[0]];cg=k[4];
       /* some strikes are the sharp, high, cracking kind: the same real claps, played brighter and a little faster */
-      bright=!k[3]&&k[2]-k[1]<6&&kind!==2&&(kind===0?Math.random()<.6:Math.random()<.3);rate=bright?1.08+Math.random()*.12:.88+Math.random()*.14;st=k[1]-.04*rate;hit=.04;end=k[2];}
+      bright=!k[3]&&k[2]-k[1]<6&&kind!==2&&(kind===0?Math.random()<.85:Math.random()<.45);rate=bright?1.12+Math.random()*.16:.88+Math.random()*.14;st=k[1]-.04*rate;hit=.04;end=k[2];}
     /* the clap lands with the flash (a deep, far one a moment later), loud, then it rolls away slowly. As it fades the sound is made duller and duller,
        which is how thunder dies away and also takes out the rain and hiss that are in the recordings. */
-    var t=now+(kind===2?.25:.05),dur=end-st,real=dur/rate,fo=Math.min(1.4,(real-hit)*.3),top=vol*r.g*cg*(bright?1.15:1);
-    var s=AC.createBufferSource();s.buffer=r.b;s.playbackRate.value=rate;var sh=AC.createBiquadFilter();sh.type=bright?'highshelf':'lowshelf';sh.frequency.value=bright?1500:140;sh.gain.value=bright?8:r.sh;
-    var lp=AC.createBiquadFilter();lp.type='lowpass';lp.Q.value=.5;lp.frequency.setValueAtTime(hit>.2?260:(bright?12000:5000),t);if(hit>.2){lp.frequency.setValueAtTime(260,t+hit-.06);lp.frequency.exponentialRampToValueAtTime(5000,t+hit);}
+    var t=now+(kind===2?.25:.05),dur=end-st,real=dur/rate,fo=Math.min(1.4,(real-hit)*.3),top=vol*r.g*cg*(bright?1.5:1)*1.7;
+    var s=AC.createBufferSource();s.buffer=r.b;s.playbackRate.value=rate;var sh=AC.createBiquadFilter();sh.type=bright?'highshelf':'lowshelf';sh.frequency.value=bright?1200:140;sh.gain.value=bright?12:r.sh;
+    var lp=AC.createBiquadFilter();lp.type='lowpass';lp.Q.value=.5;lp.frequency.setValueAtTime(hit>.2?260:(bright?14000:5000),t);if(hit>.2){lp.frequency.setValueAtTime(260,t+hit-.06);lp.frequency.exponentialRampToValueAtTime(5000,t+hit);}
     lp.frequency.exponentialRampToValueAtTime(bright?500:r.fl,t+hit+(real-hit)*.7);
+    /* driven hard into a limiter and a soft ceiling so the clap is as loud as it can be without distorting; the fade comes after, so the quiet tail is never pumped up */
+    var dr=AC.createGain();dr.gain.value=top;var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-10;cmp.knee.value=6;cmp.ratio.value=6;cmp.attack.value=.003;cmp.release.value=.12;
+    var pg=AC.createGain();pg.gain.value=.6;var ws=AC.createWaveShaper();ws.curve=wxCeil();
     var g=AC.createGain();g.gain.setValueAtTime(.0001,t);
-    if(hit>.2){g.gain.linearRampToValueAtTime(top*.5,t+Math.min(.5,hit*.5));g.gain.setValueAtTime(top*.5,t+hit-.08);g.gain.linearRampToValueAtTime(top,t+hit);}else g.gain.linearRampToValueAtTime(top,t+.03);
-    g.gain.setValueAtTime(top,t+hit+.55);g.gain.exponentialRampToValueAtTime(top*.18,t+real-fo);g.gain.linearRampToValueAtTime(.0001,t+real);
-    /* only the very loudest peaks are held back, so the quiet parts are never pumped up */
-    var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-6;cmp.knee.value=4;cmp.ratio.value=12;cmp.attack.value=.002;cmp.release.value=.15;s.connect(sh);sh.connect(lp);lp.connect(g);g.connect(cmp);cmp.connect(wxOut());s.start(t,st,dur);
-    /* the rain answers the thunder: it comes down harder for a few seconds after a clap, then settles */
-    if(wxRainN)wxRainN.forEach(function(q){try{var base=RAINVOL*(wxMode==='storm'?1.3:1),p=q.g.gain;p.cancelScheduledValues(t+hit);p.setTargetAtTime(base*(1.5+Math.random()*.4),t+hit+.6,1.1);p.setTargetAtTime(base,t+hit+5+Math.random()*3,2.5);}catch(e){}});}
+    if(hit>.2){g.gain.linearRampToValueAtTime(.4,t+Math.min(.5,hit*.5));g.gain.setValueAtTime(.4,t+hit-.06);g.gain.linearRampToValueAtTime(1,t+hit);}else g.gain.linearRampToValueAtTime(1,t+.02);
+    g.gain.setValueAtTime(1,t+hit+.6);g.gain.exponentialRampToValueAtTime(.14,t+real-fo);g.gain.linearRampToValueAtTime(.0001,t+real);
+    s.connect(sh);sh.connect(lp);lp.connect(dr);dr.connect(cmp);cmp.connect(pg);pg.connect(ws);ws.connect(g);g.connect(wxOut());s.start(t,st,dur);
+    /* the rain steps back while the thunder speaks, comes down a little harder after it, then settles */
+    if(wxRainN)wxRainN.forEach(function(q){try{var base=RAINVOL*(wxMode==='storm'?1.3:1),p=q.g.gain;p.cancelScheduledValues(t+hit);p.setTargetAtTime(base*.45,t+hit,.12);p.setTargetAtTime(base*(1.25+Math.random()*.25),t+hit+2.2,1.3);p.setTargetAtTime(base,t+hit+6+Math.random()*3,2.5);}catch(e){}});}
   function wxThunderSynth(delay,vol,kind,len){if(!AC)return;len=len||3.5;var PRE=.5,POST=1.4,t=AC.currentTime+delay,out=AC.createGain();out.gain.value=vol*PRE;var cmp=AC.createDynamicsCompressor();cmp.threshold.value=-20;cmp.knee.value=12;cmp.ratio.value=8;cmp.attack.value=.004;cmp.release.value=.3;var post=AC.createGain();post.gain.value=POST;out.connect(cmp);cmp.connect(post);post.connect(wxOut());
     /* Real thunder is not a note, it is air tearing: many claps of plain noise arriving one after another from along the bolt,
        smeared by a long dull echo off the clouds and the ground. So there are no tones here at all (a falling tone is what a bass drum is). */
