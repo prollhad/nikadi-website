@@ -316,3 +316,9 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('ca sign', a.ok || a.error, bad.error, no.error, g.stamp === png, g.sign === '');
   if (!a.ok || bad.ok || no.ok || g.stamp !== png || JSON.stringify(b).indexOf('iVBORw0KGgo') >= 0) throw new Error('ca sign broken');
 }
+{ // CIN and the combined stamp picture
+  const bad = await call('deskCaSignSave', { token: tok, which: 'cin', data: 'hello' }), ok = await call('deskCaSignSave', { token: tok, which: 'cin', data: 'u55101wb2020ptc123456' });
+  const b = await call('deskCaSignSave', { token: tok, which: 'both', data: 'data:image/png;base64,AAAA' }), g = await call('deskCaSignGet', { token: tok });
+  console.log('cin', bad.error, ok.cin, b.ok, g.cin, g.both.length);
+  if (bad.ok || ok.cin !== 'U55101WB2020PTC123456' || !b.ok || g.cin !== ok.cin || !g.both) throw new Error('cin broken');
+}

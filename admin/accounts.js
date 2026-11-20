@@ -80,22 +80,26 @@
   }
   /* ---- who sends the accounts: one director, with the company stamp and signature on every page ---- */
   var SIGNER = { name: 'Prollhad Paul', title: 'Director', company: 'Nikadi Projects Private Limited' };
-  var SENT = 'Accounts sent by one of the directors: ' + SIGNER.name + ', ' + SIGNER.title + ', ' + SIGNER.company;
+  function coLines() { var H = (window.NikadiBill || {}).HOTEL || {}, cin = SG && SG.cin; return [SIGNER.company, 'GSTIN ' + (H.gstin || '') + (cin ? '   CIN ' + cin : ''), (H.address || []).join(', ')]; }
+  function sentLine() { return 'Accounts sent by one of the directors: ' + SIGNER.name + ', ' + SIGNER.title + ', ' + coLines().join(', ').replace(/   /g, ', '); }
   var SG = null, sgP = null;
   function sgOne(u) { return u ? imgSize(u).then(function (z) { return z ? { u: u, w: z[0], h: z[1] } : null; }) : Promise.resolve(null); }
   /* the stamp with signature already used on the guest bills is the one used here, unless another is added below */
   function sgBill(f) { return fetch('/img/brand/' + f).then(function (r) { if (!r.ok) throw 0; return r.blob(); }).then(function (b) { return new Promise(function (ok) { var fr = new FileReader(); fr.onload = function () { ok(fr.result); }; fr.onerror = function () { ok(''); }; fr.readAsDataURL(b); }); }).then(sgOne, function () { return null; }); }
-  function signLoad() { if (sgP) return sgP; sgP = C.post({ action: 'deskCaSignGet', token: C.tok() }).then(function (r) { if (!r.ok) throw new Error(r.error); return Promise.all([sgOne(r.stamp), sgOne(r.sign)]); }).then(function (a) { return Promise.all([a[0] || sgBill('stamp.png'), a[1] || sgBill('sign.png')]).then(function (d) { return { stamp: d[0], sign: d[1], own: { stamp: !!a[0], sign: !!a[1] } }; }); }).then(function (o) { SG = o; return SG; }, function () { sgP = null; SG = SG || { stamp: null, sign: null, own: {} }; return SG; }); return sgP; }
+  function signLoad() { if (sgP) return sgP; sgP = C.post({ action: 'deskCaSignGet', token: C.tok() }).then(function (r) { if (!r.ok) throw new Error(r.error); return Promise.all([sgOne(r.stamp), sgOne(r.sign), sgOne(r.both), r.cin || '']); }).then(function (a) { return Promise.all([a[0] || sgBill('stamp.png'), a[1] || sgBill('sign.png'), a[2] || sgBill('signature.png')]).then(function (d) { return { stamp: d[0], sign: d[1], both: d[2], cin: a[3] || '', own: { stamp: !!a[0], sign: !!a[1], both: !!a[2] } }; }); }).then(function (o) { SG = o; return SG; }, function () { sgP = null; SG = SG || { stamp: null, sign: null, both: null, cin: '', own: {} }; return SG; }); return sgP; }
   /* bottom right corner of a page: stamp, signature, then the director's name. The page keeps this corner free. */
-  function signPage(doc, W, Ht, M) { var x1 = W - M, g = SG || {};
+  function signPage(doc, W, Ht, M) { var x1 = W - M, g = SG || {}, own = g.own || {}, B = Ht - 25.5;
     function put(o, bw, bh, right, bottom) { if (!o) return 0; var sc = Math.min(bw / o.w, bh / o.h), w = o.w * sc, h = o.h * sc; try { doc.addImage(o.u, /png/.test(o.u.slice(0, 30)) ? 'PNG' : 'JPEG', right - w, bottom - h, w, h, undefined, 'FAST'); } catch (er) { return 0; } return w; }
-    var own = g.own || {};
-    if (g.stamp && !own.stamp) { /* our stamp has the company name on top and Director below, with the space between them for the signature */
-      var sw0 = 56, sh0 = sw0 * g.stamp.h / g.stamp.w, top = Ht - 17.5 - sh0, left = x1 - sw0; put(g.stamp, sw0, sh0, x1, Ht - 17.5);
+    if (own.both && g.both) put(g.both, 58, 18, x1, B); /* one picture of the stamp already signed */
+    else if (g.stamp && !own.stamp) { /* our stamp has the company name on top and Director below, with the space between them for the signature */
+      var sw0 = 56, sh0 = sw0 * g.stamp.h / g.stamp.w, top = B - sh0, left = x1 - sw0; put(g.stamp, sw0, sh0, x1, B);
       if (g.sign) { var bw = sw0 * .751, bh = sh0 * .58, sc = Math.min(bw / g.sign.w, bh / g.sign.h), w2 = g.sign.w * sc, h2 = g.sign.h * sc; try { doc.addImage(g.sign.u, /png/.test(g.sign.u.slice(0, 30)) ? 'PNG' : 'JPEG', left + sw0 * .178 + (bw - w2) / 2, top + sh0 * .225 + (bh - h2) / 2, w2, h2, undefined, 'FAST'); } catch (er) {} } }
-    else { var sw = put(g.sign, 40, 14, x1, Ht - 18.5); put(g.stamp, 22, 19, x1 - (sw ? sw + 4 : 0), Ht - 17.5); }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.8); doc.setTextColor(30, 30, 30); doc.text(lat(SIGNER.name + ', ' + SIGNER.title), x1, Ht - 14.6, { align: 'right' });
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(70, 70, 70); doc.text(lat(SIGNER.company + ' - sent by one of the directors'), x1, Ht - 11.4, { align: 'right' }); }
+    else { var sw = put(g.sign, 40, 14, x1, B - 1); put(g.stamp, 22, 18, x1 - (sw ? sw + 4 : 0), B); }
+    /* under it: who signs, then the company with GSTIN, CIN and address */
+    var L = coLines(), y = Ht - 22.3;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.6); doc.setTextColor(30, 30, 30); doc.text(lat(SIGNER.name + ', ' + SIGNER.title), x1, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6.6); doc.setTextColor(60, 60, 60);
+    L.concat(['Accounts sent by one of the directors']).forEach(function (t, i) { doc.text(lat(t), x1, y + 3.1 + i * 2.9, { align: 'right' }); }); }
   /* a photo or scan is made small enough to store; a white paper background is made see-through so only the ink shows */
   function sgPrep(file) { return new Promise(function (ok, bad) { var fr = new FileReader(); fr.onerror = bad; fr.onload = function () { var im = new Image(); im.onerror = bad; im.onload = function () {
     function make(max) { var sc = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * sc)); c.height = Math.max(1, Math.round(im.naturalHeight * sc)); var x = c.getContext('2d'); x.drawImage(im, 0, 0, c.width, c.height);
@@ -104,11 +108,18 @@
     var u = make(640); if (u.length > 380000) u = make(420); if (u.length > 380000) u = make(280); ok(u); }; im.src = fr.result; }; fr.readAsDataURL(file); }); }
   function signCard() { var g = SG; function slot(k, t) { var o = g && g[k], own = o && g.own && g.own[k]; return '<div style="flex:1;min-width:210px"><b style="font-weight:500">' + t + '</b><div style="margin:8px 0;height:86px;border:1px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fff">' + (o ? '<img alt="' + t + ' on file" src="' + o.u + '" style="max-height:78px;max-width:92%">' : '<span style="color:#666;font-size:.86rem">' + (g ? 'Not added yet' : 'Checking…') + '</span>') + '</div>' +
       '<label class="btn" style="cursor:pointer">' + (own ? 'Change' : o ? 'Use a different one' : 'Add a photo or scan') + '<input type="file" accept="image/*" data-sg="' + k + '" style="position:absolute;width:1px;height:1px;opacity:0"></label>' + (own ? ' <button class="btn" type="button" data-sgx="' + k + '">Remove</button>' : '') + '</div>'; }
-    return '<div class="card" id="sgCard"><div class="ch"><h2>Stamp and signature on the files</h2><span class="small">bottom corner of every PDF page</span></div><p class="small" style="margin-top:0">Every file says: ' + C.esc(SENT) + '. The company stamp and your signature below, the same ones as on the guest bills, are placed on each page: the signature goes in the space between the company name and Director. To use a different stamp or signature, add a photo of it on white paper; it is then stored privately on the server.' + (g && !g.stamp && !g.sign ? ' Until one is added, the corner is left empty so you can stamp and sign a print by hand.' : '') + '</p><div style="display:flex;gap:16px;flex-wrap:wrap">' + slot('stamp', 'Company stamp') + slot('sign', 'Signature') + '</div><p class="small" id="sgMsg" role="status"></p></div>'; }
+    var H = (window.NikadiBill || {}).HOTEL || {}, e = C.esc;
+    return '<div class="card" id="sgCard"><div class="ch"><h2>Stamp, signature and company details on the files</h2><span class="small">bottom corner of every PDF page</span></div><p class="small" style="margin-top:0">Each page is signed with the stamp and signature below, the same ones as on the guest bills: the signature goes in the space between the company name and Director. Under them come your name and the company details. To use a different picture, add a photo of it on white paper; it is then stored privately on the server.</p>' +
+      '<div style="display:flex;gap:16px;flex-wrap:wrap">' + slot('stamp', 'Company stamp') + slot('sign', 'Signature') + slot('both', 'Stamp and signature together') + '</div>' +
+      '<p class="small">' + (g && g.own && g.own.both ? 'The picture you added under Stamp and signature together is the one used on the pages.' : 'If you add your own picture under Stamp and signature together, that one picture is used on the pages instead of the two separate ones.') + '</p>' +
+      '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:12px"><b style="font-weight:500">Printed under the signature</b><p style="margin:6px 0">' + e(SIGNER.name + ', ' + SIGNER.title) + '<br>' + e(SIGNER.company) + '<br>GSTIN ' + e(H.gstin || '') + (g && g.cin ? ' &nbsp; CIN ' + e(g.cin) : '') + '<br>' + e((H.address || []).join(', ')) + '</p>' +
+      '<label for="sgCin" class="small" style="display:block;margin-bottom:4px">CIN of the company (21 letters and digits, from the certificate of incorporation)</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input class="in" id="sgCin" maxlength="24" autocomplete="off" style="max-width:300px;text-transform:uppercase" value="' + e(g && g.cin || '') + '" placeholder="' + (g && g.cin ? '' : 'Not added yet') + '"><button class="btn" type="button" id="sgCinGo">Save CIN</button></div></div>' +
+      '<p class="small" id="sgMsg" role="status"></p></div>'; }
   function signWire() { var card = document.getElementById('sgCard'); if (!card) return;
     function redo(msg) { var c = document.getElementById('sgCard'); if (!c) return; var d = document.createElement('div'); d.innerHTML = signCard(); c.replaceWith(d.firstChild); signWire(); if (msg) document.getElementById('sgMsg').textContent = msg; }
     function send(k, data) { var m = document.getElementById('sgMsg'); m.textContent = 'Saving…'; return C.post({ action: 'deskCaSignSave', token: C.tok(), which: k, data: data }).then(function (r) { if (!r.ok) { m.textContent = r.error === 'bad_image' ? 'That picture could not be used. Try a clear photo on white paper.' : 'Could not save. Please try again.'; return; } return sgOne(data).then(function (o) { SG = null; sgP = null; return signLoad(); }).then(function () { redo(data ? 'Saved. It will be on every PDF you make from now.' : 'Removed.'); }); }, function () { m.textContent = 'No connection. Please try again.'; }); }
     card.querySelectorAll('[data-sg]').forEach(function (i) { i.onchange = function () { var f = i.files && i.files[0]; if (!f) return; sgPrep(f).then(function (u) { send(i.dataset.sg, u); }, function () { document.getElementById('sgMsg').textContent = 'That picture could not be opened.'; }); }; });
+    var cg = document.getElementById('sgCinGo'); if (cg) cg.onclick = function () { var m = document.getElementById('sgMsg'), v = document.getElementById('sgCin').value; m.textContent = 'Saving…'; C.post({ action: 'deskCaSignSave', token: C.tok(), which: 'cin', data: v }).then(function (r) { if (!r.ok) { m.textContent = r.error === 'bad_cin' ? 'That does not look like a CIN. It has 21 letters and digits and starts with U or L, for example U55101WB2020PTC123456.' : 'Could not save. Please try again.'; return; } SG = SG || {}; SG.cin = r.cin; redo(r.cin ? 'CIN saved. It is printed on every file from now.' : 'CIN removed.'); }, function () { m.textContent = 'No connection. Please try again.'; }); };
     card.querySelectorAll('[data-sgx]').forEach(function (b) { b.onclick = function () { send(b.dataset.sgx, ''); }; });
     if (!SG) signLoad().then(function () { redo(); }); }
   function draw() { if (MODE === 'bills') return drawBills();
@@ -137,7 +148,7 @@
     chooserWire(pr);
     if (R && !busy) {
       document.getElementById('acPdf').onclick = function () { var b = this; b.disabled = true; b.textContent = 'Making the PDF…'; pdf().then(function (f) { b.disabled = false; b.textContent = 'See the full PDF report'; preview([f]); }, function (er) { b.disabled = false; b.textContent = 'Could not make the PDF. Try again'; console.error(er); }); };
-      [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { preview([csv(b.dataset.csv)]); }; });
+      [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { signLoad().then(function () { preview([csv(b.dataset.csv)]); }); }; });
       document.getElementById('acAll').onclick = function () { var b = this; b.disabled = true; pdf().then(function (f) { b.disabled = false; preview([f].concat(['sales', 'hsn', 'receipts', 'expenses', 'commission'].map(csv))); }, function () { b.disabled = false; }); };
     }
   }
@@ -164,7 +175,7 @@
         .concat(R.r.laundry.map(function (x) { return ['', x.date, 'Laundry', 'Laundry bill', 'Laundry', '', x.total.toFixed(2), '', '', '', '', '', '', '', '', '', '', '', (x.paid ? 'Paid. ' : 'Not marked paid. ') + x.note]; })); }
     else { name = 'Commission'; head = ['Date', 'Name', 'Driver or broker', 'Phone', 'Vehicle no.', 'For guest', 'Room / booking', 'Amount', 'Paid by', 'Transaction no.', 'Note'];
       rows = R.r.commissions.map(function (x) { return [x.date, x.name, x.type, x.phone, x.vehicle, x.guest, x.room, x.amount.toFixed(2), x.method, x.ref, x.note]; }); }
-    return { name: fname(name, 'csv'), kind: 'csv', label: name.replace(/-/g, ' '), head: head, rows: rows, note: SENT, blob: new Blob([csvText(head, rows.concat([[], [SENT]]))], { type: 'text/csv;charset=utf-8' }) };
+    return { name: fname(name, 'csv'), kind: 'csv', label: name.replace(/-/g, ' '), head: head, rows: rows, note: sentLine(), blob: new Blob([csvText(head, rows.concat([[], [sentLine()]]))], { type: 'text/csv;charset=utf-8' }) };
   }
   /* Look before you download: every file opens here first. PDFs are shown page by page as they will print; Excel files as a table. */
   function preview(files) {
@@ -196,7 +207,7 @@
   function lat(v) { return String(v == null ? '' : v).replace(/₹/g, 'Rs ').replace(/[›→]/g, '>').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/·/g, '-').replace(/[^\x20-\x7e\xa0-\xff]/g, '?'); }
   function pdf() { return Promise.all([tool(), signLoad()]).then(function () {
     var H = (window.NikadiBill || {}).HOTEL || {}, doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' }), W = 297, Ht = 210, M = 12, y = M, t = R.tot;
-    function need(h) { if (y + h > Ht - 36) { doc.addPage(); y = M; } }
+    function need(h) { if (y + h > Ht - 46) { doc.addPage(); y = M; } }
     function h1(s) { need(14); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(20, 30, 60); doc.text(lat(s), M, y + 5); y += 8; doc.setDrawColor(190, 150, 70); doc.setLineWidth(.5); doc.line(M, y, W - M, y); y += 4; }
     function para(s, size) { doc.setFont('helvetica', 'normal'); doc.setFontSize(size || 9); doc.setTextColor(50, 50, 50); var l = doc.splitTextToSize(lat(s), W - 2 * M); need(l.length * 4 + 2); doc.text(l, M, y + 3); y += l.length * 4 + 2; }
     /* cols: [title, width mm, 'r' for right-aligned]; long text is cut to its column */
@@ -207,8 +218,8 @@
         cells.forEach(function (c, i) { var w = cols[i][1] * sc, s = fit(c, w); if (cols[i][2] === 'r') doc.text(s, xs[i] + w - 1.2, y + 3.6, { align: 'right' }); else doc.text(s, xs[i] + 1.2, y + 3.6); }); y += 5.2; }
       function head() { line(cols.map(function (c) { return c[0]; }), 2, [28, 40, 78]); }
       need(16); head();
-      rows.forEach(function (r, i) { if (y + 5.2 > Ht - 36) { doc.addPage(); y = M; head(); } line(r, false, i % 2 ? [245, 246, 249] : null); });
-      if (foot) { if (y + 5.2 > Ht - 36) { doc.addPage(); y = M; head(); } line(foot, 1, [236, 226, 200]); }
+      rows.forEach(function (r, i) { if (y + 5.2 > Ht - 46) { doc.addPage(); y = M; head(); } line(r, false, i % 2 ? [245, 246, 249] : null); });
+      if (foot) { if (y + 5.2 > Ht - 46) { doc.addPage(); y = M; head(); } line(foot, 1, [236, 226, 200]); }
       y += 5;
     }
     /* cover */
@@ -279,7 +290,7 @@
     C.app.innerHTML = h; C.wire(); chooserWire(pr);
     if (R && !busy) {
       [].forEach.call(C.app.querySelectorAll('tr[data-exp]'), function (r) { r.onclick = function () { editor(r.dataset.exp); }; });
-      [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { preview([csv(b.dataset.csv)]); }; });
+      [].forEach.call(C.app.querySelectorAll('[data-csv]'), function (b) { b.onclick = function () { signLoad().then(function () { preview([csv(b.dataset.csv)]); }); }; });
       document.getElementById('pbRead').onclick = readAll; document.getElementById('pbOne').onclick = function () { billsPdf(false); }; document.getElementById('pbMon').onclick = function () { billsPdf(true); };
     }
   }
@@ -354,7 +365,7 @@
     function finish(msg) { [].forEach.call(C.app.querySelectorAll('#pbOne,#pbMon'), function (b) { b.disabled = false; }); if (document.getElementById('pbPdf')) document.getElementById('pbPdf').textContent = msg; }
     function one() { if (gi >= groups.length) { finish(groups.length + ' file' + (groups.length > 1 ? 's' : '') + ' with ' + all.length + ' bills ready. Look through them, then download.'); return preview(files); }
       var key = groups[gi][0], list = groups[gi][1]; gi++;
-      var H = (window.NikadiBill || {}).HOTEL || {}, doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' }), W = 210, Ht = 297, M = 12, PER = 42, idxPages = Math.ceil(list.length / PER), pageOf = {}, pno = idxPages + 1;
+      var H = (window.NikadiBill || {}).HOTEL || {}, doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' }), W = 210, Ht = 297, M = 12, PER = 40, idxPages = Math.ceil(list.length / PER), pageOf = {}, pno = idxPages + 1;
       list.forEach(function (x) { pageOf[x.id] = pno; pno += x.photos; });
       var title = 'Purchase bills: ' + (key ? mname(key) : nice(P[0]) + ' to ' + nice(P[1]));
       function foot() { var n = doc.getNumberOfPages(); for (var i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120); doc.text(lat((H.company || '') + '  -  GSTIN ' + (H.gstin || '') + '  -  ' + title), M, Ht - 6); doc.text('Page ' + i + ' of ' + n, W - M, Ht - 6, { align: 'right' }); signPage(doc, W, Ht, M); } }
@@ -378,7 +389,7 @@
             var g = r2(x.cgst + x.sgst + x.igst); doc.text(fit(nice(x.date) + '   ' + (x.shop || '') + '   ' + x.item + '   Rs ' + money(x.amount) + (x.gstin ? '   GSTIN ' + x.gstin : '') + (g ? '   Taxable ' + money(x.taxable) + '  CGST ' + money(x.cgst) + '  SGST ' + money(x.sgst) + (x.igst ? '  IGST ' + money(x.igst) : '') : ''), 180), M + 3, y + 11.5); y += 18;
             if (!u) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be opened.', M, y + 8); return nextPh(); }
             return imgSize(u).then(function (sz) { if (!sz) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be opened.', M, y + 8); return nextPh(); }
-              var mw = 186, mh = Ht - y - 36, sc = Math.min(mw / sz[0], mh / sz[1]), w = sz[0] * sc, hh = sz[1] * sc; try { doc.addImage(u, /png/.test(u.slice(0, 30)) ? 'PNG' : 'JPEG', M + (mw - w) / 2, y, w, hh, undefined, 'FAST'); } catch (er) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be placed on the page.', M, y + 8); } return nextPh(); }); }
+              var mw = 186, mh = Ht - y - 46, sc = Math.min(mw / sz[0], mh / sz[1]), w = sz[0] * sc, hh = sz[1] * sc; try { doc.addImage(u, /png/.test(u.slice(0, 30)) ? 'PNG' : 'JPEG', M + (mw - w) / 2, y, w, hh, undefined, 'FAST'); } catch (er) { doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text('The photo of this bill could not be placed on the page.', M, y + 8); } return nextPh(); }); }
           return nextPh(); }, function () { for (var j = 0; j < x.photos; j++) { doc.addPage(); doc.setTextColor(120, 30, 30); doc.setFontSize(10); doc.text(lat('Expense no. ' + x.id + ': the bill photo could not be fetched.'), M, M + 8); } return nextExp(); }); }
       return nextExp(); }
     note.textContent = 'Getting ready…'; Promise.all([tool(), signLoad()]).then(one, function () { finish('The PDF maker could not be loaded. Check the internet and try again.'); });
