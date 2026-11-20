@@ -260,6 +260,7 @@ function deskCore(db, hooks) {
       v.phone = b.phone; v.email = b.email; v.rate = b.rate; v.total = b.total; v.advanceDue = b.advanceDue; v.advanceSet = Number(b.advanceSet) > 0; v.advancePaid = b.advancePaid; v.refunded = b.refunded; v.notes = b.notes;
       v.payments = bookingPays(b.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: p.note, by: p.by }; }).reverse();
       if (b.status === 'Checked in') { var bu = checkinUndoList(b, true); v.undoIn = checkinUndoBlock(bu) || 'ok'; v.undoInRooms = bu.list.map(function (x) { return Number(x.room); }).sort(function (a, c) { return a - c; }); }
+      if (b.status === 'No-show' && stmtKey(b)) v.stmtUrl = DESK_STMT_URL + stmtKey(b);
       v.refundable = b.status === 'Confirmed' && daysBefore(b) >= DESK_POLICY.freeCancelDays ? Number(b.advancePaid || 0) - Number(b.refunded || 0) : 0;
     }
     return v;
@@ -678,13 +679,28 @@ function deskCore(db, hooks) {
     dealMemo = { day: t, at: now, pm: ist().getUTCHours() >= DEAL_AFTER, deal: deal }; return deal;
   }
   function rateNow(type, ymd) { var r = deskRateOn(type, ymd); if (ymd !== today()) return r; var d = tonightDeal(); return d ? Math.min(r, d[/large/i.test(String(type || '')) ? 'double' : /twin/i.test(String(type || '')) ? 'twin' : 'double']) : r; }
+  /* The no-show statement lives online, like a bill: www.nikadiguesthouse.com/bill/?s=<secret key>. The key is made when the booking is marked
+     as a no-show (or the first time the desk asks for the link) and kept in the settings, so the link in the WhatsApp message always works. */
+  var DESK_STMT_URL = DESK_BILL_URL.replace('?id=', '?s=');
+  function stmtKeys() { var m = {}; try { m = JSON.parse(cfgGet('stmtKeys') || '{}') || {}; } catch (e) { m = {}; } return m; }
+  function stmtKey(b, make) {
+    var m = stmtKeys(); if (m[b.id] || !make) return m[b.id] || '';
+    var k = ''; while (k.length < 22) k += Math.random().toString(36).slice(2); k = k.slice(0, 22).toUpperCase();
+    m[b.id] = k; cfgSet('stmtKeys', JSON.stringify(m)); return k;
+  }
+  function stmtData(b) {
+    return { no: b.id, date: today(), closed: String(b.closedAt || '').slice(0, 10), guest: { name: b.guest, phone: b.phone ? '+91 ' + String(waPhone(b.phone)).slice(-10) : '', email: b.email || '' },
+      checkin: b.checkin, checkout: b.checkout, nights: Number(b.nights), rooms: roomList(b.rooms), roomType: b.roomType, guests: Number(b.guests), rate: Number(b.rate || 0), total: Number(b.total || 0),
+      paid: Number(b.advancePaid || 0), refunded: Number(b.refunded || 0), policy: DESK_POLICY.text,
+      payments: bookingPays(b.id).map(function (p) { return { date: String(p.at).slice(0, 10), method: p.method, ref: p.ref, amount: Number(p.amount) }; }) };
+  }
   /* WhatsApp text for a no-show: what was booked, what was paid, what was still due, and that the advance is kept under the policy */
   function noShowText(b, sal) {
     var paid = Number(b.advancePaid || 0), back = Number(b.refunded || 0), kept = Math.max(0, paid - back), total = Number(b.total || 0), bal = Math.max(0, total - paid), n = roomList(b.rooms).length || Number(b.roomsNeeded || 1);
     return sal + ', Hare Krishna! We kept ' + (n > 1 ? n + ' rooms' : 'your room') + ' ready at Nikadi Guest House for your booking ' + b.id + ' (' + dd(b.checkin) + ' to ' + dd(b.checkout) + '), but you did not arrive on the check-in day, so the booking has been closed as a no-show.\n\n' +
       'Booking statement\nBooking total: ' + rupees(total) + '\nAdvance received: ' + rupees(paid) + (back > 0 ? '\nRefunded to you: ' + rupees(back) : '') + '\nBalance that was due at check-in: ' + rupees(bal) + ' (no longer payable)\n\n' +
       (kept > 0 ? 'As per our cancellation policy, shared when you booked, the advance of ' + rupees(kept) + ' is not refundable for a no-show and cannot be moved to another date.\n' : '') +
-      'We are sending the booking statement with this message. We hope to welcome you in Sri Dham Mayapur another time: for a new booking, just message us here.\nNikadi Guest House · +91 75011 01137';
+      (stmtKey(b) ? '📄 See or download your booking statement: ' + DESK_STMT_URL + stmtKey(b) + '\n' : '') + 'We hope to welcome you in Sri Dham Mayapur another time: for a new booking, just message us here.\nNikadi Guest House · +91 75011 01137';
   }
   function quoteOf(type, ci, co, rooms) { var tot = 0, d = ci; for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { tot += rateNow(type, d); d = addDays(d, 1); } return tot * Math.max(1, rooms || 1); }
   function enqMsgs(o) {
@@ -2087,6 +2103,22 @@ function deskCore(db, hooks) {
     return {};
   };
 
+  /* Front desk: the online statement link for a no-show booking (made now if this booking has none yet) */
+  api.noShowLink = function (req) {
+    var me = auth(req); needMgr(me);
+    var b = find('bookings', 'id', req.id) || fail('no_booking');
+    if (b.status !== 'No-show') fail('booking_closed');
+    return { url: DESK_STMT_URL + stmtKey(b, true), booking: bookingView(b, me) };
+  };
+  /* Public: the guest opens the statement link. Only the secret key opens it, and only while the booking is a no-show. */
+  api.statementView = function (req) {
+    var key = String(req.id || '');
+    if (!/^[A-Z0-9]{20,40}$/.test(key)) fail('no_bill');
+    var m = stmtKeys(), bid = Object.keys(m).filter(function (k) { return m[k] === key; })[0];
+    var b = bid ? find('bookings', 'id', bid) : null;
+    if (!b || b.status !== 'No-show') fail('no_bill');
+    return { statement: stmtData(b) };
+  };
   api.billView = function (req) {
     var key = String(req.id || '');
     if (!/^[A-Za-z0-9]{12,40}$/.test(key)) fail('no_bill');
@@ -2922,6 +2954,7 @@ function deskCore(db, hooks) {
     if (b.status !== 'Confirmed') fail('booking_closed');
     if (b.checkin > today()) fail('not_arrival_day');
     db.set('bookings', b, { status: 'No-show', closedBy: me.name, closedAt: stamp(), closeNote: text('No-show · advance ₹' + b.advancePaid + ' kept (policy) ' + text(req.reason, 120), 300) });
+    stmtKey(b, true);
     return { booking: bookingView(b, me) };
   };
 

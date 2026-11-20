@@ -25,8 +25,8 @@
 </div>
 <script>var NIKADI_API_URL = "https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api";</script>
 <script src="../staff/qr.js"></script>
-<script src="../staff/bill.js?v=53"></script>
-<script src="../staff/billpdf.js"></script>
+<script src="../staff/bill.js?v=93"></script>
+<script src="../staff/billpdf.js?v=93"></script>
 <script>
 (function () {
   var q = new URLSearchParams(location.search), id = (q.get('id') || '').trim();
@@ -50,6 +50,26 @@
       }
     };
     if (document.readyState === 'complete') go(); else window.addEventListener('load', function () { setTimeout(go, 0); });
+  }
+  /* ?s=<key>: a booking statement (a no-show: the advance received and why it is kept), in the same style as a bill */
+  var sk = (q.get('s') || '').trim();
+  function showStatement(d) {
+    var html = NikadiBill.noShowHTML(d, { toolbar: true, logo: '../img/brand/logo.png' });
+    window.nikadiPdf = function (btn) {
+      var t = btn.textContent; btn.textContent = 'Making PDF…'; btn.disabled = true;
+      NikadiBillPdf.make(d, { base: '../staff/', title: 'Booking statement', name: 'Nikadi-Booking-statement-' + d.no + '.pdf', html: function (o) { return NikadiBill.noShowHTML(d, o); } })
+        .then(function (r) { btn.textContent = t; btn.disabled = false; NikadiBillPdf.download(r); }, function () { btn.textContent = t; btn.disabled = false; window.print(); });
+    };
+    var go = function () { document.open(); document.write(html); document.close(); };
+    if (document.readyState === 'complete') go(); else window.addEventListener('load', function () { setTimeout(go, 0); });
+  }
+  if (sk) {
+    if (!/^[A-Z0-9]{20,40}$/.test(sk)) return fail('Statement not found', 'This link is incomplete. Please use the link we sent you.');
+    document.querySelector('#msg h1').textContent = 'Opening your statement…';
+    return void fetch(NIKADI_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'deskStatementView', id: sk }), redirect: 'follow' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.ok && j.statement) showStatement(j.statement); else fail('Statement not found', 'We could not find a statement for this link. Please check the latest link we sent you.'); },
+        function () { fail('Could not open the statement', 'Please check your internet connection and try again.'); });
   }
   if (q.get('demo') === '1') return show(SAMPLE());
   if (!/^[A-Za-z0-9]{12,40}$/.test(id)) return fail('Bill not found', 'This link is incomplete. Please scan the QR code on your bill again, or use the link we sent you.');

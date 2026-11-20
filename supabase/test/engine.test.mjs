@@ -227,3 +227,22 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
     if (u3.ok || (bi.ok && !bi2.ok)) throw new Error('undo check-in guards broken');
   }
 }
+// ---- no-show: message with the statement link, public statement ----
+{
+  const st = await call('deskState', { token: tok });
+  const ready = st.rooms.filter(r => r.status === 'Ready').map(r => r.room);
+  if (ready.length) {
+    const t0 = st.today, t2 = new Date(Date.parse(t0) + 2 * 864e5).toISOString().slice(0, 10);
+    const bc = await call('deskBookingCreate', { token: tok, guest: 'Noshow Test', phone: '9876500022', guests: 2, roomsNeeded: 1, roomType: st.rooms.find(r => r.room === ready[0]).type, checkin: t0, checkout: t2, rate: 12000, rooms: [ready[0]] });
+    const bid = bc.booking.id;
+    await call('deskBookingConfirm', { token: tok, id: bid, amount: 10000, method: 'UPI', ref: 'UTR123', rooms: [ready[0]] });
+    const ns = await call('deskBookingNoShow', { token: tok, id: bid });
+    const url = ns.booking && ns.booking.stmtUrl, key = url && url.split('?s=')[1];
+    const pub = await call('deskStatementView', { id: key });
+    const bad = await call('deskStatementView', { id: 'AAAAAAAAAAAAAAAAAAAAAA' });
+    const kit = await call('deskWaKit', { token: tok });
+    const g = (kit.enq || []).find(x => x.booking === bid), msg = g && g.msgs.find(m => m.kind === 'noshow');
+    console.log('no-show', ns.ok || ns.error, 'url', url, '| public', pub.ok || pub.error, pub.statement && [pub.statement.total, pub.statement.paid, pub.statement.payments.length].join('/'), '| bad key', bad.error, '| msg has link', !!(msg && msg.text.includes(url)), '\n' + (msg ? msg.text : ''));
+    if (!pub.ok || pub.statement.total !== 24000 || pub.statement.paid !== 10000 || bad.ok || !msg || !msg.text.includes(url)) throw new Error('no-show statement broken');
+  }
+}

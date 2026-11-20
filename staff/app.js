@@ -2250,8 +2250,8 @@
     if (b.status === 'No-show') {
       var kept = Math.max(0, b.advancePaid - b.refunded);
       h += '<div class="bstat k-bad"><span><b>Guest did not come.</b> ' + (kept > 0 ? 'The advance of ' + inr(kept) + ' is with us and is not refundable (cancellation policy). ' : 'No advance is held. ') + 'The balance of ' + inr(Math.max(0, b.total - b.advancePaid)) + ' is no longer due.</span></div>' +
-        '<div class="btns">' + (b.phone ? '<button class="btn btn-line" id="k-wns" type="button">WhatsApp: no-show message</button>' : '') + '<button class="btn btn-line" id="k-nspdf" type="button">Booking statement (PDF)</button></div>' +
-        '<p class="small">Send the WhatsApp message first, then share the statement PDF in the same chat. On a phone the PDF button opens the share list; on a computer it downloads the file.</p>';
+        '<div class="btns">' + (b.phone ? '<button class="btn btn-gold" id="k-wns" type="button">WhatsApp: no-show message + statement</button>' : '') + '<button class="btn btn-line" id="k-nspdf" type="button">View the statement</button></div>' +
+        '<p class="small">The WhatsApp message carries a link to the booking statement, so nothing has to be downloaded: the guest taps the link to see it or save it as a PDF.</p>';
     }
     if ((b.status === 'Cancelled' || b.status === 'No-show') && b.advancePaid - b.refunded > 0) h += '<div class="btns"><button class="btn btn-quiet" id="k-ref" type="button">Refund money (' + inr(b.advancePaid - b.refunded) + ' kept)</button></div>';
     if (b.payments.length) h += '<p class="small">Tap a payment to correct a mistake.' + (rcp() ? ' Changes go to the manager for approval.' : '') + '</p>';
@@ -2261,28 +2261,10 @@
     if (q('#k-conf')) q('#k-conf').onclick = function () { openConfirm(b, body); };
     if (q('#k-wadv')) q('#k-wadv').onclick = function () { WK.open = b.id; openWaSend('enq'); };
     if (q('#k-wcan')) q('#k-wcan').onclick = function () { WK.open = b.id; openWaSend('enq'); };
-    if (q('#k-wns')) q('#k-wns').onclick = function () { WK.open = b.id; openWaSend('enq'); };
-    if (q('#k-nspdf')) q('#k-nspdf').onclick = function () {
-      var x = this, d = { no: b.id, date: S.st.today, closed: String(b.closedAt || '').slice(0, 10), guest: { name: b.guest, phone: b.phone ? nkPhoneShow(b.phone) : '', email: b.email || '' }, checkin: b.checkin, checkout: b.checkout, nights: b.nights,
-        rooms: b.rooms, roomType: b.roomType, guests: b.guests, rate: b.rate, total: b.total, paid: b.advancePaid, refunded: b.refunded, policy: S.st.policy.text,
-        payments: (b.payments || []).slice().reverse().map(function (p) { return { date: String(p.at).slice(0, 10), method: p.method, ref: p.ref, amount: p.amount }; }) };
-      busy(x, true);
-      NikadiBillPdf.make(d, { base: '', title: 'Booking statement', name: 'Nikadi-No-show-statement-' + b.id + '.pdf', html: function (o) { return NikadiBill.noShowHTML(d, o); } }).then(function (r) {
-        busy(x, false);
-        return NikadiBillPdf.share(r, 'Booking statement ' + b.id + ' · Nikadi Guest House').then(function (ok) { if (ok !== true && ok !== 'cancel') { NikadiBillPdf.download(r); toast('Statement PDF downloaded'); } });
-      }, function (e) { busy(x, false); toast(errText(e)); });
-    };
-    if (open && mgr() && !b.comp) q('#k-adv').onclick = function () { openAdvance(b, body); };
-    if (q('#k-edit')) q('#k-edit').onclick = function () { openBookingForm(b, body); };
-    if (q('#k-cancel')) q('#k-cancel').onclick = function () { openCancel(b, body); };
-    if (q('#k-pay')) q('#k-pay').onclick = function () { openBookingPay(b, body); };
-    if (q('#k-ref')) q('#k-ref').onclick = function () { openRefund('booking', b, body); };
-    $$('[data-pay]', body).forEach(function (row) { row.onclick = function () { var p = b.payments.filter(function (x) { return x.id === row.dataset.pay; })[0]; if (p) openVoid(p, 'booking', body); }; });
-    if (q('#k-in')) q('#k-in').onclick = function () {
-      var x = this; busy(x, true);
-      api('deskBookingCheckIn', { id: b.id }).then(function (r) { vibrate(); toast(b.guest + ' checked in to room ' + b.rooms.join(', ')); after(sheets.length); void r; },
-        function (e) { busy(x, false); toast(errText(e)); });
-    };
+    /* the statement is online (like a bill): make sure this booking has its link, then open the ready message, which carries it */
+    function nsLink(x, then) { if (b.stmtUrl) return then(b.stmtUrl); busy(x, true); api('deskNoShowLink', { id: b.id }).then(function (r) { busy(x, false); b.stmtUrl = r.url; WK.data = null; then(r.url); }, function (e) { busy(x, false); toast(errText(e)); }); }
+    if (q('#k-wns')) q('#k-wns').onclick = function () { nsLink(this, function () { WK.open = b.id; openWaSend('enq'); }); };
+    if (q('#k-nspdf')) q('#k-nspdf').onclick = function () { var w = window.open('', '_blank'); nsLink(this, function (u) { if (w) w.location = u; else location.href = u; }); };
     if (q('#b-undoin')) q('#b-undoin').onclick = function () { openUndoCheckin({ booking: b.id }, b.guest, b.undoInRooms || b.rooms, true, 2); };
     if (q('#k-ns')) q('#k-ns').onclick = function () {
       var x = this;
