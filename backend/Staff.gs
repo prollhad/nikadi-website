@@ -3421,7 +3421,8 @@ function deskCore(db, hooks) {
     email: 'nikadiguesthouse@gmail.com',
     web: 'www.nikadiguesthouse.com',
     logo: 'https://www.nikadiguesthouse.com/img/brand/logo.png',
-    sign: 'https://www.nikadiguesthouse.com/img/brand/signature.png'
+    sign: 'https://www.nikadiguesthouse.com/img/brand/signature.png',
+    paid: 'https://www.nikadiguesthouse.com/img/brand/paid.png'
   };
   /* Government codes. Rooms: SAC 996311 "Room or unit accommodation services" (5% GST up to ₹7,500 a night). */
   var ROOM_HSN = '996311', ROOM_GST = 5;
@@ -3564,7 +3565,9 @@ function deskCore(db, hooks) {
       '<section class="split">' +
         '<div class="taxbox"><div class="lbl">GST summary (included in the total)</div><div class="tbl-wrap"><table class="tax"><thead><tr><th>HSN / SAC</th><th class="r">Taxable value</th><th class="c">CGST</th><th class="r">CGST amt</th><th class="c">SGST</th><th class="r">SGST amt</th><th class="r">Total tax</th><th class="r">Amount</th></tr></thead>' +
           '<tbody>' + taxRows + '</tbody><tfoot><tr><td>Total</td><td class="r">' + num(c.taxable) + '</td><td></td><td class="r">' + num(c.cgst) + '</td><td></td><td class="r">' + num(c.sgst) + '</td><td class="r">' + num(c.gstTotal) + '</td><td class="r">' + num(c.total) + '</td></tr></tfoot></table></div>' +
-          '<div class="small">IGST ₹0.00 · Cess ₹0.00 · Tax payable on reverse charge: No</div></div>' +
+          '<div class="small">IGST ₹0.00 · Cess ₹0.00 · Tax payable on reverse charge: No</div>' +
+          /* the PAID stamp: only on a settled bill that has money on it, never on a free stay */
+          (settled && c.total > 0.5 ? '<img class="paidimg" alt="Paid" src="' + esc(opt.paid || HOTEL.paid) + '">' : '') + '</div>' +
         '<div class="totals">' +
           '<div class="srow"><span>Room charges</span><span>' + num(c.roomGross) + '</span></div>' +
           (c.disc ? '<div class="srow"><span>Less: discount</span><span>' + num(-c.disc) + '</span></div>' : '') +
@@ -3573,7 +3576,6 @@ function deskCore(db, hooks) {
           '<div class="srow"><span>Amount received</span><span>' + num(-c.paid) + '</span></div>' +
           (c.refunded ? '<div class="srow"><span>Refunded</span><span>' + num(c.refunded) + '</span></div>' : '') +
           '<div class="srow bal' + (settled ? ' ok' : '') + '"><span>' + (settled ? 'Balance' : c.due > 0 ? 'Balance payable' : 'Refundable to guest') + '</span><span>₹' + num(Math.abs(c.due)) + '</span></div>' +
-          (settled ? '<div class="stamp">Paid</div>' : '') +
           '<div class="words"><b>Amount in words:</b> Indian Rupees ' + words(c.total) + ' Only</div>' +
         '</div>' +
       '</section>' +
@@ -3599,7 +3601,7 @@ function deskCore(db, hooks) {
       '</div></body></html>';
   }
 
-  var PRINT = ['.wm{top:150px;width:72%}body{background:#fff;font-size:9.5px;line-height:1.3}.incl{margin-top:3px}.parties .kv.sm{margin-top:3px}.small{margin-top:3px}.decl p{font-size:9px}.foot{font-size:9px;line-height:1.45}.foot .thanks{font-size:10.5px;margin-top:3px}.words{margin-top:5px}.stamp{margin-top:5px}.top{gap:14px;padding-bottom:10px}.logo{width:120px}.qr-svg{width:96px;height:96px}.doc h1{font-size:18px}.parties{padding:10px 0;gap:18px}.who{font-size:11.5px}.lines{margin-top:10px}.lines td{padding:5px 6px}.lines th{padding:6px}.split{margin-top:10px}.tax td,.tax th,.ptab td,.ptab th{padding:3px 5px}.pays,.member,.decl{margin-top:10px}.sign{margin-top:8px}.sign .line{margin-top:2px}.sign .sig{width:185px}.foot>div:first-child{display:none}.stamp{display:none}.srow.tot{margin:3px 0}.srow.bal{margin-top:3px;padding:4px 6px}.lines tfoot td{padding:5px 6px}.kv th,.kv td,.kv td.colon{padding-top:0;padding-bottom:0}.party{line-height:1.35}.tax td,.tax th{padding:2px 5px}.ptab td,.ptab th{padding:2px 5px}.srow{padding:1px 0}.lines td{padding:4px 6px}.qr span{font-size:8px}.decl p{line-height:1.35}.split{gap:14px}.foot{margin-top:12px;padding-top:8px}.member{padding:6px 10px}.totals{padding:6px 10px}.srow{padding:2px 0}.srow.tot{font-size:13px;padding:5px 0}section,.totals,.taxbox,table{break-inside:avoid}.toolbar{display:none}.sheet{box-shadow:none;margin:0;max-width:none;padding:0;border-top-width:4px}',
+  var PRINT = ['.paidimg{width:66px;height:66px;margin-top:4px}.wm{top:150px;width:72%}body{background:#fff;font-size:9.5px;line-height:1.3}.incl{margin-top:3px}.parties .kv.sm{margin-top:3px}.small{margin-top:3px}.decl p{font-size:9px}.foot{font-size:9px;line-height:1.45}.foot .thanks{font-size:10.5px;margin-top:3px}.words{margin-top:5px}.stamp{margin-top:5px}.top{gap:14px;padding-bottom:10px}.logo{width:120px}.qr-svg{width:96px;height:96px}.doc h1{font-size:18px}.parties{padding:10px 0;gap:18px}.who{font-size:11.5px}.lines{margin-top:10px}.lines td{padding:5px 6px}.lines th{padding:6px}.split{margin-top:10px}.tax td,.tax th,.ptab td,.ptab th{padding:3px 5px}.pays,.member,.decl{margin-top:10px}.sign{margin-top:8px}.sign .line{margin-top:2px}.sign .sig{width:185px}.foot>div:first-child{display:none}.stamp{display:none}.srow.tot{margin:3px 0}.srow.bal{margin-top:3px;padding:4px 6px}.lines tfoot td{padding:5px 6px}.kv th,.kv td,.kv td.colon{padding-top:0;padding-bottom:0}.party{line-height:1.35}.tax td,.tax th{padding:2px 5px}.ptab td,.ptab th{padding:2px 5px}.srow{padding:1px 0}.lines td{padding:4px 6px}.qr span{font-size:8px}.decl p{line-height:1.35}.split{gap:14px}.foot{margin-top:12px;padding-top:8px}.member{padding:6px 10px}.totals{padding:6px 10px}.srow{padding:2px 0}.srow.tot{font-size:13px;padding:5px 0}section,.totals,.taxbox,table{break-inside:avoid}.toolbar{display:none}.sheet{box-shadow:none;margin:0;max-width:none;padding:0;border-top-width:4px}',
     '.top{grid-template-columns:1fr auto 1.25fr}.parties{grid-template-columns:1fr 1fr}.split{grid-template-columns:1fr 250px}',
     '.lines th,.srow.bal,.lines tfoot td,.tax th,.ptab th,.member{-webkit-print-color-adjust:exact;print-color-adjust:exact}'].join('');
 
@@ -3637,6 +3639,7 @@ function deskCore(db, hooks) {
     '.srow{display:flex;justify-content:space-between;gap:10px;padding:4px 0;color:#3d474b}',
     '.srow.tot{border-top:1.5px solid #1d2326;border-bottom:1.5px solid #1d2326;margin:6px 0;padding:8px 0;font-size:15px;font-weight:800;color:#1d2326}',
     '.srow.bal{font-weight:700;color:#1d2326;background:#f2f5f6;margin:6px -6px 0;padding:7px 6px}.srow.bal.ok{background:#e8f3ee;color:#1e6b46}',
+    '.paidimg{display:block;width:84px;height:84px;margin:8px 14px 0 auto;transform:rotate(-7deg);opacity:.9}',
     '.stamp{margin:10px 0 0 auto;width:max-content;border:2px solid #1e6b46;color:#1e6b46;padding:2px 16px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;font-size:12px;transform:rotate(-4deg);border-radius:3px}',
     '.words{font-size:11px;color:#3d474b;margin-top:10px;line-height:1.4}',
     '.pays{margin-top:18px}.ptab th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:#3d474b;background:#f2f5f6;padding:6px;border-bottom:1px solid #cfd6d9}',
