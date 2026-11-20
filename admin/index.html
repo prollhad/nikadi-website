@@ -92,7 +92,7 @@ input.in{font:inherit;color:var(--ink);background:var(--panel-2);border:1px soli
     return '<div class="rows">'+a.slice(0,max||10).map(function(x){return '<div class="row"><span class="t">'+esc(name(x[0]))+'</span><span class="v">'+num(x[1])+' · '+Math.round(x[1]/tot*100)+'%</span><span class="m"><i style="width:'+Math.max(2,x[1]/top*100)+'%"></i></span></div>';}).join('')+'</div>';}
   function merge(a,name){var o={};a.forEach(function(x){var k=name(x[0]);o[k]=(o[k]||0)+x[1];});return Object.keys(o).map(function(k){return [k,o[k]];}).sort(function(x,y){return y[1]-x[1];});}
 
-  function errOf(e){return e==='wrong_login'?'The user name or password is not right.':e==='wrong_pin'?'That PIN is not right.':e==='too_many_attempts'?'Too many wrong tries. Wait 15 minutes.':e==='bad_user'?'User name: 3 to 30 letters or numbers, no spaces.':e==='bad_pass'?'Password: at least 8 characters.':e==='not_allowed'?'Only the owner can do this.':'Could not do that ('+e+').';}
+  function errOf(e){return e==='wrong_login'?'The user name or password is not right.':e==='wrong_pin'?'That PIN is not right.':e==='too_many_attempts'?'Too many wrong tries. Wait 15 minutes.':e==='bad_user'?'User name: 3 to 30 letters or numbers, no spaces.':e==='bad_pass'?'Password: at least 4 characters.':e==='not_allowed'?'Only the owner can do this.':'Could not do that ('+e+').';}
   function shell(inner){clearInterval(timer);app.innerHTML='<div class="login"><p class="kick">Nikadi Guest House</p><h1>Website admin</h1>'+inner+'</div>';}
   function login(msg){
     shell('<p class="muted">Sign in to see the website figures.</p><div class="card"><form id="lf"><input class="in" id="au" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" placeholder="User name" style="max-width:none;margin-bottom:10px">'+
@@ -107,7 +107,7 @@ input.in{font:inherit;color:var(--ink);background:var(--panel-2);border:1px soli
     shell('<p class="muted">'+(first?'First time: choose the user name and password for this page.':'Choose a new user name and password for this page.')+' Only the owner can do this.</p><div class="card"><form id="sf">'+
       '<input class="in" id="spin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="Your staff app PIN (owner)" style="max-width:none;margin-bottom:10px">'+
       '<input class="in" id="su" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" placeholder="New user name" style="max-width:none;margin-bottom:10px">'+
-      '<input class="in" id="sp" type="password" autocomplete="new-password" maxlength="64" placeholder="New password (8 characters or more)" style="max-width:none;margin-bottom:10px">'+
+      '<input class="in" id="sp" type="password" autocomplete="new-password" maxlength="64" placeholder="New password" style="max-width:none;margin-bottom:10px">'+
       '<input class="in" id="sp2" type="password" autocomplete="new-password" maxlength="64" placeholder="Password again" style="max-width:none;margin-bottom:10px">'+
       '<p class="err" id="serr" role="alert"></p><button class="btn btn-gold" type="submit" style="width:100%">Save and open</button></form></div><p class="small" style="margin-top:14px"><button class="btn" id="bk" type="button">Back to sign in</button></p>');
     document.getElementById('bk').onclick=function(){login();};

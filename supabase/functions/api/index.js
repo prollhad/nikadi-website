@@ -4773,7 +4773,7 @@ function deskCore(db, hooks) {
     if (!hooks.hash) fail('not_ready');
     var user = String(req.user || '').trim(), pass = String(req.pass || '');
     if (!/^[A-Za-z0-9._\-]{3,30}$/.test(user)) fail('bad_user');
-    if (pass.length < 8 || pass.length > 64) fail('bad_pass');
+    if (pass.length < 4 || pass.length > 64) fail('bad_pass');
     var salt = id('S') + Math.random().toString(36).slice(2);
     cfgSet('adminLogin', JSON.stringify({ user: user, salt: salt, hash: admHash(salt, pass), at: stamp() }));
     return { user: user };
