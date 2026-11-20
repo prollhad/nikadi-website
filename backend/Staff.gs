@@ -265,6 +265,7 @@ function deskCore(db, hooks) {
     if (mgr) {
       v.phone = b.phone; v.email = b.email; v.rate = b.rate; v.total = b.total; v.advanceDue = b.advanceDue; v.advanceSet = Number(b.advanceSet) > 0; v.advancePaid = b.advancePaid; v.refunded = b.refunded; v.notes = b.notes;
       v.payments = bookingPays(b.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: p.note, by: p.by }; }).reverse();
+      if (b.status === 'Checked in') { var bu = checkinUndoList(b, true); v.undoIn = checkinUndoBlock(bu) || 'ok'; v.undoInRooms = bu.list.map(function (x) { return Number(x.room); }).sort(function (a, c) { return a - c; }); }
       v.refundable = b.status === 'Confirmed' && daysBefore(b) >= DESK_POLICY.freeCancelDays ? Number(b.advancePaid || 0) - Number(b.refunded || 0) : 0;
     }
     return v;
@@ -430,6 +431,7 @@ function deskCore(db, hooks) {
       v.payments = paymentsOf(s.id).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, note: p.note, by: p.by, ref: p.ref }; }).reverse();
       v.booking = s.booking;
       if (s.status === 'Checked out') { var ub = undoBlock(s); v.undo = ub === 'undo_too_late' ? '' : ub || 'ok'; }
+      if (s.status === 'In house') { var cu = checkinUndoList(s, false); v.undoIn = checkinUndoBlock(cu) || 'ok'; v.undoInRooms = cu.list.map(function (x) { return Number(x.room); }).sort(function (a, c) { return a - c; }); }
       v.ids = idCount(db.all('guestids').filter(function (x) { return x.stay === s.id && !x.removed; }));
       var ar = find('archive', 'stay', s.id); if (canApprove(me) && ar && ar.folder) v.drive = 'https://drive.google.com/drive/folders/' + ar.folder;
       v.advancePays = s.booking ? bookingPays(s.booking).filter(function (p) { return Number(p.amount) > 0; }).map(function (p) { return { id: p.id, at: p.at, amount: p.amount, method: p.method, ref: p.ref, note: 'Advance · booking ' + s.booking }; }) : [];
@@ -583,7 +585,7 @@ function deskCore(db, hooks) {
     waQueue('welcome', s.phone, s.guest, s.id);
     if (s.waOffers === 'Yes' && firstVisit(s) && !memberOf(s.phone)) waQueue('membership', s.phone, s.guest, s.id, plusHours(stamp(), 0.05)); // first stay with us, not yet a member
   }
-  function firstVisit(s) { return !db.all('stays').some(function (x) { return x.id !== s.id && x.phone === s.phone && x.checkin <= s.checkin; }); }
+  function firstVisit(s) { return !db.all('stays').some(function (x) { return x.id !== s.id && x.status !== 'Reversed' && x.phone === s.phone && x.checkin <= s.checkin; }); }
   function waParams(m) {
     if (m.kind === 'welcome' || m.kind === 'membership') {
       var s = find('stays', 'id', m.ref); if (!s) throw new Error('stay_gone');
@@ -1512,6 +1514,7 @@ function deskCore(db, hooks) {
     var list = db.all('stays').filter(function (s) {
       if (q) return (String(s.guest).toLowerCase().indexOf(q) >= 0 || String(s.phone).indexOf(q) >= 0 || String(s.room) === q);
       return s.status === 'In house' || (s.checkout >= since);
+    }).filter(function (s) { return s.status !== 'Reversed';
     }).sort(function (a, b) { return (a.status === 'In house') !== (b.status === 'In house') ? (a.status === 'In house' ? -1 : 1) : a.status === 'In house' ? Number(a.room) - Number(b.room) : (a.checkout < b.checkout ? 1 : -1); });
     return { list: list.slice(0, 80).map(idStayView), slots: ID_SLOTS };
   };
@@ -1755,6 +1758,47 @@ function deskCore(db, hooks) {
     if (db.all('stays').some(function (x) { return x.id !== s.id && Number(x.room) === Number(s.room) && x.status === 'In house'; })) return 'room_taken';
     return '';
   }
+  /* ---- Reverse a check-in made by mistake (e.g. an advance booking checked in before the guest came) ----
+     From a room, or from the booking. A booking's rooms always go back together: every room becomes Ready again, the booking is Confirmed again
+     (its advance stays on the booking), and the free welcome items go back to stock. The mistaken stays are kept as "Reversed" for the record.
+     Not allowed once money has been taken in the room or anything has been put on the bill: those must be corrected first. */
+  function checkinUndoList(sOrB, isBooking) {
+    var b = isBooking ? sOrB : (sOrB.booking ? find('bookings', 'id', sOrB.booking) : null);
+    var list = b ? db.all('stays').filter(function (x) { return x.booking === b.id && x.status === 'In house'; }) : [sOrB];
+    return { b: b, list: list };
+  }
+  function checkinUndoBlock(u) {
+    if (!u.list.length || u.list.some(function (x) { return x.status !== 'In house'; })) return 'not_in_house';
+    if (u.b && u.b.status !== 'Checked in') return 'not_checked_in';
+    if (u.b && db.all('stays').some(function (x) { return x.booking === u.b.id && x.status === 'Checked out'; })) return 'undo_some_left';
+    if (u.list.some(function (x) { return paymentsOf(x.id).some(function (p) { return p.method !== FROM_ADV; }); })) return 'undo_has_money';
+    if (u.list.some(function (x) { return chargesOf(x.id).some(function (c) { return c.free !== 'Yes'; }); })) return 'undo_has_items';
+    return '';
+  }
+  api.undoCheckin = function (req) {
+    var me = auth(req); needMgr(me);
+    var u = req.booking ? checkinUndoList(find('bookings', 'id', String(req.booking)) || fail('no_booking'), true) : checkinUndoList(stay(req.id), false);
+    var why = checkinUndoBlock(u); if (why) fail(why);
+    var reason = text(req.reason, 200); if (!reason) fail('reason_required');
+    var rooms = u.list.map(function (x) { return Number(x.room); }).sort(function (a, c) { return a - c; });
+    var g = gate(me, 'undoCheckin', req, (u.b ? 'Booking ' + u.b.id + ' · ' + u.b.guest : u.list[0].guest) + ': reverse the check-in, room ' + rooms.join(', ') + ' back to Ready');
+    if (g) return g;
+    var by = who(me, req), mark = 'Check-in reversed by ' + by + ' ' + stamp();
+    u.list.forEach(function (x) {
+      chargesOf(x.id).forEach(function (c) { // only free lines can be here: water, welcome kit, extra bedding
+        var it = find('items', 'item', c.item); if (it) moveStock(it, Number(c.qty), 'Check-in reversed', x.room, me.name);
+        if (c.note === DESK_EXTRA_NOTE) { var li = linenItem(c.item); if (li) linenMove(li, Number(c.qty), 'rooms', 'store', 'Check-in reversed', x.room, me.name); }
+        db.set('charges', c, { removed: mark });
+      });
+      paymentsOf(x.id).forEach(function (p) { db.set('payments', p, { voided: mark }); }); // only the advance carried over from the booking: it stays on the booking
+      db.all('wa').forEach(function (m) { if (m.ref === x.id && m.status === 'Waiting') db.set('wa', m, { status: 'Cancelled', info: 'Check-in reversed' }); });
+      db.set('stays', x, { status: 'Reversed', booking: '', outBy: me.name, outAt: stamp(), roomTotal: 0, extras: 0, paid: 0, balance: 0,
+        notes: text((x.notes ? x.notes + ' · ' : '') + mark + (u.b ? ' (booking ' + u.b.id + ')' : '') + ': ' + reason, 1000) });
+      var r = find('rooms', 'room', x.room); if (r && r.stay === x.id) db.set('rooms', r, { status: 'Ready', stay: '', updated: stamp(), by: me.name });
+    });
+    if (u.b) { db.set('bookings', u.b, { status: 'Confirmed', closedBy: '', closedAt: '', closeNote: '', notes: text((u.b.notes ? u.b.notes + ' · ' : '') + mark + ': ' + reason, 1000) }); recomputeBooking(u.b); }
+    return { rooms: rooms, booking: u.b ? bookingView(u.b, me) : null };
+  };
   api.undoCheckout = function (req) {
     var me = auth(req); needMgr(me);
     var s = stay(req.id), why = undoBlock(s);
@@ -2975,7 +3019,7 @@ function deskCore(db, hooks) {
   };
 
   /* ================= Approvals ================= */
-  var APPROVABLE = ['laundryEdit', 'laundryDelete', 'editCharge', 'refund', 'voidPayment', 'payAmount', 'updateStay', 'bookingUpdate', 'bookingCancel', 'bookingRefund', 'undoCheckout'];
+  var APPROVABLE = ['laundryEdit', 'laundryDelete', 'editCharge', 'refund', 'voidPayment', 'payAmount', 'updateStay', 'bookingUpdate', 'bookingCancel', 'bookingRefund', 'undoCheckout', 'undoCheckin'];
   function reqView(r) { return { id: r.id, at: r.at, by: r.by, type: r.type, summary: r.summary, reason: r.reason, status: r.status, decidedBy: r.decidedBy, decidedAt: r.decidedAt, decisionNote: r.decisionNote }; }
   api.requests = function (req) {
     var me = auth(req); needMgr(me);

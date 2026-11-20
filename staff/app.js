@@ -45,6 +45,8 @@
     reason_required: 'Please write the reason. The manager sees it.', refund_too_much: 'That is more than the guest has paid.',
     no_payment: 'This payment cannot be changed.', no_request: 'Request not found.', request_done: 'Someone already decided this request.',
     refund_from_room: 'The guest has checked in: refund from their room bill instead.',
+    not_checked_in: 'This booking is not checked in.', undo_some_left: 'One of this booking\'s rooms has already checked out, so the check-in can no longer be reversed.',
+    undo_has_money: 'Money has been taken in the room. Correct or refund that payment first, then reverse the check-in.', undo_has_items: 'Something is on the room\'s bill. Remove those items first, then reverse the check-in.',
     not_checked_out: 'This guest is not checked out.', undo_too_late: 'It is more than 7 days since the check-out.', room_taken: 'Another guest is already in this room. Move one of them to another room first.',
     room_booked: 'This room is booked for another guest in those dates. Choose an earlier leaving date or move the booking first.', bad_checkout_date: 'The leaving date cannot be in the past.', no_room: 'This room no longer exists.',
     ask_manager_nights: 'Charging fewer nights than the guest stayed needs a manager. Ask the manager or owner to check this guest out.',
@@ -786,6 +788,7 @@
         return '<div class="bl tap" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.qty + ' × ' + c.item) + '</span><span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span></div>';
       }).join('') : '<div class="bl"><span class="d">Nothing given yet</span></div>') + '</div>' +
         '<div class="btns">' + (inHouse ? '<button class="btn btn-gold" id="b-add" type="button">Add item</button><button class="btn btn-quiet" id="b-edit" type="button">Edit / extend</button><button class="btn btn-quiet" id="b-out" type="button">Check out</button>' : '') + '</div>';
+      if (inHouse && s.undoIn && mgr()) h += undoInBox(s.undoIn, s.undoInRooms, !!s.booking);
       if (!inHouse && s.undo) h += s.undo === 'ok' ? '<div class="undo-box"><b>Checked out by mistake?</b><span>If the guest is still staying, bring the room back.</span><button class="btn btn-line" id="b-undo" type="button">' + (rcp() ? 'Ask manager to reverse check-out' : 'Reverse check-out') + '</button></div>' : '';
     } else if (m) {
       h += '<div class="bill"><h3>Bill</h3>' +
@@ -805,6 +808,7 @@
         (S.st.fine && (inHouse || approver()) ? '<button class="btn btn-danger" id="b-fine" type="button">Add fine ' + inr(S.st.fine.amount) + '</button>' : '') +
         (s.paid > 0 ? '<button class="btn btn-quiet" id="b-ref" type="button">' + (s.balance < 0 ? 'Refund ' + inr(-s.balance) : 'Refund money') + '</button>' : '') +
         (inHouse ? '<button class="btn btn-quiet" id="b-edit" type="button">Edit / extend</button><button class="btn btn-quiet" id="b-out" type="button">Check out</button>' : '') + '</div>';
+      if (inHouse && s.undoIn) h += undoInBox(s.undoIn, s.undoInRooms, !!s.booking);
       if (!inHouse && s.undo) h += s.undo === 'ok'
         ? '<div class="undo-box"><b>Checked out by mistake?</b><span>If the guest is still staying, bring the room back.</span><button class="btn btn-line" id="b-undo" type="button">' + (rcp() ? 'Ask manager to reverse check-out' : 'Reverse check-out') + '</button></div>'
         : '<p class="small">Check-out can\'t be reversed now: ' + esc(errText(s.undo)) + '</p>';
@@ -830,12 +834,38 @@
     if (m) $$('[data-pay].tap', body).forEach(function (row) { row.onclick = function () { var p = s.payments.filter(function (x) { return x.id === row.dataset.pay; })[0]; if (p) openVoid(p, 'stay', body); }; });
     if ((b = $('#b-out', body))) b.onclick = function () { openCheckOut(s, body); };
     if ((b = $('#b-undo', body))) b.onclick = function () { openUndoCheckout(s, body); };
+    if ((b = $('#b-undoin', body))) b.onclick = function () { openUndoCheckin({ id: s.id }, s.guest, s.undoInRooms || [s.room], !!s.booking, 2); };
     if (m) $$('[data-charge]', body).forEach(function (row) {
       row.onclick = function () { var c = s.charges.filter(function (x) { return x.id === row.dataset.charge; })[0]; if (c) openEditCharge(c, s, body); };
     });
   }
 
   /* Checked out by mistake: Manager / Owner reverse it at once, a receptionist sends it for approval */
+  /* Reverse a check-in made by mistake: from a room, or from the booking (then all of its rooms go back together) */
+  function undoInBox(state, rooms, fromBooking) {
+    var n = (rooms || []).length, all = n > 2 ? 'all ' + n + ' rooms (' + rooms.join(', ') + ')' : n === 2 ? 'both rooms (' + rooms.join(', ') + ')' : 'the room';
+    if (state === 'ok') return '<div class="undo-box"><b>Checked in by mistake?</b><span>' + (fromBooking ? 'This puts ' + all + ' back to Ready and the booking back to Confirmed, with its advance kept.' : 'This puts the room back to Ready, as if the guest had not arrived.') + '</span><button class="btn btn-line" id="b-undoin" type="button">' + (rcp() ? 'Ask manager to reverse check-in' : n > 1 ? 'Reverse check-in · ' + n + ' rooms' : 'Reverse check-in') + '</button></div>';
+    if (state === 'undo_has_money' || state === 'undo_has_items' || state === 'undo_some_left') return '<div class="undo-box"><b>Checked in by mistake?</b><span>' + esc(errText(state)) + '</span></div>';
+    return '';
+  }
+  function openUndoCheckin(data, guest, rooms, fromBooking, closeN) {
+    var n = rooms.length, body = openSheet('Reverse check-in · Room' + (n > 1 ? 's ' : ' ') + rooms.join(', '));
+    body.innerHTML = '<p class="small"><b>' + esc(guest) + '</b> · room' + (n > 1 ? 's ' : ' ') + esc(rooms.join(', ')) + '</p>' +
+      '<div class="note"><b>What happens</b>' + (n > 2 ? 'All ' + n + ' rooms go' : n === 2 ? 'Both rooms go' : 'Room ' + esc(rooms[0]) + ' goes') + ' back to Ready. ' +
+      (fromBooking ? 'The booking is Confirmed again with its advance kept, ready to check in when the guest really arrives. ' : 'The stay is removed from the room. ') +
+      'The free water and welcome kit go back to stock, and the welcome WhatsApp is stopped if it has not gone yet.</div>' +
+      (rcp() ? '<div class="note gold"><b>Needs approval</b>This is sent to the manager. The rooms go back once they approve it.</div>' : '') +
+      reasonField('ui-why', 'e.g. Checked in the advance booking by mistake, guest has not arrived') +
+      '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">' + goLabel(n > 1 ? 'Reverse check-in for ' + n + ' rooms' : 'Reverse check-in') + '</button>';
+    $('#go', body).onclick = function () {
+      var x = this;
+      if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = 'Tap again to confirm'; return; }
+      var d = { reason: $('#ui-why', body).value }; Object.keys(data).forEach(function (k) { d[k] = data[k]; });
+      submit(x, $('#err', body), 'deskUndoCheckin', d, function (r) {
+        vibrate(); toast('Check-in reversed · room' + (r.rooms.length > 1 ? 's ' : ' ') + r.rooms.join(', ') + ' ready again'); X.cal = null; after(closeN); refresh();
+      });
+    };
+  }
   function openUndoCheckout(s, parentBody) {
     var t = S.st.today, tmr = addDaysYmd(t, 1), def = s.checkout > t ? s.checkout : tmr;
     var body = openSheet('Reverse check-out · Room ' + s.room);
@@ -2215,6 +2245,7 @@
         (b.advancePaid - b.refunded > 0 ? '<button class="btn btn-quiet" id="k-ref" type="button">Refund part of advance</button>' : '') +
         '<button class="btn btn-danger" id="k-cancel" type="button">Cancel booking</button>' + (b.checkin <= t ? '<button class="btn btn-danger" id="k-ns" type="button">Guest did not come</button>' : '') + '</div>';
     }
+    if (b.status === 'Checked in' && b.undoIn && mgr()) h += undoInBox(b.undoIn, b.undoInRooms, true);
     if (b.status === 'Cancelled' && b.phone) h += '<div class="btns"><button class="btn btn-line" id="k-wcan" type="button">WhatsApp: cancellation message</button></div>';
     if ((b.status === 'Cancelled' || b.status === 'No-show') && b.advancePaid - b.refunded > 0) h += '<div class="btns"><button class="btn btn-quiet" id="k-ref" type="button">Refund money (' + inr(b.advancePaid - b.refunded) + ' kept)</button></div>';
     if (b.payments.length) h += '<p class="small">Tap a payment to correct a mistake.' + (rcp() ? ' Changes go to the manager for approval.' : '') + '</p>';
@@ -2235,6 +2266,7 @@
       api('deskBookingCheckIn', { id: b.id }).then(function (r) { vibrate(); toast(b.guest + ' checked in to room ' + b.rooms.join(', ')); after(sheets.length); void r; },
         function (e) { busy(x, false); toast(errText(e)); });
     };
+    if (q('#b-undoin')) q('#b-undoin').onclick = function () { openUndoCheckin({ booking: b.id }, b.guest, b.undoInRooms || b.rooms, true, 2); };
     if (q('#k-ns')) q('#k-ns').onclick = function () {
       var x = this;
       if (!x.dataset.sure) { x.dataset.sure = 1; x.textContent = 'Tap again: no-show, advance kept'; return; }
@@ -2475,7 +2507,7 @@
   }
 
   /* ---------- Approvals (managers) / My requests (reception) ---------- */
-  var TYPE_LABEL = { editCharge: 'Bill item', refund: 'Refund', voidPayment: 'Payment correction', payAmount: 'Payment amount change', updateStay: 'Rate change', bookingUpdate: 'Rate change', bookingCancel: 'Cancellation', bookingRefund: 'Refund', undoCheckout: 'Reverse check-out' };
+  var TYPE_LABEL = { editCharge: 'Bill item', refund: 'Refund', voidPayment: 'Payment correction', payAmount: 'Payment amount change', updateStay: 'Rate change', bookingUpdate: 'Rate change', bookingCancel: 'Cancellation', bookingRefund: 'Refund', undoCheckout: 'Reverse check-out', undoCheckin: 'Reverse check-in' };
   var REQ = null;
   function viewApprovals(v) {
     var title = approver() ? 'Approvals' : 'My requests';

@@ -193,3 +193,37 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('tonight deal at IST hour', hourIst, JSON.stringify(s1.deal));
   if (hourIst < 18 && s1.deal) throw new Error('deal before 6 pm');
 }
+// ---- reverse check-in ----
+{
+  const st = await call('deskState', { token: tok });
+  const ready = st.rooms.filter(r => r.status === 'Ready').map(r => r.room);
+  console.log('ready rooms for undo test', ready.length);
+  if (ready.length >= 3) {
+    const t0 = st.today, t2 = new Date(Date.parse(t0) + 2 * 864e5).toISOString().slice(0, 10);
+    // walk-in, reversed from the room
+    const ci = await call('deskCheckIn', { token: tok, room: ready[0], guest: 'Undo Walkin', guests: 2, checkin: t0, checkout: t2, rate: 3000 });
+    const sid = ci.stay && ci.stay.id;
+    const u1 = await call('deskUndoCheckin', { token: tok, id: sid, reason: 'test mistake' });
+    const st1 = await call('deskState', { token: tok });
+    console.log('walk-in undo', ci.ok || ci.error, 'undoIn flag', ci.stay && ci.stay.undoIn, '->', u1.ok || u1.error, 'room now', st1.rooms.find(r => r.room === ready[0]).status);
+    if (!u1.ok || st1.rooms.find(r => r.room === ready[0]).status !== 'Ready') throw new Error('undo walk-in check-in broken');
+    // booking with two rooms, reversed from the booking
+    const bc = await call('deskBookingCreate', { token: tok, guest: 'Undo Group', phone: '9876500011', guests: 4, roomsNeeded: 2, roomType: st.rooms.find(r => r.room === ready[1]).type, checkin: t0, checkout: t2, rate: 3000, rooms: [ready[1], ready[2]] });
+    const bid = bc.booking && bc.booking.id;
+    const cf = await call('deskBookingConfirm', { token: tok, id: bid, amount: 1000, method: 'Cash', rooms: [ready[1], ready[2]] });
+    const bi = await call('deskBookingCheckIn', { token: tok, id: bid });
+    const bv = await call('deskBooking', { token: tok, id: bid });
+    const u2 = await call('deskUndoCheckin', { token: tok, booking: bid, reason: 'guest not arrived yet' });
+    const st2 = await call('deskState', { token: tok });
+    console.log('booking undo', bc.ok || bc.error, cf.ok || cf.error, bi.ok || bi.error, 'flag', bv.booking && bv.booking.undoIn, JSON.stringify(bv.booking && bv.booking.undoInRooms), '->', u2.ok || u2.error, u2.booking && u2.booking.status, 'advance kept', u2.booking && u2.booking.advancePaid,
+      'rooms', [ready[1], ready[2]].map(n => st2.rooms.find(r => r.room === n).status).join('/'));
+    if (bi.ok && (!u2.ok || u2.booking.status !== 'Confirmed' || u2.booking.advancePaid !== 1000 || [ready[1], ready[2]].some(n => st2.rooms.find(r => r.room === n).status !== 'Ready'))) throw new Error('undo booking check-in broken');
+    // can check in again afterwards
+    const bi2 = bi.ok ? await call('deskBookingCheckIn', { token: tok, id: bid }) : { ok: false };
+    // a stay with money cannot be reversed
+    const ci3 = await call('deskCheckIn', { token: tok, room: ready[0], guest: 'Paid Walkin', guests: 1, checkin: t0, checkout: t2, rate: 3000, advance: 500, method: 'Cash' });
+    const u3 = await call('deskUndoCheckin', { token: tok, id: ci3.stay && ci3.stay.id, reason: 'x' });
+    console.log('check in again', bi2.ok || bi2.error, '| paid stay undo refused:', u3.error);
+    if (u3.ok || (bi.ok && !bi2.ok)) throw new Error('undo check-in guards broken');
+  }
+}
