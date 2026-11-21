@@ -230,137 +230,94 @@
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
   function fit(x, t, max, size, font) { var s = size; x.font = font.replace('#', s); while (x.measureText(t).width > max && s > 20) { s -= 2; x.font = font.replace('#', s); } return s; }
   function spaced(x, t, cx, y, sp) { var w = 0, i; for (i = 0; i < t.length; i++) w += x.measureText(t[i]).width + sp; w -= sp; var X = cx - w / 2; for (i = 0; i < t.length; i++) { x.fillText(t[i], X, y); X += x.measureText(t[i]).width + sp; } }
-  /* Card designs. Three looks, chosen on the card screen:
-     navy   – white card, deep navy head with the logo, photo framed in white, a single gold line. Corporate and calm.
-     ivory  – warm ivory card, navy type, one fine gold frame, round photo. Quiet hotel elegance.
-     noir   – matte black, gold lettering and hairlines. Evening luxury.
-     All: Cormorant Garamond for names, Jost for small capitals (the website's type), nothing busy. */
-  var GOLD = '#b8924a', GOLD_HI = '#dcc08a', NAVY = '#0f1a3a', INK = '#18203a', MUTED = '#7a7f8f';
-  var LOOKS = { navy: 'Navy and white', ivory: 'Ivory and gold', noir: 'Black and gold' };
-  function goldGrad(x, x0, x1) { var g = x.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, '#9a7535'); g.addColorStop(.45, '#e2c88f'); g.addColorStop(.6, '#c9a35a'); g.addColorStop(1, '#9a7535'); return g; }
-  function caps(x, t, cx, y, font, color, sp) { x.font = font; x.fillStyle = color; x.textAlign = 'left'; spaced(x, t, cx, y, sp); }
-  function spacedL(x, t, X, y, sp) { for (var i = 0; i < t.length; i++) { x.fillText(t[i], X, y); X += x.measureText(t[i]).width + sp; } }
-  function spacedR(x, t, X, y, sp) { var w = 0, i; for (i = 0; i < t.length; i++) w += x.measureText(t[i]).width + sp; w -= sp; x.textAlign = 'left'; spacedL(x, t, X - w, y, sp); }
-  function serif(px) { return '600 ' + px + 'px "Cormorant Garamond", Georgia, serif'; }
-  function facts(e) { return [e.joined ? 'SINCE ' + dLong(e.joined).replace(/^\d+ /, '').toUpperCase() : '', e.blood ? 'BLOOD GROUP ' + e.blood : ''].filter(Boolean).join('    ·    '); }
-  function role(e) { return String((e.director ? 'Director' : e.job) || 'Staff'); }
-  function phImg(x, ph, e, X, Y, W, H, round, bg, fg) {
-    x.save(); if (round) { x.beginPath(); x.arc(X + W / 2, Y + H / 2, W / 2, 0, 7); } else rr(x, X, Y, W, H, 10); x.clip();
-    if (ph) { var k = Math.max(W / ph.width, H / ph.height), w = ph.width * k, h = ph.height * k; x.drawImage(ph, X + (W - w) / 2, Y + (H - h) / 2, w, h); }
-    else { x.fillStyle = bg; x.fillRect(X, Y, W, H); x.fillStyle = fg; x.font = serif(Math.round(W * .38)); x.textAlign = 'center'; x.fillText(initials(e.name), X + W / 2, Y + H / 2 + W * .13); }
+  /* Card design: deep navy with a fine gold guilloché, a double gold frame round the photo, ivory reverse.
+     Cormorant Garamond for names, Jost for small capitals: the same type as the guest house website. */
+  var NAVY = '#0c1430', NAVY2 = '#16224a', GOLD = '#c9a35a', GOLD_HI = '#e6c98a', GOLD_LO = '#9a7633', IVORY = '#f8f3e8', INK = '#1a2036', MUTED = '#6d7182';
+  function goldGrad(x, x0, x1) { var g = x.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, GOLD_LO); g.addColorStop(.35, GOLD_HI); g.addColorStop(.6, GOLD); g.addColorStop(1, GOLD_LO); return g; }
+  function guilloche(x, cy, amp, alpha) {
+    x.save(); x.globalAlpha = alpha; x.strokeStyle = GOLD; x.lineWidth = 1.2;
+    for (var k = 0; k < 14; k++) { x.beginPath(); for (var X = -10; X <= CW + 10; X += 6) { var t = X / CW * Math.PI * 2; var Y = cy + Math.sin(t * 3 + k * .45) * amp * (0.55 + .45 * Math.cos(t * 2 - k * .3)) + (k - 7) * 5; if (X < 0) x.moveTo(X, Y); else x.lineTo(X, Y); } x.stroke(); }
     x.restore();
   }
-  function tint(im, color) { if (!im) return null; var c = document.createElement('canvas'); c.width = im.width; c.height = im.height; var x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, c.width, c.height); return c; }
-  function logoAt(x, logo, cx, y, w) { if (!logo) return 0; var h = w * logo.height / logo.width; x.drawImage(logo, cx - w / 2, y, w, h); return h; }
-
-  function front(e, ph, logo, look) {
-    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d'), cx = CW / 2;
-    if (look === 'ivory') {
-      x.fillStyle = '#f7f2e7'; x.fillRect(0, 0, CW, CH);
-      x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 2; rr(x, 44, 44, CW - 88, CH - 88, 18); x.stroke();
-      logoAt(x, tint(logo, NAVY), cx, 112, 300);
-      x.fillStyle = goldGrad(x, cx - 40, cx + 40); x.fillRect(cx - 40, 378, 80, 2);
-      var R = 470; x.fillStyle = goldGrad(x, cx - R / 2 - 8, cx + R / 2 + 8); x.beginPath(); x.arc(cx, 420 + R / 2, R / 2 + 8, 0, 7); x.fill();
-      x.fillStyle = '#f7f2e7'; x.beginPath(); x.arc(cx, 420 + R / 2, R / 2 + 3, 0, 7); x.fill();
-      phImg(x, ph, e, cx - R / 2, 420, R, R, true, '#e8dfcc', GOLD);
-      x.textAlign = 'center'; x.fillStyle = INK; fit(x, e.name, CW - 200, 86, serif('#')); x.fillText(e.name, cx, 1010);
-      caps(x, role(e).toUpperCase(), cx, 1066, '500 25px Jost', GOLD, 9);
-      x.fillStyle = 'rgba(24,32,58,.14)'; x.fillRect(150, 1130, CW - 300, 1.5);
-      caps(x, 'EMPLOYEE ID', cx, 1196, '400 18px Jost', MUTED, 6); caps(x, e.id, cx, 1250, '500 40px Jost', INK, 5);
-      x.fillStyle = 'rgba(24,32,58,.14)'; x.fillRect(150, 1296, CW - 300, 1.5);
-      caps(x, facts(e), cx, 1370, '400 20px Jost', MUTED, 4);
-      caps(x, 'NIKADI PROJECTS PRIVATE LIMITED', cx, CH - 120, '400 17px Jost', MUTED, 5);
-      return c;
-    }
-    if (look === 'noir') {
-      var g = x.createLinearGradient(0, 0, 0, CH); g.addColorStop(0, '#16161a'); g.addColorStop(1, '#0b0b0e'); x.fillStyle = g; x.fillRect(0, 0, CW, CH);
-      x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 1.6; rr(x, 40, 40, CW - 80, CH - 80, 14); x.stroke();
-      logoAt(x, tint(logo, '#d8bd85'), cx, 104, 290);
-      var PW = 420, PH = 525, px = cx - PW / 2, py = 410;
-      x.strokeStyle = goldGrad(x, px, px + PW); x.lineWidth = 1.6; rr(x, px - 14, py - 14, PW + 28, PH + 28, 16); x.stroke();
-      phImg(x, ph, e, px, py, PW, PH, false, '#202026', '#d8bd85');
-      x.textAlign = 'center'; x.fillStyle = '#f4ead6'; fit(x, e.name, CW - 200, 82, serif('#')); x.fillText(e.name, cx, py + PH + 120);
-      caps(x, role(e).toUpperCase(), cx, py + PH + 172, '400 24px Jost', '#d8bd85', 10);
-      x.fillStyle = goldGrad(x, cx - 30, cx + 30); x.fillRect(cx - 30, py + PH + 214, 60, 1.6);
-      caps(x, e.id, cx, py + PH + 286, '400 36px Jost', '#f4ead6', 7);
-      caps(x, 'EMPLOYEE ID', cx, py + PH + 326, '400 16px Jost', 'rgba(216,189,133,.7)', 6);
-      caps(x, facts(e), cx, py + PH + 410, '400 19px Jost', 'rgba(244,234,214,.75)', 4);
-      caps(x, 'SRI DHAM MAYAPUR', cx, CH - 104, '400 16px Jost', 'rgba(216,189,133,.75)', 8);
-      return c;
-    }
-    /* navy (default) */
-    x.fillStyle = '#ffffff'; x.fillRect(0, 0, CW, CH);
-    var HEAD = 600; x.fillStyle = NAVY; x.fillRect(0, 0, CW, HEAD); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, HEAD, CW, 5);
-    logoAt(x, logo, cx, 84, 310);
-    var PW2 = 420, PH2 = 520, px2 = cx - PW2 / 2, py2 = 378;
-    x.save(); x.shadowColor = 'rgba(10,20,50,.28)'; x.shadowBlur = 40; x.shadowOffsetY = 14; x.fillStyle = '#fff'; rr(x, px2 - 12, py2 - 12, PW2 + 24, PH2 + 24, 16); x.fill(); x.restore();
-    phImg(x, ph, e, px2, py2, PW2, PH2, false, '#e9ecf3', NAVY);
-    x.textAlign = 'center'; x.fillStyle = NAVY; fit(x, e.name, CW - 180, 84, serif('#')); x.fillText(e.name, cx, py2 + PH2 + 128);
-    caps(x, role(e).toUpperCase(), cx, py2 + PH2 + 182, '500 25px Jost', GOLD, 9);
-    var by = py2 + PH2 + 250; x.fillStyle = '#f3f4f8'; rr(x, 120, by, CW - 240, 120, 14); x.fill();
-    caps(x, 'EMPLOYEE ID', cx, by + 46, '400 17px Jost', MUTED, 6); caps(x, e.id, cx, by + 94, '500 36px Jost', NAVY, 5);
-    caps(x, facts(e), cx, by + 196, '400 20px Jost', MUTED, 4);
-    x.fillStyle = NAVY; x.fillRect(0, CH - 96, CW, 96); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, CH - 96, CW, 4);
-    caps(x, 'NIKADI GUEST HOUSE  ·  SRI DHAM MAYAPUR', cx, CH - 38, '400 18px Jost', 'rgba(255,255,255,.82)', 5);
+  function rule(x, y, w) { /* gold hairline with a small diamond in the middle */
+    var cx = CW / 2; x.fillStyle = goldGrad(x, cx - w / 2, cx + w / 2); x.fillRect(cx - w / 2, y - 1, w / 2 - 16, 2); x.fillRect(cx + 16, y - 1, w / 2 - 16, 2);
+    x.save(); x.translate(cx, y); x.rotate(Math.PI / 4); x.fillRect(-6, -6, 12, 12); x.restore();
+  }
+  function caps(x, t, cx, y, font, color, sp) { x.font = font; x.fillStyle = color; x.textAlign = 'left'; spaced(x, t, cx, y, sp); }
+  function front(e, ph, logo) {
+    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d');
+    var g = x.createRadialGradient(CW / 2, CH * .38, 80, CW / 2, CH * .45, CH * .75); g.addColorStop(0, NAVY2); g.addColorStop(1, NAVY); x.fillStyle = g; x.fillRect(0, 0, CW, CH);
+    guilloche(x, 250, 70, .10); guilloche(x, CH - 330, 50, .07);
+    x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 3; rr(x, 26, 26, CW - 52, CH - 52, 30); x.stroke();
+    x.globalAlpha = .35; x.lineWidth = 1; rr(x, 38, 38, CW - 76, CH - 76, 24); x.stroke(); x.globalAlpha = 1;
+    if (logo) { var lw = 250, lh = lw * logo.height / logo.width; x.drawImage(logo, (CW - lw) / 2, 128, lw, lh); } /* sits just above GUEST HOUSE, as one lockup */
+    caps(x, 'GUEST HOUSE', CW / 2, 342, '500 26px Jost', GOLD_HI, 12); caps(x, 'SRI DHAM MAYAPUR', CW / 2, 380, '400 19px Jost', 'rgba(255,255,255,.55)', 8);
+    rule(x, 418, 300);
+    var PW = 392, PH = 490, px = (CW - PW) / 2, py = 456;
+    x.fillStyle = goldGrad(x, px - 14, px + PW + 14); rr(x, px - 14, py - 14, PW + 28, PH + 28, 26); x.fill();
+    x.fillStyle = NAVY; rr(x, px - 8, py - 8, PW + 16, PH + 16, 21); x.fill();
+    x.fillStyle = goldGrad(x, px - 4, px + PW + 4); rr(x, px - 4, py - 4, PW + 8, PH + 8, 19); x.fill();
+    x.save(); rr(x, px, py, PW, PH, 16); x.clip();
+    if (ph) { var k = Math.max(PW / ph.width, PH / ph.height), w = ph.width * k, h = ph.height * k; x.drawImage(ph, px + (PW - w) / 2, py + (PH - h) / 2, w, h); }
+    else { x.fillStyle = '#1d2a52'; x.fillRect(px, py, PW, PH); x.fillStyle = GOLD; x.font = '600 170px "Cormorant Garamond", Georgia, serif'; x.textAlign = 'center'; x.fillText(initials(e.name), CW / 2, py + PH * .64); }
+    x.restore();
+    var y = py + PH + 118; x.textAlign = 'center'; x.fillStyle = '#ffffff'; fit(x, e.name, CW - 150, 82, '600 #px "Cormorant Garamond", Georgia, serif'); x.fillText(e.name, CW / 2, y);
+    caps(x, String((e.director ? 'Director' : e.job) || 'Staff').toUpperCase(), CW / 2, y + 56, '500 27px Jost', GOLD_HI, 9);
+    rule(x, y + 104, 420);
+    /* three facts in columns */
+    var cols = [['EMPLOYEE ID', e.id], ['JOINED', e.joined ? dLong(e.joined).replace(/^\d+ /, '') : '—'], ['BLOOD', e.blood || '—']], cw = (CW - 150) / 3, by = y + 176;
+    cols.forEach(function (cc, i) { var cx = 75 + cw * i + cw / 2; caps(x, cc[0], cx, by, '400 18px Jost', 'rgba(255,255,255,.55)', 5); x.textAlign = 'center'; x.fillStyle = '#fff'; fit(x, cc[1], cw - 16, 31, '500 #px Jost'); x.fillText(cc[1], cx, by + 46); });
+    x.fillStyle = 'rgba(201,163,90,.35)'; x.fillRect(75 + cw, by - 22, 1, 80); x.fillRect(75 + cw * 2, by - 22, 1, 80);
+    caps(x, 'A UNIT OF NIKADI PROJECTS PRIVATE LIMITED', CW / 2, CH - 76, '400 17px Jost', 'rgba(230,201,138,.8)', 4);
     return c;
   }
-  function back(e, sign, qr, logo, look) {
-    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d'), cx = CW / 2;
-    var dark = look === 'noir', bg = look === 'ivory' ? '#f7f2e7' : dark ? '#111114' : '#ffffff', ink = dark ? '#f1e7d2' : INK, mut = dark ? 'rgba(216,189,133,.75)' : MUTED, line = dark ? 'rgba(216,189,133,.25)' : 'rgba(24,32,58,.12)', accent = dark ? '#d8bd85' : GOLD;
-    x.fillStyle = bg; x.fillRect(0, 0, CW, CH);
-    var top = 100;
-    if (look === 'navy' || !look) { x.fillStyle = NAVY; x.fillRect(0, 0, CW, 230); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, 230, CW, 4); logoAt(x, logo, cx, 44, 190); top = 320; }
-    else { x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = dark ? 1.6 : 2; rr(x, dark ? 40 : 44, dark ? 40 : 44, CW - (dark ? 80 : 88), CH - (dark ? 80 : 88), dark ? 14 : 18); x.stroke();
-      logoAt(x, tint(logo, dark ? '#d8bd85' : NAVY), cx, 96, 170); top = 330; }
-    var bx = 120, bw = CW - 240;
-    var GAP = 78;
-    function row(k, v, yy) { x.textAlign = 'left'; x.font = '400 18px Jost'; x.fillStyle = mut; spacedL(x, k, bx, yy, 4); x.textAlign = 'right'; x.fillStyle = ink; fit(x, v || '—', bw - 290, 30, '500 #px Jost'); x.fillText(v || '—', bx + bw, yy); x.fillStyle = line; x.fillRect(bx, yy + 22, bw, 1.4); }
-    row('NAME', e.name, top); row('EMPLOYEE ID', e.id, top + GAP); row('DATE OF BIRTH', dLong(e.dob), top + GAP * 2); row('BLOOD GROUP', e.blood, top + GAP * 3);
-    row('IN AN EMERGENCY', e.emName ? e.emName + (e.emRel ? ' (' + e.emRel + ')' : '') : '', top + GAP * 4); row('EMERGENCY PHONE', e.emPhone ? '+91 ' + e.emPhone.replace(/(\d{5})(\d{5})/, '$1 $2') : '', top + GAP * 5);
-    var qy = top + GAP * 5 + 100;
-    if (qr) { var qs = 230; x.fillStyle = '#fff'; rr(x, bx - 10, qy - 10, qs + 20, qs + 20, 12); x.fill(); x.drawImage(qr, bx, qy, qs, qs); x.textAlign = 'left'; x.font = '400 16px Jost'; x.fillStyle = mut; spacedL(x, 'SCAN TO VERIFY', bx - 4, qy + qs + 44, 4); }
-    var sx = CW - bx, sy = qy + 170;
-    if (sign) { var sw = 290, sh = sw * sign.height / sign.width; x.drawImage(dark ? tint(sign, '#e9dcc0') : sign, sx - sw, sy - sh, sw, sh); }
-    x.fillStyle = line; x.fillRect(sx - 310, sy + 10, 310, 1.6);
-    x.textAlign = 'right'; x.fillStyle = ink; x.font = serif(30); x.fillText('Authorised Signatory', sx, sy + 52);
-    x.font = '400 16px Jost'; x.fillStyle = mut; spacedR(x, 'DIRECTOR', sx, sy + 84, 4);
-    x.textAlign = 'center'; x.fillStyle = dark ? 'rgba(241,231,210,.7)' : '#5d6272'; x.font = 'italic 500 26px "Cormorant Garamond", Georgia, serif';
-    ['This card is the property of Nikadi Projects Private Limited.', 'Please wear it on duty and return it on leaving.', 'If found, kindly hand it to the reception of Nikadi Guest House.'].forEach(function (l, i) { fit(x, l, CW - 200, 26, 'italic 500 #px "Cormorant Garamond", Georgia, serif'); x.fillText(l, cx, qy + 372 + i * 38); });
-    var fy = CH - 230;
-    if (look === 'navy' || !look) { x.fillStyle = NAVY; x.fillRect(0, fy, CW, 230); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, fy, CW, 4); ink = '#fff'; accent = GOLD_HI; }
-    else { x.fillStyle = goldGrad(x, cx - 40, cx + 40); x.fillRect(cx - 40, fy + 20, 80, 2); }
-    x.textAlign = 'center'; x.fillStyle = ink; x.font = '400 21px Jost';
-    ['Bhaktisiddhanta Saraswati Marg, Opp. ISKCON Gate No. 4', 'Sri Dham Mayapur, Nadia, West Bengal 741313'].forEach(function (l, i) { fit(x, l, CW - 200, 21, '400 #px Jost'); x.fillText(l, cx, fy + 84 + i * 32); });
-    caps(x, '+91 75011 01137   ·   NIKADIGUESTHOUSE.COM', cx, fy + 172, '500 17px Jost', accent, 3);
+  function back(e, sign, qr) {
+    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d');
+    x.fillStyle = IVORY; x.fillRect(0, 0, CW, CH);
+    guilloche(x, CH / 2, 120, .22);
+    x.fillStyle = NAVY; x.fillRect(0, 0, CW, 210); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, 210, CW, 4);
+    x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = '600 58px "Cormorant Garamond", Georgia, serif'; x.fillText('Nikadi Guest House', CW / 2, 112);
+    caps(x, 'EMPLOYEE IDENTITY CARD', CW / 2, 162, '400 21px Jost', GOLD_HI, 8);
+    x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 3; rr(x, 26, 26, CW - 52, CH - 52, 30); x.stroke();
+    var bx = 110, bw = CW - 220, y = 300;
+    function line(k, v, yy) { x.textAlign = 'left'; x.font = '400 19px Jost'; x.fillStyle = MUTED; spacedL(x, k, bx, yy, 4); x.textAlign = 'right'; x.fillStyle = INK; fit(x, v || '—', bw - 330, 31, '500 #px Jost'); x.fillText(v || '—', bx + bw, yy); x.fillStyle = 'rgba(26,32,54,.1)'; x.fillRect(bx, yy + 22, bw, 1.5); }
+    line('NAME', e.name, y); line('EMPLOYEE ID', e.id, y + 70); line('DATE OF BIRTH', dLong(e.dob), y + 140); line('IN AN EMERGENCY', e.emName ? e.emName + (e.emRel ? ' (' + e.emRel + ')' : '') : '', y + 210); line('EMERGENCY PHONE', e.emPhone ? '+91 ' + e.emPhone.replace(/(\d{5})(\d{5})/, '$1 $2') : '', y + 280);
+    if (qr) { var qs = 230, qx = bx, qy = 700; x.fillStyle = '#fff'; rr(x, qx - 12, qy - 12, qs + 24, qs + 24, 14); x.fill(); x.strokeStyle = 'rgba(201,163,90,.6)'; x.lineWidth = 2; x.stroke(); x.drawImage(qr, qx, qy, qs, qs);
+      x.textAlign = 'left'; x.fillStyle = MUTED; x.font = '400 21px Jost'; ['Scan to see the', 'employee details'].forEach(function (l, i) { x.fillText(l, qx, qy + qs + 50 + i * 28); }); }
+    if (sign) { var sw = 300, sh = sw * sign.height / sign.width; x.drawImage(sign, CW - 110 - sw, 900 - sh, sw, sh); }
+    x.fillStyle = 'rgba(26,32,54,.45)'; x.fillRect(CW - 430, 912, 320, 1.5);
+    x.textAlign = 'right'; x.fillStyle = INK; x.font = '500 25px Jost'; x.fillText('Authorised Signatory', CW - 110, 952);
+    x.fillStyle = MUTED; x.font = '400 21px Jost'; x.fillText('Director', CW - 110, 984);
+    x.textAlign = 'center'; x.fillStyle = MUTED; x.font = 'italic 400 25px "Cormorant Garamond", Georgia, serif';
+    ['This card is the property of Nikadi Projects Private Limited.', 'It must be worn on duty, shown on request and returned', 'on leaving the job. If found, please return it to', 'the reception of Nikadi Guest House.'].forEach(function (l, i) { fit(x, l, CW - 160, 27, 'italic 400 #px "Cormorant Garamond", Georgia, serif'); x.fillText(l, CW / 2, 1100 + i * 36); });
+    x.fillStyle = NAVY; x.fillRect(0, CH - 262, CW, 262); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, CH - 262, CW, 4);
+    x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '500 23px Jost';
+    ['Bhaktisiddhanta Saraswati Marg, Opp. ISKCON Gate No. 4', 'Sri Dham Mayapur, Nadia, West Bengal 741313'].forEach(function (l, i) { fit(x, l, CW - 140, 23, '500 #px Jost'); x.fillText(l, CW / 2, CH - 190 + i * 34); });
+    caps(x, '+91 75011 01137   ·   NIKADIGUESTHOUSE.COM', CW / 2, CH - 98, '400 19px Jost', GOLD_HI, 3);
+    x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 3; rr(x, 26, 26, CW - 52, CH - 52, 30); x.stroke();
     return c;
   }
-  function qrImage(text, dark) {
+  function spacedL(x, t, X, y, sp) { for (var i = 0; i < t.length; i++) { x.fillText(t[i], X, y); X += x.measureText(t[i]).width + sp; } }
+  function qrImage(text) {
     if (!window.NikadiQR) return Promise.resolve(null);
-    try { var svg = NikadiQR.svg(text, { color: '#0f1a3a' }); return img('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)).then(function (i) { if (!i) return null; var c = document.createElement('canvas'); c.width = c.height = 460; var x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(i, 0, 0, 460, 460); return c; }); } catch (er) { return Promise.resolve(null); }
+    try { var svg = NikadiQR.svg(text, { color: '#0c1430' }); return img('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)).then(function (i) { if (!i) return null; var c = document.createElement('canvas'); c.width = c.height = 460; var x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(i, 0, 0, 460, 460); return c; }); } catch (er) { return Promise.resolve(null); }
   }
   function jspdf() { if (window.jspdf) return Promise.resolve(window.jspdf); return new Promise(function (ok, bad) { var s = document.createElement('script'); s.src = '/staff/vendor/jspdf.umd.min.js'; s.onload = function () { ok(window.jspdf); }; s.onerror = bad; document.head.appendChild(s); }); }
-  function lookNow() { try { return LOOKS[localStorage.getItem('nk-card-look')] ? localStorage.getItem('nk-card-look') : 'navy'; } catch (x) { return 'navy'; } }
   function idCard(e, phId) {
     var body = C.openSheet('ID card · ' + e.name); body.innerHTML = '<div class="loading">Drawing the card…</div>';
-    Promise.all([photo(phId).then(img), img('/img/brand/logo-light.png'), img('/img/brand/sign.png'), fonts(), qrImage('Nikadi Guest House, a unit of Nikadi Projects Private Limited\nEmployee ' + e.id + '\n' + e.name + '\n' + role(e) + '\nTo check, call the reception: +91 75011 01137')]).then(function (a) {
-      var f, b, look = lookNow();
-      function paint() {
-        f = front(e, a[0], a[1], look); b = back(e, a[2], a[4], a[1], look);
-        body.innerHTML = '<div class="seg" data-seg="look">' + Object.keys(LOOKS).map(function (k) { return '<button type="button" data-v="' + k + '" aria-pressed="' + (k === look) + '">' + esc(LOOKS[k]) + '</button>'; }).join('') + '</div>' +
-          '<div class="emp-cards"><img alt="Front of the ID card" src="' + f.toDataURL('image/png') + '"><img alt="Back of the ID card" src="' + b.toDataURL('image/png') + '"></div>' +
-          (a[0] ? '' : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
-          '<div class="emp-acts"><button class="btn btn-gold" type="button" id="cPdf">Download PDF to print</button></div><p class="small">The PDF has the front and the back at real card size, 54 × 85.6 mm, for a PVC card printer or a print shop. The design you choose is remembered on this device.</p>';
-        $$('[data-seg="look"] button', body).forEach(function (bt) { bt.onclick = function () { look = bt.dataset.v; try { localStorage.setItem('nk-card-look', look); } catch (x) {} paint(); }; });
-        $('#cPdf', body).onclick = function () {
-          var btn = this; C.busy(btn, true);
-          jspdf().then(function (J) {
-            var d = new J.jsPDF({ unit: 'mm', format: [54, 85.6], orientation: 'portrait' });
-            d.addImage(f.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6); d.addPage([54, 85.6], 'portrait'); d.addImage(b.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6);
-            d.save(e.id + ' ' + e.name.replace(/[^\w .-]+/g, '') + ' ID card.pdf'); C.busy(btn, false);
-          }, function () { C.busy(btn, false); C.toast('Could not make the PDF. Please try again.'); });
-        };
-      }
-      paint();
+    Promise.all([photo(phId).then(img), img('/img/brand/nikadi-mark/NIKADI-logo-white.png'), img('/img/brand/sign.png'), fonts(), qrImage('Nikadi Guest House, a unit of Nikadi Projects Private Limited\nEmployee ' + e.id + '\n' + e.name + '\n' + ((e.director ? 'Director' : e.job) || '') + '\nTo check, call the reception: +91 75011 01137')]).then(function (a) {
+      var f = front(e, a[0], a[1]), b = back(e, a[2], a[4]);
+      body.innerHTML = '<div class="emp-cards"><img alt="Front of the ID card" src="' + f.toDataURL('image/png') + '"><img alt="Back of the ID card" src="' + b.toDataURL('image/png') + '"></div>' +
+        (a[0] ? '' : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
+        '<div class="emp-acts"><button class="btn btn-gold" type="button" id="cPdf">Download PDF to print</button></div><p class="small">The PDF has the front and the back at real card size, 54 × 85.6 mm, for a PVC card printer or a print shop.</p>';
+      $('#cPdf', body).onclick = function () {
+        var btn = this; C.busy(btn, true);
+        jspdf().then(function (J) {
+          var d = new J.jsPDF({ unit: 'mm', format: [54, 85.6], orientation: 'portrait' });
+          d.addImage(f.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6); d.addPage([54, 85.6], 'portrait'); d.addImage(b.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6);
+          d.save(e.id + ' ' + e.name.replace(/[^\w .-]+/g, '') + ' ID card.pdf'); C.busy(btn, false);
+        }, function () { C.busy(btn, false); C.toast('Could not make the PDF. Please try again.'); });
+      };
     });
   }
   window.NikadiEmp = { mount: mount, reset: function () { LIST = null; }, _draw: { front: front, back: back, qr: qrImage, img: img, fonts: fonts } };
