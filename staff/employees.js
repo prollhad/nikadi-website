@@ -230,128 +230,138 @@
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
   function fit(x, t, max, size, font) { var s = size; x.font = font.replace('#', s); while (x.measureText(t).width > max && s > 20) { s -= 2; x.font = font.replace('#', s); } return s; }
   function spaced(x, t, cx, y, sp) { var w = 0, i; for (i = 0; i < t.length; i++) w += x.measureText(t[i]).width + sp; w -= sp; var X = cx - w / 2; for (i = 0; i < t.length; i++) { x.fillText(t[i], X, y); X += x.measureText(t[i]).width + sp; } }
-  /* Card design: midnight navy and gold, a fine lattice in the background, a lotus mandala (Sri Dham Mayapur) behind a temple-arch photo frame,
-     art-deco corner ornaments, and the NIKADI lockup with GUEST HOUSE as one piece. Ivory reverse with the same frame. */
-  var NAVY = '#0b1330', NAVY2 = '#182553', GOLD = '#c9a35a', GOLD_HI = '#ecd39a', GOLD_LO = '#957130', IVORY = '#faf5ea', INK = '#1a2036', MUTED = '#6d7182';
-  function goldGrad(x, x0, x1, y0, y1) { var g = x.createLinearGradient(x0, y0 || 0, x1, y1 || 0); g.addColorStop(0, GOLD_LO); g.addColorStop(.3, GOLD_HI); g.addColorStop(.55, GOLD); g.addColorStop(.8, GOLD_HI); g.addColorStop(1, GOLD_LO); return g; }
-  function lattice(x, color, alpha) { /* small diamonds with dots, like a woven damask */
-    x.save(); x.globalAlpha = alpha; x.strokeStyle = color; x.fillStyle = color; x.lineWidth = 1;
-    for (var y = -40, r = 0; y < CH + 40; y += 44, r++) for (var X = (r % 2) * 32 - 40; X < CW + 40; X += 64) { x.beginPath(); x.moveTo(X, y - 14); x.lineTo(X + 14, y); x.lineTo(X, y + 14); x.lineTo(X - 14, y); x.closePath(); x.stroke(); x.beginPath(); x.arc(X + 32, y, 2, 0, 7); x.fill(); }
-    x.restore();
-  }
-  function lotus(x, cx, cy, R, color, alpha) { /* line-drawn lotus mandala: three rings of petals */
-    x.save(); x.globalAlpha = alpha; x.strokeStyle = color; x.lineWidth = 2; x.translate(cx, cy);
-    [[16, R, R * .42], [12, R * .74, R * .36], [8, R * .5, R * .3]].forEach(function (ring, j) {
-      for (var i = 0; i < ring[0]; i++) { x.save(); x.rotate(i * Math.PI * 2 / ring[0] + j * .2); x.beginPath(); x.moveTo(0, -ring[1] * .18); x.bezierCurveTo(ring[2] * .55, -ring[1] * .45, ring[2] * .32, -ring[1] * .86, 0, -ring[1]); x.bezierCurveTo(-ring[2] * .32, -ring[1] * .86, -ring[2] * .55, -ring[1] * .45, 0, -ring[1] * .18); x.stroke();
-        x.beginPath(); x.moveTo(0, -ring[1] * .3); x.lineTo(0, -ring[1] * .8); x.stroke(); x.restore(); }
-    });
-    x.beginPath(); x.arc(0, 0, R * 1.04, 0, 7); x.stroke(); x.beginPath(); x.arc(0, 0, R * 1.1, 0, 7); x.setLineDash([3, 9]); x.stroke(); x.setLineDash([]);
-    x.restore();
-  }
-  function corner(x, X, Y, sx, sy, color) { /* art-deco corner: stepped lines, quarter rings and a diamond */
-    x.save(); x.translate(X, Y); x.scale(sx, sy); x.strokeStyle = color; x.fillStyle = color; x.lineWidth = 2.2;
-    x.beginPath(); x.moveTo(0, 110); x.lineTo(0, 0); x.lineTo(110, 0); x.stroke();
-    x.lineWidth = 1.4; x.beginPath(); x.moveTo(14, 80); x.lineTo(14, 14); x.lineTo(80, 14); x.stroke();
-    [30, 44, 58].forEach(function (r) { x.beginPath(); x.arc(14, 14, r, 0, Math.PI / 2); x.stroke(); });
-    x.save(); x.translate(30, 30); x.rotate(Math.PI / 4); x.fillRect(-6, -6, 12, 12); x.restore();
-    x.beginPath(); x.arc(110, 0, 3.5, 0, 7); x.fill(); x.beginPath(); x.arc(0, 110, 3.5, 0, 7); x.fill();
-    x.restore();
-  }
-  function frame(x, color, inset) {
-    x.strokeStyle = color; x.lineWidth = 3; rr(x, inset, inset, CW - inset * 2, CH - inset * 2, 22); x.stroke();
-    x.globalAlpha = .55; x.lineWidth = 1.2; rr(x, inset + 12, inset + 12, CW - (inset + 12) * 2, CH - (inset + 12) * 2, 16); x.stroke(); x.globalAlpha = 1;
-    var o = inset + 22; corner(x, o, o, 1, 1, color); corner(x, CW - o, o, -1, 1, color); corner(x, o, CH - o, 1, -1, color); corner(x, CW - o, CH - o, -1, -1, color);
-  }
-  function rule(x, y, w, color) { /* hairline · diamond · hairline, with small dots */
-    var cx = CW / 2; x.fillStyle = color || goldGrad(x, cx - w / 2, cx + w / 2); x.fillRect(cx - w / 2, y - 1, w / 2 - 22, 2); x.fillRect(cx + 22, y - 1, w / 2 - 22, 2);
-    x.save(); x.translate(cx, y); x.rotate(Math.PI / 4); x.fillRect(-7, -7, 14, 14); x.restore();
-    [-1, 1].forEach(function (d) { x.beginPath(); x.arc(cx + d * (w / 2 + 10), y, 3, 0, 7); x.fill(); });
-  }
+  /* Card designs. Three looks, chosen on the card screen:
+     navy   – white card, deep navy head with the logo, photo framed in white, a single gold line. Corporate and calm.
+     ivory  – warm ivory card, navy type, one fine gold frame, round photo. Quiet hotel elegance.
+     noir   – matte black, gold lettering and hairlines. Evening luxury.
+     All: Cormorant Garamond for names, Jost for small capitals (the website's type), nothing busy. */
+  var GOLD = '#b8924a', GOLD_HI = '#dcc08a', NAVY = '#0f1a3a', INK = '#18203a', MUTED = '#7a7f8f';
+  var LOOKS = { navy: 'Navy and white', ivory: 'Ivory and gold', noir: 'Black and gold' };
+  function goldGrad(x, x0, x1) { var g = x.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, '#9a7535'); g.addColorStop(.45, '#e2c88f'); g.addColorStop(.6, '#c9a35a'); g.addColorStop(1, '#9a7535'); return g; }
   function caps(x, t, cx, y, font, color, sp) { x.font = font; x.fillStyle = color; x.textAlign = 'left'; spaced(x, t, cx, y, sp); }
-  function arch(x, X, Y, w, h) { var r = w / 2; x.beginPath(); x.moveTo(X, Y + h); x.lineTo(X, Y + r); x.arc(X + r, Y + r, r, Math.PI, 0); x.lineTo(X + w, Y + h); x.closePath(); }
-  function front(e, ph, logo) {
-    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d');
-    var g = x.createRadialGradient(CW / 2, CH * .42, 60, CW / 2, CH * .5, CH * .8); g.addColorStop(0, NAVY2); g.addColorStop(1, NAVY); x.fillStyle = g; x.fillRect(0, 0, CW, CH);
-    lattice(x, GOLD, .06);
-    frame(x, goldGrad(x, 0, CW, 0, CH), 30);
-    /* NIKADI lockup with GUEST HOUSE, as one */
-    if (logo) { var lw = 360, lh = lw * logo.height / logo.width; x.drawImage(logo, (CW - lw) / 2, 92, lw, lh); }
-    caps(x, 'SRI DHAM MAYAPUR', CW / 2, 92 + 360 * 600 / 795 + 28, '400 19px Jost', 'rgba(236,211,154,.75)', 9);
-    var PW = 380, PH = 470, px = (CW - PW) / 2, py = 470;
-    lotus(x, CW / 2, py + PH * .46, 330, GOLD_HI, .16);
-    x.fillStyle = goldGrad(x, px - 16, px + PW + 16); arch(x, px - 16, py - 16, PW + 32, PH + 32); x.fill();
-    x.fillStyle = NAVY; arch(x, px - 9, py - 9, PW + 18, PH + 18); x.fill();
-    x.fillStyle = goldGrad(x, px - 4, px + PW + 4); arch(x, px - 4, py - 4, PW + 8, PH + 8); x.fill();
-    x.save(); arch(x, px, py, PW, PH); x.clip();
-    if (ph) { var k = Math.max(PW / ph.width, PH / ph.height), w = ph.width * k, h = ph.height * k; x.drawImage(ph, px + (PW - w) / 2, py + (PH - h) / 2, w, h); }
-    else { x.fillStyle = '#1f2d5c'; x.fillRect(px, py, PW, PH); x.fillStyle = GOLD; x.font = '600 170px "Cormorant Garamond", Georgia, serif'; x.textAlign = 'center'; x.fillText(initials(e.name), CW / 2, py + PH * .66); }
-    x.restore();
-    x.save(); x.translate(CW / 2, py - 16); x.rotate(Math.PI / 4); x.fillStyle = goldGrad(x, -10, 10); x.fillRect(-11, -11, 22, 22); x.restore();
-    var y = py + PH + 112; x.textAlign = 'center'; x.fillStyle = '#ffffff'; fit(x, e.name, CW - 170, 80, '600 #px "Cormorant Garamond", Georgia, serif'); x.fillText(e.name, CW / 2, y);
-    caps(x, String((e.director ? 'Director' : e.job) || 'Staff').toUpperCase(), CW / 2, y + 54, '500 26px Jost', GOLD_HI, 10);
-    /* employee ID on a gold-edged plaque */
-    var bw = 520, bh = 112, bx = (CW - bw) / 2, by = y + 98;
-    x.fillStyle = 'rgba(8,13,34,.55)'; rr(x, bx, by, bw, bh, 56); x.fill(); x.strokeStyle = goldGrad(x, bx, bx + bw); x.lineWidth = 2.5; rr(x, bx, by, bw, bh, 56); x.stroke();
-    caps(x, 'EMPLOYEE ID', CW / 2, by + 38, '400 17px Jost', 'rgba(236,211,154,.8)', 6);
-    caps(x, e.id, CW / 2, by + 86, '500 36px Jost', '#ffffff', 6);
-    var facts = [e.joined ? 'SINCE ' + dLong(e.joined).replace(/^\d+ /, '').toUpperCase() : '', e.blood ? 'BLOOD ' + e.blood : ''].filter(Boolean).join('     ·     ');
-    if (facts) caps(x, facts, CW / 2, by + bh + 58, '400 21px Jost', 'rgba(255,255,255,.7)', 4);
-    rule(x, CH - 124, 360);
-    caps(x, 'A UNIT OF NIKADI PROJECTS PRIVATE LIMITED', CW / 2, CH - 78, '400 16px Jost', 'rgba(236,211,154,.85)', 4);
-    return c;
-  }
-  function back(e, sign, qr, logo) {
-    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d');
-    x.fillStyle = IVORY; x.fillRect(0, 0, CW, CH);
-    lattice(x, GOLD_LO, .07);
-    lotus(x, CW / 2, 820, 400, GOLD, .10);
-    /* navy head with the lockup */
-    x.fillStyle = NAVY; x.beginPath(); x.moveTo(0, 0); x.lineTo(CW, 0); x.lineTo(CW, 250); x.quadraticCurveTo(CW / 2, 300, 0, 250); x.closePath(); x.fill();
-    x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 3; x.beginPath(); x.moveTo(0, 262); x.quadraticCurveTo(CW / 2, 312, CW, 262); x.stroke();
-    if (logo) { var lw = 186, lh = lw * logo.height / logo.width; x.drawImage(logo, (CW - lw) / 2, 50, lw, lh); }
-    caps(x, 'EMPLOYEE IDENTITY CARD', CW / 2, 246, '400 18px Jost', GOLD_HI, 8);
-    frame(x, goldGrad(x, 0, CW, 0, CH), 30);
-    var bx = 120, bw = CW - 240, y = 390;
-    function line(k, v, yy) { x.textAlign = 'left'; x.font = '400 18px Jost'; x.fillStyle = MUTED; spacedL(x, k, bx, yy, 4); x.textAlign = 'right'; x.fillStyle = INK; fit(x, v || '—', bw - 300, 30, '500 #px Jost'); x.fillText(v || '—', bx + bw, yy); x.fillStyle = 'rgba(149,113,48,.28)'; x.fillRect(bx, yy + 20, bw, 1.2); }
-    line('NAME', e.name, y); line('EMPLOYEE ID', e.id, y + 66); line('DATE OF BIRTH', dLong(e.dob), y + 132); line('IN AN EMERGENCY', e.emName ? e.emName + (e.emRel ? ' (' + e.emRel + ')' : '') : '', y + 198); line('EMERGENCY PHONE', e.emPhone ? '+91 ' + e.emPhone.replace(/(\d{5})(\d{5})/, '$1 $2') : '', y + 264);
-    var qy = 740;
-    if (qr) { var qs = 214, qx = bx + 6; x.fillStyle = '#fff'; rr(x, qx - 14, qy - 14, qs + 28, qs + 28, 16); x.fill(); x.strokeStyle = goldGrad(x, qx, qx + qs); x.lineWidth = 2.5; rr(x, qx - 14, qy - 14, qs + 28, qs + 28, 16); x.stroke(); x.drawImage(qr, qx, qy, qs, qs);
-      x.textAlign = 'left'; x.fillStyle = MUTED; x.font = '400 19px Jost'; spacedL(x, 'SCAN TO VERIFY', qx - 6, qy + qs + 52, 4); }
-    if (sign) { var sw = 300, sh = sw * sign.height / sign.width; x.drawImage(sign, CW - bx - sw, qy + 150 - sh, sw, sh); }
-    x.fillStyle = goldGrad(x, CW - bx - 320, CW - bx); x.fillRect(CW - bx - 320, qy + 162, 320, 1.6);
-    x.textAlign = 'right'; x.fillStyle = INK; x.font = '600 30px "Cormorant Garamond", Georgia, serif'; x.fillText('Authorised Signatory', CW - bx, qy + 202);
-    x.fillStyle = MUTED; x.font = '400 19px Jost'; spacedR(x, 'DIRECTOR', CW - bx, qy + 234, 4);
-    x.textAlign = 'center'; x.fillStyle = '#585c6c'; x.font = 'italic 500 27px "Cormorant Garamond", Georgia, serif';
-    ['This card is the property of Nikadi Projects Private Limited.', 'It is to be worn on duty, shown on request and', 'returned on leaving. If found, kindly return it to', 'the reception of Nikadi Guest House.'].forEach(function (l, i) { fit(x, l, CW - 190, 27, 'italic 500 #px "Cormorant Garamond", Georgia, serif'); x.fillText(l, CW / 2, 1100 + i * 37); });
-    rule(x, 1290, 300);
-    x.textAlign = 'center'; x.fillStyle = INK; x.font = '500 22px Jost';
-    ['Bhaktisiddhanta Saraswati Marg, Opp. ISKCON Gate No. 4', 'Sri Dham Mayapur, Nadia, West Bengal 741313'].forEach(function (l, i) { fit(x, l, CW - 190, 22, '500 #px Jost'); x.fillText(l, CW / 2, 1356 + i * 34); });
-    caps(x, '+91 75011 01137   ·   NIKADIGUESTHOUSE.COM', CW / 2, 1452, '500 19px Jost', GOLD_LO, 3);
-    return c;
-  }
   function spacedL(x, t, X, y, sp) { for (var i = 0; i < t.length; i++) { x.fillText(t[i], X, y); X += x.measureText(t[i]).width + sp; } }
   function spacedR(x, t, X, y, sp) { var w = 0, i; for (i = 0; i < t.length; i++) w += x.measureText(t[i]).width + sp; w -= sp; x.textAlign = 'left'; spacedL(x, t, X - w, y, sp); }
-  function qrImage(text) {
+  function serif(px) { return '600 ' + px + 'px "Cormorant Garamond", Georgia, serif'; }
+  function facts(e) { return [e.joined ? 'SINCE ' + dLong(e.joined).replace(/^\d+ /, '').toUpperCase() : '', e.blood ? 'BLOOD GROUP ' + e.blood : ''].filter(Boolean).join('    ·    '); }
+  function role(e) { return String((e.director ? 'Director' : e.job) || 'Staff'); }
+  function phImg(x, ph, e, X, Y, W, H, round, bg, fg) {
+    x.save(); if (round) { x.beginPath(); x.arc(X + W / 2, Y + H / 2, W / 2, 0, 7); } else rr(x, X, Y, W, H, 10); x.clip();
+    if (ph) { var k = Math.max(W / ph.width, H / ph.height), w = ph.width * k, h = ph.height * k; x.drawImage(ph, X + (W - w) / 2, Y + (H - h) / 2, w, h); }
+    else { x.fillStyle = bg; x.fillRect(X, Y, W, H); x.fillStyle = fg; x.font = serif(Math.round(W * .38)); x.textAlign = 'center'; x.fillText(initials(e.name), X + W / 2, Y + H / 2 + W * .13); }
+    x.restore();
+  }
+  function tint(im, color) { if (!im) return null; var c = document.createElement('canvas'); c.width = im.width; c.height = im.height; var x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, c.width, c.height); return c; }
+  function logoAt(x, logo, cx, y, w) { if (!logo) return 0; var h = w * logo.height / logo.width; x.drawImage(logo, cx - w / 2, y, w, h); return h; }
+
+  function front(e, ph, logo, look) {
+    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d'), cx = CW / 2;
+    if (look === 'ivory') {
+      x.fillStyle = '#f7f2e7'; x.fillRect(0, 0, CW, CH);
+      x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 2; rr(x, 44, 44, CW - 88, CH - 88, 18); x.stroke();
+      logoAt(x, tint(logo, NAVY), cx, 112, 300);
+      x.fillStyle = goldGrad(x, cx - 40, cx + 40); x.fillRect(cx - 40, 378, 80, 2);
+      var R = 470; x.fillStyle = goldGrad(x, cx - R / 2 - 8, cx + R / 2 + 8); x.beginPath(); x.arc(cx, 420 + R / 2, R / 2 + 8, 0, 7); x.fill();
+      x.fillStyle = '#f7f2e7'; x.beginPath(); x.arc(cx, 420 + R / 2, R / 2 + 3, 0, 7); x.fill();
+      phImg(x, ph, e, cx - R / 2, 420, R, R, true, '#e8dfcc', GOLD);
+      x.textAlign = 'center'; x.fillStyle = INK; fit(x, e.name, CW - 200, 86, serif('#')); x.fillText(e.name, cx, 1010);
+      caps(x, role(e).toUpperCase(), cx, 1066, '500 25px Jost', GOLD, 9);
+      x.fillStyle = 'rgba(24,32,58,.14)'; x.fillRect(150, 1130, CW - 300, 1.5);
+      caps(x, 'EMPLOYEE ID', cx, 1196, '400 18px Jost', MUTED, 6); caps(x, e.id, cx, 1250, '500 40px Jost', INK, 5);
+      x.fillStyle = 'rgba(24,32,58,.14)'; x.fillRect(150, 1296, CW - 300, 1.5);
+      caps(x, facts(e), cx, 1370, '400 20px Jost', MUTED, 4);
+      caps(x, 'NIKADI PROJECTS PRIVATE LIMITED', cx, CH - 120, '400 17px Jost', MUTED, 5);
+      return c;
+    }
+    if (look === 'noir') {
+      var g = x.createLinearGradient(0, 0, 0, CH); g.addColorStop(0, '#16161a'); g.addColorStop(1, '#0b0b0e'); x.fillStyle = g; x.fillRect(0, 0, CW, CH);
+      x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 1.6; rr(x, 40, 40, CW - 80, CH - 80, 14); x.stroke();
+      logoAt(x, tint(logo, '#d8bd85'), cx, 104, 290);
+      var PW = 420, PH = 525, px = cx - PW / 2, py = 410;
+      x.strokeStyle = goldGrad(x, px, px + PW); x.lineWidth = 1.6; rr(x, px - 14, py - 14, PW + 28, PH + 28, 16); x.stroke();
+      phImg(x, ph, e, px, py, PW, PH, false, '#202026', '#d8bd85');
+      x.textAlign = 'center'; x.fillStyle = '#f4ead6'; fit(x, e.name, CW - 200, 82, serif('#')); x.fillText(e.name, cx, py + PH + 120);
+      caps(x, role(e).toUpperCase(), cx, py + PH + 172, '400 24px Jost', '#d8bd85', 10);
+      x.fillStyle = goldGrad(x, cx - 30, cx + 30); x.fillRect(cx - 30, py + PH + 214, 60, 1.6);
+      caps(x, e.id, cx, py + PH + 286, '400 36px Jost', '#f4ead6', 7);
+      caps(x, 'EMPLOYEE ID', cx, py + PH + 326, '400 16px Jost', 'rgba(216,189,133,.7)', 6);
+      caps(x, facts(e), cx, py + PH + 410, '400 19px Jost', 'rgba(244,234,214,.75)', 4);
+      caps(x, 'SRI DHAM MAYAPUR', cx, CH - 104, '400 16px Jost', 'rgba(216,189,133,.75)', 8);
+      return c;
+    }
+    /* navy (default) */
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, CW, CH);
+    var HEAD = 600; x.fillStyle = NAVY; x.fillRect(0, 0, CW, HEAD); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, HEAD, CW, 5);
+    logoAt(x, logo, cx, 84, 310);
+    var PW2 = 420, PH2 = 520, px2 = cx - PW2 / 2, py2 = 378;
+    x.save(); x.shadowColor = 'rgba(10,20,50,.28)'; x.shadowBlur = 40; x.shadowOffsetY = 14; x.fillStyle = '#fff'; rr(x, px2 - 12, py2 - 12, PW2 + 24, PH2 + 24, 16); x.fill(); x.restore();
+    phImg(x, ph, e, px2, py2, PW2, PH2, false, '#e9ecf3', NAVY);
+    x.textAlign = 'center'; x.fillStyle = NAVY; fit(x, e.name, CW - 180, 84, serif('#')); x.fillText(e.name, cx, py2 + PH2 + 128);
+    caps(x, role(e).toUpperCase(), cx, py2 + PH2 + 182, '500 25px Jost', GOLD, 9);
+    var by = py2 + PH2 + 250; x.fillStyle = '#f3f4f8'; rr(x, 120, by, CW - 240, 120, 14); x.fill();
+    caps(x, 'EMPLOYEE ID', cx, by + 46, '400 17px Jost', MUTED, 6); caps(x, e.id, cx, by + 94, '500 36px Jost', NAVY, 5);
+    caps(x, facts(e), cx, by + 196, '400 20px Jost', MUTED, 4);
+    x.fillStyle = NAVY; x.fillRect(0, CH - 96, CW, 96); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, CH - 96, CW, 4);
+    caps(x, 'NIKADI GUEST HOUSE  ·  SRI DHAM MAYAPUR', cx, CH - 38, '400 18px Jost', 'rgba(255,255,255,.82)', 5);
+    return c;
+  }
+  function back(e, sign, qr, logo, look) {
+    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d'), cx = CW / 2;
+    var dark = look === 'noir', bg = look === 'ivory' ? '#f7f2e7' : dark ? '#111114' : '#ffffff', ink = dark ? '#f1e7d2' : INK, mut = dark ? 'rgba(216,189,133,.75)' : MUTED, line = dark ? 'rgba(216,189,133,.25)' : 'rgba(24,32,58,.12)', accent = dark ? '#d8bd85' : GOLD;
+    x.fillStyle = bg; x.fillRect(0, 0, CW, CH);
+    var top = 100;
+    if (look === 'navy' || !look) { x.fillStyle = NAVY; x.fillRect(0, 0, CW, 230); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, 230, CW, 4); logoAt(x, logo, cx, 44, 190); top = 320; }
+    else { x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = dark ? 1.6 : 2; rr(x, dark ? 40 : 44, dark ? 40 : 44, CW - (dark ? 80 : 88), CH - (dark ? 80 : 88), dark ? 14 : 18); x.stroke();
+      logoAt(x, tint(logo, dark ? '#d8bd85' : NAVY), cx, 96, 170); top = 330; }
+    var bx = 120, bw = CW - 240;
+    var GAP = 78;
+    function row(k, v, yy) { x.textAlign = 'left'; x.font = '400 18px Jost'; x.fillStyle = mut; spacedL(x, k, bx, yy, 4); x.textAlign = 'right'; x.fillStyle = ink; fit(x, v || '—', bw - 290, 30, '500 #px Jost'); x.fillText(v || '—', bx + bw, yy); x.fillStyle = line; x.fillRect(bx, yy + 22, bw, 1.4); }
+    row('NAME', e.name, top); row('EMPLOYEE ID', e.id, top + GAP); row('DATE OF BIRTH', dLong(e.dob), top + GAP * 2); row('BLOOD GROUP', e.blood, top + GAP * 3);
+    row('IN AN EMERGENCY', e.emName ? e.emName + (e.emRel ? ' (' + e.emRel + ')' : '') : '', top + GAP * 4); row('EMERGENCY PHONE', e.emPhone ? '+91 ' + e.emPhone.replace(/(\d{5})(\d{5})/, '$1 $2') : '', top + GAP * 5);
+    var qy = top + GAP * 5 + 100;
+    if (qr) { var qs = 230; x.fillStyle = '#fff'; rr(x, bx - 10, qy - 10, qs + 20, qs + 20, 12); x.fill(); x.drawImage(qr, bx, qy, qs, qs); x.textAlign = 'left'; x.font = '400 16px Jost'; x.fillStyle = mut; spacedL(x, 'SCAN TO VERIFY', bx - 4, qy + qs + 44, 4); }
+    var sx = CW - bx, sy = qy + 170;
+    if (sign) { var sw = 290, sh = sw * sign.height / sign.width; x.drawImage(dark ? tint(sign, '#e9dcc0') : sign, sx - sw, sy - sh, sw, sh); }
+    x.fillStyle = line; x.fillRect(sx - 310, sy + 10, 310, 1.6);
+    x.textAlign = 'right'; x.fillStyle = ink; x.font = serif(30); x.fillText('Authorised Signatory', sx, sy + 52);
+    x.font = '400 16px Jost'; x.fillStyle = mut; spacedR(x, 'DIRECTOR', sx, sy + 84, 4);
+    x.textAlign = 'center'; x.fillStyle = dark ? 'rgba(241,231,210,.7)' : '#5d6272'; x.font = 'italic 500 26px "Cormorant Garamond", Georgia, serif';
+    ['This card is the property of Nikadi Projects Private Limited.', 'Please wear it on duty and return it on leaving.', 'If found, kindly hand it to the reception of Nikadi Guest House.'].forEach(function (l, i) { fit(x, l, CW - 200, 26, 'italic 500 #px "Cormorant Garamond", Georgia, serif'); x.fillText(l, cx, qy + 372 + i * 38); });
+    var fy = CH - 230;
+    if (look === 'navy' || !look) { x.fillStyle = NAVY; x.fillRect(0, fy, CW, 230); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, fy, CW, 4); ink = '#fff'; accent = GOLD_HI; }
+    else { x.fillStyle = goldGrad(x, cx - 40, cx + 40); x.fillRect(cx - 40, fy + 20, 80, 2); }
+    x.textAlign = 'center'; x.fillStyle = ink; x.font = '400 21px Jost';
+    ['Bhaktisiddhanta Saraswati Marg, Opp. ISKCON Gate No. 4', 'Sri Dham Mayapur, Nadia, West Bengal 741313'].forEach(function (l, i) { fit(x, l, CW - 200, 21, '400 #px Jost'); x.fillText(l, cx, fy + 84 + i * 32); });
+    caps(x, '+91 75011 01137   ·   NIKADIGUESTHOUSE.COM', cx, fy + 172, '500 17px Jost', accent, 3);
+    return c;
+  }
+  function qrImage(text, dark) {
     if (!window.NikadiQR) return Promise.resolve(null);
-    try { var svg = NikadiQR.svg(text, { color: '#0b1330' }); return img('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)).then(function (i) { if (!i) return null; var c = document.createElement('canvas'); c.width = c.height = 460; var x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(i, 0, 0, 460, 460); return c; }); } catch (er) { return Promise.resolve(null); }
+    try { var svg = NikadiQR.svg(text, { color: '#0f1a3a' }); return img('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)).then(function (i) { if (!i) return null; var c = document.createElement('canvas'); c.width = c.height = 460; var x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(i, 0, 0, 460, 460); return c; }); } catch (er) { return Promise.resolve(null); }
   }
   function jspdf() { if (window.jspdf) return Promise.resolve(window.jspdf); return new Promise(function (ok, bad) { var s = document.createElement('script'); s.src = '/staff/vendor/jspdf.umd.min.js'; s.onload = function () { ok(window.jspdf); }; s.onerror = bad; document.head.appendChild(s); }); }
+  function lookNow() { try { return LOOKS[localStorage.getItem('nk-card-look')] ? localStorage.getItem('nk-card-look') : 'navy'; } catch (x) { return 'navy'; } }
   function idCard(e, phId) {
     var body = C.openSheet('ID card · ' + e.name); body.innerHTML = '<div class="loading">Drawing the card…</div>';
-    Promise.all([photo(phId).then(img), img('/img/brand/logo-light.png'), img('/img/brand/sign.png'), fonts(), qrImage('Nikadi Guest House, a unit of Nikadi Projects Private Limited\nEmployee ' + e.id + '\n' + e.name + '\n' + ((e.director ? 'Director' : e.job) || '') + '\nTo check, call the reception: +91 75011 01137')]).then(function (a) {
-      var f = front(e, a[0], a[1]), b = back(e, a[2], a[4], a[1]);
-      body.innerHTML = '<div class="emp-cards"><img alt="Front of the ID card" src="' + f.toDataURL('image/png') + '"><img alt="Back of the ID card" src="' + b.toDataURL('image/png') + '"></div>' +
-        (a[0] ? '' : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
-        '<div class="emp-acts"><button class="btn btn-gold" type="button" id="cPdf">Download PDF to print</button></div><p class="small">The PDF has the front and the back at real card size, 54 × 85.6 mm, for a PVC card printer or a print shop.</p>';
-      $('#cPdf', body).onclick = function () {
-        var btn = this; C.busy(btn, true);
-        jspdf().then(function (J) {
-          var d = new J.jsPDF({ unit: 'mm', format: [54, 85.6], orientation: 'portrait' });
-          d.addImage(f.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6); d.addPage([54, 85.6], 'portrait'); d.addImage(b.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6);
-          d.save(e.id + ' ' + e.name.replace(/[^\w .-]+/g, '') + ' ID card.pdf'); C.busy(btn, false);
-        }, function () { C.busy(btn, false); C.toast('Could not make the PDF. Please try again.'); });
-      };
+    Promise.all([photo(phId).then(img), img('/img/brand/logo-light.png'), img('/img/brand/sign.png'), fonts(), qrImage('Nikadi Guest House, a unit of Nikadi Projects Private Limited\nEmployee ' + e.id + '\n' + e.name + '\n' + role(e) + '\nTo check, call the reception: +91 75011 01137')]).then(function (a) {
+      var f, b, look = lookNow();
+      function paint() {
+        f = front(e, a[0], a[1], look); b = back(e, a[2], a[4], a[1], look);
+        body.innerHTML = '<div class="seg" data-seg="look">' + Object.keys(LOOKS).map(function (k) { return '<button type="button" data-v="' + k + '" aria-pressed="' + (k === look) + '">' + esc(LOOKS[k]) + '</button>'; }).join('') + '</div>' +
+          '<div class="emp-cards"><img alt="Front of the ID card" src="' + f.toDataURL('image/png') + '"><img alt="Back of the ID card" src="' + b.toDataURL('image/png') + '"></div>' +
+          (a[0] ? '' : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
+          '<div class="emp-acts"><button class="btn btn-gold" type="button" id="cPdf">Download PDF to print</button></div><p class="small">The PDF has the front and the back at real card size, 54 × 85.6 mm, for a PVC card printer or a print shop. The design you choose is remembered on this device.</p>';
+        $$('[data-seg="look"] button', body).forEach(function (bt) { bt.onclick = function () { look = bt.dataset.v; try { localStorage.setItem('nk-card-look', look); } catch (x) {} paint(); }; });
+        $('#cPdf', body).onclick = function () {
+          var btn = this; C.busy(btn, true);
+          jspdf().then(function (J) {
+            var d = new J.jsPDF({ unit: 'mm', format: [54, 85.6], orientation: 'portrait' });
+            d.addImage(f.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6); d.addPage([54, 85.6], 'portrait'); d.addImage(b.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6);
+            d.save(e.id + ' ' + e.name.replace(/[^\w .-]+/g, '') + ' ID card.pdf'); C.busy(btn, false);
+          }, function () { C.busy(btn, false); C.toast('Could not make the PDF. Please try again.'); });
+        };
+      }
+      paint();
     });
   }
-  window.NikadiEmp = { mount: mount, reset: function () { LIST = null; }, _draw: { front: front, back: back } };
+  window.NikadiEmp = { mount: mount, reset: function () { LIST = null; }, _draw: { front: front, back: back, qr: qrImage, img: img, fonts: fonts } };
 })();
