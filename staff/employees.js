@@ -3,7 +3,15 @@
    Loaded by the staff app; NikadiEmp.mount(view, ctx) draws the page. */
 (function () {
   var C, LIST = null, PH = {}, FONTS = null;
-  var JOBS = ['Director', 'Manager', 'Receptionist', 'Housekeeping', 'Laundry', 'Security', 'Bell boy', 'Cook', 'Accountant', 'Other'];
+  var JOBS = ['Director', 'Manager', 'Front office / Receptionist', 'Housekeeping', 'Room attendant', 'Laundry', 'Security guard', 'Bell boy', 'Cook', 'Kitchen helper', 'Driver', 'Electrician / Maintenance', 'Cleaner', 'Gardener', 'Accountant', 'Office assistant'];
+  var BANKS = ['State Bank of India', 'Punjab National Bank', 'Bank of Baroda', 'Canara Bank', 'Union Bank of India', 'Bank of India', 'Indian Bank', 'Central Bank of India', 'Indian Overseas Bank', 'UCO Bank', 'Bank of Maharashtra', 'Punjab & Sind Bank',
+    'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra Bank', 'IndusInd Bank', 'Yes Bank', 'IDFC First Bank', 'IDBI Bank', 'Bandhan Bank', 'Federal Bank', 'South Indian Bank', 'Karur Vysya Bank', 'City Union Bank', 'Tamilnad Mercantile Bank',
+    'Karnataka Bank', 'RBL Bank', 'DCB Bank', 'CSB Bank', 'Dhanlaxmi Bank', 'Jammu & Kashmir Bank', 'Nainital Bank',
+    'AU Small Finance Bank', 'Equitas Small Finance Bank', 'Ujjivan Small Finance Bank', 'Jana Small Finance Bank', 'Suryoday Small Finance Bank', 'ESAF Small Finance Bank', 'Utkarsh Small Finance Bank', 'Capital Small Finance Bank', 'Unity Small Finance Bank', 'Shivalik Small Finance Bank',
+    'West Bengal Gramin Bank', 'Paschim Banga Gramin Bank', 'Bangiya Gramin Vikash Bank', 'Uttarbanga Kshetriya Gramin Bank', 'West Bengal State Co-operative Bank', 'Nadia District Central Co-operative Bank',
+    'India Post Payments Bank', 'Airtel Payments Bank', 'Paytm Payments Bank', 'Fino Payments Bank', 'Jio Payments Bank', 'NSDL Payments Bank',
+    'Standard Chartered Bank', 'HSBC', 'Citibank', 'DBS Bank India', 'Deutsche Bank'];
+  var RELS = ['Father', 'Mother', 'Husband', 'Wife', 'Son', 'Daughter', 'Brother', 'Sister', 'Uncle', 'Aunt', 'Friend', 'Neighbour'];
   var BLOOD = ['', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   var COMPANY = 'Nikadi Projects Private Limited';
   var ADDR = ['Bhaktisiddhanta Saraswati Marg, Opp. ISKCON Gate No. 4', '(Namahatta Bhavan), Sri Dham Mayapur', 'Nadia, West Bengal 741313'];
@@ -62,7 +70,7 @@
     body.innerHTML = '<div class="emp-head"><span class="emp-ph big"' + (have.photo ? ' data-ph="' + esc(have.photo[0].id) + '"' : '') + '>' + esc(initials(e.name)) + '</span><div><h3>' + esc(e.name) + '</h3><p class="small">' + esc(e.job || '') + (e.director ? ' · Director' : '') + (e.status === 'Left' ? ' · left on ' + esc(dLong(e.left)) : '') + '</p><code class="emp-id">' + esc(e.id) + '</code></div></div>' +
       '<div class="emp-acts"><button class="btn btn-gold" type="button" id="epCard">Employee ID card</button><button class="btn btn-line" type="button" id="epEdit">Edit details</button></div>' +
       '<div class="panel"><div class="sec-h"><h2>Work</h2></div>' + row('Designation', e.job) + row('Date of joining', dLong(e.joined)) + row('Monthly salary', e.salary ? rs(e.salary) + (e.salaryNote ? ' · ' + e.salaryNote : '') : e.salaryNote) + row('Status', e.status) + '</div>' +
-      '<div class="panel"><div class="sec-h"><h2>Personal</h2></div>' + row('Phone', e.phone) + row('Email', e.email) + row('Date of birth', dLong(e.dob)) + row('Blood group', e.blood) + row("Father's / husband's name", e.father) + row('Home address', e.address) + row('Emergency contact', [e.emName, e.emPhone].filter(Boolean).join(' · ')) + '</div>' +
+      '<div class="panel"><div class="sec-h"><h2>Personal</h2></div>' + row('Phone', e.phone) + row('Email', e.email) + row('Date of birth', dLong(e.dob)) + row('Blood group', e.blood) + row("Father's / husband's name", e.father) + row('Home address', e.address) + row('Emergency contact', [e.emName + (e.emRel ? ' (' + e.emRel + ')' : ''), e.emPhone].filter(Boolean).join(' · ')) + '</div>' +
       '<div class="panel"><div class="sec-h"><h2>Salary account</h2></div>' + (e.accNo || e.upi ? row('Account holder', e.accName) + row('Bank', [e.bank, e.branch].filter(Boolean).join(', ')) + row('Account no.', mask(e.accNo)) + row('IFSC', e.ifsc) + row('UPI', e.upi) : '<p class="small">Not added yet.</p>') + '</div>' +
       '<div class="panel"><div class="sec-h"><h2>ID numbers</h2></div>' + (e.aadhaar || e.pan || e.voter || e.uan || e.esic ? row('Aadhaar', mask(e.aadhaar)) + row('PAN', mask(e.pan)) + row('Voter ID', e.voter) + row('PF UAN', e.uan) + row('ESI no.', e.esic) : '<p class="small">Not added yet.</p>') + '</div>' +
       (e.prevWork || e.notes ? '<div class="panel"><div class="sec-h"><h2>Previous work</h2></div>' + (e.prevWork ? '<p class="emp-pre">' + esc(e.prevWork) + '</p>' : '') + (e.notes ? '<p class="small">' + esc(e.notes) + '</p>' : '') + '</div>' : '') +
@@ -120,29 +128,50 @@
   function edit(e) {
     var n = !e; e = e || { status: 'Active', joined: C.today(), director: false };
     var body = C.openSheet(n ? 'New employee' : 'Edit · ' + e.name), F = C.field;
+    /* a list to choose from; "Other" opens a box to type something not in the list */
+    function pick(k, opts, ph) { var v = e[k] || '', inList = !v || opts.indexOf(v) >= 0;
+      return '<select class="input" data-pick="' + k + '"><option value="">' + esc(ph || 'Choose…') + '</option>' + opts.map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '<option value="__other"' + (inList ? '' : ' selected') + '>Other (type it)</option></select>' +
+        '<input class="input emp-other" name="' + k + '" value="' + esc(v) + '"' + (inList ? ' hidden' : '') + ' placeholder="Type it here">'; }
     function inp(k, type, extra) { return '<input class="input" name="' + k + '" type="' + (type || 'text') + '" value="' + esc(e[k] || '') + '"' + (extra || '') + '>'; }
     body.innerHTML = '<form id="empF" class="emp-form" novalidate>' +
       '<h3 class="emp-fh">Work</h3>' + F('Employee ID', inp('id', 'text', ' autocomplete="off" style="text-transform:uppercase" placeholder="' + esc(n ? LIST.next : '') + '"') + '<small class="hint">' + (n ? 'Leave empty to give the next number, ' + esc(LIST.next) + '.' : 'Change only if needed, for example before the ID cards are printed.') + '</small>') +
       F('Full name (as on Aadhaar)', inp('name', 'text', ' autocomplete="off" required'), true) +
-      F('Designation', '<input class="input" name="job" list="empJobs" value="' + esc(e.job || '') + '"><datalist id="empJobs">' + JOBS.map(function (j) { return '<option>' + j + '</option>'; }).join('') + '</datalist>') +
+      F('Designation', pick('job', JOBS, 'Choose the job')) +
       '<label class="toggle"><span>This person is a director of the company</span><input type="checkbox" name="director"' + (e.director ? ' checked' : '') + '></label>' +
       F('Date of joining', inp('joined', 'date')) + F('Monthly salary (₹)', inp('salary', 'number', ' inputmode="numeric" min="0" step="1"')) + F('Salary note (optional)', inp('salaryNote', 'text', ' placeholder="For example: variable, ₹50,000 or above"')) +
       F('Status', '<select class="input" name="status"><option' + (e.status !== 'Left' ? ' selected' : '') + '>Active</option><option' + (e.status === 'Left' ? ' selected' : '') + '>Left</option></select>') + F('Date of leaving', inp('left', 'date')) +
       '<h3 class="emp-fh">Personal</h3>' + F('Phone', inp('phone', 'tel', ' inputmode="tel"')) + F('Email', inp('email', 'email')) + F('Date of birth', inp('dob', 'date')) +
       F('Blood group', '<select class="input" name="blood">' + BLOOD.map(function (b) { return '<option' + (b === (e.blood || '') ? ' selected' : '') + ' value="' + b + '">' + (b || '—') + '</option>'; }).join('') + '</select>') +
       F("Father's / husband's name", inp('father')) + F('Home address', '<textarea class="input" name="address" rows="2">' + esc(e.address || '') + '</textarea>') +
-      F('Emergency contact name', inp('emName')) + F('Emergency contact phone', inp('emPhone', 'tel', ' inputmode="tel"')) +
-      '<h3 class="emp-fh">Salary account</h3>' + F('Account holder name', inp('accName')) + F('Bank', inp('bank')) + F('Branch', inp('branch')) + F('Account number', inp('accNo', 'text', ' inputmode="numeric" autocomplete="off"')) + F('IFSC', inp('ifsc', 'text', ' autocomplete="off" style="text-transform:uppercase"')) + F('UPI ID (optional)', inp('upi')) +
+      F('Emergency contact name', inp('emName')) + F('Relation', pick('emRel', RELS, 'Choose the relation')) + F('Emergency contact phone', inp('emPhone', 'tel', ' inputmode="tel"')) +
+      '<h3 class="emp-fh">Salary account</h3>' + F('Account holder name (as in the bank)', inp('accName')) + F('IFSC code', inp('ifsc', 'text', ' autocomplete="off" maxlength="11" style="text-transform:uppercase" placeholder="11 letters and digits, on the passbook or cheque"') + '<small class="hint" id="ifscMsg">Type the IFSC and the bank and branch fill in by themselves.</small>') +
+      F('Bank', pick('bank', BANKS, 'Choose the bank')) + F('Branch', inp('branch')) + F('Account number', inp('accNo', 'text', ' inputmode="numeric" autocomplete="off"')) + F('Account number again (to check)', '<input class="input" id="accNo2" inputmode="numeric" autocomplete="off" value="' + esc(e.accNo || '') + '">') + F('UPI ID (optional)', inp('upi')) +
       '<h3 class="emp-fh">ID numbers</h3>' + F('Aadhaar number', inp('aadhaar', 'text', ' inputmode="numeric" autocomplete="off"')) + F('PAN', inp('pan', 'text', ' autocomplete="off" style="text-transform:uppercase"')) + F('Voter ID number', inp('voter', 'text', ' autocomplete="off" style="text-transform:uppercase"')) +
       F('PF UAN (if any)', inp('uan', 'text', ' inputmode="numeric"')) + F('ESI number (if any)', inp('esic', 'text', ' inputmode="numeric"')) +
       '<h3 class="emp-fh">Previous work</h3>' + F('Where they worked before, what they did, how long', '<textarea class="input" name="prevWork" rows="4" placeholder="For example: Hotel Sri Krishna, Mayapur · housekeeping · 2019–2023">' + esc(e.prevWork || '') + '</textarea>') +
       F('Notes (optional)', '<textarea class="input" name="notes" rows="2">' + esc(e.notes || '') + '</textarea>') +
       '<p class="small">Photo, Aadhaar, PAN and voter card scans, the CV and work papers are added on the profile after saving.</p>' +
       '<p class="err" id="eErr" role="alert"></p><button class="btn btn-gold" type="submit" id="eGo">' + (n ? 'Save and add documents' : 'Save changes') + '</button></form>';
+    $$('[data-pick]', body).forEach(function (sel) { var box = sel.nextElementSibling; sel.onchange = function () { if (sel.value === '__other') { box.hidden = false; box.value = ''; box.focus(); } else { box.hidden = true; box.value = sel.value; } }; });
+    function setPick(k, v) { var sel = $('[data-pick="' + k + '"]', body), box = sel.nextElementSibling, has = Array.prototype.some.call(sel.options, function (o) { return o.value === v; }); sel.value = has ? v : '__other'; box.hidden = has; box.value = v; }
+    /* IFSC: the bank and branch are looked up (Razorpay's free IFSC directory) */
+    var ifsc = $('[name="ifsc"]', body), im = $('#ifscMsg', body), lastQ = '';
+    ifsc.addEventListener('input', function () {
+      var q = ifsc.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); if (q === lastQ) return; lastQ = q;
+      if (q.length < 11) { im.textContent = 'Type the IFSC and the bank and branch fill in by themselves.'; return; }
+      if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(q)) { im.textContent = 'This does not look like an IFSC. It is 4 letters, a 0, then 6 letters or digits.'; return; }
+      im.textContent = 'Looking up ' + q + '…';
+      fetch('https://ifsc.razorpay.com/' + q).then(function (r) { if (r.status === 404) throw 'nf'; if (!r.ok) throw 'x'; return r.json(); }).then(function (j) {
+        if (q !== lastQ) return;
+        setPick('bank', j.BANK || ''); var br = [j.BRANCH, j.CITY && j.CITY !== j.BRANCH ? j.CITY : ''].filter(Boolean).map(function (w) { return w.toLowerCase().replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }); }).join(', ');
+        $('[name="branch"]', body).value = br; im.textContent = '✓ ' + j.BANK + ' · ' + br + (j.ADDRESS ? ' · ' + j.ADDRESS : '');
+      }, function (x) { if (q === lastQ) im.textContent = x === 'nf' ? 'No bank branch has this IFSC. Please check it on the passbook or cheque.' : 'Could not look it up right now. Choose the bank and type the branch.'; });
+    });
     $('#empF', body).onsubmit = function (ev) {
       ev.preventDefault(); var f = this, b = $('#eGo', body), req = { original: n ? '' : e.id };
-      ['id', 'name', 'job', 'joined', 'salary', 'salaryNote', 'status', 'left', 'phone', 'email', 'dob', 'blood', 'father', 'address', 'emName', 'emPhone', 'accName', 'bank', 'branch', 'accNo', 'ifsc', 'upi', 'aadhaar', 'pan', 'voter', 'uan', 'esic', 'prevWork', 'notes'].forEach(function (k) { req[k] = f.elements[k] ? f.elements[k].value.trim() : ''; });
+      ['id', 'name', 'job', 'joined', 'salary', 'salaryNote', 'status', 'left', 'phone', 'email', 'dob', 'blood', 'father', 'address', 'emName', 'emRel', 'emPhone', 'accName', 'bank', 'branch', 'accNo', 'ifsc', 'upi', 'aadhaar', 'pan', 'voter', 'uan', 'esic', 'prevWork', 'notes'].forEach(function (k) { req[k] = f.elements[k] ? f.elements[k].value.trim() : ''; });
       req.director = f.elements.director.checked;
+      if ((req.accNo || $('#accNo2', body).value.trim()) && req.accNo.replace(/\s/g, '') !== $('#accNo2', body).value.trim().replace(/\s/g, '')) { $('#eErr', body).textContent = 'The two account numbers are not the same. Please check them.'; return; }
       if (!req.name) { $('#eErr', body).textContent = 'Please write the name.'; return; }
       C.busy(b, true); $('#eErr', body).textContent = '';
       C.api('deskEmployeeSave', req).then(function (r) { LIST = null; body.closest('.sheet').dataset.dirty = ''; C.toast('Saved'); C.closeSheet(); C.render(); setTimeout(function () { profile(r.employee.id); }, 120); },
@@ -191,7 +220,7 @@
     x.fillStyle = INK; x.font = '500 30px Jost'; x.fillText('+91 75011 01137  ·  nikadiguesthouse.com', CW / 2, y + 268);
     var bx = 110, bw = CW - 220; y = 640; x.strokeStyle = 'rgba(28,34,56,.14)'; x.lineWidth = 2; x.beginPath(); x.moveTo(bx, y); x.lineTo(bx + bw, y); x.stroke();
     function line(k, v, yy) { x.textAlign = 'left'; x.fillStyle = MUTED; x.font = '400 30px Jost'; x.fillText(k, bx, yy); x.textAlign = 'right'; x.fillStyle = INK; x.font = '500 32px Jost'; fit(x, v || '—', bw - 300, 32, '500 #px Jost'); x.fillText(v || '—', bx + bw, yy); }
-    line('Date of birth', dLong(e.dob), y + 66); line('Emergency contact', e.emName, y + 118); line('Emergency phone', e.emPhone ? '+91 ' + e.emPhone : '', y + 170);
+    line('Date of birth', dLong(e.dob), y + 66); line('Emergency contact', e.emName ? e.emName + (e.emRel ? ' (' + e.emRel + ')' : '') : '', y + 118); line('Emergency phone', e.emPhone ? '+91 ' + e.emPhone : '', y + 170);
     y = 940; x.textAlign = 'center'; x.fillStyle = MUTED; x.font = '400 27px Jost';
     ['This card is the property of ' + COMPANY + '.', 'It must be shown on request and returned on', 'leaving the job. If found, please return it to', 'the reception of Nikadi Guest House.'].forEach(function (l, i) { fit(x, l, CW - 120, 27, '400 #px Jost'); x.fillText(l, CW / 2, y + i * 40); });
     if (sign) { var sw = 300, sh = sw * sign.height / sign.width; x.drawImage(sign, CW - 110 - sw, 1250 - sh, sw, sh); }
