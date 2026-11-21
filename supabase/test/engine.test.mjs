@@ -322,3 +322,17 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('cin', bad.error, ok.cin, b.ok, g.cin, g.both.length);
   if (bad.ok || ok.cin !== 'U55101WB2020PTC123456' || !b.ok || g.cin !== ok.cin || !g.both) throw new Error('cin broken');
 }
+{ // employee profiles
+  const a = await call('deskEmployeeSave', { token: tok, name: 'Test Director', job: 'Director', director: true, salary: 50000, salaryNote: 'Variable, 50,000 or above', joined: '2021-09-01' });
+  const b = await call('deskEmployeeSave', { token: tok, name: 'Test Staff', job: 'Housekeeping', salary: 12500, aadhaar: '1234 5678 9012', pan: 'abcde1234f', accNo: '123456789012', ifsc: 'sbin0001234', phone: '9876543210' });
+  const bad = await call('deskEmployeeSave', { token: tok, name: 'X', pan: 'BAD' });
+  const list = await call('deskEmployees', { token: tok }), one = await call('deskEmployee', { token: tok, id: b.employee.id });
+  const doc = await call('deskEmpDocSave', { token: tok, emp: b.employee.id, kind: 'photo', data: 'AAAA' });
+  const doc2 = await call('deskEmpDocSave', { token: tok, emp: b.employee.id, kind: 'photo', data: 'BBBB' });
+  const ren = await call('deskEmployeeSave', Object.assign({}, one.employee, { token: tok, original: b.employee.id, id: 'NPPL-NGH-050', salary: 13000 }));
+  const rm = await call('deskEmployeeRemove', { token: tok, id: a.employee.id }), list2 = await call('deskEmployees', { token: tok }), no = await call('deskEmployees', {});
+  const lb = list.list.find(x => x.id === b.employee.id);
+  console.log('employees', a.employee.id, b.employee.id, bad.error, lb.aadhaar, lb.accNo, one.employee.aadhaar, doc2.docs.length, ren.employee && ren.employee.id, ren.employee && ren.employee.docs.length, list2.list.length, list2.next, no.error);
+  if (a.employee.id !== 'NPPL-NGH-001' || b.employee.id !== 'NPPL-NGH-002' || bad.error !== 'bad_pan' || lb.aadhaar !== '•••• 9012' || one.employee.aadhaar !== '123456789012' || doc2.docs.length !== 1 ||
+      !ren.employee || ren.employee.id !== 'NPPL-NGH-050' || ren.employee.docs.length !== 1 || list2.list.length !== 1 || list2.next !== 'NPPL-NGH-051' || no.ok) throw new Error('employees broken');
+}

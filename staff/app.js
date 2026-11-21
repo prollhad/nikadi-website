@@ -32,7 +32,7 @@
     room_not_occupied: 'There is no guest in this room.', name_required: 'Please enter a name.', max_guests: 'A room takes 1 to 3 guests. For 4 or more, use two rooms.',
     bad_dates: 'The check-out date must be after the check-in date.', rate_required: 'Please enter the rate per night.', invalid_amount: 'Please enter an amount in rupees.',
     method_required: 'Choose how they paid: Cash, UPI or Card.', invalid_phone: 'Please check the phone number and its country code (+91 for India).', bad_qty: 'Please check the quantity.',
-    bad_nights: 'Please check the number of nights.', not_in_house: 'This guest has already checked out.', bad_pin: 'The PIN must be 4 to 6 digits.', pin_easy: 'That PIN is too easy to guess. Please choose another one, not a repeat or a run like 1111 or 1234.', pin_short: 'The Owner and Manager need a 6 digit PIN, because they can see the money and accounts.',
+    bad_nights: 'Please check the number of nights.', not_in_house: 'This guest has already checked out.', bad_pin: 'The PIN must be 4 to 6 digits.', bad_aadhaar: 'The Aadhaar number must have 12 digits.', bad_pan: 'The PAN looks wrong. It has 10 letters and digits, like ABCDE1234F.', bad_ifsc: 'The IFSC looks wrong. It has 11 letters and digits, like SBIN0001234.', bad_account: 'Please check the account number.', id_taken: 'That employee ID is already used by someone else.', bad_kind: 'Please choose which document this is.', pin_easy: 'That PIN is too easy to guess. Please choose another one, not a repeat or a run like 1111 or 1234.', pin_short: 'The Owner and Manager need a 6 digit PIN, because they can see the money and accounts.',
     pin_taken: 'Someone else already uses this PIN. Choose another.', name_taken: 'That name is already used.', last_owner: 'There must always be at least one active Owner.',
     no_item: 'This item is not available.', not_tracked: 'Stock is not counted for this item.', bad_status: 'The room status has changed. Pull to refresh.',
     network: 'No internet connection. Please try again.', server_error: 'Something went wrong. Please try again.',
@@ -282,6 +282,7 @@
     expenses: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/><path d="M7 6V4h10v2"/></svg>',
     commission: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M17 7v6M14.5 9.5h3.2a1.3 1.3 0 0 1 0 2.6H16"/></svg>',
     housekeeping: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 3h6v4H9z"/><path d="M7 7h10l-1 14H8z"/><path d="M10 11h4M10 15h4"/></svg>',
+    employees: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.3"/><path d="M5.8 16.2c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M14.5 10h4M14.5 13.5h3"/></svg>',
     attendance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     bills: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2.5h12v19l-3-2-3 2-3-2-3 2z"/><path d="M9 7.5h6M9 11h6M9 14.5h4"/></svg>',
     today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
@@ -296,11 +297,11 @@
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
   };
-  var NAMES = { photos: 'Photos', regs: 'Registrations', help: 'Help', changelog: 'Change log', today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies', whatsapp: 'WhatsApp', laundry: 'Laundry' };
+  var NAMES = { photos: 'Photos', regs: 'Registrations', help: 'Help', changelog: 'Change log', today: 'Today', rooms: 'Rooms', calendar: 'Calendar', bookings: 'Bookings', add: 'Add item', stock: 'Stock', settings: 'Settings', approvals: 'Approvals', more: 'More', reports: 'Sales', bills: 'Bills', attendance: 'Attendance', employees: 'Employees', housekeeping: 'Housekeeping', expenses: 'Expenses', commission: 'Commission', idcopy: 'ID copies', whatsapp: 'WhatsApp', laundry: 'Laundry' };
   function navFor(desk) {
     if (S.me && S.me.role === 'Laundry') return ['laundry'];
     if (!mgr()) return desk ? ['rooms', 'housekeeping', 'add', 'stock', 'laundry', 'calendar'] : ['rooms', 'housekeeping', 'add', 'stock', 'calendar'];
-    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'whatsapp', 'regs', 'photos', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock', 'laundry'].concat(owner() ? ['reports', 'attendance', 'changelog', 'settings'] : []);
+    if (desk) return ['today', 'rooms', 'housekeeping', 'calendar', 'bookings', 'whatsapp', 'regs', 'photos', 'bills', 'idcopy', 'expenses', 'commission', 'approvals', 'add', 'stock', 'laundry'].concat(owner() ? ['reports', 'attendance', 'employees', 'changelog', 'settings'] : []);
     return ['today', 'rooms', 'calendar', 'bookings', 'more'];
   }
   function navName(t) { return t === 'approvals' && rcp() ? 'My requests' : NAMES[t]; }
@@ -355,7 +356,7 @@
 
   function render() {
     var v = $('#view'); if (!v || !S.st) return;
-    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, regs: viewRegs, photos: viewPhotos, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog, laundry: viewLaundry }[S.tab] || (S.me.role === 'Laundry' ? viewLaundry : viewRooms))(v);
+    ({ rooms: viewRooms, add: viewAdd, stock: viewStock, today: viewToday, calendar: viewCalendar, bookings: viewBookings, settings: viewSettings, approvals: viewApprovals, more: viewMore, reports: viewReports, bills: viewBills, attendance: viewAttendance, employees: viewEmployees, housekeeping: viewHousekeeping, expenses: viewExpenses, commission: viewCommission, idcopy: viewIdCopy, regs: viewRegs, photos: viewPhotos, whatsapp: viewWhatsApp, help: viewHelp, changelog: viewChangeLog, laundry: viewLaundry }[S.tab] || (S.me.role === 'Laundry' ? viewLaundry : viewRooms))(v);
     waBanner(v); pinBanner(v);
   }
   /* an easy PIN (a starter one, a repeat or a run) is shown on every page until it is changed */
@@ -3220,10 +3221,17 @@
     $$('[data-add]', v).forEach(function (b) { b.onclick = function () { save(b.dataset.add, false, b); }; });
   }
 
+  /* ---------- Employees (owner only): staff/employees.js ---------- */
+  function viewEmployees(v) {
+    if (!owner()) { v.innerHTML = '<p class="small">Only the owner can see this.</p>'; return; }
+    if (!window.NikadiEmp) { v.innerHTML = '<p class="err">Please reload the app.</p>'; return; }
+    NikadiEmp.mount(v, { api: api, esc: esc, toast: toast, errText: errText, openSheet: openSheet, closeSheet: closeSheet, field: field, busy: busy, shrinkPhoto: shrinkPhoto,
+      today: function () { return S.st ? S.st.today : new Date().toISOString().slice(0, 10); }, render: render, alive: function () { return S.tab === 'employees'; } });
+  }
   /* ---------- More (phones) ---------- */
   function viewMore(v) {
     var list = [['whatsapp', 'WhatsApp', 'Guest chats: new enquiries, advance paid, checked in, members'], ['regs', 'Registration cards', 'Guest registration forms filled on the website'], ['photos', 'Photos of GH', 'Room and guest house photos to share on WhatsApp'], ['housekeeping', 'Housekeeping', 'Daily free water and room service checklist'], ['idcopy', 'ID copies', 'Guest ID / passport copies for each room, print on A4'], ['expenses', 'Expenses', 'Electricity, supplies, cleaning… with bill photos'], ['commission', 'Commission', 'Drivers and brokers paid, with phone numbers'], ['bills', 'Bills', 'GST invoices: view, print, WhatsApp, email'], ['approvals', approver() ? 'Approvals' : 'My requests', approver() ? 'Money changes from reception' : 'Refunds and corrections you asked for'], ['add', 'Add item', 'Water, dental kit, mattress, late checkout'],
-      ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
+      ['stock', 'Stock', 'What is in storage and what to buy'], ['laundry', 'Laundry', 'Bedding and towels: lists to the laundry, returns, linen count and the laundry bill']].concat(owner() ? [['reports', 'Sales', 'Monthly and yearly sales (owner only)'], ['attendance', 'Attendance', 'Staff entry and exit on the guest house Wi-Fi (owner only)'], ['employees', 'Employees', 'Profiles, documents, bank details and ID cards (owner only)'], ['changelog', 'Change log', 'Who changed what, with before and after (owner only)'], ['settings', 'Settings', 'Team, PINs, prices, policy']] : []).concat([['help', 'Help', 'How to use the app: a short guide for your job']]);
     v.innerHTML = '<div><p class="kicker">' + esc(S.me.name) + ' · ' + esc(S.me.role) + '</p><h1>More</h1></div><div class="menu">' + list.map(function (m) {
       return '<button type="button" class="menu-item" data-go="' + m[0] + '">' + ICON[m[0]] + '<span><b>' + m[1] + '</b><small>' + m[2] + '</small></span>' + badge(m[0]) + '<i aria-hidden="true">›</i></button>';
     }).join('') + '</div><div data-install></div>' + (approver() ? '<a class="btn btn-line" href="/admin/" target="_blank" rel="noopener">Website admin: visitors and members</a>' : '') + '<button class="btn btn-quiet" type="button" id="lo">Log out</button><p class="small" style="text-align:center">App version 79</p>';

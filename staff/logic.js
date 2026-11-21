@@ -157,6 +157,15 @@ var DESK_SCHEMA = {
     ['member', 'Signed-in member'], ['ev', 'Taps (system)', 's']] },
   visitdays: { sheet: 'Website visits by day (old)', lazy: true, cols: [['date', 'Date', 'd'], ['visits', 'Visits', 'n'], ['visitors', 'Visitors', 'n'], ['fresh', 'First-time visitors', 'n'], ['pages', 'Pages seen', 'n'],
     ['secs', 'Seconds on the site', 'n'], ['mobile', 'On a phone', 'n'], ['data', 'Details (system)', 's']] },
+  /* employee profiles and their documents: owner only. Photos and scans live in Google Drive (Nikadi Staff Records), not in this table. */
+  employees: { sheet: 'Employees (private)', lazy: true, hidden: true, cols: [['id', 'Employee ID'], ['name', 'Name'], ['job', 'Designation'], ['director', 'Director', 's'], ['status', 'Status'],
+    ['joined', 'Date of joining', 'd'], ['left', 'Date of leaving', 'd'], ['dob', 'Date of birth', 'd'], ['blood', 'Blood group'], ['father', "Father's / husband's name"], ['phone', 'Phone', 's'], ['email', 'Email'],
+    ['address', 'Home address'], ['emName', 'Emergency contact'], ['emPhone', 'Emergency phone', 's'], ['salary', 'Monthly salary (₹)', 'n'], ['salaryNote', 'Salary note'],
+    ['accName', 'Account holder'], ['bank', 'Bank'], ['branch', 'Branch'], ['accNo', 'Account no.', 's'], ['ifsc', 'IFSC', 's'], ['upi', 'UPI ID', 's'],
+    ['aadhaar', 'Aadhaar no.', 's'], ['pan', 'PAN', 's'], ['voter', 'Voter ID no.', 's'], ['uan', 'PF UAN', 's'], ['esic', 'ESI no.', 's'],
+    ['prevWork', 'Previous work'], ['notes', 'Notes'], ['added', 'Added', 't'], ['by', 'Added by'], ['edited', 'Last change'], ['removed', 'Deleted']] },
+  empdocs: { sheet: 'Employee documents (private)', lazy: true, hidden: true, cols: [['id', 'ID'], ['emp', 'Employee ID'], ['kind', 'Document'], ['label', 'Label'], ['file', 'File (Drive ID)', 's'],
+    ['at', 'Added', 't'], ['by', 'Added by'], ['removed', 'Removed']] },
   config: { sheet: 'Staff app settings', lazy: true, hidden: true, cols: [['key', 'Setting'], ['value', 'Value', 's']] }
 };
 
@@ -2892,6 +2901,91 @@ function deskCore(db, hooks) {
     if (d && (!/^data:image\/(png|jpeg);base64,[A-Za-z0-9+\/=]+$/.test(d) || d.length > 400000)) fail('bad_image');
     cfgSet(which, d);
     return { saved: true };
+  };
+  /* ---------- Employees (owner only) ----------
+     Employee ID: NPPL-NGH-001, 002, … in order of adding. A number is never given again, even after a profile is deleted. */
+  var EMP_PREFIX = 'NPPL-NGH-';
+  var EMP_DOCS = { photo: ['Photo', 1], aadhaarF: ['Aadhaar card (front)', 1], aadhaarB: ['Aadhaar card (back)', 1], pan: ['PAN card', 1], voter: ['Voter card', 1],
+    bank: ['Bank passbook or cheque', 1], cv: ['CV', 0], work: ['Work history papers', 0], other: ['Other document', 0] };
+  var EMP_TEXT = { name: 80, job: 60, blood: 6, father: 80, email: 80, address: 300, emName: 80, salaryNote: 120, accName: 80, bank: 80, branch: 80, upi: 60, prevWork: 2000, notes: 1000 };
+  function empNext() { var n = 0; db.all('employees').forEach(function (e) { var m = /(\d+)$/.exec(String(e.id)); if (m && String(e.id).indexOf(EMP_PREFIX) === 0) n = Math.max(n, +m[1]); }); return EMP_PREFIX + String(n + 1).padStart(3, '0'); }
+  function empMask(v, keep) { v = String(v || ''); return v ? (v.length > keep ? '•••• ' + v.slice(-keep) : v) : ''; }
+  function empDocs(empId) { return db.all('empdocs').filter(function (d) { return d.emp === empId && !d.removed; }).map(function (d) { return { id: d.id, kind: d.kind, label: d.label, at: d.at }; }); }
+  function empView(e, full) {
+    var o = { id: e.id, name: e.name, job: e.job, director: yes(e.director), status: e.status || 'Active', joined: e.joined, left: e.left, phone: e.phone, salary: Number(e.salary || 0), salaryNote: e.salaryNote,
+      blood: e.blood, emName: e.emName, emPhone: e.emPhone, docs: empDocs(e.id), photo: (db.all('empdocs').filter(function (d) { return d.emp === e.id && d.kind === 'photo' && !d.removed; })[0] || {}).id || '',
+      aadhaar: empMask(e.aadhaar, 4), pan: empMask(e.pan, 4), accNo: empMask(e.accNo, 4), bank: e.bank, ifsc: e.ifsc };
+    if (full) Object.keys(EMP_TEXT).concat(['dob', 'aadhaar', 'pan', 'voter', 'uan', 'esic', 'accNo', 'ifsc', 'upi', 'edited', 'added', 'by']).forEach(function (k) { o[k] = e[k] == null ? '' : e[k]; });
+    return o;
+  }
+  function empGet(id) { var e = find('employees', 'id', id); if (!e || e.removed) fail('not_found'); return e; }
+  api.employees = function (req) {
+    var me = auth(req); needOwner(me);
+    var list = db.all('employees').filter(function (e) { return !e.removed; }).map(function (e) { return empView(e); })
+      .sort(function (a, b) { return (a.status === 'Left') - (b.status === 'Left') || (a.id < b.id ? -1 : 1); });
+    return { list: list, next: empNext(), kinds: Object.keys(EMP_DOCS).map(function (k) { return { kind: k, label: EMP_DOCS[k][0], one: !!EMP_DOCS[k][1] }; }) };
+  };
+  api.employee = function (req) { var me = auth(req); needOwner(me); return { employee: empView(empGet(req.id), true) }; };
+  api.employeeSave = function (req) {
+    var me = auth(req); needOwner(me);
+    var old = req.original ? empGet(req.original) : null, p = {};
+    Object.keys(EMP_TEXT).forEach(function (k) { p[k] = text(req[k], EMP_TEXT[k]); });
+    if (!p.name) fail('name_required');
+    p.director = req.director ? 'Yes' : 'No'; p.status = req.status === 'Left' ? 'Left' : 'Active';
+    ['joined', 'left', 'dob'].forEach(function (k) { p[k] = isYmd(req[k]) ? req[k] : ''; });
+    if (p.status === 'Left' && !p.left) p.left = today();
+    if (p.status === 'Active') p.left = '';
+    p.phone = req.phone ? phoneOk(req.phone) : ''; p.emPhone = req.emPhone ? phoneOk(req.emPhone) : '';
+    var sal = req.salary === '' || req.salary == null ? 0 : money(req.salary); if (isNaN(sal)) fail('invalid_amount'); p.salary = sal;
+    var digits = function (v, n) { return String(v || '').replace(/\D/g, '').slice(0, n); };
+    p.aadhaar = digits(req.aadhaar, 12); if (p.aadhaar && p.aadhaar.length !== 12) fail('bad_aadhaar');
+    p.pan = String(req.pan || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (p.pan && !/^[A-Z]{5}\d{4}[A-Z]$/.test(p.pan)) fail('bad_pan');
+    p.ifsc = String(req.ifsc || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (p.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(p.ifsc)) fail('bad_ifsc');
+    p.accNo = String(req.accNo || '').replace(/[^0-9A-Za-z]/g, '').slice(0, 20); if (p.accNo && p.accNo.length < 6) fail('bad_account');
+    p.voter = String(req.voter || '').toUpperCase().replace(/[^A-Z0-9\/]/g, '').slice(0, 20); p.uan = digits(req.uan, 12); p.esic = digits(req.esic, 17);
+    var want = String(req.id || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 24);
+    if (old) {
+      if (want && want !== old.id) { /* the owner may correct an ID, for example before the cards are printed */
+        if (find('employees', 'id', want)) fail('id_taken');
+        db.all('empdocs').forEach(function (d) { if (d.emp === old.id) db.set('empdocs', d, { emp: want }); });
+        p.id = want;
+      }
+      p.edited = stamp() + ' · ' + me.name; db.set('employees', old, p); return { employee: empView(old, true) };
+    }
+    var newId = want || empNext(); if (find('employees', 'id', newId)) fail('id_taken');
+    var row = db.add('employees', Object.assign({ id: newId, added: stamp(), by: me.name, edited: '', removed: '' }, p));
+    return { employee: empView(row, true) };
+  };
+  api.employeeRemove = function (req) {
+    var me = auth(req); needOwner(me);
+    var e = empGet(req.id);
+    db.all('empdocs').forEach(function (d) { if (d.emp === e.id && !d.removed) { db.set('empdocs', d, { removed: stamp() + ' · ' + me.name }); if (hooks.trashFile) try { hooks.trashFile(d.file); } catch (x) {} } });
+    db.set('employees', e, { removed: stamp() + ' · ' + me.name });
+    return { removed: e.id };
+  };
+  api.empDocSave = function (req) {
+    var me = auth(req); needOwner(me);
+    var e = empGet(req.emp), kind = EMP_DOCS[req.kind] ? req.kind : fail('bad_kind');
+    if (!hooks.savePhoto) fail('photos_unavailable');
+    var data = String(req.data || '').replace(/^data:image\/\w+;base64,/, '');
+    if (!/^[A-Za-z0-9+\/=]+$/.test(data) || data.length > 4000000) fail('bad_photo');
+    var label = EMP_DOCS[kind][0] + (req.page ? ' page ' + Math.round(Number(req.page)) : '') + (req.label ? ' · ' + text(req.label, 60) : '');
+    var file = hooks.savePhoto(data, e.id + ' · ' + label.replace(/[^\w .()·-]+/g, ' ') + '.jpg', e.id + ' ' + String(e.name).replace(/[^\w .-]+/g, ''), 'Nikadi Staff Records');
+    if (EMP_DOCS[kind][1]) db.all('empdocs').forEach(function (d) { if (d.emp === e.id && d.kind === kind && !d.removed) { db.set('empdocs', d, { removed: 'Replaced ' + stamp() + ' · ' + me.name }); if (hooks.trashFile) try { hooks.trashFile(d.file); } catch (x) {} } });
+    var row = db.add('empdocs', { id: id('D'), emp: e.id, kind: kind, label: label, file: file, at: stamp(), by: me.name, removed: '' });
+    return { doc: { id: row.id, kind: kind, label: label, at: row.at }, docs: empDocs(e.id) };
+  };
+  api.empDocGet = function (req) {
+    var me = auth(req); needOwner(me);
+    var d = find('empdocs', 'id', req.id); if (!d || d.removed) fail('not_found');
+    if (!hooks.getPhoto) fail('photos_unavailable');
+    return { id: d.id, data: hooks.getPhoto(d.file) };
+  };
+  api.empDocRemove = function (req) {
+    var me = auth(req); needOwner(me);
+    var d = find('empdocs', 'id', req.id); if (!d || d.removed) fail('not_found');
+    db.set('empdocs', d, { removed: stamp() + ' · ' + me.name }); if (hooks.trashFile) try { hooks.trashFile(d.file); } catch (x) {}
+    return { docs: empDocs(d.emp) };
   };
   api.backupAll = function (req) {
     var me = auth(req); needOwner(me);
