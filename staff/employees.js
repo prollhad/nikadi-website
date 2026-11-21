@@ -225,6 +225,17 @@
 
   /* ---------- employee ID card: front and back, credit-card size (54 × 85.6 mm) ---------- */
   var CW = 1012, CH = 1604;
+  /* print resolution: the card is drawn in 1012 × 1604 design units and printed at 600 dpi (54 × 85.6 mm = 1276 × 2022 px) */
+  var HD = 1276 / 1012;
+  function sheet(k) { var c = document.createElement('canvas'); c.width = Math.round(CW * k); c.height = Math.round(CH * k); var x = c.getContext('2d'); x.scale(k, k); x.imageSmoothingQuality = 'high'; return { c: c, x: x }; }
+  /* bleed for a print shop: the card's edges are carried outwards so nothing white shows if the cut is a little off */
+  function bleed(c, px) {
+    var o = document.createElement('canvas'); o.width = c.width + px * 2; o.height = c.height + px * 2; var x = o.getContext('2d'), W = c.width, H = c.height;
+    x.drawImage(c, 0, 0, W, 1, px, 0, W, px); x.drawImage(c, 0, H - 1, W, 1, px, H + px, W, px);
+    x.drawImage(c, 0, 0, 1, H, 0, px, px, H); x.drawImage(c, W - 1, 0, 1, H, W + px, px, px, H);
+    [[0, 0, 0, 0], [W - 1, 0, W + px, 0], [0, H - 1, 0, H + px], [W - 1, H - 1, W + px, H + px]].forEach(function (q) { x.drawImage(c, q[0], q[1], 1, 1, q[2], q[3], px, px); });
+    x.drawImage(c, px, px); return o;
+  }
   function img(src) { return new Promise(function (ok) { if (!src) return ok(null); var i = new Image(); i.onload = function () { ok(i); }; i.onerror = function () { ok(null); }; i.src = src; }); }
   function fonts() { if (!FONTS) FONTS = Promise.all(['600 80px "Cormorant Garamond"', '500 40px Jost', '400 30px Jost'].map(function (f) { return document.fonts ? document.fonts.load(f).catch(function () {}) : 0; })); return FONTS; }
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
@@ -244,8 +255,8 @@
     x.save(); x.translate(cx, y); x.rotate(Math.PI / 4); x.fillRect(-6, -6, 12, 12); x.restore();
   }
   function caps(x, t, cx, y, font, color, sp) { x.font = font; x.fillStyle = color; x.textAlign = 'left'; spaced(x, t, cx, y, sp); }
-  function front(e, ph, logo) {
-    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d');
+  function front(e, ph, logo, k) {
+    var S = sheet(k || 1), c = S.c, x = S.x;
     var g = x.createRadialGradient(CW / 2, CH * .38, 80, CW / 2, CH * .45, CH * .75); g.addColorStop(0, NAVY2); g.addColorStop(1, NAVY); x.fillStyle = g; x.fillRect(0, 0, CW, CH);
     guilloche(x, 250, 70, .10); guilloche(x, CH - 330, 50, .07);
     x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 3; rr(x, 26, 26, CW - 52, CH - 52, 30); x.stroke();
@@ -271,8 +282,8 @@
     caps(x, 'A UNIT OF NIKADI PROJECTS PRIVATE LIMITED', CW / 2, CH - 76, '400 17px Jost', 'rgba(230,201,138,.8)', 4);
     return c;
   }
-  function back(e, sign, qr) {
-    var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d');
+  function back(e, sign, qr, k) {
+    var S = sheet(k || 1), c = S.c, x = S.x;
     x.fillStyle = IVORY; x.fillRect(0, 0, CW, CH);
     guilloche(x, CH / 2, 120, .22);
     x.fillStyle = NAVY; x.fillRect(0, 0, CW, 210); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, 210, CW, 4);
@@ -300,24 +311,44 @@
   function spacedL(x, t, X, y, sp) { for (var i = 0; i < t.length; i++) { x.fillText(t[i], X, y); X += x.measureText(t[i]).width + sp; } }
   function qrImage(text) {
     if (!window.NikadiQR) return Promise.resolve(null);
-    try { var svg = NikadiQR.svg(text, { color: '#0c1430' }); return img('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)).then(function (i) { if (!i) return null; var c = document.createElement('canvas'); c.width = c.height = 460; var x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(i, 0, 0, 460, 460); return c; }); } catch (er) { return Promise.resolve(null); }
+    try { var svg = NikadiQR.svg(text, { color: '#0c1430' }); return img('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)).then(function (i) { if (!i) return null; var c = document.createElement('canvas'); c.width = c.height = 1200; var x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(i, 0, 0, 1200, 1200); return c; }); } catch (er) { return Promise.resolve(null); }
   }
   function jspdf() { if (window.jspdf) return Promise.resolve(window.jspdf); return new Promise(function (ok, bad) { var s = document.createElement('script'); s.src = '/staff/vendor/jspdf.umd.min.js'; s.onload = function () { ok(window.jspdf); }; s.onerror = bad; document.head.appendChild(s); }); }
   function idCard(e, phId) {
     var body = C.openSheet('ID card · ' + e.name); body.innerHTML = '<div class="loading">Drawing the card…</div>';
     Promise.all([photo(phId).then(img), img('/img/brand/nikadi-mark/NIKADI-logo-white.png'), img('/img/brand/sign.png'), fonts(), qrImage('Nikadi Guest House, a unit of Nikadi Projects Private Limited\nEmployee ' + e.id + '\n' + e.name + '\n' + ((e.director ? 'Director' : e.job) || '') + '\nTo check, call the reception: +91 75011 01137')]).then(function (a) {
-      var f = front(e, a[0], a[1]), b = back(e, a[2], a[4]);
+      var f = front(e, a[0], a[1]), b = back(e, a[2], a[4]), name = e.id + ' ' + e.name.replace(/[^\w .-]+/g, '');
+      var low = a[0] && Math.min(a[0].width, a[0].height) < 500;
       body.innerHTML = '<div class="emp-cards"><img alt="Front of the ID card" src="' + f.toDataURL('image/png') + '"><img alt="Back of the ID card" src="' + b.toDataURL('image/png') + '"></div>' +
-        (a[0] ? '' : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
-        '<div class="emp-acts"><button class="btn btn-gold" type="button" id="cPdf">Download PDF to print</button></div><p class="small">The PDF has the front and the back at real card size, 54 × 85.6 mm, for a PVC card printer or a print shop.</p>';
-      $('#cPdf', body).onclick = function () {
-        var btn = this; C.busy(btn, true);
-        jspdf().then(function (J) {
-          var d = new J.jsPDF({ unit: 'mm', format: [54, 85.6], orientation: 'portrait' });
-          d.addImage(f.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6); d.addPage([54, 85.6], 'portrait'); d.addImage(b.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 54, 85.6);
-          d.save(e.id + ' ' + e.name.replace(/[^\w .-]+/g, '') + ' ID card.pdf'); C.busy(btn, false);
-        }, function () { C.busy(btn, false); C.toast('Could not make the PDF. Please try again.'); });
-      };
+        (a[0] ? (low ? '<p class="note" style="padding:10px 14px">The photo is small (' + a[0].width + ' × ' + a[0].height + ' px), so it may look soft on the printed card. For the best card, take a new photo in good light and add it on the profile.</p>' : '') : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
+        '<div class="emp-acts"><button class="btn btn-gold" type="button" data-out="card">PDF for a PVC card printer</button><button class="btn btn-line" type="button" data-out="shop">PDF for a print shop (with bleed)</button><button class="btn btn-line" type="button" data-out="png">Front and back as pictures (PNG)</button></div>' +
+        '<p class="small">All three are made at 600 dpi (1276 × 2022 pixels for the 54 × 85.6 mm card), with lossless compression (no JPEG blur), for sharp HD printing on PVC. ' +
+        'Card printer: exact card size, front and back as two pages, for printers like Evolis, Zebra or Fargo printing edge to edge. Print shop: 2 mm extra on every side for trimming, with corner marks. Pictures: for the card printer’s own software.</p>';
+      var hd = null;
+      function make() { if (!hd) hd = { f: front(e, a[0], a[1], HD), b: back(e, a[2], a[4], HD) }; return hd; }
+      $$('[data-out]', body).forEach(function (btn) {
+        btn.onclick = function () {
+          var kind = btn.dataset.out; C.busy(btn, true);
+          setTimeout(function () {
+            var H = make();
+            if (kind === 'png') {
+              [['front', H.f], ['back', H.b]].forEach(function (p, i) { setTimeout(function () { p[1].toBlob(function (bl) { var u = URL.createObjectURL(bl), l = document.createElement('a'); l.href = u; l.download = name + ' ID card ' + p[0] + '.png'; document.body.appendChild(l); l.click(); l.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); }, 'image/png'); }, i * 600); });
+              C.busy(btn, false); return;
+            }
+            jspdf().then(function (J) {
+              var shop = kind === 'shop', bl = shop ? 2 : 0, W = 54 + bl * 2, Hh = 85.6 + bl * 2, px = Math.round(bl / 25.4 * 600);
+              var d = new J.jsPDF({ unit: 'mm', format: [W, Hh], orientation: 'portrait', compress: true });
+              d.setProperties({ title: 'Employee ID card · ' + e.name, subject: e.id, creator: 'Nikadi Guest House' });
+              [H.f, H.b].forEach(function (cv, i) {
+                if (i) d.addPage([W, Hh], 'portrait');
+                d.addImage(shop ? bleed(cv, px) : cv, 'PNG', 0, 0, W, Hh, undefined, 'FAST'); /* lossless (flate), no JPEG blur */
+                if (shop) { d.setDrawColor(255, 255, 255); d.setLineWidth(.15); [[bl, 0, bl, bl * .8], [0, bl, bl * .8, bl], [W - bl, 0, W - bl, bl * .8], [W, bl, W - bl * .8, bl], [bl, Hh, bl, Hh - bl * .8], [0, Hh - bl, bl * .8, Hh - bl], [W - bl, Hh, W - bl, Hh - bl * .8], [W, Hh - bl, W - bl * .8, Hh - bl]].forEach(function (L) { d.line(L[0], L[1], L[2], L[3]); }); }
+              });
+              d.save(name + ' ID card' + (shop ? ' (print shop, 2 mm bleed)' : '') + '.pdf'); C.busy(btn, false);
+            }, function () { C.busy(btn, false); C.toast('Could not make the PDF. Please try again.'); });
+          }, 30);
+        };
+      });
     });
   }
   window.NikadiEmp = { mount: mount, reset: function () { LIST = null; }, _draw: { front: front, back: back, qr: qrImage, img: img, fonts: fonts } };
