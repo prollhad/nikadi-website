@@ -805,3 +805,6 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .sitechip.on{border-color:var(--gold);background:rgba(217,173,85,.1)}.sitechip.v-full{border-color:#e8705a;background:rgba(232,112,90,.14)}.sitechip.v-full select{color:#ffb3a3}
 
 .lc-row>.btn{width:auto;flex:none;padding-left:14px;padding-right:14px}
+
+/* attendance: folding entry and exit list */
+.att-fold>summary{list-style:none;cursor:pointer;align-items:center}.att-fold>summary::-webkit-details-marker{display:none}.att-fold>summary h2{margin-right:auto}.att-fold .att-ch{width:10px;height:10px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin:0 6px 4px 12px;transition:transform .2s;opacity:.7;flex:none}.att-fold[open] .att-ch{transform:rotate(-135deg);margin-bottom:-4px}.att-fold:not([open])>summary{margin-bottom:0}

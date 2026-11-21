@@ -3114,6 +3114,7 @@
     if (k === 'today') return [t, t];
     if (k === 'week') return [add(t, -6), t];
     if (k === 'month') return [t.slice(0, 8) + '01', t];
+    if (k === 'year') return [t.slice(0, 5) + '01-01', t];
     var pm = m === 1 ? 12 : m - 1, py = m === 1 ? y - 1 : y, last = new Date(Date.UTC(py, pm, 0)).getUTCDate();
     return [py + '-' + String(pm).padStart(2, '0') + '-01', py + '-' + String(pm).padStart(2, '0') + '-' + last];
   }
@@ -3139,6 +3140,8 @@
     }, function () { if (box.isConnected) box.innerHTML = '<p class="small">Could not check right now.</p>'; })
       .then(function () { LIVE_T = setTimeout(function () { if (S.tab === 'attendance' && !document.hidden && $('#livebody')) liveLoad(document); }, 30000); });
   }
+  /* the entry and exit list can be folded away; the app remembers the choice on this device */
+  function attOpen() { try { return localStorage.getItem('nk-att-fold') !== 'closed'; } catch (e) { return true; } }
   function viewAttendance(v) {
     if (!owner()) { v.innerHTML = '<p class="small">Only the owner can see this.</p>'; return; }
     if (!ATT.data) {
@@ -3156,10 +3159,10 @@
       '<div class="panel"><div class="sec-h"><h2>At the guest house now</h2><span class="small">app opened on the Wi-Fi in the last 15 min</span></div>' + (now.length ? '<div class="list">' + now.map(function (r) {
         return '<div class="bl"><span class="t"><b>' + esc(r.name) + '</b><small>' + esc(r.role) + ' · came in ' + esc(clock(r.first)) + ' · ' + esc(r.lastDevice || r.device || '') + '</small></span><span class="a"><span class="ptag k-ok">On Wi-Fi</span></span></div>';
       }).join('') + '</div>' : '<p class="small">Nobody right now.</p>') + '</div>' +
-      '<div class="att-filters">' + seg('arange', ['Today', 'Last 7 days', 'This month', 'Last month'], { today: 'Today', week: 'Last 7 days', month: 'This month', last: 'Last month' }[ATT.range]) +
+      '<div class="att-filters">' + seg('arange', ['Day', 'Week', 'Month', 'Year'], { today: 'Day', week: 'Week', month: 'Month', year: 'Year' }[ATT.range] || 'Week') +
       '<select class="input" id="aname"><option value="">Everyone</option>' + d.people.map(function (p) { return '<option' + (p.name === ATT.name ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') + '</select></div>' +
       (Object.keys(tot).length ? '<div class="kpis">' + Object.keys(tot).map(function (n) { var t = tot[n]; return '<div class="kpi"><span>' + esc(n) + '</span><b>' + dur(t.min) + '</b><small>' + esc(t.role) + ' · ' + t.days + ' day' + (t.days > 1 ? 's' : '') + ' at work</small></div>'; }).join('') + '</div>' : '') +
-      '<div class="panel"><div class="sec-h"><h2>Entry and exit</h2><span class="small">' + esc(dShort(d.from)) + ' – ' + esc(dShort(d.to)) + '</span></div>' +
+      '<details class="panel att-fold" id="attlog"' + (attOpen() ? ' open' : '') + '><summary class="sec-h"><h2>Entry and exit</h2><span class="small">' + esc(dShort(d.from)) + ' – ' + esc(dShort(d.to)) + ' · ' + rows.length + ' entr' + (rows.length === 1 ? 'y' : 'ies') + '</span><span class="att-ch" aria-hidden="true"></span></summary>' +
       (rows.length ? '<div class="tbl-wrap"><table class="tbl att"><thead><tr><th>Person</th><th>Entry</th><th>Exit</th><th class="r">Time</th><th class="r hide-s">Opens</th></tr></thead><tbody>' +
         Object.keys(byDay).map(function (day) {
           return '<tr class="day"><td colspan="5">' + esc(day === today ? 'Today' : dShort(day)) + '</td></tr>' + byDay[day].map(function (r) {
@@ -3168,14 +3171,15 @@
               '<td class="r">' + dur(hm(r.first, r.last)) + '</td><td class="r hide-s">' + r.opens + '</td></tr>';
           }).join('');
         }).join('') + '</tbody></table></div>' : '<p class="small">No one opened the app on the guest house Wi-Fi in this period.</p>') +
-      '<p class="small">Entry = first time the person opened the staff app on the guest house Wi-Fi that day. Exit = the last time (the app also checks in every 10 minutes while it is open on screen). Staff need to be logged in on their phone and open the app when they arrive and before they leave.</p></div>' +
+      '<p class="small">Entry = first time the person opened the staff app on the guest house Wi-Fi that day. Exit = the last time (the app also checks in every 10 minutes while it is open on screen). Staff need to be logged in on their phone and open the app when they arrive and before they leave.</p></details>' +
       '<div class="panel"><div class="sec-h"><h2>Guest house Wi-Fi</h2></div>' +
       (d.wifi.length ? '<div class="list">' + d.wifi.map(function (ip) { return '<div class="bl"><span class="t"><b>Saved network</b><small>Internet address ' + esc(ip) + '</small></span><span class="a"><button class="btn btn-quiet sm danger" type="button" data-rm="' + esc(ip) + '">Remove</button></span></div>'; }).join('') + '</div>' : '<p class="small">No Wi-Fi saved yet.</p>') +
       '<button class="btn btn-line" type="button" id="awifi">This device is on the guest house Wi-Fi now: save it</button><p class="err" id="aerr" role="alert"></p>' +
       (d.others.length ? '<div class="sec-h"><h3>Other networks staff opened the app on</h3></div><p class="small">If your internet provider changes the guest house address (for example after the router restarts), staff on the Wi-Fi show up here. Add it if you know they were at the guest house.</p><div class="list">' +
         d.others.map(function (o) { return '<div class="bl"><span class="t"><b>' + esc(o.name) + '</b><small>' + esc(tShort(o.at)) + ' · ' + esc(o.ip) + '</small></span><span class="a"><button class="btn btn-quiet sm" type="button" data-add="' + esc(o.ip) + '">Add as guest house Wi-Fi</button></span></div>'; }).join('') + '</div>' : '') +
       '</div>';
-    wireSegs(v, function () { ATT.range = { 'Today': 'today', 'Last 7 days': 'week', 'This month': 'month', 'Last month': 'last' }[segVal(v, 'arange')] || 'week'; ATT.data = null; render(); });
+    wireSegs(v, function () { ATT.range = { 'Day': 'today', 'Week': 'week', 'Month': 'month', 'Year': 'year' }[segVal(v, 'arange')] || 'week'; ATT.data = null; render(); });
+    var fold = $('#attlog', v); if (fold) fold.addEventListener('toggle', function () { try { localStorage.setItem('nk-att-fold', fold.open ? 'open' : 'closed'); } catch (e) {} });
     $('#aname', v).onchange = function () { ATT.name = this.value; ATT.data = null; render(); };
     $('#arf', v).onclick = function () { ATT.data = null; render(); };
     liveLoad(v);
