@@ -228,6 +228,11 @@
   /* print resolution: the card is drawn in 1012 × 1604 design units and printed at 600 dpi (54 × 85.6 mm = 1276 × 2022 px) */
   var HD = 1276 / 1012;
   function sheet(k) { var c = document.createElement('canvas'); c.width = Math.round(CW * k); c.height = Math.round(CH * k); var x = c.getContext('2d'); x.scale(k, k); x.imageSmoothingQuality = 'high'; return { c: c, x: x }; }
+  /* digital ID: the card cut to its real shape (rounded corners, 3.18 mm like a bank card), nothing outside it */
+  function cutout(c) {
+    var o = document.createElement('canvas'); o.width = c.width; o.height = c.height; var x = o.getContext('2d'), r = c.width * 3.18 / 54;
+    rr(x, 0, 0, c.width, c.height, r); x.clip(); x.drawImage(c, 0, 0); return o;
+  }
   /* bleed for a print shop: the card's edges are carried outwards so nothing white shows if the cut is a little off */
   function bleed(c, px) {
     var o = document.createElement('canvas'); o.width = c.width + px * 2; o.height = c.height + px * 2; var x = o.getContext('2d'), W = c.width, H = c.height;
@@ -321,9 +326,9 @@
       var low = a[0] && Math.min(a[0].width, a[0].height) < 500;
       body.innerHTML = '<div class="emp-cards"><img alt="Front of the ID card" src="' + f.toDataURL('image/png') + '"><img alt="Back of the ID card" src="' + b.toDataURL('image/png') + '"></div>' +
         (a[0] ? (low ? '<p class="note" style="padding:10px 14px">The photo is small (' + a[0].width + ' × ' + a[0].height + ' px), so it may look soft on the printed card. For the best card, take a new photo in good light and add it on the profile.</p>' : '') : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
-        '<div class="emp-acts"><button class="btn btn-gold" type="button" data-out="card">PDF for a PVC card printer</button><button class="btn btn-line" type="button" data-out="shop">PDF for a print shop (with bleed)</button><button class="btn btn-line" type="button" data-out="png">Front and back as pictures (PNG)</button></div>' +
+        '<div class="emp-acts"><button class="btn btn-gold" type="button" data-out="digital">DIGITAL ID</button><button class="btn btn-line" type="button" data-out="card">PDF for a PVC card printer</button><button class="btn btn-line" type="button" data-out="shop">PDF for a print shop (with bleed)</button><button class="btn btn-line" type="button" data-out="png">Front and back as pictures (PNG)</button></div>' +
         '<p class="small">All three are made at 600 dpi (1276 × 2022 pixels for the 54 × 85.6 mm card), with lossless compression (no JPEG blur), for sharp HD printing on PVC. ' +
-        'Card printer: exact card size, front and back as two pages, for printers like Evolis, Zebra or Fargo printing edge to edge. Print shop: 2 mm extra on every side for trimming, with corner marks. Pictures: for the card printer’s own software.</p>';
+        'Digital ID: the front and the back cut out to the card’s shape with rounded corners and nothing around them, to keep on a phone or send on WhatsApp. Card printer: exact card size, front and back as two pages, for printers like Evolis, Zebra or Fargo printing edge to edge. Print shop: 2 mm extra on every side for trimming, with corner marks. Pictures: for the card printer’s own software.</p>';
       var hd = null;
       function make() { if (!hd) hd = { f: front(e, a[0], a[1], HD), b: back(e, a[2], a[4], HD) }; return hd; }
       $$('[data-out]', body).forEach(function (btn) {
@@ -331,6 +336,16 @@
           var kind = btn.dataset.out; C.busy(btn, true);
           setTimeout(function () {
             var H = make();
+            if (kind === 'digital') {
+              var fc = cutout(H.f), bc = cutout(H.b);
+              Promise.all([fc, bc].map(function (cv) { return new Promise(function (ok) { cv.toBlob(ok, 'image/png'); }); })).then(function (bls) {
+                var files = bls.map(function (bl, i) { return new File([bl], name + ' Digital ID ' + (i ? 'back' : 'front') + '.png', { type: 'image/png' }); });
+                C.busy(btn, false);
+                if (navigator.canShare && navigator.canShare({ files: files }) && /Android|iPhone|iPad/i.test(navigator.userAgent)) { navigator.share({ files: files, title: 'Digital ID · ' + e.name }).catch(function () {}); return; }
+                files.forEach(function (f, i) { setTimeout(function () { var u = URL.createObjectURL(f), l = document.createElement('a'); l.href = u; l.download = f.name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); }, i * 600); });
+              });
+              return;
+            }
             if (kind === 'png') {
               [['front', H.f], ['back', H.b]].forEach(function (p, i) { setTimeout(function () { p[1].toBlob(function (bl) { var u = URL.createObjectURL(bl), l = document.createElement('a'); l.href = u; l.download = name + ' ID card ' + p[0] + '.png'; document.body.appendChild(l); l.click(); l.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); }, 'image/png'); }, i * 600); });
               C.busy(btn, false); return;
