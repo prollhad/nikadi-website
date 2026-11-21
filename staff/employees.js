@@ -330,7 +330,7 @@
         (a[0] ? (low ? '<p class="note" style="padding:10px 14px">The photo is small (' + a[0].width + ' × ' + a[0].height + ' px), so it may look soft on the printed card. For the best card, take a new photo in good light and add it on the profile.</p>' : '') : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
         '<div class="emp-acts"><button class="btn btn-gold" type="button" data-out="digital">DIGITAL ID</button><button class="btn btn-line" type="button" data-out="card">PDF for a PVC card printer</button><button class="btn btn-line" type="button" data-out="shop">PDF for a print shop (with bleed)</button><button class="btn btn-line" type="button" data-out="png">Front and back as pictures (PNG)</button></div>' +
         '<p class="small">All three are made at 600 dpi (1276 × 2022 pixels for the 54 × 85.6 mm card), with lossless compression (no JPEG blur), for sharp HD printing on PVC. ' +
-        'Digital ID: the front and the back cut along the gold border, with nothing outside it, to keep on a phone or send on WhatsApp. Card printer: exact card size, front and back as two pages, for printers like Evolis, Zebra or Fargo printing edge to edge. Print shop: 2 mm extra on every side for trimming, with corner marks. Pictures: for the card printer’s own software.</p>';
+        'Digital ID: one picture with the front and the back side by side, each cut along the gold border with nothing outside it, to keep on a phone or send on WhatsApp. Card printer: exact card size, front and back as two pages, for printers like Evolis, Zebra or Fargo printing edge to edge. Print shop: 2 mm extra on every side for trimming, with corner marks. Pictures: for the card printer’s own software.</p>';
       var hd = null;
       function make() { if (!hd) hd = { f: front(e, a[0], a[1], HD), b: back(e, a[2], a[4], HD) }; return hd; }
       $$('[data-out]', body).forEach(function (btn) {
@@ -339,13 +339,16 @@
           setTimeout(function () {
             var H = make();
             if (kind === 'digital') {
-              var fc = cutout(H.f), bc = cutout(H.b);
-              Promise.all([fc, bc].map(function (cv) { return new Promise(function (ok) { cv.toBlob(ok, 'image/png'); }); })).then(function (bls) {
-                var files = bls.map(function (bl, i) { return new File([bl], name + ' Digital ID ' + (i ? 'back' : 'front') + '.png', { type: 'image/png' }); });
+              /* one picture: the front and the back side by side, with a clear gap between them */
+              var fc = cutout(H.f), bc = cutout(H.b), gap = Math.round(fc.width * .06), one = document.createElement('canvas');
+              one.width = fc.width + gap + bc.width; one.height = Math.max(fc.height, bc.height);
+              var ox = one.getContext('2d'); ox.drawImage(fc, 0, 0); ox.drawImage(bc, fc.width + gap, 0);
+              one.toBlob(function (bl) {
+                var file = new File([bl], name + ' Digital ID.png', { type: 'image/png' });
                 C.busy(btn, false);
-                if (navigator.canShare && navigator.canShare({ files: files }) && /Android|iPhone|iPad/i.test(navigator.userAgent)) { navigator.share({ files: files, title: 'Digital ID · ' + e.name }).catch(function () {}); return; }
-                files.forEach(function (f, i) { setTimeout(function () { var u = URL.createObjectURL(f), l = document.createElement('a'); l.href = u; l.download = f.name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); }, i * 600); });
-              });
+                if (navigator.canShare && navigator.canShare({ files: [file] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)) { navigator.share({ files: [file], title: 'Digital ID · ' + e.name }).catch(function () {}); return; }
+                var u = URL.createObjectURL(file), l = document.createElement('a'); l.href = u; l.download = file.name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+              }, 'image/png');
               return;
             }
             if (kind === 'png') {
