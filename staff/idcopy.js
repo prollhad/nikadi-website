@@ -701,14 +701,14 @@
           if (a === 'full') { q = [{ x: 0, y: 0 }, { x: W, y: 0 }, { x: W, y: H }, { x: 0, y: H }]; paint(); return; }
           ov.remove(); if (a === 'no') return ok(null);
           var out;
-          if (photo) { out = canvasOf(800, 1000); out.getContext('2d').drawImage(src, box.x / k, box.y / k, box.w / k, box.w * 1.25 / k, 0, 0, 800, 1000); }
+          if (photo) { /* up to 1200 × 1500, enough for the photo on a 1200 dpi card; never enlarged beyond the original */ var sw0 = box.w / k, ow = Math.max(400, Math.min(1200, Math.round(sw0))); out = canvasOf(ow, Math.round(ow * 1.25)); var ctx0 = out.getContext('2d'); ctx0.imageSmoothingQuality = 'high'; ctx0.drawImage(src, box.x / k, box.y / k, sw0, sw0 * 1.25, 0, 0, out.width, out.height); }
           else {
             var qq = order(q.map(function (p) { return { x: p.x / k, y: p.y / k }; })), wq = (dist(qq[0], qq[1]) + dist(qq[3], qq[2])) / 2, hq = (dist(qq[0], qq[3]) + dist(qq[1], qq[2])) / 2, OW, OH;
             if (o.mode === 'card') { var land = wq >= hq; OW = land ? 1012 : 638; OH = land ? 638 : 1012; }
             else { var s2 = Math.min(1.6, 1800 / Math.max(wq, hq)); OW = Math.round(wq * s2); OH = Math.round(hq * s2); }
             out = enhance(warp(src, qq, OW, OH));
           }
-          var url = out.toDataURL('image/jpeg', photo ? .9 : .86); ok({ url: url, data: url.split(',')[1], src: src, out: out });
+          var url = out.toDataURL('image/jpeg', photo ? .95 : .9); ok({ url: url, data: url.split(',')[1], src: src, out: out });
         };
       });
       setup();

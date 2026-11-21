@@ -225,8 +225,9 @@
 
   /* ---------- employee ID card: front and back, credit-card size (54 × 85.6 mm) ---------- */
   var CW = 1012, CH = 1604;
-  /* print resolution: the card is drawn in 1012 × 1604 design units and printed at 600 dpi (54 × 85.6 mm = 1276 × 2022 px) */
-  var HD = 1276 / 1012;
+  /* print resolution: the card is drawn in 1012 × 1604 design units and made at 1200 dpi (54 × 85.6 mm = 2551 × 4044 px), lossless.
+     The digital ID is made at 1000 dpi so the two sides together stay under the 16-megapixel limit of phone browsers. */
+  var HD = 2551 / 1012, HD_DIGITAL = 2126 / 1012;
   function sheet(k) { var c = document.createElement('canvas'); c.width = Math.round(CW * k); c.height = Math.round(CH * k); var x = c.getContext('2d'); x.scale(k, k); x.imageSmoothingQuality = 'high'; return { c: c, x: x }; }
   /* digital ID: everything outside the gold border is cut away. The border is drawn at 26 units from the edge, 3 units thick, with
      30-unit corners; the cut follows its outer edge (24.5 units in, 31.5-unit corners), so the gold line itself stays as the card's rim. */
@@ -329,7 +330,7 @@
       body.innerHTML = '<div class="emp-cards"><img alt="Front of the ID card" src="' + f.toDataURL('image/png') + '"><img alt="Back of the ID card" src="' + b.toDataURL('image/png') + '"></div>' +
         (a[0] ? (low ? '<p class="note" style="padding:10px 14px">The photo is small (' + a[0].width + ' × ' + a[0].height + ' px), so it may look soft on the printed card. For the best card, take a new photo in good light and add it on the profile.</p>' : '') : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
         '<div class="emp-acts"><button class="btn btn-gold" type="button" data-out="digital">DIGITAL ID</button><button class="btn btn-line" type="button" data-out="card">PDF for a PVC card printer</button><button class="btn btn-line" type="button" data-out="shop">PDF for a print shop (with bleed)</button><button class="btn btn-line" type="button" data-out="png">Front and back as pictures (PNG)</button></div>' +
-        '<p class="small">All three are made at 600 dpi (1276 × 2022 pixels for the 54 × 85.6 mm card), with lossless compression (no JPEG blur), for sharp HD printing on PVC. ' +
+        '<p class="small">The printing files are made at 1200 dpi (2551 × 4044 pixels for the 54 × 85.6 mm card) and the digital ID at 1000 dpi, all lossless: no JPEG, so the colours and fine lines stay exactly as drawn and never blur or fade. ' +
         'Digital ID: one picture with the front and the back side by side, each cut along the gold border with nothing outside it, to keep on a phone or send on WhatsApp. Card printer: exact card size, front and back as two pages, for printers like Evolis, Zebra or Fargo printing edge to edge. Print shop: 2 mm extra on every side for trimming, with corner marks. Pictures: for the card printer’s own software.</p>';
       var hd = null;
       function make() { if (!hd) hd = { f: front(e, a[0], a[1], HD), b: back(e, a[2], a[4], HD) }; return hd; }
@@ -340,7 +341,7 @@
             var H = make();
             if (kind === 'digital') {
               /* one picture: the front and the back side by side, with a clear gap between them */
-              var fc = cutout(H.f), bc = cutout(H.b), gap = Math.round(fc.width * .06), one = document.createElement('canvas');
+              var fc = cutout(front(e, a[0], a[1], HD_DIGITAL)), bc = cutout(back(e, a[2], a[4], HD_DIGITAL)), gap = Math.round(fc.width * .06), one = document.createElement('canvas');
               one.width = fc.width + gap + bc.width; one.height = Math.max(fc.height, bc.height);
               var ox = one.getContext('2d'); ox.drawImage(fc, 0, 0); ox.drawImage(bc, fc.width + gap, 0);
               one.toBlob(function (bl) {
@@ -356,12 +357,12 @@
               C.busy(btn, false); return;
             }
             jspdf().then(function (J) {
-              var shop = kind === 'shop', bl = shop ? 2 : 0, W = 54 + bl * 2, Hh = 85.6 + bl * 2, px = Math.round(bl / 25.4 * 600);
-              var d = new J.jsPDF({ unit: 'mm', format: [W, Hh], orientation: 'portrait', compress: true });
+              var shop = kind === 'shop', bl = shop ? 2 : 0, W = 54 + bl * 2, Hh = 85.6 + bl * 2, px = Math.round(bl / 25.4 * 1200);
+              var d = new J.jsPDF({ unit: 'mm', format: [W, Hh], orientation: 'portrait', compress: false });
               d.setProperties({ title: 'Employee ID card · ' + e.name, subject: e.id, creator: 'Nikadi Guest House' });
               [H.f, H.b].forEach(function (cv, i) {
                 if (i) d.addPage([W, Hh], 'portrait');
-                d.addImage(shop ? bleed(cv, px) : cv, 'PNG', 0, 0, W, Hh, undefined, 'FAST'); /* lossless (flate), no JPEG blur */
+                d.addImage(shop ? bleed(cv, px) : cv, 'PNG', 0, 0, W, Hh, undefined, 'NONE'); /* stored uncompressed: every pixel kept exactly, the heaviest and safest file for printing */
                 if (shop) { d.setDrawColor(255, 255, 255); d.setLineWidth(.15); [[bl, 0, bl, bl * .8], [0, bl, bl * .8, bl], [W - bl, 0, W - bl, bl * .8], [W, bl, W - bl * .8, bl], [bl, Hh, bl, Hh - bl * .8], [0, Hh - bl, bl * .8, Hh - bl], [W - bl, Hh, W - bl, Hh - bl * .8], [W, Hh - bl, W - bl * .8, Hh - bl]].forEach(function (L) { d.line(L[0], L[1], L[2], L[3]); }); }
               });
               d.save(name + ' ID card' + (shop ? ' (print shop, 2 mm bleed)' : '') + '.pdf'); C.busy(btn, false);
