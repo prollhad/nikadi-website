@@ -831,3 +831,8 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .emp-form .hint{display:block;color:var(--muted);font-size:.72rem;margin-top:4px}
 .emp-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.emp-cards img{width:100%;border-radius:14px;box-shadow:0 10px 30px -12px rgba(0,0,0,.7)}
 @media (max-width:520px){.emp-grid{grid-template-columns:1fr}.emp-card{grid-template-columns:54px minmax(0,1fr)}.emp-ph{width:54px;height:68px}.emp-r{grid-column:2;justify-items:start;text-align:left}}
+
+.idc-cap{max-width:min(940px,100%)}.idc-cap .idc-adj-pic canvas{touch-action:none}
+.emp-found{padding:14px 16px;display:grid;gap:8px;margin-bottom:12px}
+.emp-fd{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:8px 0;border-top:1px solid var(--line-soft);cursor:pointer}
+.emp-fd input{width:20px;height:20px;margin-top:3px;accent-color:var(--gold)}.emp-fd span{display:grid;gap:2px}.emp-fd small{color:var(--muted);font-size:.72rem}.emp-fd em{font-style:normal;color:var(--muted);font-size:.74rem}

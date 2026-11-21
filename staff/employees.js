@@ -70,15 +70,15 @@
     body.innerHTML = '<div class="emp-head"><span class="emp-ph big"' + (have.photo ? ' data-ph="' + esc(have.photo[0].id) + '"' : '') + '>' + esc(initials(e.name)) + '</span><div><h3>' + esc(e.name) + '</h3><p class="small">' + esc(e.job || '') + (e.director ? ' · Director' : '') + (e.status === 'Left' ? ' · left on ' + esc(dLong(e.left)) : '') + '</p><code class="emp-id">' + esc(e.id) + '</code></div></div>' +
       '<div class="emp-acts"><button class="btn btn-gold" type="button" id="epCard">Employee ID card</button><button class="btn btn-line" type="button" id="epEdit">Edit details</button></div>' +
       '<div class="panel"><div class="sec-h"><h2>Work</h2></div>' + row('Designation', e.job) + row('Date of joining', dLong(e.joined)) + row('Monthly salary', e.salary ? rs(e.salary) + (e.salaryNote ? ' · ' + e.salaryNote : '') : e.salaryNote) + row('Status', e.status) + '</div>' +
-      '<div class="panel"><div class="sec-h"><h2>Personal</h2></div>' + row('Phone', e.phone) + row('Email', e.email) + row('Date of birth', dLong(e.dob)) + row('Blood group', e.blood) + row("Father's / husband's name", e.father) + row('Home address', e.address) + row('Emergency contact', [e.emName + (e.emRel ? ' (' + e.emRel + ')' : ''), e.emPhone].filter(Boolean).join(' · ')) + '</div>' +
+      '<div class="panel"><div class="sec-h"><h2>Personal</h2></div>' + row('Phone', e.phone) + row('Email', e.email) + row('Date of birth', dLong(e.dob)) + row('Gender', e.gender) + row('Blood group', e.blood) + row("Father's / husband's name", e.father) + row('Home address', e.address) + row('Emergency contact', [e.emName + (e.emRel ? ' (' + e.emRel + ')' : ''), e.emPhone].filter(Boolean).join(' · ')) + '</div>' +
       '<div class="panel"><div class="sec-h"><h2>Salary account</h2></div>' + (e.accNo || e.upi ? row('Account holder', e.accName) + row('Bank', [e.bank, e.branch].filter(Boolean).join(', ')) + row('Account no.', mask(e.accNo)) + row('IFSC', e.ifsc) + row('UPI', e.upi) : '<p class="small">Not added yet.</p>') + '</div>' +
       '<div class="panel"><div class="sec-h"><h2>ID numbers</h2></div>' + (e.aadhaar || e.pan || e.voter || e.uan || e.esic ? row('Aadhaar', mask(e.aadhaar)) + row('PAN', mask(e.pan)) + row('Voter ID', e.voter) + row('PF UAN', e.uan) + row('ESI no.', e.esic) : '<p class="small">Not added yet.</p>') + '</div>' +
       (e.prevWork || e.notes ? '<div class="panel"><div class="sec-h"><h2>Previous work</h2></div>' + (e.prevWork ? '<p class="emp-pre">' + esc(e.prevWork) + '</p>' : '') + (e.notes ? '<p class="small">' + esc(e.notes) + '</p>' : '') + '</div>' : '') +
-      '<div class="panel"><div class="sec-h"><h2>Documents</h2><span class="small">photo or scan; a PDF is saved page by page</span></div><div class="emp-docs">' +
-      SLOTS.map(function (s) { var d = (have[s[0]] || [])[0]; return '<div class="emp-doc">' + (d ? '<button type="button" class="emp-thumb" data-see="' + esc(d.id) + '" data-ph="' + esc(d.id) + '" aria-label="Open ' + esc(s[1]) + '"></button>' : '<div class="emp-thumb empty">' + esc(s[1]) + '</div>') +
+      '<div class="panel"><div class="sec-h"><h2>Documents</h2><span class="small">photo, scan or PDF · crop and turn before saving · details are read from Aadhaar, PAN, voter card and passbook</span></div><div class="emp-docs">' +
+      SLOTS.map(function (s) { var d = (have[s[0]] || [])[0]; return '<div class="emp-doc">' + (d ? '<button type="button" class="emp-thumb" data-kind="' + s[0] + '" data-see="' + esc(d.id) + '" data-ph="' + esc(d.id) + '" aria-label="Open ' + esc(s[1]) + '"></button>' : '<div class="emp-thumb empty">' + esc(s[1]) + '</div>') +
         '<span>' + esc(s[1]) + '</span><label class="btn btn-quiet sm">' + (d ? 'Replace' : 'Add') + '<input type="file" accept="image/*,application/pdf" data-up="' + s[0] + '" hidden></label></div>'; }).join('') + '</div>' +
       MULTI.map(function (s) { var list = have[s[0]] || []; return '<div class="sec-h" style="margin-top:14px"><h3>' + esc(s[1]) + '</h3><label class="btn btn-quiet sm">+ Add<input type="file" accept="image/*,application/pdf" multiple data-up="' + s[0] + '" hidden></label></div>' +
-        (list.length ? '<div class="list">' + list.map(function (d) { return '<div class="bl"><span class="t"><b>' + esc(d.label) + '</b><small>added ' + esc(d.at) + '</small></span><span class="a"><button class="btn btn-quiet sm" type="button" data-see="' + esc(d.id) + '">Open</button></span></div>'; }).join('') + '</div>' : '<p class="small">None yet.</p>'); }).join('') +
+        (list.length ? '<div class="list">' + list.map(function (d) { return '<div class="bl"><span class="t"><b>' + esc(d.label) + '</b><small>added ' + esc(d.at) + '</small></span><span class="a"><button class="btn btn-quiet sm" type="button" data-kind="' + s[0] + '" data-see="' + esc(d.id) + '">Open</button></span></div>'; }).join('') + '</div>' : '<p class="small">None yet.</p>'); }).join('') +
       '<p class="small" id="epMsg" role="status"></p></div>' +
       '<div class="emp-acts"><button class="btn btn-quiet danger" type="button" id="epDel">Delete this profile</button></div>' +
       '<p class="small">Added ' + esc(e.added) + ' by ' + esc(e.by) + (e.edited ? ' · last change ' + esc(e.edited) : '') + '</p>';
@@ -89,37 +89,81 @@
       var b = this; if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'Tap again to delete ' + e.name + ' and all their documents'; return; }
       C.busy(b, true); C.api('deskEmployeeRemove', { id: e.id }).then(function () { C.toast('Profile deleted'); LIST = null; C.closeSheet(); C.render(); }, function (x) { C.busy(b, false); C.toast(C.errText(x)); });
     };
-    $$('[data-see]', body).forEach(function (b) { b.onclick = function () { see(b.dataset.see); }; });
+    $$('[data-see]', body).forEach(function (b) { b.onclick = function () { see(b.dataset.see, body, e, b.dataset.kind); }; });
     $$('[data-up]', body).forEach(function (inp) {
       inp.onchange = function () {
-        var files = Array.prototype.slice.call(inp.files || []); if (!files.length) return;
-        var msg = $('#epMsg', body); msg.textContent = 'Saving…';
-        var kind = inp.dataset.up, chain = Promise.resolve();
-        files.forEach(function (f) { chain = chain.then(function () { return images(f).then(function (pages) { var c2 = Promise.resolve(); pages.forEach(function (data, i) { c2 = c2.then(function () { return C.api('deskEmpDocSave', { emp: e.id, kind: kind, data: data, page: pages.length > 1 ? i + 1 : 0, label: kind === 'photo' ? '' : f.name.replace(/\.[^.]+$/, '').slice(0, 40) }); }); }); return c2; }); }); });
-        chain.then(function () { LIST = null; return C.api('deskEmployee', { id: e.id }); }).then(function (r) { draw(body, r.employee); C.toast('Saved'); }, function (x) { msg.textContent = C.errText(x); });
+        var files = Array.prototype.slice.call(inp.files || []); inp.value = ''; if (!files.length) return;
+        upload(body, e, inp.dataset.up, files);
       };
     });
   }
-  /* a photo is made smaller before upload; a PDF becomes one picture per page (up to 8 pages) */
-  function images(f) {
-    if (!/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)) return C.shrinkPhoto(f).then(function (p) { return [p.data]; });
-    return import('/staff/vendor/pdf.min.mjs').then(function (m) {
-      m.GlobalWorkerOptions.workerSrc = '/staff/vendor/pdf.worker.min.mjs';
-      return f.arrayBuffer().then(function (buf) { return m.getDocument({ data: buf }).promise; }).then(function (doc) {
-        var out = [], chain = Promise.resolve();
-        for (var i = 1; i <= Math.min(doc.numPages, 8); i++) (function (n) { chain = chain.then(function () { return doc.getPage(n).then(function (pg) {
-          var vp = pg.getViewport({ scale: 1 }), k = Math.min(2, 1600 / Math.max(vp.width, vp.height)), v2 = pg.getViewport({ scale: k }), c = document.createElement('canvas');
-          c.width = Math.round(v2.width); c.height = Math.round(v2.height); var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
-          return pg.render({ canvasContext: x, viewport: v2 }).promise.then(function () { out.push(c.toDataURL('image/jpeg', .78).split(',')[1]); });
-        }); }); })(i);
-        return chain.then(function () { return out; });
+  /* kinds of document: how the picture is cut, and whether its details can be read */
+  var MODE = { photo: 'photo', aadhaarF: 'card', aadhaarB: 'card', pan: 'card', voter: 'card', bank: 'page', cv: 'page', work: 'page', other: 'page' };
+  var READ = { aadhaarF: 'Aadhaar card', aadhaarB: 'Aadhaar card', pan: 'PAN card', voter: 'voter card', bank: 'passbook / cheque' };
+  var TITLES = { photo: 'photo', aadhaarF: 'Aadhaar card (front)', aadhaarB: 'Aadhaar card (back)', pan: 'PAN card', voter: 'voter card', bank: 'bank passbook or cheque', cv: 'CV', work: 'work paper', other: 'document' };
+  function isPdf(f) { return /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name || ''); }
+  function upload(body, e, kind, files, replaceId) {
+    var msg = $('#epMsg', body), found = null, chain = Promise.resolve(), saved = 0;
+    function save(data, page, label) { if (msg) msg.textContent = 'Saving…'; return C.api('deskEmpDocSave', { emp: e.id, kind: kind, data: data, page: page || 0, label: label || '' }).then(function () { saved++; }); }
+    files.forEach(function (f) {
+      chain = chain.then(function () {
+        var label = kind === 'photo' || READ[kind] ? '' : String(f.name || '').replace(/\.[^.]+$/, '').slice(0, 40);
+        if (MODE[kind] === 'page' && !READ[kind] && isPdf(f)) /* a CV or work papers in a PDF: every page is kept as it is */
+          return NikadiID.pdfPages(f).then(function (pages) { var c2 = Promise.resolve(); pages.forEach(function (u, i) { c2 = c2.then(function () { return save(u.split(',')[1], pages.length > 1 ? i + 1 : 0, label); }); }); return c2; });
+        return NikadiID.capture(f, { mode: MODE[kind], title: TITLES[kind], toast: C.toast }).then(function (r) {
+          if (!r) return;
+          return save(r.data, 0, label).then(function () {
+            if (!READ[kind] || !window.NikadiIdRead) return;
+            if (msg) msg.textContent = 'Reading the details on the ' + READ[kind] + '… (the first time takes up to a minute)';
+            return NikadiIdRead.read(kind, r.out, r.src).then(function (fd) { found = fd; }, function () { found = {}; });
+          });
+        });
       });
     });
+    chain.then(function () {
+      /* "crop again" on a CV or work page: the new picture replaces the old one (single documents are replaced by the server) */
+      if (replaceId && saved && MODE[kind] === 'page' && !READ[kind]) return C.api('deskEmpDocRemove', { id: replaceId });
+    }).then(function () { LIST = null; return C.api('deskEmployee', { id: e.id }); }).then(function (r) {
+      draw(body, r.employee); if (saved) C.toast('Saved');
+      if (found) offer(body, r.employee, kind, found);
+    }, function (x) { if (msg) msg.textContent = C.errText(x); else C.toast(C.errText(x)); });
   }
-  function see(id) {
+  /* what was read off the card: tick what to fill in */
+  var FIELDS = [['name', 'Name'], ['dob', 'Date of birth'], ['gender', 'Gender'], ['father', "Father's name"], ['husband', "Husband's name"], ['address', 'Address'], ['aadhaar', 'Aadhaar number'], ['pan', 'PAN'], ['voter', 'Voter ID number'], ['accName', 'Account holder'], ['accNo', 'Account number'], ['ifsc', 'IFSC']];
+  var TARGET = { husband: 'father' };
+  function show(k, v) { return k === 'dob' ? dLong(v) : k === 'aadhaar' ? String(v).replace(/(\d{4})(?=\d)/g, '$1 ') : v; }
+  function offer(body, e, kind, fd) {
+    var rows = FIELDS.filter(function (f) { return fd[f[0]]; }), box = document.createElement('div'); box.className = 'note emp-found';
+    var where = $('.emp-docs', body); if (where) where.parentNode.insertBefore(box, where); else body.prepend(box);
+    if (!rows.length) {
+      box.innerHTML = '<b>No details could be read from the ' + esc(READ[kind]) + '.</b><p class="small">The picture may be blurred, too small or at an angle. Try "Crop or turn it again", or type the details in Edit details' + (fd.aadhaarLast4 ? ' (the QR code says the Aadhaar number ends in ' + esc(fd.aadhaarLast4) + ')' : '') + '.</p>';
+      return box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    box.innerHTML = '<b>Found on the ' + esc(READ[kind]) + '</b><span class="small"> · read from the ' + esc(fd.source || 'card') + '. Please check before filling in.</span>' +
+      rows.map(function (f) { var k = f[0], cur = e[TARGET[k] || k] || '', same = String(cur).toLowerCase() === String(fd[k]).toLowerCase();
+        return '<label class="emp-fd"><input type="checkbox" data-fk="' + k + '"' + (!cur ? ' checked' : '') + (same ? ' disabled' : '') + '><span><small>' + esc(f[1]) + '</small><b>' + esc(show(k, fd[k])) + '</b>' + (cur && !same ? '<em>now: ' + esc(show(TARGET[k] || k, cur)) + '</em>' : same ? '<em>already the same</em>' : '') + '</span></label>'; }).join('') +
+      (fd.aadhaarLast4 && !fd.aadhaar ? '<p class="small">The QR code says the Aadhaar number ends in ' + esc(fd.aadhaarLast4) + '.' + (e.aadhaar && String(e.aadhaar).slice(-4) !== fd.aadhaarLast4 ? ' <b>The number in the profile ends differently. Please check it.</b>' : '') + '</p>' : '') +
+      '<div class="emp-acts"><button class="btn btn-gold" type="button" data-fill>Fill in the ticked details</button><button class="btn btn-quiet" type="button" data-skip>Not now</button></div>';
+    box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    $('[data-skip]', box).onclick = function () { box.remove(); };
+    $('[data-fill]', box).onclick = function () {
+      var b = this, req = {}, pick = $$('[data-fk]:checked', box).map(function (x) { return x.dataset.fk; }); if (!pick.length) { box.remove(); return; }
+      C.busy(b, true);
+      C.api('deskEmployee', { id: e.id }).then(function (r) {
+        var full = r.employee; Object.keys(full).forEach(function (k) { req[k] = full[k]; });
+        pick.forEach(function (k) { req[TARGET[k] || k] = fd[k]; });
+        req.original = full.id; req.id = full.id; req.director = full.director;
+        var bankP = pick.indexOf('ifsc') >= 0 ? fetch('https://ifsc.razorpay.com/' + fd.ifsc).then(function (x) { return x.ok ? x.json() : null; }).then(function (j) { if (j) { req.bank = j.BANK || req.bank; req.branch = [j.BRANCH, j.CITY].filter(Boolean).map(function (w) { return w.toLowerCase().replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }); }).join(', '); } }, function () {}) : Promise.resolve();
+        return bankP.then(function () { return C.api('deskEmployeeSave', req); });
+      }).then(function (r) { LIST = null; C.toast('Details filled in'); draw(body, r.employee); }, function (x) { C.busy(b, false); C.toast(C.errText(x)); });
+    };
+  }
+  function see(id, body, e, kind) {
     var b = C.openSheet('Document'); b.innerHTML = '<div class="loading">Loading…</div>';
     photo(id).then(function (u) {
-      b.innerHTML = u ? '<img class="emp-big" alt="Document" src="' + u + '"><div class="emp-acts"><button class="btn btn-quiet danger" type="button" id="dRm">Remove this document</button></div>' : '<p class="err">Could not open it.</p>';
+      b.innerHTML = u ? '<img class="emp-big" alt="Document" src="' + u + '"><div class="emp-acts">' + (body ? '<button class="btn btn-line" type="button" id="dCrop">Crop or turn it again</button>' : '') + (body && READ[kind] ? '<button class="btn btn-line" type="button" id="dRead">Read the details again</button>' : '') + '<button class="btn btn-quiet danger" type="button" id="dRm">Remove this document</button></div>' : '<p class="err">Could not open it.</p>';
+      var cr = $('#dCrop', b); if (cr) cr.onclick = function () { fetch(u).then(function (x) { return x.blob(); }).then(function (bl) { var f = new File([bl], 'document.jpg', { type: bl.type || 'image/jpeg' }); C.closeSheet(); setTimeout(function () { upload(body, e, kind, [f], id); }, 80); }); };
+      var rd = $('#dRead', b); if (rd) rd.onclick = function () { var x = this; C.busy(x, true); x.textContent = 'Reading…'; var im = new Image(); im.onload = function () { var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); NikadiIdRead.read(kind, c, c).then(function (fd) { C.closeSheet(); setTimeout(function () { offer(body, e, kind, fd); }, 80); }, function () { C.busy(x, false); x.textContent = 'Could not read it'; }); }; im.src = u; };
       var rm = $('#dRm', b); if (rm) rm.onclick = function () { var x = this; if (x.dataset.sure !== '1') { x.dataset.sure = '1'; x.textContent = 'Tap again to remove'; return; } C.busy(x, true); C.api('deskEmpDocRemove', { id: id }).then(function () { LIST = null; C.toast('Removed'); C.closeSheet(); setTimeout(function () { C.closeSheet(); }, 80); C.render(); }, function (e) { C.busy(x, false); C.toast(C.errText(e)); }); };
     });
   }
@@ -140,7 +184,7 @@
       '<label class="toggle"><span>This person is a director of the company</span><input type="checkbox" name="director"' + (e.director ? ' checked' : '') + '></label>' +
       F('Date of joining', inp('joined', 'date')) + F('Monthly salary (₹)', inp('salary', 'number', ' inputmode="numeric" min="0" step="1"')) + F('Salary note (optional)', inp('salaryNote', 'text', ' placeholder="For example: variable, ₹50,000 or above"')) +
       F('Status', '<select class="input" name="status"><option' + (e.status !== 'Left' ? ' selected' : '') + '>Active</option><option' + (e.status === 'Left' ? ' selected' : '') + '>Left</option></select>') + F('Date of leaving', inp('left', 'date')) +
-      '<h3 class="emp-fh">Personal</h3>' + F('Phone', inp('phone', 'tel', ' inputmode="tel"')) + F('Email', inp('email', 'email')) + F('Date of birth', inp('dob', 'date')) +
+      '<h3 class="emp-fh">Personal</h3>' + F('Phone', inp('phone', 'tel', ' inputmode="tel"')) + F('Email', inp('email', 'email')) + F('Date of birth', inp('dob', 'date')) + F('Gender', '<select class="input" name="gender">' + ['', 'Male', 'Female', 'Other'].map(function (g) { return '<option value="' + g + '"' + (g === (e.gender || '') ? ' selected' : '') + '>' + (g || '—') + '</option>'; }).join('') + '</select>') +
       F('Blood group', '<select class="input" name="blood">' + BLOOD.map(function (b) { return '<option' + (b === (e.blood || '') ? ' selected' : '') + ' value="' + b + '">' + (b || '—') + '</option>'; }).join('') + '</select>') +
       F("Father's / husband's name", inp('father')) + F('Home address', '<textarea class="input" name="address" rows="2">' + esc(e.address || '') + '</textarea>') +
       F('Emergency contact name', inp('emName')) + F('Relation', pick('emRel', RELS, 'Choose the relation')) + F('Emergency contact phone', inp('emPhone', 'tel', ' inputmode="tel"')) +
@@ -150,7 +194,7 @@
       F('PF UAN (if any)', inp('uan', 'text', ' inputmode="numeric"')) + F('ESI number (if any)', inp('esic', 'text', ' inputmode="numeric"')) +
       '<h3 class="emp-fh">Previous work</h3>' + F('Where they worked before, what they did, how long', '<textarea class="input" name="prevWork" rows="4" placeholder="For example: Hotel Sri Krishna, Mayapur · housekeeping · 2019–2023">' + esc(e.prevWork || '') + '</textarea>') +
       F('Notes (optional)', '<textarea class="input" name="notes" rows="2">' + esc(e.notes || '') + '</textarea>') +
-      '<p class="small">Photo, Aadhaar, PAN and voter card scans, the CV and work papers are added on the profile after saving.</p>' +
+      '<p class="small">Photo, Aadhaar, PAN and voter card scans, the CV and work papers are added on the profile after saving. The details on Aadhaar, PAN, voter card and passbook can then be read and filled in for you.</p>' +
       '<p class="err" id="eErr" role="alert"></p><button class="btn btn-gold" type="submit" id="eGo">' + (n ? 'Save and add documents' : 'Save changes') + '</button></form>';
     $$('[data-pick]', body).forEach(function (sel) { var box = sel.nextElementSibling; sel.onchange = function () { if (sel.value === '__other') { box.hidden = false; box.value = ''; box.focus(); } else { box.hidden = true; box.value = sel.value; } }; });
     function setPick(k, v) { var sel = $('[data-pick="' + k + '"]', body), box = sel.nextElementSibling, has = Array.prototype.some.call(sel.options, function (o) { return o.value === v; }); sel.value = has ? v : '__other'; box.hidden = has; box.value = v; }
@@ -169,7 +213,7 @@
     });
     $('#empF', body).onsubmit = function (ev) {
       ev.preventDefault(); var f = this, b = $('#eGo', body), req = { original: n ? '' : e.id };
-      ['id', 'name', 'job', 'joined', 'salary', 'salaryNote', 'status', 'left', 'phone', 'email', 'dob', 'blood', 'father', 'address', 'emName', 'emRel', 'emPhone', 'accName', 'bank', 'branch', 'accNo', 'ifsc', 'upi', 'aadhaar', 'pan', 'voter', 'uan', 'esic', 'prevWork', 'notes'].forEach(function (k) { req[k] = f.elements[k] ? f.elements[k].value.trim() : ''; });
+      ['id', 'name', 'job', 'joined', 'salary', 'salaryNote', 'status', 'left', 'phone', 'email', 'dob', 'gender', 'blood', 'father', 'address', 'emName', 'emRel', 'emPhone', 'accName', 'bank', 'branch', 'accNo', 'ifsc', 'upi', 'aadhaar', 'pan', 'voter', 'uan', 'esic', 'prevWork', 'notes'].forEach(function (k) { req[k] = f.elements[k] ? f.elements[k].value.trim() : ''; });
       req.director = f.elements.director.checked;
       if ((req.accNo || $('#accNo2', body).value.trim()) && req.accNo.replace(/\s/g, '') !== $('#accNo2', body).value.trim().replace(/\s/g, '')) { $('#eErr', body).textContent = 'The two account numbers are not the same. Please check them.'; return; }
       if (!req.name) { $('#eErr', body).textContent = 'Please write the name.'; return; }
@@ -186,55 +230,83 @@
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
   function fit(x, t, max, size, font) { var s = size; x.font = font.replace('#', s); while (x.measureText(t).width > max && s > 20) { s -= 2; x.font = font.replace('#', s); } return s; }
   function spaced(x, t, cx, y, sp) { var w = 0, i; for (i = 0; i < t.length; i++) w += x.measureText(t[i]).width + sp; w -= sp; var X = cx - w / 2; for (i = 0; i < t.length; i++) { x.fillText(t[i], X, y); X += x.measureText(t[i]).width + sp; } }
-  var NAVY = '#101a36', NAVY2 = '#1b2a55', GOLD = '#c9a35a', INK = '#1c2238', MUTED = '#6b7184';
+  /* Card design: deep navy with a fine gold guilloché, a double gold frame round the photo, ivory reverse.
+     Cormorant Garamond for names, Jost for small capitals: the same type as the guest house website. */
+  var NAVY = '#0c1430', NAVY2 = '#16224a', GOLD = '#c9a35a', GOLD_HI = '#e6c98a', GOLD_LO = '#9a7633', IVORY = '#f8f3e8', INK = '#1a2036', MUTED = '#6d7182';
+  function goldGrad(x, x0, x1) { var g = x.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, GOLD_LO); g.addColorStop(.35, GOLD_HI); g.addColorStop(.6, GOLD); g.addColorStop(1, GOLD_LO); return g; }
+  function guilloche(x, cy, amp, alpha) {
+    x.save(); x.globalAlpha = alpha; x.strokeStyle = GOLD; x.lineWidth = 1.2;
+    for (var k = 0; k < 14; k++) { x.beginPath(); for (var X = -10; X <= CW + 10; X += 6) { var t = X / CW * Math.PI * 2; var Y = cy + Math.sin(t * 3 + k * .45) * amp * (0.55 + .45 * Math.cos(t * 2 - k * .3)) + (k - 7) * 5; if (X < 0) x.moveTo(X, Y); else x.lineTo(X, Y); } x.stroke(); }
+    x.restore();
+  }
+  function rule(x, y, w) { /* gold hairline with a small diamond in the middle */
+    var cx = CW / 2; x.fillStyle = goldGrad(x, cx - w / 2, cx + w / 2); x.fillRect(cx - w / 2, y - 1, w / 2 - 16, 2); x.fillRect(cx + 16, y - 1, w / 2 - 16, 2);
+    x.save(); x.translate(cx, y); x.rotate(Math.PI / 4); x.fillRect(-6, -6, 12, 12); x.restore();
+  }
+  function caps(x, t, cx, y, font, color, sp) { x.font = font; x.fillStyle = color; x.textAlign = 'left'; spaced(x, t, cx, y, sp); }
   function front(e, ph, logo) {
     var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d');
-    x.fillStyle = '#fbf8f2'; x.fillRect(0, 0, CW, CH);
-    var g = x.createLinearGradient(0, 0, CW, 520); g.addColorStop(0, NAVY); g.addColorStop(1, NAVY2); x.fillStyle = g;
-    x.beginPath(); x.moveTo(0, 0); x.lineTo(CW, 0); x.lineTo(CW, 470); x.quadraticCurveTo(CW / 2, 560, 0, 470); x.closePath(); x.fill();
-    x.strokeStyle = GOLD; x.lineWidth = 6; x.beginPath(); x.moveTo(0, 484); x.quadraticCurveTo(CW / 2, 574, CW, 484); x.stroke();
-    if (logo) { var lw = 330, lh = lw * logo.height / logo.width; x.drawImage(logo, (CW - lw) / 2, 34, lw, lh); }
-    x.fillStyle = 'rgba(255,255,255,.78)'; x.font = '500 25px Jost'; x.textAlign = 'left'; spaced(x, 'EMPLOYEE IDENTITY CARD', CW / 2, 330, 6);
-    var P = 380, px = (CW - P) / 2, py = 372;
-    x.save(); rr(x, px - 10, py - 10, P + 20, P * 1.2 + 20, 34); x.fillStyle = GOLD; x.fill(); rr(x, px, py, P, P * 1.2, 26); x.clip();
-    if (ph) { var k = Math.max(P / ph.width, P * 1.2 / ph.height), w = ph.width * k, h = ph.height * k; x.drawImage(ph, px + (P - w) / 2, py + (P * 1.2 - h) / 2, w, h); }
-    else { x.fillStyle = '#e9e3d6'; x.fillRect(px, py, P, P * 1.2); x.fillStyle = '#9a8f78'; x.font = '600 150px "Cormorant Garamond"'; x.textAlign = 'center'; x.fillText(initials(e.name), CW / 2, py + P * .72); }
+    var g = x.createRadialGradient(CW / 2, CH * .38, 80, CW / 2, CH * .45, CH * .75); g.addColorStop(0, NAVY2); g.addColorStop(1, NAVY); x.fillStyle = g; x.fillRect(0, 0, CW, CH);
+    guilloche(x, 250, 70, .10); guilloche(x, CH - 330, 50, .07);
+    x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 3; rr(x, 26, 26, CW - 52, CH - 52, 30); x.stroke();
+    x.globalAlpha = .35; x.lineWidth = 1; rr(x, 38, 38, CW - 76, CH - 76, 24); x.stroke(); x.globalAlpha = 1;
+    if (logo) { var lw = 250, lh = lw * logo.height / logo.width; x.drawImage(logo, (CW - lw) / 2, 78, lw, lh); }
+    caps(x, 'GUEST HOUSE', CW / 2, 342, '500 26px Jost', GOLD_HI, 12); caps(x, 'SRI DHAM MAYAPUR', CW / 2, 380, '400 19px Jost', 'rgba(255,255,255,.55)', 8);
+    rule(x, 418, 300);
+    var PW = 392, PH = 490, px = (CW - PW) / 2, py = 456;
+    x.fillStyle = goldGrad(x, px - 14, px + PW + 14); rr(x, px - 14, py - 14, PW + 28, PH + 28, 26); x.fill();
+    x.fillStyle = NAVY; rr(x, px - 8, py - 8, PW + 16, PH + 16, 21); x.fill();
+    x.fillStyle = goldGrad(x, px - 4, px + PW + 4); rr(x, px - 4, py - 4, PW + 8, PH + 8, 19); x.fill();
+    x.save(); rr(x, px, py, PW, PH, 16); x.clip();
+    if (ph) { var k = Math.max(PW / ph.width, PH / ph.height), w = ph.width * k, h = ph.height * k; x.drawImage(ph, px + (PW - w) / 2, py + (PH - h) / 2, w, h); }
+    else { x.fillStyle = '#1d2a52'; x.fillRect(px, py, PW, PH); x.fillStyle = GOLD; x.font = '600 170px "Cormorant Garamond", Georgia, serif'; x.textAlign = 'center'; x.fillText(initials(e.name), CW / 2, py + PH * .64); }
     x.restore();
-    var y = py + P * 1.2 + 112; x.textAlign = 'center'; x.fillStyle = INK; fit(x, e.name, CW - 120, 84, '600 #px "Cormorant Garamond"'); x.fillText(e.name, CW / 2, y);
-    x.fillStyle = '#a07c36'; x.font = '500 31px Jost'; x.textAlign = 'left'; spaced(x, String((e.director ? 'Director' : e.job) || 'Staff').toUpperCase(), CW / 2, y + 58, 7);
-    var bx = 110, bw = CW - 220, by = y + 104; x.strokeStyle = 'rgba(28,34,56,.14)'; x.lineWidth = 2; x.beginPath(); x.moveTo(bx, by); x.lineTo(bx + bw, by); x.stroke();
-    function line(k, v, yy) { x.textAlign = 'left'; x.fillStyle = MUTED; x.font = '400 30px Jost'; x.fillText(k, bx, yy); x.textAlign = 'right'; x.fillStyle = INK; x.font = '500 32px Jost'; x.fillText(v || '—', bx + bw, yy); }
-    line('Joined', dLong(e.joined), by + 62); line('Blood group', e.blood, by + 112); line('Phone', e.phone ? '+91 ' + e.phone.replace(/(\d{5})(\d{5})/, '$1 $2') : '', by + 162);
-    x.fillStyle = NAVY; x.fillRect(0, CH - 150, CW, 150); x.fillStyle = GOLD; x.fillRect(0, CH - 150, CW, 5);
-    x.textAlign = 'center'; x.fillStyle = 'rgba(255,255,255,.62)'; x.font = '400 24px Jost'; spaced(x, 'EMPLOYEE ID', CW / 2, CH - 98, 5);
-    x.fillStyle = '#fff'; x.font = '500 44px Jost'; x.textAlign = 'left'; spaced(x, e.id, CW / 2, CH - 44, 5);
+    var y = py + PH + 118; x.textAlign = 'center'; x.fillStyle = '#ffffff'; fit(x, e.name, CW - 150, 82, '600 #px "Cormorant Garamond", Georgia, serif'); x.fillText(e.name, CW / 2, y);
+    caps(x, String((e.director ? 'Director' : e.job) || 'Staff').toUpperCase(), CW / 2, y + 56, '500 27px Jost', GOLD_HI, 9);
+    rule(x, y + 104, 420);
+    /* three facts in columns */
+    var cols = [['EMPLOYEE ID', e.id], ['JOINED', e.joined ? dLong(e.joined).replace(/^\d+ /, '') : '—'], ['BLOOD', e.blood || '—']], cw = (CW - 150) / 3, by = y + 176;
+    cols.forEach(function (cc, i) { var cx = 75 + cw * i + cw / 2; caps(x, cc[0], cx, by, '400 18px Jost', 'rgba(255,255,255,.55)', 5); x.textAlign = 'center'; x.fillStyle = '#fff'; fit(x, cc[1], cw - 16, 31, '500 #px Jost'); x.fillText(cc[1], cx, by + 46); });
+    x.fillStyle = 'rgba(201,163,90,.35)'; x.fillRect(75 + cw, by - 22, 1, 80); x.fillRect(75 + cw * 2, by - 22, 1, 80);
+    caps(x, 'A UNIT OF NIKADI PROJECTS PRIVATE LIMITED', CW / 2, CH - 76, '400 17px Jost', 'rgba(230,201,138,.8)', 4);
     return c;
   }
-  function back(e, sign) {
+  function back(e, sign, qr) {
     var c = document.createElement('canvas'); c.width = CW; c.height = CH; var x = c.getContext('2d');
-    x.fillStyle = '#fbf8f2'; x.fillRect(0, 0, CW, CH); x.fillStyle = NAVY; x.fillRect(0, 0, CW, 150); x.fillStyle = GOLD; x.fillRect(0, 145, CW, 5);
-    x.textAlign = 'left'; x.fillStyle = '#fff'; x.font = '600 52px "Cormorant Garamond"'; x.textAlign = 'center'; x.fillText('Nikadi Guest House', CW / 2, 92);
-    var y = 250; x.fillStyle = '#a07c36'; x.font = '500 26px Jost'; x.textAlign = 'left'; spaced(x, 'A UNIT OF', CW / 2, y, 6);
-    x.textAlign = 'center'; x.fillStyle = INK; x.font = '600 46px "Cormorant Garamond"'; x.fillText(COMPANY, CW / 2, y + 58);
-    x.fillStyle = MUTED; x.font = '400 29px Jost'; ADDR.forEach(function (l, i) { x.fillText(l, CW / 2, y + 128 + i * 42); });
-    x.fillStyle = INK; x.font = '500 30px Jost'; x.fillText('+91 75011 01137  ·  nikadiguesthouse.com', CW / 2, y + 268);
-    var bx = 110, bw = CW - 220; y = 640; x.strokeStyle = 'rgba(28,34,56,.14)'; x.lineWidth = 2; x.beginPath(); x.moveTo(bx, y); x.lineTo(bx + bw, y); x.stroke();
-    function line(k, v, yy) { x.textAlign = 'left'; x.fillStyle = MUTED; x.font = '400 30px Jost'; x.fillText(k, bx, yy); x.textAlign = 'right'; x.fillStyle = INK; x.font = '500 32px Jost'; fit(x, v || '—', bw - 300, 32, '500 #px Jost'); x.fillText(v || '—', bx + bw, yy); }
-    line('Date of birth', dLong(e.dob), y + 66); line('Emergency contact', e.emName ? e.emName + (e.emRel ? ' (' + e.emRel + ')' : '') : '', y + 118); line('Emergency phone', e.emPhone ? '+91 ' + e.emPhone : '', y + 170);
-    y = 940; x.textAlign = 'center'; x.fillStyle = MUTED; x.font = '400 27px Jost';
-    ['This card is the property of ' + COMPANY + '.', 'It must be shown on request and returned on', 'leaving the job. If found, please return it to', 'the reception of Nikadi Guest House.'].forEach(function (l, i) { fit(x, l, CW - 120, 27, '400 #px Jost'); x.fillText(l, CW / 2, y + i * 40); });
-    if (sign) { var sw = 300, sh = sw * sign.height / sign.width; x.drawImage(sign, CW - 110 - sw, 1250 - sh, sw, sh); }
-    x.strokeStyle = 'rgba(28,34,56,.35)'; x.beginPath(); x.moveTo(CW - 450, 1262); x.lineTo(CW - 110, 1262); x.stroke();
-    x.textAlign = 'right'; x.fillStyle = INK; x.font = '500 27px Jost'; x.fillText('Authorised signatory', CW - 110, 1302); x.fillStyle = MUTED; x.font = '400 24px Jost'; x.fillText('Director, ' + COMPANY.replace(' Private Limited', ' Pvt Ltd'), CW - 110, 1338);
-    x.fillStyle = NAVY; x.fillRect(0, CH - 110, CW, 110); x.fillStyle = GOLD; x.fillRect(0, CH - 110, CW, 5);
-    x.fillStyle = '#fff'; x.font = '500 34px Jost'; x.textAlign = 'left'; spaced(x, e.id, CW / 2, CH - 44, 5);
+    x.fillStyle = IVORY; x.fillRect(0, 0, CW, CH);
+    guilloche(x, CH / 2, 120, .22);
+    x.fillStyle = NAVY; x.fillRect(0, 0, CW, 210); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, 210, CW, 4);
+    x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = '600 58px "Cormorant Garamond", Georgia, serif'; x.fillText('Nikadi Guest House', CW / 2, 112);
+    caps(x, 'EMPLOYEE IDENTITY CARD', CW / 2, 162, '400 21px Jost', GOLD_HI, 8);
+    x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 3; rr(x, 26, 26, CW - 52, CH - 52, 30); x.stroke();
+    var bx = 110, bw = CW - 220, y = 300;
+    function line(k, v, yy) { x.textAlign = 'left'; x.font = '400 19px Jost'; x.fillStyle = MUTED; spacedL(x, k, bx, yy, 4); x.textAlign = 'right'; x.fillStyle = INK; fit(x, v || '—', bw - 330, 31, '500 #px Jost'); x.fillText(v || '—', bx + bw, yy); x.fillStyle = 'rgba(26,32,54,.1)'; x.fillRect(bx, yy + 22, bw, 1.5); }
+    line('NAME', e.name, y); line('EMPLOYEE ID', e.id, y + 70); line('DATE OF BIRTH', dLong(e.dob), y + 140); line('IN AN EMERGENCY', e.emName ? e.emName + (e.emRel ? ' (' + e.emRel + ')' : '') : '', y + 210); line('EMERGENCY PHONE', e.emPhone ? '+91 ' + e.emPhone.replace(/(\d{5})(\d{5})/, '$1 $2') : '', y + 280);
+    if (qr) { var qs = 230, qx = bx, qy = 700; x.fillStyle = '#fff'; rr(x, qx - 12, qy - 12, qs + 24, qs + 24, 14); x.fill(); x.strokeStyle = 'rgba(201,163,90,.6)'; x.lineWidth = 2; x.stroke(); x.drawImage(qr, qx, qy, qs, qs);
+      x.textAlign = 'left'; x.fillStyle = MUTED; x.font = '400 21px Jost'; ['Scan to see the', 'employee details'].forEach(function (l, i) { x.fillText(l, qx, qy + qs + 50 + i * 28); }); }
+    if (sign) { var sw = 300, sh = sw * sign.height / sign.width; x.drawImage(sign, CW - 110 - sw, 900 - sh, sw, sh); }
+    x.fillStyle = 'rgba(26,32,54,.45)'; x.fillRect(CW - 430, 912, 320, 1.5);
+    x.textAlign = 'right'; x.fillStyle = INK; x.font = '500 25px Jost'; x.fillText('Authorised Signatory', CW - 110, 952);
+    x.fillStyle = MUTED; x.font = '400 21px Jost'; x.fillText('Director', CW - 110, 984);
+    x.textAlign = 'center'; x.fillStyle = MUTED; x.font = 'italic 400 25px "Cormorant Garamond", Georgia, serif';
+    ['This card is the property of Nikadi Projects Private Limited.', 'It must be worn on duty, shown on request and returned', 'on leaving the job. If found, please return it to', 'the reception of Nikadi Guest House.'].forEach(function (l, i) { fit(x, l, CW - 160, 27, 'italic 400 #px "Cormorant Garamond", Georgia, serif'); x.fillText(l, CW / 2, 1100 + i * 36); });
+    x.fillStyle = NAVY; x.fillRect(0, CH - 262, CW, 262); x.fillStyle = goldGrad(x, 0, CW); x.fillRect(0, CH - 262, CW, 4);
+    x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '500 23px Jost';
+    ['Bhaktisiddhanta Saraswati Marg, Opp. ISKCON Gate No. 4', 'Sri Dham Mayapur, Nadia, West Bengal 741313'].forEach(function (l, i) { fit(x, l, CW - 140, 23, '500 #px Jost'); x.fillText(l, CW / 2, CH - 190 + i * 34); });
+    caps(x, '+91 75011 01137   ·   NIKADIGUESTHOUSE.COM', CW / 2, CH - 98, '400 19px Jost', GOLD_HI, 3);
+    x.strokeStyle = goldGrad(x, 0, CW); x.lineWidth = 3; rr(x, 26, 26, CW - 52, CH - 52, 30); x.stroke();
     return c;
+  }
+  function spacedL(x, t, X, y, sp) { for (var i = 0; i < t.length; i++) { x.fillText(t[i], X, y); X += x.measureText(t[i]).width + sp; } }
+  function qrImage(text) {
+    if (!window.NikadiQR) return Promise.resolve(null);
+    try { var svg = NikadiQR.svg(text, { color: '#0c1430' }); return img('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)).then(function (i) { if (!i) return null; var c = document.createElement('canvas'); c.width = c.height = 460; var x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(i, 0, 0, 460, 460); return c; }); } catch (er) { return Promise.resolve(null); }
   }
   function jspdf() { if (window.jspdf) return Promise.resolve(window.jspdf); return new Promise(function (ok, bad) { var s = document.createElement('script'); s.src = '/staff/vendor/jspdf.umd.min.js'; s.onload = function () { ok(window.jspdf); }; s.onerror = bad; document.head.appendChild(s); }); }
   function idCard(e, phId) {
     var body = C.openSheet('ID card · ' + e.name); body.innerHTML = '<div class="loading">Drawing the card…</div>';
-    Promise.all([photo(phId).then(img), img('/img/brand/nikadi-mark/NIKADI-logo-white.png'), img('/img/brand/sign.png'), fonts()]).then(function (a) {
-      var f = front(e, a[0], a[1]), b = back(e, a[2]);
+    Promise.all([photo(phId).then(img), img('/img/brand/nikadi-mark/NIKADI-logo-white.png'), img('/img/brand/sign.png'), fonts(), qrImage('Nikadi Guest House, a unit of Nikadi Projects Private Limited\nEmployee ' + e.id + '\n' + e.name + '\n' + ((e.director ? 'Director' : e.job) || '') + '\nTo check, call the reception: +91 75011 01137')]).then(function (a) {
+      var f = front(e, a[0], a[1]), b = back(e, a[2], a[4]);
       body.innerHTML = '<div class="emp-cards"><img alt="Front of the ID card" src="' + f.toDataURL('image/png') + '"><img alt="Back of the ID card" src="' + b.toDataURL('image/png') + '"></div>' +
         (a[0] ? '' : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
         '<div class="emp-acts"><button class="btn btn-gold" type="button" id="cPdf">Download PDF to print</button></div><p class="small">The PDF has the front and the back at real card size, 54 × 85.6 mm, for a PVC card printer or a print shop.</p>';

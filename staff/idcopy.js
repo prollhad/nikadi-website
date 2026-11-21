@@ -596,5 +596,133 @@
     draw();
     return { state: state, detect: detect, findCards: findCards, layouts: LAYOUTS };
   }
-  root.NikadiID = { mount: mount, detect: detect, render: render, baseCanvas: baseCanvas, LAYOUTS: LAYOUTS };
+
+  /* ---------------- capture one document (used by the Employees page) ----------------
+     capture(file, { mode: 'card' | 'page' | 'photo', title, toast, base }) → Promise of { url, data, src } or null if cancelled.
+     A PDF is opened (asks for its password if it has one), a page is chosen, then the picture is shown for editing:
+     card / page: drag the 4 corners, turn it, find the edges again or use the whole picture; photo: move and size a portrait frame. */
+  var capPdfP = null;
+  function capPdfjs(base) {
+    if (!capPdfP) { capPdfP = (new Function('u', 'return import(u)'))(base + 'pdf.min.mjs').then(function (m) { m.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.mjs'; return m; }); capPdfP.catch(function () { capPdfP = null; }); }
+    return capPdfP;
+  }
+  function capOverlay(html, cls) { var ov = document.createElement('div'); ov.className = 'idc-adj'; ov.innerHTML = '<div class="idc-adj-in ' + (cls || 'idc-pdf') + '">' + html + '</div>'; document.body.appendChild(ov); return ov; }
+  function capEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function capPassword(wrong) {
+    return new Promise(function (ok) {
+      var ov = capOverlay('<p><b>This PDF is locked with a password.</b></p>' + (wrong ? '<p class="idc-pdf-bad">That password did not work. Please try again.</p>' : '') +
+        '<p class="idc-pdf-help">e-Aadhaar: the first 4 letters of the name in CAPITALS + year of birth, for example <b>RADH1990</b>.</p>' +
+        '<input class="input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PDF password">' +
+        '<div class="idc-adj-btns"><button class="btn btn-quiet" type="button" data-a="no">Cancel</button><button class="btn btn-gold" type="button" data-a="ok">Open PDF</button></div>');
+      var inp = ov.querySelector('input'); setTimeout(function () { inp.focus(); }, 30);
+      function done(v) { ov.remove(); ok(v); }
+      ov.querySelector('[data-a="ok"]').onclick = function () { done(inp.value); };
+      ov.querySelector('[data-a="no"]').onclick = function () { done(null); };
+      inp.onkeydown = function (e) { if (e.key === 'Enter') done(inp.value); if (e.key === 'Escape') done(null); };
+    });
+  }
+  function capOpenPdf(f, base) {
+    return Promise.all([capPdfjs(base), f.arrayBuffer()]).then(function (r) {
+      var task = r[0].getDocument({ data: new Uint8Array(r[1]) });
+      task.onPassword = function (update, reason) { capPassword(reason === 2).then(function (pw) { if (pw == null) task.destroy(); else update(pw); }); };
+      return task.promise.then(null, function (e) { if (task.destroyed || /destroy/i.test(String(e && (e.name + e.message)))) throw { cancel: true }; throw e; });
+    });
+  }
+  function capPage(doc, n, longSide) {
+    return doc.getPage(n).then(function (pg) {
+      var v1 = pg.getViewport({ scale: 1 }), k = Math.min(5, longSide / Math.max(v1.width, v1.height)), vp = pg.getViewport({ scale: k });
+      var c = canvasOf(Math.round(vp.width), Math.round(vp.height)), cx = c.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, c.width, c.height);
+      return pg.render({ canvasContext: cx, viewport: vp }).promise.then(function () { return c; });
+    });
+  }
+  function capPickPage(doc, title) {
+    var n = Math.min(doc.numPages, 12); if (n === 1) return Promise.resolve(1);
+    var nums = []; for (var j = 1; j <= n; j++) nums.push(j);
+    return Promise.all(nums.map(function (j) { return capPage(doc, j, 260); })).then(function (th) {
+      return new Promise(function (ok) {
+        var ov = capOverlay('<p><b>Which page has the ' + capEsc(title || 'document') + '?</b></p><div class="idc-pages">' + th.map(function (c, j) { return '<button type="button" data-p="' + (j + 1) + '"><img alt="Page ' + (j + 1) + '" src="' + c.toDataURL('image/jpeg', .8) + '"><span>Page ' + (j + 1) + '</span></button>'; }).join('') + '</div>' +
+          '<div class="idc-adj-btns"><button class="btn btn-quiet" type="button" data-a="no">Cancel</button></div>');
+        ov.querySelectorAll('[data-p]').forEach(function (b) { b.onclick = function () { ov.remove(); ok(+b.dataset.p); }; });
+        ov.querySelector('[data-a="no"]').onclick = function () { ov.remove(); ok(null); };
+      });
+    });
+  }
+  function turnCanvas(c, r) {
+    r = ((r % 4) + 4) % 4; if (!r) return c;
+    var o = canvasOf(r % 2 ? c.height : c.width, r % 2 ? c.width : c.height), x = o.getContext('2d');
+    x.translate(o.width / 2, o.height / 2); x.rotate(r * Math.PI / 2); x.drawImage(c, -c.width / 2, -c.height / 2); return o;
+  }
+  function capEdit(src0, o) {
+    return new Promise(function (ok) {
+      var rot = 0, src = src0, photo = o.mode === 'photo', q = null, box = null;
+      var ov = capOverlay('<p>' + (photo ? 'Move the frame over the face and drag its corner to make it bigger or smaller.' : 'Drag the 4 dots onto the corners of the ' + capEsc(o.title || 'document') + ', then tap Done.') + '</p>' +
+        '<div class="idc-adj-pic"><canvas></canvas>' + (photo ? '<span class="dot" data-n="r"></span>' : [0, 1, 2, 3].map(function (n) { return '<span class="dot" data-n="' + n + '"></span>'; }).join('')) + '</div>' +
+        '<div class="idc-adj-btns"><button class="btn btn-quiet" type="button" data-a="l">↺ Turn</button><button class="btn btn-quiet" type="button" data-a="r">↻ Turn</button>' +
+        (photo ? '' : '<button class="btn btn-quiet" type="button" data-a="auto">Find edges</button><button class="btn btn-quiet" type="button" data-a="full">Whole picture</button>') +
+        '<button class="btn btn-quiet" type="button" data-a="no">Cancel</button><button class="btn btn-gold" type="button" data-a="ok">Done</button></div>', 'idc-cap');
+      var cv = ov.querySelector('canvas'), cx = cv.getContext('2d'), dots = ov.querySelectorAll('.dot'), W, H, k;
+      function setup(first) {
+        var maxW = Math.min(window.innerWidth - 32, 900), maxH = window.innerHeight - 190; k = Math.min(maxW / src.width, maxH / src.height, 1.5);
+        W = Math.round(src.width * k); H = Math.round(src.height * k); cv.width = W; cv.height = H;
+        if (photo) { var bw = Math.min(W * 0.7, H * 0.7 * 0.8); box = { x: (W - bw) / 2, y: (H - bw * 1.25) / 2, w: bw }; }
+        else {
+          var f = null; if (first !== false) { try { var cards = o.mode === 'card' && o.pdf ? findCards(src) : []; f = cards.length ? cards[0] : detect(src); } catch (e) { f = null; } }
+          q = f ? f.map(function (p) { return { x: p.x * k, y: p.y * k }; }) : [{ x: W * .06, y: H * .06 }, { x: W * .94, y: H * .06 }, { x: W * .94, y: H * .94 }, { x: W * .06, y: H * .94 }];
+        }
+        paint();
+      }
+      function paint() {
+        cx.drawImage(src, 0, 0, W, H); cx.fillStyle = 'rgba(0,0,0,.5)'; cx.beginPath(); cx.rect(0, 0, W, H);
+        if (photo) { cx.rect(box.x + box.w, box.y, -box.w, box.w * 1.25); } else { cx.moveTo(q[0].x, q[0].y); for (var j = 3; j >= 0; j--) cx.lineTo(q[j].x, q[j].y); cx.closePath(); }
+        cx.fill('evenodd'); cx.strokeStyle = '#e0be7a'; cx.lineWidth = 2; cx.beginPath();
+        if (photo) cx.rect(box.x, box.y, box.w, box.w * 1.25); else { cx.moveTo(q[0].x, q[0].y); for (j = 1; j < 4; j++) cx.lineTo(q[j].x, q[j].y); cx.closePath(); }
+        cx.stroke();
+        dots.forEach(function (d) { var n = d.dataset.n; if (n === 'r') { d.style.left = (box.x + box.w) + 'px'; d.style.top = (box.y + box.w * 1.25) + 'px'; } else { d.style.left = q[+n].x + 'px'; d.style.top = q[+n].y + 'px'; } });
+      }
+      function clampBox() { box.w = Math.max(40, Math.min(box.w, W, H / 1.25)); box.x = Math.max(0, Math.min(W - box.w, box.x)); box.y = Math.max(0, Math.min(H - box.w * 1.25, box.y)); }
+      dots.forEach(function (d) {
+        d.onpointerdown = function (e) {
+          e.preventDefault(); e.stopPropagation(); d.setPointerCapture(e.pointerId); var n = d.dataset.n, r = cv.getBoundingClientRect();
+          d.onpointermove = function (ev) { var x = Math.max(0, Math.min(W, ev.clientX - r.left)), y = Math.max(0, Math.min(H, ev.clientY - r.top));
+            if (n === 'r') { box.w = Math.max(x - box.x, (y - box.y) / 1.25); clampBox(); } else q[+n] = { x: x, y: y }; paint(); };
+          d.onpointerup = function () { d.onpointermove = null; };
+        };
+      });
+      if (photo) cv.onpointerdown = function (e) {
+        var r = cv.getBoundingClientRect(), sx = e.clientX, sy = e.clientY, bx = box.x, by = box.y; cv.setPointerCapture(e.pointerId);
+        cv.onpointermove = function (ev) { box.x = bx + ev.clientX - sx; box.y = by + ev.clientY - sy; clampBox(); paint(); };
+        cv.onpointerup = function () { cv.onpointermove = null; };
+      };
+      ov.querySelectorAll('[data-a]').forEach(function (b) {
+        b.onclick = function () {
+          var a = b.dataset.a;
+          if (a === 'l' || a === 'r') { rot += a === 'r' ? 1 : -1; src = turnCanvas(src0, rot); setup(); return; }
+          if (a === 'auto') { var f = null; try { f = detect(src); } catch (e) { f = null; } if (f) { q = f.map(function (p) { return { x: p.x * k, y: p.y * k }; }); paint(); } else if (o.toast) o.toast('Could not find the edges. Please drag the dots.'); return; }
+          if (a === 'full') { q = [{ x: 0, y: 0 }, { x: W, y: 0 }, { x: W, y: H }, { x: 0, y: H }]; paint(); return; }
+          ov.remove(); if (a === 'no') return ok(null);
+          var out;
+          if (photo) { out = canvasOf(800, 1000); out.getContext('2d').drawImage(src, box.x / k, box.y / k, box.w / k, box.w * 1.25 / k, 0, 0, 800, 1000); }
+          else {
+            var qq = order(q.map(function (p) { return { x: p.x / k, y: p.y / k }; })), wq = (dist(qq[0], qq[1]) + dist(qq[3], qq[2])) / 2, hq = (dist(qq[0], qq[3]) + dist(qq[1], qq[2])) / 2, OW, OH;
+            if (o.mode === 'card') { var land = wq >= hq; OW = land ? 1012 : 638; OH = land ? 638 : 1012; }
+            else { var s2 = Math.min(1.6, 1800 / Math.max(wq, hq)); OW = Math.round(wq * s2); OH = Math.round(hq * s2); }
+            out = enhance(warp(src, qq, OW, OH));
+          }
+          var url = out.toDataURL('image/jpeg', photo ? .9 : .86); ok({ url: url, data: url.split(',')[1], src: src, out: out });
+        };
+      });
+      setup();
+    });
+  }
+  function capture(file, o) {
+    o = o || {}; var base = o.base || '/staff/vendor/', pdf = !!file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name || ''));
+    var get = pdf ? capOpenPdf(file, base).then(function (doc) { return capPickPage(doc, o.title).then(function (n) { if (!n) throw { cancel: true }; return capPage(doc, n, 2600); }); }) : fileToImage(file).then(baseCanvas);
+    return get.then(function (src) { return capEdit(src, { mode: o.mode, title: o.title, toast: o.toast, pdf: pdf }); }, function (e) { if (e && e.cancel) return null; throw e; });
+  }
+  /* every page of a PDF as a picture (for CVs and work papers), up to 12 pages */
+  function pdfPages(file, base) {
+    return capOpenPdf(file, base || '/staff/vendor/').then(function (doc) { var out = [], ch = Promise.resolve(); for (var i = 1; i <= Math.min(doc.numPages, 12); i++) (function (n) { ch = ch.then(function () { return capPage(doc, n, 1800).then(function (c) { out.push(c.toDataURL('image/jpeg', .82)); }); }); })(i); return ch.then(function () { return out; }); },
+      function (e) { if (e && e.cancel) return []; throw e; });
+  }
+  root.NikadiID = { mount: mount, detect: detect, render: render, baseCanvas: baseCanvas, LAYOUTS: LAYOUTS, capture: capture, pdfPages: pdfPages };
 })(window);

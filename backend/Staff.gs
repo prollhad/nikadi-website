@@ -165,7 +165,7 @@ var DESK_SCHEMA = {
     ['secs', 'Seconds on the site', 'n'], ['mobile', 'On a phone', 'n'], ['data', 'Details (system)', 's']] },
   /* employee profiles and their documents: owner only. Photos and scans live in Google Drive (Nikadi Staff Records), not in this table. */
   employees: { sheet: 'Employees (private)', lazy: true, hidden: true, cols: [['id', 'Employee ID'], ['name', 'Name'], ['job', 'Designation'], ['director', 'Director', 's'], ['status', 'Status'],
-    ['joined', 'Date of joining', 'd'], ['left', 'Date of leaving', 'd'], ['dob', 'Date of birth', 'd'], ['blood', 'Blood group'], ['father', "Father's / husband's name"], ['phone', 'Phone', 's'], ['email', 'Email'],
+    ['joined', 'Date of joining', 'd'], ['left', 'Date of leaving', 'd'], ['dob', 'Date of birth', 'd'], ['gender', 'Gender'], ['blood', 'Blood group'], ['father', "Father's / husband's name"], ['phone', 'Phone', 's'], ['email', 'Email'],
     ['address', 'Home address'], ['emName', 'Emergency contact'], ['emRel', 'Relation'], ['emPhone', 'Emergency phone', 's'], ['salary', 'Monthly salary (₹)', 'n'], ['salaryNote', 'Salary note'],
     ['accName', 'Account holder'], ['bank', 'Bank'], ['branch', 'Branch'], ['accNo', 'Account no.', 's'], ['ifsc', 'IFSC', 's'], ['upi', 'UPI ID', 's'],
     ['aadhaar', 'Aadhaar no.', 's'], ['pan', 'PAN', 's'], ['voter', 'Voter ID no.', 's'], ['uan', 'PF UAN', 's'], ['esic', 'ESI no.', 's'],
@@ -2913,7 +2913,7 @@ function deskCore(db, hooks) {
   var EMP_PREFIX = 'NPPL-NGH-';
   var EMP_DOCS = { photo: ['Photo', 1], aadhaarF: ['Aadhaar card (front)', 1], aadhaarB: ['Aadhaar card (back)', 1], pan: ['PAN card', 1], voter: ['Voter card', 1],
     bank: ['Bank passbook or cheque', 1], cv: ['CV', 0], work: ['Work history papers', 0], other: ['Other document', 0] };
-  var EMP_TEXT = { name: 80, job: 60, blood: 6, father: 80, email: 80, address: 300, emName: 80, emRel: 30, salaryNote: 120, accName: 80, bank: 80, branch: 80, upi: 60, prevWork: 2000, notes: 1000 };
+  var EMP_TEXT = { name: 80, job: 60, gender: 10, blood: 6, father: 80, email: 80, address: 300, emName: 80, emRel: 30, salaryNote: 120, accName: 80, bank: 80, branch: 80, upi: 60, prevWork: 2000, notes: 1000 };
   function empNext() { var n = 0; db.all('employees').forEach(function (e) { var m = /(\d+)$/.exec(String(e.id)); if (m && String(e.id).indexOf(EMP_PREFIX) === 0) n = Math.max(n, +m[1]); }); return EMP_PREFIX + String(n + 1).padStart(3, '0'); }
   function empMask(v, keep) { v = String(v || ''); return v ? (v.length > keep ? '•••• ' + v.slice(-keep) : v) : ''; }
   function empDocs(empId) { return db.all('empdocs').filter(function (d) { return d.emp === empId && !d.removed; }).map(function (d) { return { id: d.id, kind: d.kind, label: d.label, at: d.at }; }); }
