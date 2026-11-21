@@ -228,10 +228,12 @@
   /* print resolution: the card is drawn in 1012 × 1604 design units and printed at 600 dpi (54 × 85.6 mm = 1276 × 2022 px) */
   var HD = 1276 / 1012;
   function sheet(k) { var c = document.createElement('canvas'); c.width = Math.round(CW * k); c.height = Math.round(CH * k); var x = c.getContext('2d'); x.scale(k, k); x.imageSmoothingQuality = 'high'; return { c: c, x: x }; }
-  /* digital ID: the card cut to its real shape (rounded corners, 3.18 mm like a bank card), nothing outside it */
+  /* digital ID: everything outside the gold border is cut away. The border is drawn at 26 units from the edge, 3 units thick, with
+     30-unit corners; the cut follows its outer edge (24.5 units in, 31.5-unit corners), so the gold line itself stays as the card's rim. */
   function cutout(c) {
-    var o = document.createElement('canvas'); o.width = c.width; o.height = c.height; var x = o.getContext('2d'), r = c.width * 3.18 / 54;
-    rr(x, 0, 0, c.width, c.height, r); x.clip(); x.drawImage(c, 0, 0); return o;
+    var k = c.width / CW, inset = 24.5 * k, w = c.width - inset * 2, h = c.height - inset * 2, r = 31.5 * k;
+    var o = document.createElement('canvas'); o.width = Math.round(w); o.height = Math.round(h); var x = o.getContext('2d');
+    rr(x, 0, 0, o.width, o.height, r); x.clip(); x.drawImage(c, -inset, -inset); return o;
   }
   /* bleed for a print shop: the card's edges are carried outwards so nothing white shows if the cut is a little off */
   function bleed(c, px) {
@@ -328,7 +330,7 @@
         (a[0] ? (low ? '<p class="note" style="padding:10px 14px">The photo is small (' + a[0].width + ' × ' + a[0].height + ' px), so it may look soft on the printed card. For the best card, take a new photo in good light and add it on the profile.</p>' : '') : '<p class="note" style="padding:10px 14px">There is no photo yet. Add one on the profile and the card will use it.</p>') +
         '<div class="emp-acts"><button class="btn btn-gold" type="button" data-out="digital">DIGITAL ID</button><button class="btn btn-line" type="button" data-out="card">PDF for a PVC card printer</button><button class="btn btn-line" type="button" data-out="shop">PDF for a print shop (with bleed)</button><button class="btn btn-line" type="button" data-out="png">Front and back as pictures (PNG)</button></div>' +
         '<p class="small">All three are made at 600 dpi (1276 × 2022 pixels for the 54 × 85.6 mm card), with lossless compression (no JPEG blur), for sharp HD printing on PVC. ' +
-        'Digital ID: the front and the back cut out to the card’s shape with rounded corners and nothing around them, to keep on a phone or send on WhatsApp. Card printer: exact card size, front and back as two pages, for printers like Evolis, Zebra or Fargo printing edge to edge. Print shop: 2 mm extra on every side for trimming, with corner marks. Pictures: for the card printer’s own software.</p>';
+        'Digital ID: the front and the back cut along the gold border, with nothing outside it, to keep on a phone or send on WhatsApp. Card printer: exact card size, front and back as two pages, for printers like Evolis, Zebra or Fargo printing edge to edge. Print shop: 2 mm extra on every side for trimming, with corner marks. Pictures: for the card printer’s own software.</p>';
       var hd = null;
       function make() { if (!hd) hd = { f: front(e, a[0], a[1], HD), b: back(e, a[2], a[4], HD) }; return hd; }
       $$('[data-out]', body).forEach(function (btn) {
