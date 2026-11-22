@@ -336,3 +336,18 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   if (a.employee.id !== 'NPPL-NGH-001' || b.employee.id !== 'NPPL-NGH-002' || bad.error !== 'bad_pan' || lb.aadhaar !== '•••• 9012' || one.employee.aadhaar !== '123456789012' || doc2.docs.length !== 1 ||
       !ren.employee || ren.employee.id !== 'NPPL-NGH-050' || ren.employee.docs.length !== 1 || list2.list.length !== 1 || list2.next !== 'NPPL-NGH-051' || no.ok) throw new Error('employees broken');
 }
+{ // salaries and payslips
+  const m = await call('deskPayrollMonth', { token: tok, month: '2026-11' });
+  const r = m.rows.find(x => x.emp === 'NPPL-NGH-050');
+  const s1 = await call('deskPayrollSave', { token: tok, month: '2026-11', rows: [Object.assign({}, r, { lop: 3, extra: 500, extraNote: 'Overtime', adv: 1000 })] });
+  const r1 = s1.rows.find(x => x.emp === 'NPPL-NGH-050');
+  const f = await call('deskPayrollSave', { token: tok, month: '2026-11', rows: s1.rows, finalise: true });
+  const r2 = f.rows.find(x => x.emp === 'NPPL-NGH-050');
+  const again = await call('deskPayrollSave', { token: tok, month: '2026-11', rows: [Object.assign({}, r2, { extra: 9999 })] });
+  const slip = await call('deskPayslipData', { token: tok, month: '2026-11', emp: 'NPPL-NGH-050' }), no = await call('deskPayrollMonth', { month: '2026-11' });
+  console.log('payroll', m.rows.length, r.rate, r1.basic, r1.gross, r1.pt, r1.net, r2.status, r2.slipNo, again.rows.find(x => x.emp === 'NPPL-NGH-050').extra, slip.slips[0].accNo, no.error);
+  // rate 13000, 30 days, 3 lop => basic 11700; +500 = 12200 gross; Nov 2026 slab => PT 0; adv 1000 => net 11200
+  if (r1.basic !== 11700 || r1.gross !== 12200 || r1.pt !== 0 || r1.net !== 11200 || r2.status !== 'Final' || r2.slipNo !== 'NPPL/SAL/2026-11/001' || again.rows.find(x => x.emp === 'NPPL-NGH-050').extra !== 500 || slip.slips[0].accNo !== 'XXXX9012' || !no.error) throw new Error('payroll broken');
+  const sep = await call('deskPayrollMonth', { token: tok, month: '2026-09' }), rs = sep.rows.find(x => x.emp === 'NPPL-NGH-050');
+  if (rs && rs.pt !== 110) throw new Error('old PT slab wrong: ' + rs.pt);
+}

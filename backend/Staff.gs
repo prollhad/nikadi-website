@@ -172,6 +172,11 @@ var DESK_SCHEMA = {
     ['prevWork', 'Previous work'], ['notes', 'Notes'], ['added', 'Added', 't'], ['by', 'Added by'], ['edited', 'Last change'], ['removed', 'Deleted']] },
   empdocs: { sheet: 'Employee documents (private)', lazy: true, hidden: true, cols: [['id', 'ID'], ['emp', 'Employee ID'], ['kind', 'Document'], ['label', 'Label'], ['file', 'File (Drive ID)', 's'],
     ['at', 'Added', 't'], ['by', 'Added by'], ['removed', 'Removed']] },
+  payroll: { sheet: 'Salaries (private)', lazy: true, hidden: true, cols: [['id', 'ID'], ['month', 'Month'], ['emp', 'Employee ID'], ['name', 'Name'], ['job', 'Designation'], ['rate', 'Monthly rate (₹)', 'n'],
+    ['days', 'Days in month', 'n'], ['lop', 'Unpaid days', 'n'], ['paidDays', 'Paid days', 'n'], ['basic', 'Basic (₹)', 'n'], ['extra', 'Other earnings (₹)', 'n'], ['extraNote', 'Other earnings for'], ['gross', 'Gross (₹)', 'n'],
+    ['pt', 'Profession tax (₹)', 'n'], ['ptAuto', 'PT by slab'], ['pf', 'PF (₹)', 'n'], ['esi', 'ESI (₹)', 'n'], ['tds', 'TDS (₹)', 'n'], ['adv', 'Advance recovered (₹)', 'n'], ['otherDed', 'Other deduction (₹)', 'n'], ['otherNote', 'Other deduction for'],
+    ['ded', 'Total deductions (₹)', 'n'], ['net', 'Net pay (₹)', 'n'], ['mode', 'Paid by'], ['paidOn', 'Paid on', 'd'], ['ref', 'Payment reference'], ['slipNo', 'Payslip no.'], ['status', 'Status'], ['finalOn', 'Finalised'],
+    ['by', 'Made by'], ['at', 'Made', 't'], ['edited', 'Last change'], ['removed', 'Deleted']] },
   config: { sheet: 'Staff app settings', lazy: true, hidden: true, cols: [['key', 'Setting'], ['value', 'Value', 's']] }
 };
 
@@ -2992,6 +2997,73 @@ function deskCore(db, hooks) {
     var d = find('empdocs', 'id', req.id); if (!d || d.removed) fail('not_found');
     db.set('empdocs', d, { removed: stamp() + ' · ' + me.name }); if (hooks.trashFile) try { hooks.trashFile(d.file); } catch (x) {}
     return { docs: empDocs(d.emp) };
+  };
+  /* ---------- Salaries and payslips (owner only) ----------
+     One row per person per month. Pay is worked out on the server: monthly rate × paid days ÷ days in the month, plus extra earnings,
+     minus deductions. A month is "final" once the owner finalises it: payslip numbers are given then and the rows are locked. */
+  function ptWB(month, gross) { /* West Bengal profession tax per month (new slabs from October 2026) */
+    var g = Number(gross) || 0;
+    if (month >= '2026-10') return g <= 20000 ? 0 : g <= 30000 ? 100 : g <= 50000 ? 140 : g <= 100000 ? 170 : 208;
+    return g <= 10000 ? 0 : g <= 15000 ? 110 : g <= 25000 ? 130 : g <= 40000 ? 150 : 200;
+  }
+  function monthDays(m) { var p = m.split('-'); return new Date(+p[0], +p[1], 0).getDate(); }
+  function payCalc(r, month) {
+    var days = monthDays(month), lop = Math.max(0, Math.min(days, Number(r.lop) || 0)), paidDays = days - lop;
+    var basic = Math.round((Number(r.rate) || 0) * paidDays / days), extra = Math.max(0, Math.round(Number(r.extra) || 0)), gross = basic + extra;
+    var pt = r.ptAuto === false ? Math.max(0, Math.round(Number(r.pt) || 0)) : ptWB(month, gross);
+    var d = { pt: pt, pf: Math.max(0, Math.round(Number(r.pf) || 0)), esi: Math.max(0, Math.round(Number(r.esi) || 0)), tds: Math.max(0, Math.round(Number(r.tds) || 0)), adv: Math.max(0, Math.round(Number(r.adv) || 0)), otherDed: Math.max(0, Math.round(Number(r.otherDed) || 0)) };
+    var ded = d.pt + d.pf + d.esi + d.tds + d.adv + d.otherDed;
+    return Object.assign({ days: days, lop: lop, paidDays: paidDays, basic: basic, extra: extra, gross: gross, ded: ded, net: gross - ded, ptAuto: r.ptAuto !== false }, d);
+  }
+  function payRows(month) { return db.all('payroll').filter(function (r) { return r.month === month && !r.removed; }); }
+  function payView(r) { var o = {}; DESK_SCHEMA.payroll.cols.forEach(function (c) { o[c[0]] = r[c[0]] == null ? '' : r[c[0]]; }); ['rate', 'lop', 'days', 'paidDays', 'basic', 'extra', 'gross', 'pt', 'pf', 'esi', 'tds', 'adv', 'otherDed', 'ded', 'net'].forEach(function (k) { o[k] = Number(o[k]) || 0; }); o.ptAuto = o.ptAuto !== 'No'; return o; }
+  api.payrollMonth = function (req) {
+    var me = auth(req); needOwner(me);
+    var month = /^\d{4}-\d{2}$/.test(req.month || '') ? req.month : today().slice(0, 7), first = month + '-01', last = month + '-' + String(monthDays(month)).padStart(2, '0');
+    var have = {}; payRows(month).forEach(function (r) { have[r.emp] = r; });
+    var rows = db.all('employees').filter(function (e) { return !e.removed && (have[e.id] || ((!e.joined || e.joined <= last) && (!e.left || e.left >= first) && (e.status !== 'Left' || (e.left && e.left >= first)))); })
+      .sort(function (a, b) { return a.id < b.id ? -1 : 1; }).map(function (e) {
+        if (have[e.id]) return Object.assign(payView(have[e.id]), { saved: true });
+        var c = payCalc({ rate: Number(e.salary) || 0 }, month);
+        return Object.assign({ id: month + '|' + e.id, month: month, emp: e.id, name: e.name, job: yes(e.director) ? 'Director' : e.job, rate: Number(e.salary) || 0, extraNote: '', otherNote: '', mode: e.accNo ? 'Bank transfer' : 'Cash', paidOn: '', ref: '', slipNo: '', status: 'Draft', saved: false }, c);
+      });
+    var fin = rows.length && rows.every(function (r) { return r.status === 'Final'; });
+    return { month: month, rows: rows, final: !!fin, days: monthDays(month), ptNote: month >= '2026-10' ? 'West Bengal profession tax, slabs from October 2026: nil up to ₹20,000; ₹100 up to ₹30,000; ₹140 up to ₹50,000; ₹170 up to ₹1,00,000; ₹208 above.' : 'West Bengal profession tax, slabs before October 2026: nil up to ₹10,000; ₹110 up to ₹15,000; ₹130 up to ₹25,000; ₹150 up to ₹40,000; ₹200 above.' };
+  };
+  api.payrollSave = function (req) {
+    var me = auth(req); needOwner(me);
+    var month = /^\d{4}-\d{2}$/.test(req.month || '') ? req.month : fail('bad_month'), list = Array.isArray(req.rows) ? req.rows : [];
+    var have = {}; payRows(month).forEach(function (r) { have[r.emp] = r; });
+    var finalise = !!req.finalise, n = 0;
+    payRows(month).forEach(function (r) { var m = /(\d+)$/.exec(String(r.slipNo || '')); if (m) n = Math.max(n, +m[1]); });
+    list.forEach(function (x) {
+      var e = find('employees', 'id', x.emp); if (!e || e.removed) return;
+      var old = have[e.id]; if (old && old.status === 'Final') return; /* a finalised payslip is never changed by a save; reopen it first */
+      var c = payCalc({ rate: money(x.rate), lop: x.lop, extra: x.extra, pt: x.pt, ptAuto: x.ptAuto !== false, pf: x.pf, esi: x.esi, tds: x.tds, adv: x.adv, otherDed: x.otherDed }, month);
+      if (isNaN(money(x.rate))) fail('invalid_amount');
+      var p = Object.assign({ id: month + '|' + e.id, month: month, emp: e.id, name: e.name, job: yes(e.director) ? 'Director' : (e.job || ''), rate: money(x.rate), extraNote: text(x.extraNote, 80), otherNote: text(x.otherNote, 80),
+        mode: ['Bank transfer', 'UPI', 'Cash', 'Cheque'].indexOf(x.mode) >= 0 ? x.mode : 'Bank transfer', paidOn: isYmd(x.paidOn) ? x.paidOn : '', ref: text(x.ref, 60), edited: stamp() + ' · ' + me.name }, c);
+      p.ptAuto = c.ptAuto ? 'Yes' : 'No';
+      if (finalise) { p.status = 'Final'; p.slipNo = (old && old.slipNo) || ('NPPL/SAL/' + month + '/' + String(++n).padStart(3, '0')); p.finalOn = stamp(); }
+      else p.status = 'Draft';
+      if (old) db.set('payroll', old, p); else db.add('payroll', Object.assign({ by: me.name, at: stamp(), removed: '', slipNo: '', finalOn: '' }, p));
+    });
+    return api.payrollMonth({ token: req.token, month: month });
+  };
+  api.payrollReopen = function (req) {
+    var me = auth(req); needOwner(me);
+    var month = /^\d{4}-\d{2}$/.test(req.month || '') ? req.month : fail('bad_month');
+    payRows(month).forEach(function (r) { if (!req.emp || r.emp === req.emp) db.set('payroll', r, { status: 'Draft', edited: stamp() + ' · ' + me.name + ' (reopened)' }); });
+    return api.payrollMonth({ token: req.token, month: month });
+  };
+  /* everything a payslip needs about the person (full bank and ID details stay on the server; the slip shows the last 4 digits) */
+  api.payslipData = function (req) {
+    var me = auth(req); needOwner(me);
+    var month = /^\d{4}-\d{2}$/.test(req.month || '') ? req.month : fail('bad_month');
+    var rows = payRows(month).filter(function (r) { return r.status === 'Final' && (!req.emp || r.emp === req.emp); });
+    if (!rows.length) fail('not_final');
+    return { month: month, slips: rows.map(function (r) { var e = find('employees', 'id', r.emp) || {}, last4 = function (v) { v = String(v || ''); return v ? 'XXXX' + v.slice(-4) : ''; };
+      return Object.assign(payView(r), { father: e.father || '', joined: e.joined || '', bank: e.bank || '', accNo: last4(e.accNo), ifsc: e.ifsc || '', pan: e.pan ? e.pan.slice(0, 2) + 'XXXXX' + e.pan.slice(-3) : '', uan: e.uan || '', esic: e.esic || '', gender: e.gender || '' }); }) };
   };
   api.backupAll = function (req) {
     var me = auth(req); needOwner(me);

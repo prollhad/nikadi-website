@@ -836,3 +836,17 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .emp-found{padding:14px 16px;display:grid;gap:8px;margin-bottom:12px}
 .emp-fd{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:8px 0;border-top:1px solid var(--line-soft);cursor:pointer}
 .emp-fd input{width:20px;height:20px;margin-top:3px;accent-color:var(--gold)}.emp-fd span{display:grid;gap:2px}.emp-fd small{color:var(--muted);font-size:.72rem}.emp-fd em{font-style:normal;color:var(--muted);font-size:.74rem}
+
+/* salaries */
+.pay-month{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 14px}.pay-month h2{margin:0;font-family:var(--display);font-size:1.7rem;font-weight:600}
+.pay-list{display:grid;gap:10px}
+.pay-row>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}.pay-row>summary::-webkit-details-marker{display:none}
+.pay-who{display:grid;gap:2px}.pay-who b{font-family:var(--display);font-size:1.25rem;font-weight:600}.pay-who small{color:var(--muted);font-size:.74rem}
+.pay-sum{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}.pay-sum b{color:var(--ink);font-weight:500}.pay-net b{color:var(--gold);font-size:1.05rem}.pay-sum code{font-size:.7rem;color:var(--muted)}
+.pay-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.pay-col{display:grid;gap:10px;align-content:start}.pay-col h4{margin:0;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:500}
+.pay-f{display:grid;gap:4px}.pay-f span{font-size:.74rem;color:var(--muted)}.pay-f input:disabled,.pay-f select:disabled{opacity:.7}
+.pay-prev{display:grid;gap:14px}.pay-prev canvas{width:100%;height:auto;border-radius:6px;background:#fff;box-shadow:0 8px 24px -10px rgba(0,0,0,.6)}
+.pay-sum .btn{width:auto;flex:none;padding-left:18px;padding-right:18px}.pay-row .emp-acts .btn,#payAll,#payReg,#payOpen,#paySave,#payFin{width:auto}
+.pay-month .btn{width:auto;flex:none;min-width:44px;padding-left:14px;padding-right:14px}
+#payBack,#empPay,#empAdd{width:auto;flex:none}

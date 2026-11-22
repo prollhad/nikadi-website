@@ -36,18 +36,21 @@
   function load() { return C.api('deskEmployees').then(function (r) { LIST = r; return r; }); }
 
   /* ---------- the page ---------- */
+  var PAY = false;
   function mount(v, ctx) {
     C = ctx;
+    if (PAY && window.NikadiPay) return NikadiPay.mount(v, C, function () { PAY = false; C.render(); });
     if (!LIST) { v.innerHTML = '<div><p class="kicker">Owner only</p><h1>Employees</h1></div><div class="loading">Loading…</div>'; load().then(function () { if (C.alive()) C.render(); }, function (e) { C.toast(C.errText(e)); }); return; }
     var act = LIST.list.filter(function (e) { return e.status !== 'Left'; }), left = LIST.list.filter(function (e) { return e.status === 'Left'; });
     var pay = act.reduce(function (s, e) { return s + e.salary; }, 0);
-    v.innerHTML = '<div class="hrow"><div><p class="kicker">Owner only · profiles, documents and ID cards</p><h1>Employees</h1></div><button class="btn btn-gold" type="button" id="empAdd">+ Add employee</button></div>' +
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">Owner only · profiles, documents and ID cards</p><h1>Employees</h1></div><div class="emp-acts" style="margin:0"><button class="btn btn-line" type="button" id="empPay">Salaries and payslips</button><button class="btn btn-gold" type="button" id="empAdd">+ Add employee</button></div></div>' +
       '<div class="kpis"><div class="kpi"><span>Working now</span><b>' + act.length + '</b><small>' + act.filter(function (e) { return e.director; }).length + ' director' + (act.filter(function (e) { return e.director; }).length === 1 ? '' : 's') + '</small></div>' +
       '<div class="kpi"><span>Monthly salaries</span><b>' + rs(pay) + '</b><small>as set in the profiles</small></div><div class="kpi"><span>Next employee ID</span><b class="emp-idk">' + esc(LIST.next) + '</b><small>given automatically</small></div></div>' +
       (act.length ? '<div class="emp-grid">' + act.map(card).join('') + '</div>' : '<div class="panel"><p class="small">No employees yet. Tap “Add employee” to make the first profile.</p></div>') +
       (left.length ? '<details class="panel att-fold"><summary class="sec-h"><h2>Left the job</h2><span class="small">' + left.length + '</span><span class="att-ch" aria-hidden="true"></span></summary><div class="emp-grid">' + left.map(card).join('') + '</div></details>' : '') +
       '<p class="small">Only the owner can see this page. Photos and document scans are kept in your Google Drive, in the folder “Nikadi Staff Records”, one folder per person. Aadhaar, PAN and bank numbers show in full only inside the edit form.</p>';
     $('#empAdd', v).onclick = function () { edit(null); };
+    $('#empPay', v).onclick = function () { PAY = true; window.scrollTo(0, 0); C.render(); };
     $$('[data-emp]', v).forEach(function (b) { b.onclick = function () { profile(b.dataset.emp); }; });
     $$('[data-ph]', v).forEach(function (el) { photo(el.dataset.ph).then(function (u) { if (u) el.style.backgroundImage = 'url(' + u + ')', el.textContent = ''; }); });
   }
