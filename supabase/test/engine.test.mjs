@@ -208,7 +208,7 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
     console.log('walk-in undo', ci.ok || ci.error, 'undoIn flag', ci.stay && ci.stay.undoIn, '->', u1.ok || u1.error, 'room now', st1.rooms.find(r => r.room === ready[0]).status);
     if (!u1.ok || st1.rooms.find(r => r.room === ready[0]).status !== 'Ready') throw new Error('undo walk-in check-in broken');
     // booking with two rooms, reversed from the booking
-    const bc = await call('deskBookingCreate', { token: tok, guest: 'Undo Group', phone: '9876500011', guests: 4, roomsNeeded: 2, roomType: st.rooms.find(r => r.room === ready[1]).type, checkin: t0, checkout: t2, rate: 3000, rooms: [ready[1], ready[2]] });
+    const bc = await call('deskBookingCreate', { token: tok, waOk: true, guest: 'Undo Group', phone: '9876500011', guests: 4, roomsNeeded: 2, roomType: st.rooms.find(r => r.room === ready[1]).type, checkin: t0, checkout: t2, rate: 3000, rooms: [ready[1], ready[2]] });
     const bid = bc.booking && bc.booking.id;
     const cf = await call('deskBookingConfirm', { token: tok, id: bid, amount: 1000, method: 'Cash', rooms: [ready[1], ready[2]] });
     const bi = await call('deskBookingCheckIn', { token: tok, id: bid });
@@ -233,7 +233,7 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   const ready = st.rooms.filter(r => r.status === 'Ready').map(r => r.room);
   if (ready.length) {
     const t0 = st.today, t2 = new Date(Date.parse(t0) + 2 * 864e5).toISOString().slice(0, 10);
-    const bc = await call('deskBookingCreate', { token: tok, guest: 'Noshow Test', phone: '9876500022', guests: 2, roomsNeeded: 1, roomType: st.rooms.find(r => r.room === ready[0]).type, checkin: t0, checkout: t2, rate: 12000, rooms: [ready[0]] });
+    const bc = await call('deskBookingCreate', { token: tok, waOk: true, guest: 'Noshow Test', phone: '9876500022', guests: 2, roomsNeeded: 1, roomType: st.rooms.find(r => r.room === ready[0]).type, checkin: t0, checkout: t2, rate: 12000, rooms: [ready[0]] });
     const bid = bc.booking.id;
     await call('deskBookingConfirm', { token: tok, id: bid, amount: 10000, method: 'UPI', ref: 'UTR123', rooms: [ready[0]] });
     const ns = await call('deskBookingNoShow', { token: tok, id: bid });
@@ -384,4 +384,12 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   if (given.length !== 6 || iv(b1, 'Bedsheet (single)').reuse !== it('Bedsheet (single)').reuse + 1 || iv(b2, 'Pillow').reuse !== 0 || iv(b2, 'Pillow').store !== it('Pillow').store + 1 ||
       tooMany.error !== 'not_enough_reuse' || pillowReuse.error !== 'not_enough_reuse' || !ok.ok || iv(ok, 'Bedsheet (single)').reuse !== it('Bedsheet (single)').reuse || roomMat.error !== 'bad_qty' ||
       all.rooms.find(r => r.room === rm.room).given.length !== 0 || iv(kept, 'Pillow cover').reuse < 1 || pilKeep.error !== 'bad_item') throw new Error('extra mattress / reuse broken');
+}
+{ // no booking without the guest's WhatsApp agreement
+  const st9 = await call('deskState', { token: tok });
+  const ci9 = st9.today, co9 = st9.today.slice(0, 8) + String(+st9.today.slice(8) + 1).padStart(2, '0');
+  const no = await call('deskBookingCreate', { token: tok, guest: 'No Consent', phone: '9876500033', guests: 1, roomsNeeded: 1, roomType: 'Deluxe Double', checkin: ci9, checkout: co9, waOk: false });
+  const yes = await call('deskBookingCreate', { token: tok, guest: 'Yes Consent', phone: '9876500034', guests: 1, roomsNeeded: 1, roomType: 'Deluxe Double', checkin: ci9, checkout: co9, waOk: true });
+  console.log('wa consent booking', no.error, yes.ok || yes.error);
+  if (no.error !== 'wa_consent_needed' || !yes.ok) throw new Error('booking consent rule broken');
 }

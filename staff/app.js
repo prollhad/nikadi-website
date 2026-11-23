@@ -34,7 +34,7 @@
     method_required: 'Choose how they paid: Cash, UPI or Card.', invalid_phone: 'Please check the phone number and its country code (+91 for India).', bad_qty: 'Please check the quantity.',
     bad_nights: 'Please check the number of nights.', not_in_house: 'This guest has already checked out.', bad_pin: 'The PIN must be 4 to 6 digits.', bad_aadhaar: 'The Aadhaar number must have 12 digits.', bad_pan: 'The PAN looks wrong. It has 10 letters and digits, like ABCDE1234F.', bad_ifsc: 'The IFSC looks wrong. It has 11 letters and digits, like SBIN0001234.', bad_account: 'Please check the account number.', id_taken: 'That employee ID is already used by someone else.', bad_kind: 'Please choose which document this is.', pin_easy: 'That PIN is too easy to guess. Please choose another one, not a repeat or a run like 1111 or 1234.', pin_short: 'The Owner and Manager need a 6 digit PIN, because they can see the money and accounts.',
     pin_taken: 'Someone else already uses this PIN. Choose another.', name_taken: 'That name is already used.', last_owner: 'There must always be at least one active Owner.',
-    no_item: 'This item is not available.', not_enough_reuse: 'There are not that many kept for reuse. Take it from the clean store instead.', bad_item: 'Pillows, blankets and mattresses are not washed, so they always go back to the clean store.', not_tracked: 'Stock is not counted for this item.', bad_status: 'The room status has changed. Pull to refresh.',
+    no_item: 'This item is not available.', wa_consent_needed: 'The guest has to agree to WhatsApp messages (booking, updates, bill, review) before we can take the booking.', not_enough_reuse: 'There are not that many kept for reuse. Take it from the clean store instead.', bad_item: 'Pillows, blankets and mattresses are not washed, so they always go back to the clean store.', not_tracked: 'Stock is not counted for this item.', bad_status: 'The room status has changed. Pull to refresh.',
     network: 'No internet connection. Please try again.', server_error: 'Something went wrong. Please try again.',
     not_setup: 'The staff app is not connected to the Google Sheet yet.',
     room_booked: 'A room you chose is already booked or occupied on those dates. Check the calendar and pick a free room.',
@@ -1789,7 +1789,7 @@
   }
   /* WhatsApp consent (Meta's rules: we only start chats with guests who agreed) */
   function waConsentHtml(waOk, offers, withOffers) {
-    return '<div class="field wa-consent"><span>WhatsApp messages from us (welcome, booking, bill): <b>ask the guest</b></span>' + seg('waok', ['Guest agreed', 'No'], waOk === true ? 'Guest agreed' : waOk === false ? 'No' : '') + '</div>' +
+    return '<div class="field wa-consent"><span>WhatsApp messages from us (booking, updates, bill, review): <b>ask the guest</b> · on WhatsApp they reply YES</span>' + seg('waok', ['Guest agreed', 'No'], waOk === true ? 'Guest agreed' : waOk === false ? 'No' : '') + '</div>' +
       (withOffers ? '<div class="field"><span>Membership offers on WhatsApp</span>' + seg('waoff', ['Yes', 'No'], offers ? 'Yes' : 'No') + '</div>' : '');
   }
   function waConsentVal(body, phone) { var v = segVal(body, 'waok'); return !String(phone || '').replace(/\D/g, '') ? null : v === 'Guest agreed' ? true : v === 'No' ? false : undefined; }
@@ -2399,7 +2399,8 @@
         comp: bFree() ? segVal(body, 'bcomp') : '', compRef: bFree() ? $('#b-cref', body).value : '' };
       if (bFree() && !d.comp) { $('#err', body).textContent = 'Pick whose guest this is.'; vibrate(); return; }
       var wok3 = waConsentVal(body, d.phone);
-      if (wok3 === undefined) { $('#err', body).textContent = 'Ask the guest: may we send the booking confirmation on WhatsApp? Tap Guest agreed or No.'; vibrate(); return; }
+      if (wok3 === undefined) { $('#err', body).textContent = 'Ask the guest: may we message them on WhatsApp about the booking, updates, the bill and a review? Tap Guest agreed or No.'; vibrate(); return; }
+      if (isNew && wok3 === false) { $('#err', body).textContent = 'The guest has to agree to WhatsApp messages (booking, updates, bill, review) before we can take the booking. On WhatsApp: they reply YES.'; vibrate(); return; }
       if (wok3 != null) d.waOk = wok3;
       if (bFree()) delete d.rate;
       if ($('#b-rooms', body)) d.roomsNeeded = $('#b-rooms', body).value.replace(/\D/g, '');

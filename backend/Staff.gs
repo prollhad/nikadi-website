@@ -733,7 +733,7 @@ function deskCore(db, hooks) {
   function enqMsgs(o) {
     var n = o.first || 'Dear Sir/Ma\'am', out = [];
     function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
-    add('hello', 'Hello + ask dates', n + ', Hare Krishna! Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur.\nPlease send your check-in date, number of nights, number of guests and rooms, and we will reply with the available rooms and today\'s best price.\nRoom photos: ' + DESK_WA_SITE + '/#rooms');
+    add('hello', 'Hello + ask dates', n + ', Hare Krishna! Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur.\nPlease send your check-in date, number of nights, number of guests and rooms, and we will reply with the available rooms and today\'s best price.\nRoom photos: ' + DESK_WA_SITE + '/#rooms' + '\n\nBefore we book: may we message you on WhatsApp about your booking, updates during your stay, your bill and a review request? Please reply *YES* to agree. You can reply STOP any time.');
     if (o.ci && o.co) {
       var nights = nightsBetween(o.ci, o.co), rooms = Math.max(1, o.rooms || 1), when = dd(o.ci) + ' to ' + dd(o.co) + ' · ' + nights + ' night' + (nights > 1 ? 's' : '') + ' · ' + rooms + ' room' + (rooms > 1 ? 's' : '');
       var av = api.availability({ _internal: true, checkin: o.ci, checkout: o.co }), lines = [], best = null, want = roomTypeKey(o.type);
@@ -3332,6 +3332,8 @@ function deskCore(db, hooks) {
     var me = auth(req); needMgr(me);
     var p = bookingInput(req);
     if (dayNum(p.checkin) < dayNum(today()) - 1) fail('bad_dates');
+    // the owner's rule: no booking unless the guest agrees to WhatsApp messages (booking, updates, bill, review)
+    if (String(p.phone || '').replace(/\D/g, '') && req.waOk !== true && req.waOk !== 'Yes') fail('wa_consent_needed');
     var src = ['Phone', 'WhatsApp', 'Walk-in', 'Website', 'Other'].indexOf(req.source) >= 0 ? req.source : 'Phone';
     var b = db.add('bookings', Object.assign(p, { id: id('B'), status: 'Pending', source: src, rooms: '', nights: 0, total: 0, advanceDue: 0, advancePaid: 0, refunded: 0,
       created: stamp(), createdBy: me.name, confirmedBy: '', confirmedAt: '', closedBy: '', closedAt: '', closeNote: '' }));

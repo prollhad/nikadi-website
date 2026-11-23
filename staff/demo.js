@@ -56,7 +56,7 @@
     api.roomStatus({ token: hk, room: 9, status: 'Needs cleaning' });
     api.stock({ token: owner, item: 'Water bottle', mode: 'add', qty: 48, note: 'Delivery from supplier' });
     db.all('items').forEach(function (i) { if (i.item === 'Morning kit (free)') i.stock = 12; if (i.item === 'Toilet roll') i.stock = 46; });
-    var bk = function (o) { return api.bookingCreate(Object.assign({ token: owner }, o)).booking.id; };
+    var bk = function (o) { return api.bookingCreate(Object.assign({ token: owner, waOk: true }, o)).booking.id; };
     var w1 = api.bookingRequest({ guest: 'Priya Nair', phone: '9845012345', email: 'priya@example.com', guests: 3, roomType: 'Deluxe Double (King)', checkin: ymd(5), checkout: ymd(7), notes: 'Arriving by train around 2 PM' }).id;
     bk({ guest: 'Ramesh Gupta', phone: '9007012345', guests: 6, roomsNeeded: 2, roomType: 'Any', checkin: ymd(10), checkout: ymd(12), rate: 4500, source: 'Phone', notes: 'Family of 6, wants rooms next to each other' });
     var c1 = bk({ guest: 'Lakshmi Venkatesh', phone: '9444012345', guests: 5, roomsNeeded: 2, roomType: 'Any', checkin: ymd(0), checkout: ymd(2), rate: 4000, source: 'WhatsApp' });
