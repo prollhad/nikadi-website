@@ -1984,7 +1984,7 @@ var DESK_HK_OUT = [['water', 'Water bottles put in the room', DESK_HK_WATER], ['
 var DESK_LINEN_GROUPS = ['Mattresses', 'Pillows', 'Bedsheets', 'Blankets & bed covers', 'Towels & bath mats', 'Other'];
 /* [item, laundry price ₹, folder, goes to the laundry (shown in laundry lists)] */
 var DESK_LINEN = [['Mattress (king size)', 0, 'Mattresses', 0], ['Mattress (single)', 0, 'Mattresses', 0], ['Extra mattress (king size)', 0, 'Mattresses', 0], ['Extra mattress (single)', 0, 'Mattresses', 0],
-  ['Pillow', 0, 'Pillows', 1], ['Pillow cover', 0, 'Pillows', 1],
+  ['Pillow', 0, 'Pillows', 0], ['Pillow cover', 0, 'Pillows', 1],
   ['Bedsheet (king size)', 0, 'Bedsheets', 1], ['Bedsheet (single)', 0, 'Bedsheets', 1],
   ['Blanket (king size)', 0, 'Blankets & bed covers', 0], ['Blanket (single)', 0, 'Blankets & bed covers', 0], ['Blanket cover (king size)', 0, 'Blankets & bed covers', 1], ['Blanket cover (single)', 0, 'Blankets & bed covers', 1],
   ['Bed cover', 0, 'Blankets & bed covers', 1], ['Bed runner', 0, 'Blankets & bed covers', 1],
@@ -1993,7 +1993,8 @@ var DESK_LINEN_RENAME = { 'Bedsheet (double)': 'Bedsheet (king size)', 'Duvet': 
   'Duvet (king size)': 'Blanket (king size)', 'Duvet (single)': 'Blanket (single)', 'Duvet cover (king size)': 'Blanket cover (king size)', 'Duvet cover (single)': 'Blanket cover (single)' };
 var DESK_LINEN_GROUP_RENAME = { 'Duvets & bed covers': 'Blankets & bed covers' };
 var DESK_LINEN_VERSION = '2'; // bump to run linenAll's one-time update again (renames, new default items, laundry flags)
-var DESK_LINEN_PLACES = { store: 'Clean in store', rooms: 'In rooms', dirty: 'Used, waiting for laundry', laundry: 'At the laundry' };
+var DESK_LINEN_PLACES = { store: 'Clean in store', rooms: 'In rooms', dirty: 'Used, waiting for laundry', laundry: 'At the laundry', reuse: 'Kept for reuse (not washed yet)' };
+/* Things that are never washed (pillows, blankets, mattresses) always go back to the clean store; only washable ones can be kept for reuse. */
 /* Free stays (no charge): whose guest they are. Items given are still counted and taken from stock, at ₹0. */
 var DESK_COMP_HOSTS = ['AGD Guest', "Prahlad's Guest", "Debarun's Guest"];
 var DESK_FREE_WATER = 2; // free water bottles every room gets at check-in (taken from stock automatically)
@@ -2062,7 +2063,7 @@ var DESK_SCHEMA = {
     ['created', 'Created', 't'], ['createdBy', 'Created by'], ['confirmedBy', 'Confirmed by'], ['confirmedAt', 'Confirmed at', 't'],
     ['closedBy', 'Closed by'], ['closedAt', 'Closed at', 't'], ['closeNote', 'Cancellation / closing note'], ['advanceSet', 'Advance agreed (₹, blank = 50%)', 'n'], ['comp', 'Free stay (whose guest)'], ['compRef', 'Free stay reference'], ['waOk', 'WhatsApp messages OK (guest agreed)']] },
   charges: { sheet: 'Room charges', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['item', 'Item'], ['qty', 'Qty', 'n'],
-    ['price', 'Unit price (₹)', 'n'], ['total', 'Total (₹)', 'n'], ['free', 'Free'], ['note', 'Note'], ['by', 'Added by'], ['removed', 'Removed']] },
+    ['price', 'Unit price (₹)', 'n'], ['total', 'Total (₹)', 'n'], ['free', 'Free'], ['note', 'Note'], ['by', 'Added by'], ['removed', 'Removed'], ['from', 'Bedding taken from (clean store / reuse)']] },
   payments: { sheet: 'Payments', cols: [['id', 'ID'], ['at', 'Date', 't'], ['stay', 'Stay ID'], ['room', 'Room', 'n'], ['amount', 'Amount (₹)', 'n'],
     ['method', 'Method'], ['note', 'Note'], ['by', 'Taken by'], ['booking', 'Booking ID'], ['ref', 'Reference no.', 's'], ['voided', 'Voided']] },
   requests: { sheet: 'Approval requests', cols: [['id', 'Request ID'], ['at', 'Date', 't'], ['by', 'Requested by'], ['type', 'Type'], ['summary', 'What'],
@@ -2090,7 +2091,7 @@ var DESK_SCHEMA = {
   wamsgs: { sheet: 'WhatsApp inbox', lazy: true, cols: [['at', 'Time', 't'], ['phone', 'Phone', 's'], ['dir', 'From'], ['text', 'Message'], ['file', 'Photo / file (Drive file ID)', 's'], ['type', 'Type', 's'], ['wamid', 'WhatsApp ID (system)', 's']] },
   billpdfs: { sheet: 'Bill PDFs (system)', hidden: true, cols: [['bill', 'Bill link ID', 's'], ['part', 'Part', 'n'], ['data', 'PDF (system)', 's']] },
   linen: { sheet: 'Linen', cols: [['item', 'Item'], ['price', 'Laundry price per piece (₹)', 'n'], ['store', 'Clean in store', 'n'], ['rooms', 'In rooms', 'n'], ['dirty', 'Used, waiting for laundry', 'n'],
-    ['laundry', 'At the laundry', 'n'], ['low', 'Warn when clean below', 'n'], ['active', 'Active'], ['group', 'Group'], ['wash', 'Goes to the laundry']] },
+    ['laundry', 'At the laundry', 'n'], ['low', 'Warn when clean below', 'n'], ['active', 'Active'], ['group', 'Group'], ['wash', 'Goes to the laundry'], ['reuse', 'Kept for reuse (not washed yet)', 'n']] },
   laundry: { sheet: 'Laundry', cols: [['id', 'Laundry ID'], ['at', 'Listed at', 't'], ['by', 'Listed by'], ['status', 'Status'], ['items', 'Given to laundry', 's'], ['outBy', 'Given out (approved) by'],
     ['outAt', 'Given out at', 't'], ['returns', 'Returns (system)', 's'], ['back', 'Received back', 's'], ['short', 'Still at laundry / missing', 's'], ['total', 'Bill (₹)', 'n'],
     ['prices', 'Prices used (system)', 's'], ['paid', 'Paid'], ['note', 'Note'], ['edited', 'Changes after approval'], ['drive', 'Drive record (file ID)', 's'], ['dkey', 'Drive record version (system)', 's']] },
@@ -3387,38 +3388,62 @@ function deskCore(db, hooks) {
     return api.housekeeping(req);
   };
   /* ---- Extra bedding and towels for a staying guest (everyone, housekeeping included) ----
-     An extra towel, hand towel, bath mat, bedsheet, pillow, pillow cover or blanket (not a mattress, which is charged): taken from the clean store into that room,
-     written on the room's list as free, and never printed on the bill. Taking one back, or the guest checking out, returns it
-     (things that get washed go to the laundry pile, the rest back to the store). */
+     A towel, hand towel, bath mat, bedsheet, pillow, pillow cover or blanket, and the bedding for an extra mattress
+     (the mattress itself, pillow, pillow cover, single bedsheet, single blanket cover, single blanket).
+     Each piece comes from the clean store or, for washable ones, from the pieces kept for reuse. It is written on the room's list
+     (never on the bill: the extra mattress is charged separately with Add item). Taking it back: pillows, blankets and mattresses
+     go back to the clean store; washable ones go to the wash or are kept for reuse, as the staff member chooses.
+     At check-out the washable ones go to the wash; if they are still clean, move them to reuse from the Bedding & towels screen. */
+  var DESK_EXTRA_MATTRESS = /^Extra mattress\b/i;
   function extrasOf(sid) { return chargesOf(sid).filter(function (c) { return c.note === DESK_EXTRA_NOTE; }); }
-  function extraBack(c, by, why, clean) {
-    var it = linenItem(c.item);
-    if (it) linenMove(it, Number(c.qty), 'rooms', clean || it.wash === 'No' ? 'store' : 'dirty', why, c.room, by);
-    db.set('charges', c, { removed: why + ' · ' + by + ' ' + stamp() });
+  function backPlace(it, to) { return !it || it.wash === 'No' ? 'store' : to === 'reuse' ? 'reuse' : to === 'store' ? 'store' : 'dirty'; }
+  function extraBack(c, by, why, to) {
+    var it = linenItem(c.item), pl = backPlace(it, to);
+    if (it) linenMove(it, Number(c.qty), 'rooms', pl, why + (pl === 'reuse' ? ' · kept for reuse' : pl === 'dirty' ? ' · to wash' : ' · back to the store'), c.room, by);
+    db.set('charges', c, { removed: why + (pl === 'reuse' ? ' (kept for reuse)' : pl === 'dirty' ? ' (to wash)' : ' (back to the store)') + ' · ' + by + ' ' + stamp() });
   }
   api.linenExtra = function (req) {
     var me = auth(req);
+    var to = req.unused ? 'store' : req.to === 'reuse' ? 'reuse' : 'wash';
     if (req.back) { // take one back from the room
       var c = find('charges', 'id', String(req.back)); if (!c || c.removed || c.note !== DESK_EXTRA_NOTE) fail('no_charge');
-      extraBack(c, me.name, req.unused ? 'Taken back unused' : 'Taken back from the room', !!req.unused);
+      extraBack(c, me.name, req.unused ? 'Taken back unused' : 'Taken back from the room', to);
+    } else if (req.backAll != null) { // take back everything given to that room
+      var rb = room(req.backAll); if (!rb.stay) fail('room_not_occupied');
+      var all = extrasOf(rb.stay); if (!all.length) fail('no_charge');
+      all.forEach(function (x) { extraBack(x, me.name, 'Taken back from the room', to); });
     } else if (req.room != null && req.items) {
       var r = room(req.room); if (r.status !== 'Occupied' || !r.stay) fail('room_not_occupied');
-      var s = stay(r.stay), n = linenCounts(req.items);
+      var s = stay(r.stay), n = linenCounts(req.items), from = req.from && typeof req.from === 'object' ? req.from : {};
       if (!linenSum(n)) fail('bad_qty');
-      Object.keys(n).forEach(function (k) { if (n[k] > 20 || /mattress/i.test(k)) fail('bad_qty'); }); // an extra mattress is charged: it goes through Add item, never through this free list
       Object.keys(n).forEach(function (k) {
-        linenMove(linenItem(k), n[k], 'store', 'rooms', 'Extra for the guest', r.room, me.name);
-        db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: r.room, item: k, qty: n[k], price: 0, total: 0, free: 'Yes', note: DESK_EXTRA_NOTE, by: me.name, removed: '' });
+        if (n[k] > 20 || (/mattress/i.test(k) && !DESK_EXTRA_MATTRESS.test(k))) fail('bad_qty'); // room mattresses are never given out as extras
+        var it = linenItem(k);
+        if (from[k] === 'reuse' && (it.wash === 'No' || Number(it.reuse || 0) < n[k])) fail('not_enough_reuse');
       });
+      Object.keys(n).forEach(function (k) {
+        var it = linenItem(k), src = from[k] === 'reuse' ? 'reuse' : 'store';
+        linenMove(it, n[k], src, 'rooms', (DESK_EXTRA_MATTRESS.test(k) || req.mattress ? 'Extra mattress for the guest' : 'Extra for the guest') + (src === 'reuse' ? ' (from reuse)' : ' (from the clean store)'), r.room, me.name);
+        db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: r.room, item: k, qty: n[k], price: 0, total: 0, free: 'Yes', note: DESK_EXTRA_NOTE, by: me.name, removed: '', from: src === 'reuse' ? 'Reuse' : 'Clean store' });
+      });
+    } else if (req.reuse && req.item) { // used pieces that are still clean: keep them for reuse, or send them to the wash after all
+      var li = linenItem(String(req.item)) || fail('no_item'), q = Math.round(Number(req.qty));
+      if (li.wash === 'No') fail('bad_item');
+      if (req.reuse === 'keep') { if (!(q >= 1 && q <= Number(li.dirty || 0))) fail('bad_qty'); linenMove(li, q, 'dirty', 'reuse', 'Still clean: kept for reuse', '', me.name); }
+      else if (req.reuse === 'wash') { if (!(q >= 1 && q <= Number(li.reuse || 0))) fail('bad_qty'); linenMove(li, q, 'reuse', 'dirty', 'From reuse to the wash', '', me.name); }
+      else fail('bad_mode');
     }
     var rooms = [];
     db.all('rooms').forEach(function (r) {
       if (r.status !== 'Occupied' || !r.stay) return;
       var s = find('stays', 'id', r.stay); if (!s) return;
-      rooms.push({ room: r.room, guest: String(s.guest || '').split(/\s+/)[0], given: extrasOf(s.id).map(function (c) { return { id: c.id, item: c.item, qty: Number(c.qty), by: c.by, at: c.at }; }) });
+      var charged = chargesOf(s.id).filter(function (c) { return c.note !== DESK_EXTRA_NOTE && /mattress/i.test(c.item); }).reduce(function (a, c) { return a + Number(c.qty || 0); }, 0);
+      rooms.push({ room: r.room, guest: String(s.guest || '').split(/\s+/)[0], comp: !!s.comp, mattressCharged: charged,
+        given: extrasOf(s.id).map(function (c) { var it = linenItem(c.item); return { id: c.id, item: c.item, qty: Number(c.qty), by: c.by, at: c.at, from: c.from || 'Clean store', wash: !it || it.wash !== 'No' }; }) });
     });
     rooms.sort(function (a, b) { return a.room - b.room; });
-    return { rooms: rooms, items: linenAll().filter(function (i) { return yes(i.active) && !/mattress/i.test(i.item); }).map(function (i) { return { item: i.item, group: i.group || 'Other', store: Number(i.store || 0) }; }) };
+    return { rooms: rooms, items: linenAll().filter(function (i) { return yes(i.active) && (!/mattress/i.test(i.item) || DESK_EXTRA_MATTRESS.test(i.item)); }).map(function (i) {
+      return { item: i.item, group: i.group || 'Other', store: Number(i.store || 0), reuse: Number(i.reuse || 0), dirty: Number(i.dirty || 0), wash: i.wash !== 'No' }; }) };
   };
   /* Undo a mistaken "done" (the same person the same day, or a manager / owner). Puts the items back in stock. */
   api.serviceUndo = function (req) {
@@ -3744,7 +3769,7 @@ function deskCore(db, hooks) {
     recompute(s);
     var r = find('rooms', 'room', s.room);
     if (r && r.stay === s.id) db.set('rooms', r, { status: 'Needs cleaning', stay: '', updated: stamp(), by: me.name });
-    extrasOf(s.id).forEach(function (c) { var li = linenItem(c.item); if (li) linenMove(li, Number(c.qty), 'rooms', li.wash === 'No' ? 'store' : 'dirty', 'Guest checked out (extra given during the stay)', s.room, me.name); db.set('charges', c, { note: DESK_EXTRA_NOTE + ' (returned at check-out)' }); });
+    extrasOf(s.id).forEach(function (c) { var li = linenItem(c.item); if (li) linenMove(li, Number(c.qty), 'rooms', backPlace(li, 'wash'), 'Guest checked out (extra given during the stay)', s.room, me.name); db.set('charges', c, { note: DESK_EXTRA_NOTE + ' (returned at check-out)' }); });
     if (s.comp) return { stay: stayView(s, me), member: null, bill: null, comp: true }; // free stay: no bill, no points
     var member = null, memBefore = memberOf(s.phone);
     if (hooks.onCheckout && s.phone) {
@@ -4177,6 +4202,14 @@ function deskCore(db, hooks) {
       db.all('linen').forEach(function (i) { var p = {}; if (!i.group) p.group = 'Other'; if (!i.wash) p.wash = 'Yes'; if (Object.keys(p).length) db.set('linen', i, p); });
       if (fresh) cfgSet('linenVersion', DESK_LINEN_VERSION);
     }
+    if (cfgGet('pillowNoWash') !== '1') { // pillows are never washed (only their covers): they always go back to the clean store
+      cfgSet('pillowNoWash', '1');
+      db.all('linen').forEach(function (i) {
+        if (i.item !== 'Pillow' || i.wash === 'No') return;
+        db.set('linen', i, { wash: 'No' });
+        if (Number(i.dirty || 0) > 0) linenMove(i, Number(i.dirty), 'dirty', 'store', 'Pillows are not washed: back to the clean store', '', 'System');
+      });
+    }
     var ord = function (n) { for (var k = 0; k < DESK_LINEN.length; k++) if (DESK_LINEN[k][0] === n) return k; return 999; };
     return db.all('linen').slice().sort(function (x, y) { var gx = DESK_LINEN_GROUPS.indexOf(x.group), gy = DESK_LINEN_GROUPS.indexOf(y.group); return ((gx < 0 ? 99 : gx) - (gy < 0 ? 99 : gy)) || (ord(x.item) - ord(y.item)); });
   }
@@ -4198,8 +4231,8 @@ function deskCore(db, hooks) {
     db.add('linenlog', { at: stamp(), item: it.item, qty: qty, from: DESK_LINEN_PLACES[from] || from || 'New', to: DESK_LINEN_PLACES[to] || to || 'Removed', reason: text(reason, 120), room: roomNo || '', by: by });
   }
   function linenView(it, me) {
-    var o = { item: it.item, group: it.group || 'Other', wash: it.wash !== 'No', store: Number(it.store || 0), rooms: Number(it.rooms || 0), dirty: Number(it.dirty || 0), laundry: Number(it.laundry || 0), low: Number(it.low || 0), active: yes(it.active) };
-    o.total = o.store + o.rooms + o.dirty + o.laundry;
+    var o = { item: it.item, group: it.group || 'Other', wash: it.wash !== 'No', store: Number(it.store || 0), rooms: Number(it.rooms || 0), dirty: Number(it.dirty || 0), laundry: Number(it.laundry || 0), reuse: Number(it.reuse || 0), low: Number(it.low || 0), active: yes(it.active) };
+    o.total = o.store + o.rooms + o.dirty + o.laundry + o.reuse;
     if (me.role !== 'Staff') o.price = Number(it.price || 0);
     if (me.role === 'Laundry') return { item: o.item, group: o.group, wash: o.wash, laundry: o.laundry, price: o.price, active: o.active }; // the laundry sees only what is with them, never the guest house's own counts
     return o;

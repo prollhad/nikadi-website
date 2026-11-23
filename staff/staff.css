@@ -869,3 +869,14 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .pay-copy{display:block;width:100%;height:auto;border-radius:8px;border:1px solid var(--line,rgba(0,0,0,.1))}
 .pay-h .emp-acts{flex-direction:row;flex-wrap:wrap}
 .pay-h .emp-acts .btn{width:auto;flex:0 0 auto}
+
+/* extra bedding: where each piece comes from / goes back to */
+.ex-item{display:flex;flex-direction:column;gap:6px}
+.ex-src{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 4px 4px 14px}
+.ex-src .seg{flex:1 1 220px;min-width:0}
+.ex-acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.ex-acts .btn{width:auto}
+.ex-given{flex-wrap:wrap}
+.ex-all{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:12px}
+.ex-reuse>summary{cursor:pointer;list-style:none}
+.ex-reuse>summary::-webkit-details-marker{display:none}

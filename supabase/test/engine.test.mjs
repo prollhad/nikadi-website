@@ -359,3 +359,29 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('signed slip', !!a.copyDoc, a.copyDoc !== b.copyDoc, slips.length, h.rows.length, h.rows[0].copyDoc === b.copyDoc, h.rows[0].net, no.error);
   if (!a.copyDoc || a.copyDoc === b.copyDoc || slips.length !== 1 || h.rows[0].copyDoc !== b.copyDoc || h.rows[0].net !== 11200 || no.ok) throw new Error('signed payslip broken');
 }
+{ // extra mattress set: from the clean store or from reuse; taking back to wash / reuse; pillows always back to the store
+  const L0 = await call('deskLinenExtra', { token: tok });
+  const rm = (L0.rooms || [])[0]; if (!rm) throw new Error('no occupied room for the linen test');
+  const it = n => (L0.items || []).find(i => i.item === n);
+  const set = { 'Extra mattress (single)': 1, 'Pillow': 1, 'Pillow cover': 1, 'Bedsheet (single)': 1, 'Blanket cover (single)': 1, 'Blanket (single)': 1 };
+  const g = await call('deskLinenExtra', { token: tok, room: rm.room, items: set, from: {} });
+  const given = g.rooms.find(r => r.room === rm.room).given;
+  const sheet = given.find(x => x.item === 'Bedsheet (single)'), pil = given.find(x => x.item === 'Pillow');
+  const b1 = await call('deskLinenExtra', { token: tok, back: sheet.id, to: 'reuse' });
+  const b2 = await call('deskLinenExtra', { token: tok, back: pil.id, to: 'reuse' });
+  const iv = (r, n) => r.items.find(i => i.item === n);
+  const room1 = (await call('deskLinenExtra', { token: tok })).rooms.find(r => r.room === rm.room);
+  const tooMany = await call('deskLinenExtra', { token: tok, room: rm.room, items: { 'Bedsheet (single)': 2 }, from: { 'Bedsheet (single)': 'reuse' } });
+  const pillowReuse = await call('deskLinenExtra', { token: tok, room: rm.room, items: { 'Pillow': 1 }, from: { 'Pillow': 'reuse' } });
+  const ok = await call('deskLinenExtra', { token: tok, room: rm.room, items: { 'Bedsheet (single)': 1 }, from: { 'Bedsheet (single)': 'reuse' } });
+  const roomMat = await call('deskLinenExtra', { token: tok, room: rm.room, items: { 'Mattress (single)': 1 } });
+  const all = await call('deskLinenExtra', { token: tok, backAll: rm.room, to: 'wash' });
+  const kept = await call('deskLinenExtra', { token: tok, reuse: 'keep', item: 'Pillow cover', qty: 1 });
+  const pilKeep = await call('deskLinenExtra', { token: tok, reuse: 'keep', item: 'Pillow', qty: 1 });
+  console.log('mattress set', given.length, 'sheet reuse', iv(b1, 'Bedsheet (single)').reuse - it('Bedsheet (single)').reuse, 'pillow store', iv(b2, 'Pillow').store - it('Pillow').store, 'pillow reuse', iv(b2, 'Pillow').reuse,
+    'tooMany', tooMany.error, 'pillowReuse', pillowReuse.error, 'fromReuse', ok.ok && iv(ok, 'Bedsheet (single)').reuse, 'roomMattress', roomMat.error, 'left', all.rooms.find(r => r.room === rm.room).given.length,
+    'kept', iv(kept, 'Pillow cover').reuse, 'pilKeep', pilKeep.error, 'warn', room1.mattressCharged);
+  if (given.length !== 6 || iv(b1, 'Bedsheet (single)').reuse !== it('Bedsheet (single)').reuse + 1 || iv(b2, 'Pillow').reuse !== 0 || iv(b2, 'Pillow').store !== it('Pillow').store + 1 ||
+      tooMany.error !== 'not_enough_reuse' || pillowReuse.error !== 'not_enough_reuse' || !ok.ok || iv(ok, 'Bedsheet (single)').reuse !== it('Bedsheet (single)').reuse || roomMat.error !== 'bad_qty' ||
+      all.rooms.find(r => r.room === rm.room).given.length !== 0 || iv(kept, 'Pillow cover').reuse < 1 || pilKeep.error !== 'bad_item') throw new Error('extra mattress / reuse broken');
+}

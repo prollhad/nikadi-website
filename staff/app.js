@@ -34,7 +34,7 @@
     method_required: 'Choose how they paid: Cash, UPI or Card.', invalid_phone: 'Please check the phone number and its country code (+91 for India).', bad_qty: 'Please check the quantity.',
     bad_nights: 'Please check the number of nights.', not_in_house: 'This guest has already checked out.', bad_pin: 'The PIN must be 4 to 6 digits.', bad_aadhaar: 'The Aadhaar number must have 12 digits.', bad_pan: 'The PAN looks wrong. It has 10 letters and digits, like ABCDE1234F.', bad_ifsc: 'The IFSC looks wrong. It has 11 letters and digits, like SBIN0001234.', bad_account: 'Please check the account number.', id_taken: 'That employee ID is already used by someone else.', bad_kind: 'Please choose which document this is.', pin_easy: 'That PIN is too easy to guess. Please choose another one, not a repeat or a run like 1111 or 1234.', pin_short: 'The Owner and Manager need a 6 digit PIN, because they can see the money and accounts.',
     pin_taken: 'Someone else already uses this PIN. Choose another.', name_taken: 'That name is already used.', last_owner: 'There must always be at least one active Owner.',
-    no_item: 'This item is not available.', not_tracked: 'Stock is not counted for this item.', bad_status: 'The room status has changed. Pull to refresh.',
+    no_item: 'This item is not available.', not_enough_reuse: 'There are not that many kept for reuse. Take it from the clean store instead.', bad_item: 'Pillows, blankets and mattresses are not washed, so they always go back to the clean store.', not_tracked: 'Stock is not counted for this item.', bad_status: 'The room status has changed. Pull to refresh.',
     network: 'No internet connection. Please try again.', server_error: 'Something went wrong. Please try again.',
     not_setup: 'The staff app is not connected to the Google Sheet yet.',
     room_booked: 'A room you chose is already booked or occupied on those dates. Check the calendar and pick a free room.',
@@ -901,34 +901,81 @@
   /* what housekeeping gives today: water is chosen in the checklist (1 to 4 bottles, or none), the rest is fixed */
   function giveText(items) { return (items || []).map(function (i) { return i.item === 'Water bottle' ? 'Water bottles (choose 1 to 4, or none)' : i.qty + ' × ' + i.item; }).join(', '); }
   /* Extra bedding and towels for a staying guest: taken from the clean store into the room, never on the bill */
+  /* Extra bedding and towels for a staying guest. Every piece comes from the clean store or from the pieces kept for reuse;
+     taking it back, washable ones go to the wash or are kept for reuse, pillows / blankets / mattresses go back to the store. Never on the bill. */
+  var MATTRESS_SET = [['Extra mattress (single)', 1], ['Pillow', 1], ['Pillow cover', 1], ['Bedsheet (single)', 1], ['Blanket cover (single)', 1], ['Blanket (single)', 1]];
   function openExtra(roomNo, after) {
     var body = openSheet('Bedding & towels', ''), D = null, pick = roomNo ? 'Room ' + roomNo : '';
     body.innerHTML = '<div class="loading">Loading…</div>';
     function load(p) { return api('deskLinenExtra', p || {}).then(function (r) { D = r; draw(); return r; }); }
     function cur() { var n = Number(String(pick).replace(/\D/g, '')); return (D.rooms || []).filter(function (r) { return r.room === n; })[0] || null; }
-    function draw() {
-      if (!D.rooms.length) { body.innerHTML = '<p class="small">No guest is staying in any room right now.</p>'; return; }
+    function itemOf(name) { return D.items.filter(function (i) { return i.item === name; })[0] || null; }
+    function srcName(i) { return 'src-' + D.items.indexOf(i); }
+    function draw(keep) {
+      keep = keep || {};
+      if (!D.rooms.length) { body.innerHTML = '<p class="small">No guest is staying in any room right now.</p>' + reuseBox(); wireReuse(); return; }
       if (!cur()) pick = D.rooms.length === 1 ? 'Room ' + D.rooms[0].room : '';
       var groups = [], by = {};
       D.items.forEach(function (i) { if (!by[i.group]) { by[i.group] = []; groups.push(i.group); } by[i.group].push(i); });
-      var r = cur();
-      body.innerHTML = '<p class="small">For a guest who is staying and asks for something extra: a towel, hand towel, bath mat, bedsheet, pillow or blanket. It is written on the room and counted out of the clean store. <b>It is not put on the bill.</b> An extra mattress is charged: add it with Add item.</p>' +
+      var r = cur(), matGiven = r ? r.given.filter(function (g) { return /mattress/i.test(g.item); }).reduce(function (a, g) { return a + g.qty; }, 0) : 0;
+      body.innerHTML = '<p class="small">For a guest who is staying and asks for something extra, or for an extra mattress. Each piece is written on the room and taken from the <b>clean store</b> or from the pieces <b>kept for reuse</b>. <b>Nothing here goes on the bill.</b> The extra mattress itself is charged by reception with Add item.</p>' +
         '<p class="kicker">Which room?</p>' + seg('ex-room', D.rooms.map(function (x) { return 'Room ' + x.room; }), pick) +
-        (r && r.given.length ? '<p class="kicker" style="margin-top:14px">Already given to room ' + r.room + '</p><div class="list">' + r.given.map(function (g) {
-          return '<div class="lc-row"><span>' + g.qty + ' × ' + esc(g.item) + '<small>' + esc(g.by) + ' · ' + esc(tShort(g.at)) + '</small></span><button class="btn btn-quiet sm" type="button" data-back="' + esc(g.id) + '">Take back</button></div>'; }).join('') + '</div>' : '') +
-        '<p class="kicker" style="margin-top:14px">What are you giving?</p>' +
+        (r && matGiven && !r.comp && r.mattressCharged < matGiven ? '<p class="warn-t small" style="margin-top:10px"><b>The extra mattress is not on room ' + r.room + '\'s bill yet.</b> Tell reception to add it with Add item.</p>' : '') +
+        (r && r.given.length ? '<p class="kicker" style="margin-top:14px">In room ' + r.room + ' now (extras)</p><div class="list">' + r.given.map(function (g) {
+          return '<div class="lc-row ex-given"><span>' + g.qty + ' × ' + esc(g.item) + '<small>from ' + esc(String(g.from).toLowerCase()) + ' · ' + esc(g.by) + ' · ' + esc(tShort(g.at)) + '</small></span><span class="ex-acts">' +
+            (g.wash ? '<button class="btn btn-quiet sm" type="button" data-back="' + esc(g.id) + '" data-to="wash">To wash</button><button class="btn btn-line sm" type="button" data-back="' + esc(g.id) + '" data-to="reuse">Keep for reuse</button>'
+              : '<button class="btn btn-quiet sm" type="button" data-back="' + esc(g.id) + '" data-to="store">Back to store</button>') + '</span></div>'; }).join('') + '</div>' +
+          (r.given.length > 1 ? '<div class="ex-all"><span class="small">Take everything back (pillows, blankets and the mattress go back to the store). Sheets and covers:</span><span class="ex-acts"><button class="btn btn-quiet sm" type="button" data-all="wash">All to wash</button><button class="btn btn-line sm" type="button" data-all="reuse">All for reuse</button></span></div>' : '') : '') +
+        '<div class="sec-h" style="margin-top:16px"><h2 style="font-size:1.05rem">What are you giving?</h2><button class="btn btn-gold sm" type="button" id="ex-mat">Extra mattress set</button></div>' +
         groups.map(function (g) { return '<p class="small" style="margin:10px 0 6px"><b>' + esc(g) + '</b></p><div class="list">' + by[g].map(function (i) {
-          return '<label class="lc-row"><span>' + esc(i.item) + '<small>' + i.store + ' clean in store</small></span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="20" data-lk="' + esc(i.item) + '" value="0"><button type="button" data-d="1" aria-label="More">+</button></span></label>'; }).join('') + '</div>'; }).join('') +
-        '<p class="err" id="err" role="alert"></p><button class="btn btn-ok big-cta" id="go" type="button" disabled></button>';
+          var q = keep[i.item] ? keep[i.item].q : 0, src = keep[i.item] ? keep[i.item].src : 'Clean store';
+          return '<div class="ex-item"><div class="lc-row"><span>' + esc(i.item) + '<small>' + i.store + ' clean in store' + (i.wash ? ' · ' + i.reuse + ' kept for reuse' : '') + '</small></span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="20" data-lk="' + esc(i.item) + '" value="' + q + '" aria-label="How many ' + esc(i.item) + '"><button type="button" data-d="1" aria-label="More">+</button></span></div>' +
+            (i.wash ? '<div class="ex-src"' + (q ? '' : ' hidden') + '><span class="small">Take it from</span>' + seg(srcName(i), ['Clean store', 'Reuse'], src) + '</div>' : '') + '</div>'; }).join('') + '</div>'; }).join('') +
+        '<p class="err" id="err" role="alert"></p><button class="btn btn-ok big-cta" id="go" type="button" disabled></button>' + reuseBox();
       function counts() { var o = {}; $$('input[data-lk]', body).forEach(function (i) { var n = Math.round(Number(i.value) || 0); if (n > 0) o[i.dataset.lk] = n; }); return o; }
-      function upd() { var n = Object.keys(counts()).length, go = $('#go', body); go.disabled = !pick || !n; go.textContent = !pick ? 'Choose the room first' : !n ? 'Choose what you are giving' : 'Give to ' + pick + ' (not on the bill)'; }
-      wireSegs(body, function () { var v = segVal(body, 'ex-room'); if (v && v !== pick) { var keep = counts(); pick = v; draw(); Object.keys(keep).forEach(function (k) { var i = $$('input[data-lk]', body).filter(function (x) { return x.dataset.lk === k; })[0]; if (i) i.value = keep[k]; }); } });
+      function sources() { var o = {}; Object.keys(counts()).forEach(function (k) { var it = itemOf(k); o[k] = it && it.wash && segVal(body, srcName(it)) === 'Reuse' ? 'reuse' : 'store'; }); return o; }
+      function upd() {
+        var c = counts(), src = sources(), n = Object.keys(c).length, go = $('#go', body), short = '';
+        $$('input[data-lk]', body).forEach(function (i) { var w = i.closest('.ex-item').querySelector('.ex-src'); if (w) w.hidden = !(Number(i.value) > 0); });
+        Object.keys(c).forEach(function (k) { var it = itemOf(k); if (src[k] === 'reuse' && it && it.reuse < c[k]) short = short || k; });
+        $('#err', body).textContent = short ? (itemOf(short).reuse ? 'Only ' + itemOf(short).reuse + ' × ' + short + ' kept for reuse. Take the rest from the clean store.' : 'No ' + short + ' is kept for reuse now. Take it from the clean store.') : '';
+        go.disabled = !pick || !n || !!short; go.textContent = !pick ? 'Choose the room first' : !n ? 'Choose what you are giving' : short ? 'Change where it comes from' : 'Give to ' + pick + ' (not on the bill)';
+      }
+      wireSegs(body, function () { var v = segVal(body, 'ex-room'); if (v && v !== pick) { var k = {}, c = counts(), sr = sources(); Object.keys(c).forEach(function (x) { k[x] = { q: c[x], src: sr[x] === 'reuse' ? 'Reuse' : 'Clean store' }; }); pick = v; draw(k); return; } upd(); });
       $$('.lc-q', body).forEach(function (w) { w.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; e.preventDefault(); var i = $('input', w); i.value = Math.max(0, Math.min(20, (Number(i.value) || 0) + Number(b.dataset.d))); upd(); }; });
       $$('input[data-lk]', body).forEach(function (i) { i.oninput = upd; });
-      $$('[data-back]', body).forEach(function (b) { b.onclick = function () { busy(b, true); load({ back: b.dataset.back }).then(function () { toast('Taken back'); if (after) after(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
-      $('#go', body).onclick = function () { var x = this, n = Number(pick.replace(/\D/g, '')), c = counts(); if (x.disabled) return; busy(x, true);
-        load({ room: n, items: c }).then(function () { vibrate(); toast('Given to room ' + n + ' · not on the bill'); if (after) after(); }, function (e) { busy(x, false); $('#err', body).textContent = errText(e); vibrate(); }); };
+      $('#ex-mat', body).onclick = function () {
+        MATTRESS_SET.forEach(function (m) { var i = $$('input[data-lk]', body).filter(function (x) { return x.dataset.lk === m[0]; })[0]; if (i && !(Number(i.value) > 0)) i.value = m[1]; });
+        upd(); toast('Mattress set filled in: change anything you are not giving');
+      };
+      $$('[data-back]', body).forEach(function (b) { b.onclick = function () { busy(b, true); var to = b.dataset.to;
+        load({ back: b.dataset.back, to: to, unused: to === 'store' ? false : undefined }).then(function () { toast(to === 'reuse' ? 'Taken back · kept for reuse' : to === 'wash' ? 'Taken back · to wash' : 'Taken back · in the store'); if (after) after(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
+      $$('[data-all]', body).forEach(function (b) { b.onclick = function () { var n = cur() && cur().room; if (!n) return; busy(b, true);
+        load({ backAll: n, to: b.dataset.all }).then(function () { toast('Everything taken back from room ' + n); if (after) after(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
+      $('#go', body).onclick = function () { var x = this, n = Number(pick.replace(/\D/g, '')), c = counts(), src = sources(); if (x.disabled) return; busy(x, true);
+        load({ room: n, items: c, from: src }).then(function () { vibrate(); toast('Given to room ' + n + ' · not on the bill'); if (after) after(); }, function (e) { busy(x, false); $('#err', body).textContent = errText(e); vibrate(); }); };
+      wireReuse();
       upd();
+    }
+    /* pieces kept for reuse, and used pieces that are still clean */
+    function reuseBox() {
+      var w = D.items.filter(function (i) { return i.wash; });
+      if (!w.length) return '';
+      var have = w.filter(function (i) { return i.reuse > 0; });
+      return '<details class="panel ex-reuse" style="margin-top:18px"><summary><h2 style="font-size:1.05rem;display:inline">Kept for reuse</h2> <span class="small">' + (have.length ? have.map(function (i) { return i.reuse + ' × ' + esc(i.item); }).join(', ') : 'nothing kept now') + '</span></summary>' +
+        '<p class="small">Sheets and covers that came back still clean are kept here instead of going to the laundry, and are given again first. Here you can move used pieces that are still clean into reuse, or send reuse pieces to the wash.</p>' +
+        field('Item', '<select class="input" id="ru-i">' + w.map(function (i) { return '<option value="' + esc(i.item) + '">' + esc(i.item) + ' (' + i.dirty + ' used · ' + i.reuse + ' for reuse)</option>'; }).join('') + '</select>') +
+        '<div class="field"><span>What</span>' + seg('ru-m', ['Still clean: keep for reuse', 'Send to the wash'], 'Still clean: keep for reuse') + '</div>' +
+        field('How many', '<input class="input" id="ru-q" inputmode="numeric" value="1">') + '<p class="err" id="ru-err" role="alert"></p><button class="btn btn-line" type="button" id="ru-go">Save</button></details>';
+    }
+    function wireReuse() {
+      var b = $('#ru-go', body); if (!b) return;
+      wireSegs($('.ex-reuse', body));
+      b.onclick = function () {
+        var m = segVal(body, 'ru-m'), q = Number(String($('#ru-q', body).value).replace(/\D/g, ''));
+        busy(b, true); var open = $('.ex-reuse', body).open;
+        api('deskLinenExtra', { reuse: /keep/i.test(m) ? 'keep' : 'wash', item: $('#ru-i', body).value, qty: q }).then(function (r) { D = r; draw(); var d = $('.ex-reuse', body); if (d) d.open = open; toast('Saved'); }, function (e) { busy(b, false); $('#ru-err', body).textContent = errText(e); });
+      };
     }
     load().then(null, function (e) { body.innerHTML = '<p class="err">' + esc(errText(e)) + '</p>'; });
   }
@@ -1675,7 +1722,7 @@
         '<small>' + esc(tShort(x.outAt || x.at)) + ' · ' + esc(x.outBy ? 'given by ' + x.outBy : 'listed by ' + x.by) + ' · ' + lSum(x.items) + ' pieces' + (lSum(x.back) ? ' · ' + lSum(x.back) + ' back' : '') + (lSum(x.short) && x.outAt && lSum(x.back) ? ' · <b class="warn-t">' + lSum(x.short) + ' still out</b>' : '') + '</small>' +
         '<small>' + esc(lText(x.items)) + '</small></span><span class="a">' + (act ? '<span class="pill gold">' + act + '</span>' : x.total != null && lSum(x.back) ? inr(x.total) + (x.paid ? '<small>paid</small>' : '') : '') + '</span></button>';
     }
-    var cols = lr ? [['laundry', 'With you now']] : [['store', 'Clean in store'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
+    var cols = lr ? [['laundry', 'With you now']] : [['store', 'Clean in store'], ['reuse', 'Kept for reuse'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
     var table = '<div class="tbl-wrap"><table class="tbl lin"><thead><tr><th>Item</th>' + cols.map(function (c) { return '<th class="r">' + c[1] + '</th>'; }).join('') + (lr ? '' : '<th class="r">Total</th>') + (d.linen[0] && d.linen[0].price != null ? '<th class="r">Laundry ₹ / piece</th>' : '') + '</tr></thead><tbody>' +
       d.linen.map(function (i, n) {
         var low = i.low && i.store < i.low, gh = n === 0 || d.linen[n - 1].group !== i.group ? '<tr class="grp"><td colspan="' + (cols.length + 3) + '">' + esc(i.group || 'Other') + '</td></tr>' : '';
@@ -1848,7 +1895,7 @@
   /* linen item: price, warning level, bought / thrown away / counted */
   function openLinenItem(it) {
     var setup = S.me.role === 'Owner' || S.me.role === 'Manager', body = openSheet(it ? it.item : 'New room item'), groups = (S.st && S.st.linenGroups) || (LAU.data && LAU.data.groups) || ['Other'];
-    var places = [['store', 'Clean in store'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
+    var places = [['store', 'Clean in store'], ['reuse', 'Kept for reuse'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
     body.innerHTML = (it ? '<div class="calc">' + places.map(function (p) { return p[1] + ' <b>' + it[p[0]] + '</b>'; }).join(' · ') + ' · total <b>' + it.total + '</b></div>' : '') +
       (setup ? '<div class="panel"><div class="sec-h"><h2>Item</h2></div>' + field('Name (with the size, e.g. “Bedsheet (king size)”)', '<input class="input" id="li-n" maxlength="40" value="' + esc(it ? it.item : '') + '">', true) +
         '<label class="toggle"><span>Goes to the laundry <small class="small">(shown in laundry lists)</small></span><input type="checkbox" id="li-w"' + (!it || it.wash !== false ? ' checked' : '') + '></label>' +
@@ -1892,13 +1939,13 @@
   function viewRoomItems(v) {
     var L = S.st.linen || [], setup = S.me.role === 'Owner' || S.me.role === 'Manager', groups = [];
     L.forEach(function (i) { if (groups.indexOf(i.group) < 0) groups.push(i.group); });
-    var html = '<p class="small">Everything that belongs in the rooms, counted where it is now: clean in the store, in the rooms, used (waiting for the laundry) and at the laundry.' + (mgr() ? ' Tap an item to add new ones bought' + (setup ? ', remove torn / lost ones or correct a count' : '') + '.' : '') + '</p>' +
+    var html = '<p class="small">Everything that belongs in the rooms, counted where it is now: clean in the store, kept for reuse (came back clean, not washed yet), in the rooms, used (waiting for the laundry) and at the laundry.' + (mgr() ? ' Tap an item to add new ones bought' + (setup ? ', remove torn / lost ones or correct a count' : '') + '.' : '') + '</p>' +
       groups.map(function (g) {
         var its = L.filter(function (i) { return i.group === g; }), tot = its.reduce(function (a, i) { return a + i.total; }, 0), clean = its.reduce(function (a, i) { return a + i.store; }, 0);
         return '<details class="panel folder" open><summary><span class="fold-ic" aria-hidden="true">' + ICON.stock + '</span><h2>' + esc(g) + '</h2><span class="small">' + tot + ' in all · ' + clean + ' clean in store</span></summary>' +
-          '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Item</th><th class="r">Clean</th><th class="r">Rooms</th><th class="r">To wash</th><th class="r">Laundry</th><th class="r">Total</th></tr></thead><tbody>' +
+          '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Item</th><th class="r">Clean</th><th class="r">Reuse</th><th class="r">Rooms</th><th class="r">To wash</th><th class="r">Laundry</th><th class="r">Total</th></tr></thead><tbody>' +
           its.map(function (i) { var low = i.low && i.store < i.low;
-            return '<tr' + (mgr() ? ' class="tap" data-ri="' + esc(i.item) + '"' : '') + '><td><b>' + esc(i.item) + '</b>' + (low ? '<small class="warn-t">clean ones running low (warn below ' + i.low + ')</small>' : '') + '</td><td class="r">' + i.store + '</td><td class="r">' + i.rooms + '</td><td class="r">' + i.dirty + '</td><td class="r">' + i.laundry + '</td><td class="r"><b>' + i.total + '</b></td></tr>'; }).join('') +
+            return '<tr' + (mgr() ? ' class="tap" data-ri="' + esc(i.item) + '"' : '') + '><td><b>' + esc(i.item) + '</b>' + (low ? '<small class="warn-t">clean ones running low (warn below ' + i.low + ')</small>' : '') + '</td><td class="r">' + i.store + '</td><td class="r">' + (i.reuse || 0) + '</td><td class="r">' + i.rooms + '</td><td class="r">' + i.dirty + '</td><td class="r">' + i.laundry + '</td><td class="r"><b>' + i.total + '</b></td></tr>'; }).join('') +
           '</tbody></table></div></details>';
       }).join('') + (setup ? '<button class="btn btn-line" type="button" id="ri-new">Edit the item list (add, rename, delete)</button>' : '');
     v.insertAdjacentHTML('beforeend', html);
