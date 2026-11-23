@@ -2681,10 +2681,14 @@ function deskCore(db, hooks) {
       (stmtKey(b) ? '📄 See or download your booking statement: ' + DESK_STMT_URL + stmtKey(b) + '\n' : '') + 'We hope to welcome you in Sri Dham Mayapur another time: for a new booking, just message us here.\nNikadi Guest House · +91 75011 01137';
   }
   function quoteOf(type, ci, co, rooms) { var tot = 0, d = ci; for (var i = 0; i < nightsBetween(ci, co) && i < 60; i++) { tot += rateNow(type, d); d = addDays(d, 1); } return tot * Math.max(1, rooms || 1); }
+  /* the guest's agreement to WhatsApp messages (owner's rule: no booking without it): YES / CANCEL links and the website page */
+  function waAgreeAsk() {
+    return '\n\nBefore we book: may we message you on WhatsApp about your booking, updates during your stay, your bill and a review request?\n✅ YES, I agree: https://wa.me/917501101137?text=YES\n❌ CANCEL: https://wa.me/917501101137?text=CANCEL\nOr choose on our website: ' + DESK_WA_SITE + '/agree\nYou can reply STOP any time.';
+  }
   function enqMsgs(o) {
     var n = o.first || 'Dear Sir/Ma\'am', out = [];
     function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
-    add('hello', 'Hello + ask dates', n + ', Hare Krishna! Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur.\nPlease send your check-in date, number of nights, number of guests and rooms, and we will reply with the available rooms and today\'s best price.\nRoom photos: ' + DESK_WA_SITE + '/#rooms' + '\n\nBefore we book: may we message you on WhatsApp about your booking, updates during your stay, your bill and a review request?\n✅ YES, I agree: https://wa.me/917501101137?text=YES\n❌ CANCEL: https://wa.me/917501101137?text=CANCEL\nOr choose on our website: ' + DESK_WA_SITE + '/agree\nYou can reply STOP any time.');
+    add('hello', 'Hello + ask dates', n + ', Hare Krishna! Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur.\nPlease send your check-in date, number of nights, number of guests and rooms, and we will reply with the available rooms and today\'s best price.\nRoom photos: ' + DESK_WA_SITE + '/#rooms' + waAgreeAsk());
     if (o.ci && o.co) {
       var nights = nightsBetween(o.ci, o.co), rooms = Math.max(1, o.rooms || 1), when = dd(o.ci) + ' to ' + dd(o.co) + ' · ' + nights + ' night' + (nights > 1 ? 's' : '') + ' · ' + rooms + ' room' + (rooms > 1 ? 's' : '');
       var av = api.availability({ _internal: true, checkin: o.ci, checkout: o.co }), lines = [], best = null, want = roomTypeKey(o.type);
@@ -2733,7 +2737,7 @@ function deskCore(db, hooks) {
   function genMsgs() {
     var G = 'Dear Sir/Ma\'am, Hare Krishna!', t = today(), out = [];
     function add(kind, label, text) { out.push({ kind: kind, label: label, text: waSafe(text) }); }
-    add('ghello', 'Thank you for contacting us', G + ' Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur. How can we help you?');
+    add('ghello', 'Thank you for contacting us', G + ' Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur. How can we help you?' + waAgreeAsk());
     add('gdates', 'Please share your dates', G + ' Please share your check-in date, check-out date, number of guests and rooms needed, and we will reply with the available rooms and today\'s best price.');
     add('gfind', 'How to find us', G + ' Here is how to reach Nikadi Guest House:\nBhaktisiddhanta Saraswati Marg, opposite ISKCON Gate No. 4 (Namahatta Bhavan), Mayapur. Look for our lit NIKADI GUEST HOUSE sign.\nEnter at the left corner of the building, beside the picture of Sri Chaitanya Mahaprabhu, and take the stairs up to our first-floor reception.\nGoogle Maps: ' + DESK_WA_MAPS + '\nCall us any time: +91 75011 01137.');
     add('grooms', 'Our rooms & prices', G + ' Our air-conditioned rooms (private bathroom with geyser, Wi-Fi and TV):\n• Deluxe Double (king bed, up to 2 adults): ' + rupees(rateNow('Deluxe Double', t)) + ' a night\n• Deluxe Twin (2 single beds, up to 2 adults): ' + rupees(rateNow('Deluxe Twin', t)) + ' a night\n• Large Twin (2 single beds, more space, up to 3 adults): ' + rupees(rateNow('Large Twin', t)) + ' a night\nPrices include GST and can change by date. Send us your dates for the exact price.');
