@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WhatsApp messages · Nikadi Guest House</title>
+<meta name="description" content="Agree to WhatsApp messages from Nikadi Guest House about your booking, updates, bill and review.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0c1430">
+<link rel="icon" href="/favicon.ico?v=2" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Lato:wght@400;700&display=swap">
+<style>
+:root{--bg:#0c1430;--bg2:#16224a;--gold:#d8b56a;--gold2:#e6c98a;--ink:#f3ede0;--muted:#b9b6c6;--line:rgba(216,181,106,.35)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% 0%,var(--bg2) 0%,var(--bg) 70%);background-color:var(--bg);color:var(--ink);font:400 17px/1.6 Lato,'Helvetica Neue',Arial,sans-serif;min-height:100vh;
+  display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+main{width:100%;max-width:460px;border:1px solid var(--line);border-radius:20px;padding:28px 22px 24px;background:rgba(8,12,30,.55);display:flex;flex-direction:column;gap:18px;text-align:center}
+.logo{width:200px;max-width:70%;height:auto;margin:0 auto}
+h1{font:700 1.45rem/1.25 Cinzel,Georgia,serif;letter-spacing:.04em;color:var(--gold2);margin:0;text-wrap:balance}
+p{margin:0}
+.q{font-size:1.05rem}
+.q b{color:var(--gold2)}
+.small{color:var(--muted);font-size:.9rem}
+.btns{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;border-radius:999px;font:700 1rem/1 Lato,sans-serif;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;cursor:pointer;border:1.5px solid var(--gold);padding:0 22px}
+.yes{background:linear-gradient(135deg,#f3dc9f,#c9a35a 55%,#e6c98a);color:#141824;border-color:transparent}
+.no{background:transparent;color:var(--gold2)}
+.btn:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.done{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(216,181,106,.08)}
+.done[hidden]{display:none}
+.site{color:var(--gold2);text-decoration:underline;text-underline-offset:3px}
+.sep{height:1px;background:var(--line);margin:4px 0}
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="/img/brand/lockup-light.png" alt="Nikadi Guest House">
+  <h1>WhatsApp messages from us</h1>
+  <p class="q">May <b>Nikadi Guest House</b> message you on WhatsApp (+91 75011 01137) about <b>your booking</b>, <b>updates during your stay</b>, <b>your bill</b> and <b>a review request</b>?</p>
+  <p class="small">We need this to take your booking. No advertising. Reply STOP any time to stop.</p>
+  <div class="btns">
+    <a class="btn yes" id="yes" href="https://wa.me/917501101137?text=YES%2C%20I%20agree%20to%20WhatsApp%20messages%20from%20Nikadi%20Guest%20House%20about%20my%20booking%2C%20updates%2C%20bill%20and%20review." target="_blank" rel="noopener">Yes, I agree</a>
+    <button class="btn no" id="no" type="button">Cancel</button>
+  </div>
+  <div class="done" id="yesDone" hidden><p><b>Thank you!</b> WhatsApp opens with your answer: please press <b>send</b>. Then share your dates and number of guests and we will reply with the available rooms.</p></div>
+  <div class="done" id="noDone" hidden><p><b>No problem.</b> Without this we can't take a booking on WhatsApp. You are welcome to call us on <b>+91 75011 01137</b> or come to the reception, opposite ISKCON Gate No. 4.</p>
+    <p class="small" style="margin-top:8px"><a class="site" href="https://wa.me/917501101137?text=CANCEL" target="_blank" rel="noopener">Let us know on WhatsApp (CANCEL)</a></p></div>
+  <div class="sep"></div>
+  <p class="small">Rooms, prices and photos: <a class="site" href="/">www.nikadiguesthouse.com</a></p>
+</main>
+<script>
+(function(){
+  function set(v){try{localStorage.setItem('nk-wa-ok',v);}catch(e){}}
+  document.getElementById('yes').addEventListener('click',function(){set('1');document.getElementById('noDone').hidden=true;document.getElementById('yesDone').hidden=false;});
+  document.getElementById('no').addEventListener('click',function(){try{localStorage.removeItem('nk-wa-ok');}catch(e){}document.getElementById('yesDone').hidden=true;document.getElementById('noDone').hidden=false;});
+})();
+</script>
+</body>
+</html>

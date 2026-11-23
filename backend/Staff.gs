@@ -733,7 +733,7 @@ function deskCore(db, hooks) {
   function enqMsgs(o) {
     var n = o.first || 'Dear Sir/Ma\'am', out = [];
     function add(kind, label, text) { out.push({ kind: kind, label: label, text: text }); }
-    add('hello', 'Hello + ask dates', n + ', Hare Krishna! Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur.\nPlease send your check-in date, number of nights, number of guests and rooms, and we will reply with the available rooms and today\'s best price.\nRoom photos: ' + DESK_WA_SITE + '/#rooms' + '\n\nBefore we book: may we message you on WhatsApp about your booking, updates during your stay, your bill and a review request? Please reply *YES* to agree. You can reply STOP any time.');
+    add('hello', 'Hello + ask dates', n + ', Hare Krishna! Thank you for contacting Nikadi Guest House, opposite ISKCON Gate No. 4, Mayapur.\nPlease send your check-in date, number of nights, number of guests and rooms, and we will reply with the available rooms and today\'s best price.\nRoom photos: ' + DESK_WA_SITE + '/#rooms' + '\n\nBefore we book: may we message you on WhatsApp about your booking, updates during your stay, your bill and a review request?\n✅ YES, I agree: https://wa.me/917501101137?text=YES\n❌ CANCEL: https://wa.me/917501101137?text=CANCEL\nOr choose on our website: ' + DESK_WA_SITE + '/agree\nYou can reply STOP any time.');
     if (o.ci && o.co) {
       var nights = nightsBetween(o.ci, o.co), rooms = Math.max(1, o.rooms || 1), when = dd(o.ci) + ' to ' + dd(o.co) + ' · ' + nights + ' night' + (nights > 1 ? 's' : '') + ' · ' + rooms + ' room' + (rooms > 1 ? 's' : '');
       var av = api.availability({ _internal: true, checkin: o.ci, checkout: o.co }), lines = [], best = null, want = roomTypeKey(o.type);
