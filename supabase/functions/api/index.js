@@ -2126,7 +2126,7 @@ var DESK_SCHEMA = {
   payroll: { sheet: 'Salaries (private)', lazy: true, hidden: true, cols: [['id', 'ID'], ['month', 'Month'], ['emp', 'Employee ID'], ['name', 'Name'], ['job', 'Designation'], ['rate', 'Monthly rate (₹)', 'n'],
     ['days', 'Days in month', 'n'], ['lop', 'Unpaid days', 'n'], ['paidDays', 'Paid days', 'n'], ['basic', 'Basic (₹)', 'n'], ['extra', 'Other earnings (₹)', 'n'], ['extraNote', 'Other earnings for'], ['gross', 'Gross (₹)', 'n'],
     ['pt', 'Profession tax (₹)', 'n'], ['ptAuto', 'PT by slab'], ['pf', 'PF (₹)', 'n'], ['esi', 'ESI (₹)', 'n'], ['tds', 'TDS (₹)', 'n'], ['adv', 'Advance recovered (₹)', 'n'], ['otherDed', 'Other deduction (₹)', 'n'], ['otherNote', 'Other deduction for'],
-    ['ded', 'Total deductions (₹)', 'n'], ['net', 'Net pay (₹)', 'n'], ['mode', 'Paid by'], ['paidOn', 'Paid on', 'd'], ['ref', 'Payment reference'], ['slipNo', 'Payslip no.'], ['status', 'Status'], ['finalOn', 'Finalised'],
+    ['ded', 'Total deductions (₹)', 'n'], ['net', 'Net pay (₹)', 'n'], ['mode', 'Paid by'], ['paidOn', 'Paid on', 'd'], ['ref', 'Payment reference'], ['slipNo', 'Payslip no.'], ['status', 'Status'], ['finalOn', 'Finalised'], ['signed', 'Signed by employee'], ['signDoc', 'Signature (document ID)'], ['copyDoc', 'Signed paper copy (document ID)'],
     ['by', 'Made by'], ['at', 'Made', 't'], ['edited', 'Last change'], ['removed', 'Deleted']] },
   config: { sheet: 'Staff app settings', lazy: true, hidden: true, cols: [['key', 'Setting'], ['value', 'Value', 's']] }
 };
@@ -4868,7 +4868,7 @@ function deskCore(db, hooks) {
      Employee ID: NPPL-NGH-001, 002, … in order of adding. A number is never given again, even after a profile is deleted. */
   var EMP_PREFIX = 'NPPL-NGH-';
   var EMP_DOCS = { photo: ['Photo', 1], aadhaarF: ['Aadhaar card (front)', 1], aadhaarB: ['Aadhaar card (back)', 1], pan: ['PAN card', 1], voter: ['Voter card', 1],
-    bank: ['Bank passbook or cheque', 1], cv: ['CV', 0], work: ['Work history papers', 0], other: ['Other document', 0] };
+    bank: ['Bank passbook or cheque', 1], paysign: ['Payslip signature', 0], payslip: ['Signed payslip', 0], cv: ['CV', 0], work: ['Work history papers', 0], other: ['Other document', 0] };
   var EMP_TEXT = { name: 80, job: 60, gender: 10, blood: 6, father: 80, email: 80, address: 300, emName: 80, emRel: 30, salaryNote: 120, accName: 80, bank: 80, branch: 80, upi: 60, prevWork: 2000, notes: 1000 };
   function empNext() { var n = 0; db.all('employees').forEach(function (e) { var m = /(\d+)$/.exec(String(e.id)); if (m && String(e.id).indexOf(EMP_PREFIX) === 0) n = Math.max(n, +m[1]); }); return EMP_PREFIX + String(n + 1).padStart(3, '0'); }
   function empMask(v, keep) { v = String(v || ''); return v ? (v.length > keep ? '•••• ' + v.slice(-keep) : v) : ''; }
@@ -5000,6 +5000,15 @@ function deskCore(db, hooks) {
       if (old) db.set('payroll', old, p); else db.add('payroll', Object.assign({ by: me.name, at: stamp(), removed: '', slipNo: '', finalOn: '' }, p));
     });
     return api.payrollMonth({ token: req.token, month: month });
+  };
+  /* the employee's acknowledgement: a signature made on the phone screen, or a photo of the signed paper payslip */
+  api.payslipSign = function (req) {
+    var me = auth(req); needOwner(me);
+    var r = find('payroll', 'id', String(req.month) + '|' + String(req.emp)); if (!r || r.removed) fail('not_found'); if (r.status !== 'Final') fail('not_final');
+    var paper = req.kind === 'paper', res = api.empDocSave({ token: req.token, emp: r.emp, kind: paper ? 'payslip' : 'paysign', data: req.data, label: r.month + (paper ? ' · ' + r.slipNo : '') });
+    var p = paper ? { copyDoc: res.doc.id } : { signDoc: res.doc.id, signed: stamp() };
+    if (paper && !r.signed) p.signed = stamp() + ' (paper)';
+    db.set('payroll', r, p); return { signed: r.signed, signDoc: r.signDoc, copyDoc: r.copyDoc };
   };
   api.payrollReopen = function (req) {
     var me = auth(req); needOwner(me);

@@ -850,3 +850,4 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .pay-sum .btn{width:auto;flex:none;padding-left:18px;padding-right:18px}.pay-row .emp-acts .btn,#payAll,#payReg,#payOpen,#paySave,#payFin{width:auto}
 .pay-month .btn{width:auto;flex:none;min-width:44px;padding-left:14px;padding-right:14px}
 #payBack,#empPay,#empAdd{width:auto;flex:none}
+.pay-ack{display:grid;gap:10px}.pay-pad{width:100%;height:auto;aspect-ratio:5/2;background:#fff;border-radius:10px;touch-action:none;border:2px dashed var(--gold);cursor:crosshair}.pay-hr{border:0;border-top:1px solid var(--line);margin:14px 0}.pay-sum .btn-line{width:auto;flex:none}
