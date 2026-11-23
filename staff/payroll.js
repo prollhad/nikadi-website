@@ -43,14 +43,14 @@
     var tot = d.rows.reduce(function (s, r) { var c = calc(r, d.month, d.days); s.g += c.gross; s.d += c.ded; s.n += c.net; return s; }, { g: 0, d: 0, n: 0 });
     v.innerHTML = head() +
       '<div class="pay-month"><button class="btn btn-quiet" type="button" data-m="-1" aria-label="Previous month">‹</button><h2>' + esc(mName(d.month)) + '</h2><button class="btn btn-quiet" type="button" data-m="1" aria-label="Next month">›</button>' +
-      '<span class="ptag ' + (fin ? 'k-ok' : 'k-warn') + '">' + (fin ? 'Final · payslips made' : any ? 'Partly final' : 'Draft') + '</span>' + (any ? '<span class="small">' + d.rows.filter(function (r) { return r.signed; }).length + ' of ' + d.rows.filter(function (r) { return r.status === 'Final'; }).length + ' signed by the employee</span>' : '') + '</div>' +
+      '<span class="ptag ' + (fin ? 'k-ok' : 'k-warn') + '">' + (fin ? 'Final · payslips made' : any ? 'Partly final' : 'Draft') + '</span>' + (any ? '<span class="small">' + d.rows.filter(function (r) { return r.copyDoc; }).length + ' of ' + d.rows.filter(function (r) { return r.status === 'Final'; }).length + ' signed payslips uploaded</span>' : '') + '</div>' +
       '<div class="kpis"><div class="kpi"><span>Gross salaries</span><b>' + rs(tot.g) + '</b><small>' + d.rows.length + ' people · ' + d.days + ' days in the month</small></div><div class="kpi"><span>Deductions</span><b>' + rs(tot.d) + '</b><small>profession tax, advances, other</small></div><div class="kpi"><span>Net to pay</span><b>' + rs(tot.n) + '</b><small>pay by the 7th of next month</small></div></div>' +
       (d.rows.length ? '<p class="small">Tap a person to change their unpaid days, extra pay, advance or payment details. Everyone else is paid their full monthly salary.</p><div class="pay-list">' + d.rows.map(row).join('') + '</div>' : '<div class="panel"><p class="small">No employees were working in this month.</p></div>') +
       '<p class="small">' + esc(d.ptNote) + ' PF and ESI are 0 while the company has fewer than 20 and 10 people; fill them in once you register. TDS only if a person\'s yearly salary is taxable.</p>' +
       '<p class="err" id="payErr" role="alert"></p>' +
-      '<div class="emp-acts">' + (fin ? '<button class="btn btn-gold" type="button" id="payAll">All payslips (one PDF)</button><button class="btn btn-line" type="button" id="payReg">Salary register for the CA</button><button class="btn btn-quiet" type="button" id="payOpen">Reopen this month to change it</button>'
+      '<div class="emp-acts">' + (fin ? '<button class="btn btn-gold" type="button" id="payAll">Print all unsigned payslips (one PDF)</button><button class="btn btn-line" type="button" id="payReg">Salary register for the CA</button><button class="btn btn-quiet" type="button" id="payOpen">Reopen this month to change it</button>'
         : '<button class="btn btn-line" type="button" id="paySave">Save draft</button><button class="btn btn-gold" type="button" id="payFin">Finalise and make payslips</button>' + (any ? '<button class="btn btn-line" type="button" id="payAll">Payslips already final (PDF)</button>' : '')) + '</div>' +
-      '<p class="small">Finalising locks the month and gives each payslip its number (NPPL/SAL/' + esc(d.month) + '/001 …). The payslip carries the guest house and company stamps with your signature. Give or send each person their payslip on or before the day you pay them.</p>';
+      '<p class="small">Finalising locks the month and gives each payslip its number (NPPL/SAL/' + esc(d.month) + '/001 …). Then print the payslips, have each person sign theirs in ink, and upload a photo or scan of the signed page with “Upload signed copy”. The signed copy then takes the place of the printed one: it is the payslip kept for that month, on the person\'s profile and in Google Drive.</p>';
     wireHead(v, back);
     $$('[data-m]', v).forEach(function (b) { b.onclick = function () { MONTH = shift(d.month, +b.dataset.m); DATA = null; mount(v, ctx, back); }; });
     $$('.pay-row', v).forEach(function (el) {
@@ -65,11 +65,12 @@
       });
     });
     $$('[data-slip]', v).forEach(function (b) { b.onclick = function (ev) { ev.preventDefault(); slips(b.dataset.slip); }; });
-    $$('[data-sign]', v).forEach(function (b) { b.onclick = function (ev) { ev.preventDefault(); sign(b.dataset.sign, v, back); }; });
+    $$('[data-up]', v).forEach(function (b) { b.onclick = function (ev) { ev.preventDefault(); upload(b.dataset.up, function () { mount(v, C, back); }); }; });
+    $$('[data-copy]', v).forEach(function (b) { b.onclick = function (ev) { ev.preventDefault(); copy(b.dataset.copy, function () { mount(v, C, back); }); }; });
     var sv = $('#paySave', v); if (sv) sv.onclick = function () { save(v, back, false, sv); };
     var fn = $('#payFin', v); if (fn) fn.onclick = function () { if (fn.dataset.sure !== '1') { fn.dataset.sure = '1'; fn.textContent = 'Tap again to finalise ' + mName(d.month); return; } save(v, back, true, fn); };
     var op = $('#payOpen', v); if (op) op.onclick = function () { if (op.dataset.sure !== '1') { op.dataset.sure = '1'; op.textContent = 'Tap again to reopen (payslip numbers stay the same)'; return; } C.busy(op, true); C.api('deskPayrollReopen', { month: d.month }).then(function (r) { DATA = r; mount(v, ctx, back); }, function (x) { C.busy(op, false); C.toast(C.errText(x)); }); };
-    var al = $('#payAll', v); if (al) al.onclick = function () { slips(''); };
+    var al = $('#payAll', v); if (al) al.onclick = function () { slips('', true); };
     var rg = $('#payReg', v); if (rg) rg.onclick = function () { register(); };
   }
   function head() { return '<div class="hrow"><div><p class="kicker">Owner only · salary sheet, payslips and register</p><h1>Salaries</h1></div><button class="btn btn-quiet" type="button" id="payBack">‹ Employees</button></div>'; }
@@ -81,7 +82,7 @@
     var d = DATA, lock = r.status === 'Final', c = calc(r, d.month, d.days);
     return '<details class="panel pay-row" data-i="' + i + '"><summary><span class="pay-who"><b>' + esc(r.name) + '</b><small>' + esc(r.emp) + ' · ' + esc(r.job || '') + '</small></span>' +
       '<span class="pay-sum"><small data-out="days">' + c.paidDays + ' of ' + d.days + ' days</small><span>Gross <b data-out="gross">' + rs(c.gross) + '</b></span><span>Deductions <b data-out="ded">' + rs(c.ded) + '</b></span><span class="pay-net">Net <b data-out="net">' + rs(c.net) + '</b></span>' +
-      (lock ? '<button class="btn btn-gold sm" type="button" data-slip="' + esc(r.emp) + '">Payslip</button><button class="btn btn-line sm" type="button" data-sign="' + esc(r.emp) + '">' + (r.signed ? 'Signed ✓' : 'Get signature') + '</button><code>' + esc(r.slipNo) + '</code>' : '') + '</span></summary>' +
+      (lock ? (r.copyDoc ? '<button class="btn btn-gold sm" type="button" data-copy="' + esc(r.emp) + '">Signed payslip ✓</button>' : '<button class="btn btn-line sm" type="button" data-slip="' + esc(r.emp) + '">Print payslip</button><button class="btn btn-gold sm" type="button" data-up="' + esc(r.emp) + '">Upload signed copy</button>') + '<code>' + esc(r.slipNo) + '</code>' : '') + '</span></summary>' +
       '<div class="pay-grid">' +
       '<div class="pay-col"><h4>Earnings</h4>' + num('rate', r, lock, '', 'Monthly salary (₹)') + num('lop', r, lock, '', 'Unpaid leave days') + num('extra', r, lock, '', 'Extra earnings (₹)') + txt('extraNote', r, lock, 'Extra earnings for', 'Overtime, bonus, festival allowance…') + '</div>' +
       '<div class="pay-col"><h4>Deductions</h4><label class="pay-f"><span>Profession tax (₹)</span><input class="input" type="number" min="0" data-k="pt" value="' + c.pt + '"' + (lock || r.ptAuto !== false ? ' disabled' : '') + '></label>' +
@@ -98,28 +99,32 @@
   }
 
   /* ---------- the employee signs for the payslip ---------- */
-  function sign(emp, v, back) {
-    var r = DATA.rows.filter(function (x) { return x.emp === emp; })[0]; if (!r) return;
-    var body = C.openSheet('Signature · ' + r.name);
-    body.innerHTML = '<div class="pay-ack"><p class="kicker">' + esc(mName(DATA.month)) + ' · ' + esc(r.slipNo) + '</p><p>I, <b>' + esc(r.name) + '</b> (' + esc(r.emp) + '), have received my payslip and my salary of <b>' + rs(r.net) + '</b> for ' + esc(mName(DATA.month)) + (r.mode ? ', paid by ' + esc(r.mode.toLowerCase()) : '') + '.</p>' +
-      (r.signed ? '<p class="note" style="padding:10px 14px">Already signed on ' + esc(r.signed) + '. Signing again replaces it.</p>' : '') +
-      '<p class="small">Ask the employee to sign with a finger inside the box.</p><canvas class="pay-pad" width="900" height="360"></canvas>' +
-      '<div class="emp-acts"><button class="btn btn-quiet" type="button" id="sClear">Clear</button><button class="btn btn-gold" type="button" id="sSave" disabled>Save signature</button></div>' +
-      '<hr class="pay-hr"><p class="small"><b>Signed on paper instead?</b> Take a photo of the signed payslip and it is kept with this month and in the person\'s documents.</p>' +
-      '<label class="btn btn-line">Add photo or scan of the signed payslip<input type="file" accept="image/*,application/pdf" id="sPaper" hidden></label>' + (r.copyDoc ? '<p class="small">A signed paper copy is already saved.</p>' : '') + '<p class="small" id="sMsg" role="status"></p></div>';
-    var cv = $('.pay-pad', body), x = cv.getContext('2d'), drawn = false, last = null;
-    x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); x.strokeStyle = '#0f1a3a'; x.lineWidth = 4.2; x.lineCap = x.lineJoin = 'round';
-    function pt(e) { var b = cv.getBoundingClientRect(); return { x: (e.clientX - b.left) * cv.width / b.width, y: (e.clientY - b.top) * cv.height / b.height }; }
-    cv.onpointerdown = function (e) { e.preventDefault(); cv.setPointerCapture(e.pointerId); last = pt(e); x.beginPath(); x.arc(last.x, last.y, 2, 0, 7); x.fillStyle = '#0f1a3a'; x.fill(); };
-    cv.onpointermove = function (e) { if (!last) return; var p = pt(e); x.beginPath(); x.moveTo(last.x, last.y); x.lineTo(p.x, p.y); x.stroke(); last = p; if (!drawn) { drawn = true; $('#sSave', body).disabled = false; } };
-    cv.onpointerup = cv.onpointercancel = function () { last = null; };
-    $('#sClear', body).onclick = function () { x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); drawn = false; $('#sSave', body).disabled = true; };
-    function done(res, msg) { r.signed = res.signed; r.signDoc = res.signDoc; r.copyDoc = res.copyDoc; C.toast(msg); C.closeSheet(); mount(v, C, back); }
-    $('#sSave', body).onclick = function () { var b = this; C.busy(b, true);
-      C.api('deskPayslipSign', { month: DATA.month, emp: emp, data: cv.toDataURL('image/jpeg', .92).split(',')[1] }).then(function (res) { done(res, 'Signature saved. It is on the payslip now.'); }, function (e) { C.busy(b, false); $('#sMsg', body).textContent = C.errText(e); }); };
-    $('#sPaper', body).onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return;
-      NikadiID.capture(f, { mode: 'page', title: 'signed payslip', toast: C.toast }).then(function (cap) { if (!cap) return; $('#sMsg', body).textContent = 'Saving…';
-        return C.api('deskPayslipSign', { month: DATA.month, emp: emp, kind: 'paper', data: cap.data }).then(function (res) { done(res, 'Signed copy saved'); }); }).catch(function (e) { $('#sMsg', body).textContent = C.errText(e); }); };
+  /* ---------- the signed paper payslip ---------- */
+  function upload(emp, after, month) {
+    month = month || DATA.month;
+    var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*,application/pdf'; inp.style.display = 'none'; document.body.appendChild(inp);
+    inp.onchange = function () {
+      var f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      Promise.resolve(NikadiID.capture(f, { mode: 'page', title: 'signed payslip', toast: C.toast })).then(function (cap) {
+        var data = cap && (cap.data || cap); if (!data || typeof data !== 'string') return;
+        C.toast('Saving the signed payslip…');
+        return C.api('deskPayslipSign', { month: month, emp: emp, kind: 'paper', data: data }).then(function (res) {
+          if (DATA && DATA.month === month) DATA.rows.forEach(function (r) { if (r.emp === emp) { r.copyDoc = res.copyDoc; r.signed = res.signed; } });
+          C.toast('Signed payslip saved'); if (after) after();
+        });
+      }).catch(function (e) { C.toast(C.errText ? C.errText(e) : 'Could not save'); });
+    };
+    inp.click();
+  }
+  function copy(emp, after, month, docId, title) {
+    month = month || DATA.month;
+    var r = DATA && DATA.month === month ? DATA.rows.filter(function (x) { return x.emp === emp; })[0] : null, id = docId || (r && r.copyDoc);
+    var body = C.openSheet(title || ('Signed payslip · ' + (r ? r.name : emp) + ' · ' + mName(month))); body.innerHTML = '<div class="loading">Opening…</div>';
+    C.api('deskEmpDocGet', { id: id }).then(function (g) {
+      body.innerHTML = '<img class="pay-copy" alt="Signed payslip" src="' + g.data + '"><div class="emp-acts"><button class="btn btn-gold" type="button" id="cDl">Download</button><button class="btn btn-line" type="button" id="cRe">Replace with a new photo</button></div>';
+      $('#cDl', body).onclick = function () { var l = document.createElement('a'); l.href = g.data; l.download = emp + ' signed payslip ' + mName(month) + '.jpg'; document.body.appendChild(l); l.click(); l.remove(); };
+      $('#cRe', body).onclick = function () { if (C.closeSheet) C.closeSheet(); upload(emp, after, month); };
+    }, function (e) { body.innerHTML = '<p class="err">Could not open it. ' + esc(String(e && (e.error || e.message) || '')) + '</p>'; });
   }
 
   /* ---------- payslip PDF ---------- */
@@ -181,17 +186,21 @@
     font('normal', 6.8, MUT); T('This payslip is issued under the Code on Wages, 2019. It is computer-generated and signed by the employer. Please keep it safe; it is also needed for a loan or a visa.', W / 2, 286.5, { align: 'center' });
     T(CO.unit + '   ·   ' + CO.phone + '   ·   ' + CO.web, W / 2, 290.5, { align: 'center' });
   }
-  function slips(emp) {
-    var body = C.openSheet(emp ? 'Payslip' : 'Payslips · ' + mName(DATA.month)); body.innerHTML = '<div class="loading">Making the payslip…</div>';
-    Promise.all([C.api('deskPayslipData', { month: DATA.month, emp: emp || '' }), art(), jspdf()]).then(function (a) {
+  function slips(emp, unsignedOnly, month) {
+    month = month || DATA.month;
+    var body = C.openSheet(emp ? 'Payslip to print' : 'Payslips to print · ' + mName(month)); body.innerHTML = '<div class="loading">Making the payslip…</div>';
+    Promise.all([C.api('deskPayslipData', { month: month, emp: emp || '' }), art(), jspdf()]).then(function (a) {
       var res = a[0], A = a[1], J = a[2];
-      return Promise.all(res.slips.map(function (s) { return s.signDoc ? C.api('deskEmpDocGet', { id: s.signDoc }).then(function (g) { return pic(g.data); }).then(function (o) { s.signImg = o; }, function () {}) : null; })).then(function () { return [res, A, J]; });
+      if (unsignedOnly) res.slips = res.slips.filter(function (s) { return !s.copyDoc; });
+      if (!res.slips.length) { body.innerHTML = '<p class="small">Every payslip this month already has its signed copy uploaded.</p>'; return null; }
+      return Promise.all(res.slips.map(function (s) { return false ? C.api('deskEmpDocGet', { id: s.signDoc }).then(function (g) { return pic(g.data); }).then(function (o) { s.signImg = o; }, function () {}) : null; })).then(function () { return [res, A, J]; });
     }).then(function (a) {
+      if (!a) return;
       var res = a[0], A = a[1], J = a[2], d = new J.jsPDF({ unit: 'mm', format: 'a4' });
       d.setProperties({ title: 'Payslips ' + mName(res.month), author: CO.name, creator: CO.unit });
       res.slips.forEach(function (s, i) { if (i) d.addPage(); slipPage(d, A, s, res.month); });
       var blob = d.output('blob'), name = (emp ? res.slips[0].emp + ' ' + res.slips[0].name + ' payslip ' : 'Nikadi payslips ') + mName(res.month) + '.pdf';
-      body.innerHTML = '<div class="pay-prev" id="pPrev"><div class="loading">Showing the payslip…</div></div><div class="emp-acts"><button class="btn btn-gold" type="button" id="pGet">' + (emp ? 'Download / share payslip' : 'Download all ' + res.slips.length + ' payslips') + '</button></div>';
+      body.innerHTML = '<div class="pay-prev" id="pPrev"><div class="loading">Showing the payslip…</div></div><div class="emp-acts"><button class="btn btn-gold" type="button" id="pGet">' + (emp ? 'Download to print' : 'Download all ' + res.slips.length + ' to print') + '</button></div><p class="small">Print, have it signed in ink, then upload the signed page with “Upload signed copy”. The person can keep this PDF or a photocopy.</p>';
       preview(blob, $('#pPrev', body));
       $('#pGet', body).onclick = function () { var f = new File([blob], name, { type: 'application/pdf' });
         if (emp && navigator.canShare && navigator.canShare({ files: [f] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)) { navigator.share({ files: [f], title: name }).catch(function () {}); return; }
@@ -218,5 +227,5 @@
     var u = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), l = document.createElement('a'); l.href = u; l.download = 'Nikadi salary register ' + mName(d.month) + '.csv'; document.body.appendChild(l); l.click(); l.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 5000);
     C.toast('Salary register downloaded');
   }
-  window.NikadiPay = { mount: mount, reset: function () { DATA = null; }, _words: words, _slip: slipPage, _art: art };
+  window.NikadiPay = { mount: mount, reset: function () { DATA = null; }, use: function (ctx) { C = ctx; }, slips: slips, upload: upload, copy: copy, mName: mName, _words: words, _slip: slipPage, _art: art };
 })();

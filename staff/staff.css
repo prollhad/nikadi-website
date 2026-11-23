@@ -851,3 +851,21 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .pay-month .btn{width:auto;flex:none;min-width:44px;padding-left:14px;padding-right:14px}
 #payBack,#empPay,#empAdd{width:auto;flex:none}
 .pay-ack{display:grid;gap:10px}.pay-pad{width:100%;height:auto;aspect-ratio:5/2;background:#fff;border-radius:10px;touch-action:none;border:2px dashed var(--gold);cursor:crosshair}.pay-hr{border:0;border-top:1px solid var(--line);margin:14px 0}.pay-sum .btn-line{width:auto;flex:none}
+
+/* pay record on the profile */
+.pay-fy{border-top:1px solid var(--line,rgba(0,0,0,.1));padding:8px 0}
+.pay-fy>summary{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;cursor:pointer;list-style:none;padding:6px 0}
+.pay-fy>summary::-webkit-details-marker{display:none}
+.pay-tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:6px 0 10px}
+.pay-tot>div{background:var(--soft,rgba(0,0,0,.04));border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.pay-tot span{font-size:12px;opacity:.7}
+.pay-hist{display:flex;flex-direction:column;gap:8px}
+.pay-h{border:1px solid var(--line,rgba(0,0,0,.1));border-radius:12px;padding:10px 12px;min-width:0}
+.pay-h1{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.pay-h1 code{font-size:12px;opacity:.7}
+.pay-net{margin-left:auto;font-weight:600}
+.pay-h2{margin-top:4px;line-height:1.5}
+.pay-h .emp-acts{margin-top:8px}
+.pay-copy{display:block;width:100%;height:auto;border-radius:8px;border:1px solid var(--line,rgba(0,0,0,.1))}
+.pay-h .emp-acts{flex-direction:row;flex-wrap:wrap}
+.pay-h .emp-acts .btn{width:auto;flex:0 0 auto}

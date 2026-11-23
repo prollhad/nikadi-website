@@ -351,3 +351,11 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   const sep = await call('deskPayrollMonth', { token: tok, month: '2026-09' }), rs = sep.rows.find(x => x.emp === 'NPPL-NGH-050');
   if (rs && rs.pt !== 110) throw new Error('old PT slab wrong: ' + rs.pt);
 }
+{ // signed paper payslip: replaces the older upload; shows in the person's pay record
+  const a = await call('deskPayslipSign', { token: tok, month: '2026-11', emp: 'NPPL-NGH-050', kind: 'paper', data: 'AAAA' });
+  const b = await call('deskPayslipSign', { token: tok, month: '2026-11', emp: 'NPPL-NGH-050', kind: 'paper', data: 'BBBB' });
+  const h = await call('deskEmpPay', { token: tok, id: 'NPPL-NGH-050' }), one = await call('deskEmployee', { token: tok, id: 'NPPL-NGH-050' }), no = await call('deskEmpPay', { id: 'NPPL-NGH-050' });
+  const slips = one.employee.docs.filter(d => d.kind === 'payslip');
+  console.log('signed slip', !!a.copyDoc, a.copyDoc !== b.copyDoc, slips.length, h.rows.length, h.rows[0].copyDoc === b.copyDoc, h.rows[0].net, no.error);
+  if (!a.copyDoc || a.copyDoc === b.copyDoc || slips.length !== 1 || h.rows[0].copyDoc !== b.copyDoc || h.rows[0].net !== 11200 || no.ok) throw new Error('signed payslip broken');
+}

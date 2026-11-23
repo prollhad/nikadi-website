@@ -73,6 +73,7 @@
     body.innerHTML = '<div class="emp-head"><span class="emp-ph big"' + (have.photo ? ' data-ph="' + esc(have.photo[0].id) + '"' : '') + '>' + esc(initials(e.name)) + '</span><div><h3>' + esc(e.name) + '</h3><p class="small">' + esc(e.job || '') + (e.director ? ' · Director' : '') + (e.status === 'Left' ? ' · left on ' + esc(dLong(e.left)) : '') + '</p><code class="emp-id">' + esc(e.id) + '</code></div></div>' +
       '<div class="emp-acts"><button class="btn btn-gold" type="button" id="epCard">Employee ID card</button><button class="btn btn-line" type="button" id="epEdit">Edit details</button></div>' +
       '<div class="panel"><div class="sec-h"><h2>Work</h2></div>' + row('Designation', e.job) + row('Date of joining', dLong(e.joined)) + row('Monthly salary', e.salary ? rs(e.salary) + (e.salaryNote ? ' · ' + e.salaryNote : '') : e.salaryNote) + row('Status', e.status) + '</div>' +
+      '<div class="panel" id="epPay"><div class="sec-h"><h2>Salary and payslips</h2></div><div class="loading">Loading the pay record…</div></div>' +
       '<div class="panel"><div class="sec-h"><h2>Personal</h2></div>' + row('Phone', e.phone) + row('Email', e.email) + row('Date of birth', dLong(e.dob)) + row('Gender', e.gender) + row('Blood group', e.blood) + row("Father's / husband's name", e.father) + row('Home address', e.address) + row('Emergency contact', [e.emName + (e.emRel ? ' (' + e.emRel + ')' : ''), e.emPhone].filter(Boolean).join(' · ')) + '</div>' +
       '<div class="panel"><div class="sec-h"><h2>Salary account</h2></div>' + (e.accNo || e.upi ? row('Account holder', e.accName) + row('Bank', [e.bank, e.branch].filter(Boolean).join(', ')) + row('Account no.', mask(e.accNo)) + row('IFSC', e.ifsc) + row('UPI', e.upi) : '<p class="small">Not added yet.</p>') + '</div>' +
       '<div class="panel"><div class="sec-h"><h2>ID numbers</h2></div>' + (e.aadhaar || e.pan || e.voter || e.uan || e.esic ? row('Aadhaar', mask(e.aadhaar)) + row('PAN', mask(e.pan)) + row('Voter ID', e.voter) + row('PF UAN', e.uan) + row('ESI no.', e.esic) : '<p class="small">Not added yet.</p>') + '</div>' +
@@ -85,6 +86,7 @@
       '<p class="small" id="epMsg" role="status"></p></div>' +
       '<div class="emp-acts"><button class="btn btn-quiet danger" type="button" id="epDel">Delete this profile</button></div>' +
       '<p class="small">Added ' + esc(e.added) + ' by ' + esc(e.by) + (e.edited ? ' · last change ' + esc(e.edited) : '') + '</p>';
+    payHistory($('#epPay', body), e);
     $$('[data-ph]', body).forEach(function (el) { photo(el.dataset.ph).then(function (u) { if (u) { el.style.backgroundImage = 'url(' + u + ')'; if (el.classList.contains('emp-ph')) el.textContent = ''; } }); });
     $('#epEdit', body).onclick = function () { C.closeSheet(); setTimeout(function () { edit(e); }, 60); };
     $('#epCard', body).onclick = function () { idCard(e, have.photo ? have.photo[0].id : ''); };
@@ -99,6 +101,38 @@
         upload(body, e, inp.dataset.up, files);
       };
     });
+  }
+  /* ---------- one person's pay, month by month, with totals for each financial year (April to March) ---------- */
+  function fy(m) { var y = +m.slice(0, 4), mo = +m.slice(5, 7), s0 = mo >= 4 ? y : y - 1; return s0 + '–' + String(s0 + 1).slice(2); }
+  function payHistory(box, e) {
+    if (!box) return;
+    C.api('deskEmpPay', { id: e.id }).then(function (r) {
+      var rows = r.rows || [], mn = window.NikadiPay ? NikadiPay.mName : function (m) { return m; };
+      if (!rows.length) { box.innerHTML = '<div class="sec-h"><h2>Salary and payslips</h2></div><p class="small">No salary months yet. Pay is worked out on “Salaries and payslips”; every month then shows here.</p>'; return; }
+      var groups = {}, order = [];
+      rows.forEach(function (x) { var k = fy(x.month); if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(x); });
+      function sum(list, k) { return list.reduce(function (t, x) { return t + (Number(x[k]) || 0); }, 0); }
+      function dedText(x) { var p = []; if (x.pt) p.push('Prof. tax ' + rs(x.pt)); if (x.adv) p.push('Advance ' + rs(x.adv)); if (x.tds) p.push('TDS ' + rs(x.tds)); if (x.pf) p.push('PF ' + rs(x.pf)); if (x.esi) p.push('ESI ' + rs(x.esi)); if (x.otherDed) p.push((x.otherNote || 'Other') + ' ' + rs(x.otherDed)); return p.join(' · '); }
+      box.innerHTML = '<div class="sec-h"><h2>Salary and payslips</h2><span class="small">every month on record · signed payslips are the uploaded copies</span></div>' + order.map(function (k, gi) {
+        var L = groups[k], fin = L.filter(function (x) { return x.status === 'Final'; });
+        return '<details class="pay-fy"' + (gi === 0 ? ' open' : '') + '><summary><b>Financial year ' + esc(k) + '</b><span class="small">' + fin.length + ' month' + (fin.length === 1 ? '' : 's') + ' paid · net ' + rs(sum(fin, 'net')) + '</span></summary>' +
+          '<div class="pay-tot"><div><span>Gross</span><b>' + rs(sum(fin, 'gross')) + '</b></div><div><span>Bonus / extra</span><b>' + rs(sum(fin, 'extra')) + '</b></div><div><span>Deductions</span><b>' + rs(sum(fin, 'ded')) + '</b></div><div><span>of which advances</span><b>' + rs(sum(fin, 'adv')) + '</b></div><div><span>Net paid</span><b>' + rs(sum(fin, 'net')) + '</b></div></div>' +
+          '<div class="pay-hist">' + L.map(function (x) {
+            var st = x.status !== 'Final' ? '<em class="ptag k-warn">Draft</em>' : x.copyDoc ? '<em class="ptag k-ok">Signed ✓</em>' : '<em class="ptag k-warn">Not signed yet</em>';
+            var bt = x.status !== 'Final' ? '' : x.copyDoc ? '<button class="btn btn-gold sm" type="button" data-pcopy="' + esc(x.month) + '" data-doc="' + esc(x.copyDoc) + '">Signed payslip</button>'
+              : '<button class="btn btn-line sm" type="button" data-pprint="' + esc(x.month) + '">Print payslip</button><button class="btn btn-gold sm" type="button" data-pup="' + esc(x.month) + '">Upload signed copy</button>';
+            return '<div class="pay-h"><div class="pay-h1"><b>' + esc(mn(x.month)) + '</b>' + st + (x.slipNo ? '<code>' + esc(x.slipNo) + '</code>' : '') + '<span class="pay-net">' + rs(x.net) + '</span></div>' +
+              '<div class="pay-h2 small">' + x.paidDays + ' of ' + x.days + ' days' + (x.lop ? ' (' + x.lop + ' unpaid)' : '') + ' · gross ' + rs(x.gross) + (x.extra ? ' · <b>extra ' + rs(x.extra) + '</b>' + (x.extraNote ? ' (' + esc(x.extraNote) + ')' : '') : '') +
+              (x.ded ? ' · <b>deductions ' + rs(x.ded) + '</b> (' + esc(dedText(x)) + ')' : ' · no deductions') + (x.paidOn ? ' · paid ' + esc(dLong(x.paidOn)) + ' by ' + esc(x.mode) : '') + '</div>' + (bt ? '<div class="emp-acts">' + bt + '</div>' : '') + '</div>';
+          }).join('') + '</div></details>';
+      }).join('');
+      if (!window.NikadiPay) return;
+      NikadiPay.use(C);
+      var again = function () { profile(e.id); };
+      $$('[data-pcopy]', box).forEach(function (b) { b.onclick = function () { NikadiPay.copy(e.id, again, b.dataset.pcopy, b.dataset.doc, 'Signed payslip · ' + e.name + ' · ' + mn(b.dataset.pcopy)); }; });
+      $$('[data-pprint]', box).forEach(function (b) { b.onclick = function () { NikadiPay.slips(e.id, false, b.dataset.pprint); }; });
+      $$('[data-pup]', box).forEach(function (b) { b.onclick = function () { NikadiPay.upload(e.id, again, b.dataset.pup); }; });
+    }, function (x) { box.innerHTML = '<div class="sec-h"><h2>Salary and payslips</h2></div><p class="err">' + esc(C.errText(x)) + '</p>'; });
   }
   /* kinds of document: how the picture is cut, and whether its details can be read */
   var MODE = { photo: 'photo', aadhaarF: 'card', aadhaarB: 'card', pan: 'card', voter: 'card', bank: 'page', cv: 'page', work: 'page', other: 'page' };

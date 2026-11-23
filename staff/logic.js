@@ -3044,14 +3044,22 @@ function deskCore(db, hooks) {
     });
     return api.payrollMonth({ token: req.token, month: month });
   };
-  /* the employee's acknowledgement: a signature made on the phone screen, or a photo of the signed paper payslip */
+  /* the employee's acknowledgement: the printed payslip, signed in ink, photographed or scanned and uploaded.
+     The signed copy is the payslip kept for that month; uploading again replaces it and the older photo goes to the Drive bin. */
   api.payslipSign = function (req) {
     var me = auth(req); needOwner(me);
     var r = find('payroll', 'id', String(req.month) + '|' + String(req.emp)); if (!r || r.removed) fail('not_found'); if (r.status !== 'Final') fail('not_final');
-    var paper = req.kind === 'paper', res = api.empDocSave({ token: req.token, emp: r.emp, kind: paper ? 'payslip' : 'paysign', data: req.data, label: r.month + (paper ? ' · ' + r.slipNo : '') });
-    var p = paper ? { copyDoc: res.doc.id } : { signDoc: res.doc.id, signed: stamp() };
-    if (paper && !r.signed) p.signed = stamp() + ' (paper)';
-    db.set('payroll', r, p); return { signed: r.signed, signDoc: r.signDoc, copyDoc: r.copyDoc };
+    var old = r.copyDoc, res = api.empDocSave({ token: req.token, emp: r.emp, kind: 'payslip', data: req.data, label: 'Signed payslip ' + r.month + ' · ' + r.slipNo });
+    db.set('payroll', r, { copyDoc: res.doc.id, signed: stamp() + ' · uploaded by ' + me.name });
+    if (old && old !== res.doc.id) { var od = find('empdocs', 'id', old); if (od && !od.removed) { db.set('empdocs', od, { removed: stamp() + ' · replaced' }); if (hooks.trashFile) try { hooks.trashFile(od.file); } catch (x) {} } }
+    return { signed: r.signed, copyDoc: r.copyDoc };
+  };
+  /* one person's pay, every month: for their profile */
+  api.empPay = function (req) {
+    var me = auth(req); needOwner(me);
+    var e = find('employees', 'id', req.id); if (!e || e.removed) fail('not_found');
+    var rows = db.all('payroll').filter(function (r) { return r.emp === e.id && !r.removed; }).map(payView).sort(function (a, b) { return a.month < b.month ? 1 : -1; });
+    return { emp: e.id, rows: rows };
   };
   api.payrollReopen = function (req) {
     var me = auth(req); needOwner(me);
