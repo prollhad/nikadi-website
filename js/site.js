@@ -1787,3 +1787,30 @@ try{
 }catch(e){}})();
 
 }catch(e){console.error("[nikadi part 30]",e);}
+/* part 31 */
+try{
+
+/* One tick before any WhatsApp chat: the guest agrees to booking, update, bill and review messages. Remembered on this device. */
+(function(){
+  var K='nk-wa-ok',gate=document.getElementById('waGate'),ok=document.getElementById('wgOk'),err=document.getElementById('wgErr'),pending=null,open0=window.open;
+  function has(){try{return localStorage.getItem(K)==='1';}catch(e){return false;}}
+  function set(){try{localStorage.setItem(K,'1');}catch(e){}}
+  function isWa(u){return /^https:\/\/(wa\.me|api\.whatsapp\.com)\//i.test(String(u||''));}
+  function T(x){return window.nkT?nkT(x):x;}
+  function ask(url){pending=url;ok.checked=false;err.textContent='';gate.hidden=false;ok.focus();}
+  document.getElementById('wgNo').onclick=function(){gate.hidden=true;pending=null;};
+  gate.addEventListener('click',function(e){if(e.target===gate){gate.hidden=true;pending=null;}});
+  document.getElementById('wgGo').onclick=function(){
+    if(!ok.checked){err.textContent=T('Please tick the box to continue.');return;}
+    set();gate.hidden=true;var u=pending;pending=null;if(u)open0.call(window,u,'_blank','noopener');
+  };
+  /* the ticks inside the forms count too */
+  ['a_wa','r_wa','m_wa'].forEach(function(id){var c=document.getElementById(id);if(c)c.addEventListener('change',function(){if(c.checked)set();});});
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a[href]');if(!a||!isWa(a.href)||has())return;
+    e.preventDefault();e.stopImmediatePropagation();ask(a.href);
+  },true);
+  window.open=function(u){if(isWa(u)&&!has()){ask(u);return null;}return open0.apply(window,arguments);};
+})();
+
+}catch(e){console.error("[nikadi part 31]",e);}

@@ -2839,7 +2839,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         </div>
         <div class="policy-box" style="margin-bottom:16px"><p class="kicker">Advance and cancellation policy</p><p>To confirm a booking we need an advance of <b>50% of the total room price</b>. Cancel <b>3 or more days before check-in</b> and we refund the full advance. Cancellations less than 3 days before check-in, on the day of arrival, or no-shows are <b class="nref">not refunded</b>, and the advance cannot be moved to another date.</p></div>
         <div class="grid">
-          <label class="agree full"><input type="checkbox" id="a_wa" data-l="WhatsApp updates"> Send me my booking confirmation and bill on WhatsApp (+91 75011 01137). Reply STOP any time to stop.</label>
+          <label class="agree full wa-ok"><input type="checkbox" id="a_wa" required data-l="Agreed to WhatsApp messages (booking, updates, bill, review)"> I agree that Nikadi Guest House may message me on WhatsApp (+91 75011 01137) about my booking, updates, my bill and a review request. I can reply STOP any time.</label>
           <label class="agree full"><input type="checkbox" id="a_agree" required data-l="Agreed to house rules"> I confirm these details are correct and I agree to the house rules of Nikadi Guest House.</label>
           <label class="agree full"><input type="checkbox" id="a_cpol" required data-l="Agreed to cancellation policy"> I agree to the advance and cancellation policy: 50% advance; full refund only if cancelled 3 or more days before check-in; <span class="nref">no refund after that or for a no-show</span>.</label>
           <label class="fld"><span>Type your full name as signature <i>*</i></span><input id="a_sig" required data-l="Guest signature (typed)"></label>
@@ -2963,6 +2963,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
           </ol>
         </div>
         <div class="grid">
+          <label class="agree full wa-ok"><input type="checkbox" id="r_wa" required data-l="Agreed to WhatsApp messages (booking, updates, bill, review)"> I agree that Nikadi Guest House may message me on WhatsApp (+91 75011 01137) about my booking, updates, my bill and a review request. I can reply STOP any time.</label>
           <label class="agree full"><input type="checkbox" id="r_agree" required data-l="Agreed to Terms &amp; Conditions"> I confirm the above details are correct. I have read and understood the Terms &amp; Conditions of Stay, agree to abide by them, and accept that any fine or charge arising from them may be added to my bill.</label>
           <label class="fld"><span>Type your full name as signature <i>*</i></span><input id="r_sig" required data-l="Guest signature (typed)"></label>
         </div>
@@ -3005,6 +3006,7 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
       </fieldset>
       <fieldset><legend>Agreement</legend>
         <div class="grid">
+          <label class="agree full wa-ok"><input type="checkbox" id="m_wa" required data-l="Agreed to WhatsApp messages (booking, updates, bill, review)"> I agree that Nikadi Guest House may message me on WhatsApp (+91 75011 01137) about my booking, updates, my bill and a review request. I can reply STOP any time.</label>
           <label class="agree full"><input type="checkbox" id="m_agree" required data-l="Agreed to membership terms"> I agree to the Nikadi Membership terms. I understand points are earned on room tariff paid and are added after check-out.</label>
         </div>
       </fieldset>
@@ -5147,6 +5149,47 @@ setInterval(function(){if(document.hidden)return;im[i].classList.remove('on');i=
   document.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;if(!a)return;var h=a.getAttribute('href')||'';
     if(/wa\.me|whatsapp\.com/.test(h))send({ev:'wa'});else if(/^tel:/.test(h))send({ev:'call'});else if(/\/app\/|membership/.test(h))send({ev:'join'});},true);
 }catch(e){}})();
+</script>
+<style>
+.wa-gate{position:fixed;inset:0;z-index:9999;background:rgba(8,10,20,.62);display:flex;align-items:center;justify-content:center;padding:16px}
+.wa-gate[hidden]{display:none}
+.wa-gate .wg{background:#121a33;color:#f3ede0;border:1px solid rgba(216,181,106,.4);max-width:440px;width:100%;border-radius:16px;padding:22px 20px;box-shadow:0 20px 60px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:14px}
+.wa-gate h3{margin:0;font-size:1.3rem;color:#e6c98a}
+.wa-gate .agree{font-size:.95rem}
+.wa-gate .wg-err{color:#ff8a7a;font-size:.85rem;min-height:1em;margin:0}
+.wa-gate .wg-b{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.wa-gate .wg-b .btn{width:auto;flex:1 1 auto}
+.wa-gate .agree input{accent-color:#d8b56a;width:20px;height:20px;flex:none}
+</style>
+<div class="wa-gate" id="waGate" hidden role="dialog" aria-modal="true" aria-labelledby="wgT"><div class="wg">
+<h3 id="wgT">Before you message us on WhatsApp</h3>
+<label class="agree"><input type="checkbox" id="wgOk"> I agree that Nikadi Guest House may message me on WhatsApp (+91 75011 01137) about my booking, updates, my bill and a review request. I can reply STOP any time.</label>
+<p class="wg-err" id="wgErr" role="alert"></p>
+<div class="wg-b"><button type="button" class="btn btn-line" id="wgNo">Cancel</button><button type="button" class="btn btn-gold" id="wgGo">Continue to WhatsApp</button></div>
+</div></div>
+<script>
+/* One tick before any WhatsApp chat: the guest agrees to booking, update, bill and review messages. Remembered on this device. */
+(function(){
+  var K='nk-wa-ok',gate=document.getElementById('waGate'),ok=document.getElementById('wgOk'),err=document.getElementById('wgErr'),pending=null,open0=window.open;
+  function has(){try{return localStorage.getItem(K)==='1';}catch(e){return false;}}
+  function set(){try{localStorage.setItem(K,'1');}catch(e){}}
+  function isWa(u){return /^https:\/\/(wa\.me|api\.whatsapp\.com)\//i.test(String(u||''));}
+  function T(x){return window.nkT?nkT(x):x;}
+  function ask(url){pending=url;ok.checked=false;err.textContent='';gate.hidden=false;ok.focus();}
+  document.getElementById('wgNo').onclick=function(){gate.hidden=true;pending=null;};
+  gate.addEventListener('click',function(e){if(e.target===gate){gate.hidden=true;pending=null;}});
+  document.getElementById('wgGo').onclick=function(){
+    if(!ok.checked){err.textContent=T('Please tick the box to continue.');return;}
+    set();gate.hidden=true;var u=pending;pending=null;if(u)open0.call(window,u,'_blank','noopener');
+  };
+  /* the ticks inside the forms count too */
+  ['a_wa','r_wa','m_wa'].forEach(function(id){var c=document.getElementById(id);if(c)c.addEventListener('change',function(){if(c.checked)set();});});
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a[href]');if(!a||!isWa(a.href)||has())return;
+    e.preventDefault();e.stopImmediatePropagation();ask(a.href);
+  },true);
+  window.open=function(u){if(isWa(u)&&!has()){ask(u);return null;}return open0.apply(window,arguments);};
+})();
 </script>
 </body>
 </html>
