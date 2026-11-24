@@ -314,3 +314,7 @@ main{flex:1;padding-block:22px 28px;display:grid;gap:22px;align-content:start}
 .mcard.art .mc-ptsr{order:-1;justify-items:start;text-align:left;grid-auto-flow:column;align-items:baseline;gap:6px}
 .mcard.art .mc-ptsr b{font-size:1.45rem}
 .mcard.art .mc-ptsr small{display:none}
+
+.note.review{border-color:var(--gold,#d8b56a)}
+.note.review ul{margin:8px 0;padding-left:18px;display:grid;gap:4px}
+.note.review .btn{margin-top:8px;width:auto}

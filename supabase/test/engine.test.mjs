@@ -409,3 +409,11 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('member edit', first.type, first.points, bal0, '→', h1.member.points, e1.ok, e2.ok, e3.error, e4.error, e5.ok, h1.member.dob, corr.length, corr[0] && corr[0].note);
   if (!e1.ok || !e2.ok || e3.error !== 'no_change' || e4.error !== 'note_required' || !e5.ok || h1.member.points !== bal0 - first.points + 30 || h1.member.dob !== '2001-03-09' || corr.length !== 2) throw new Error('member edit broken');
 }
+{ // the member sees the Manager's changes once after logging in
+  const lg = await call('login', { phone: '9123456789', password: 'secret123' });
+  const me = await call('me', { token: lg.token });
+  const seen = await call('reviewSeen', { token: lg.token });
+  const me2 = await call('me', { token: lg.token });
+  console.log('member review', lg.ok || lg.error, (me.member.review || []).map(x => x.text).join(' | '), seen.ok, (me2.member.review || []).length);
+  if (!lg.ok || (me.member.review || []).length !== 3 || !seen.ok || (me2.member.review || []).length !== 0) throw new Error('member review notice broken');
+}

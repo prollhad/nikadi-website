@@ -293,7 +293,7 @@
     var upcoming=(S.stays.bookings||[]).filter(function(b){return (b.status==='Pending'||b.status==='Confirmed')&&b.checkout>=today();});
     if(S.tab==='card'){
       show('<div style="display:grid;gap:6px"><p class="kicker">Hare Krishna</p><h1 class="title">'+nkEsc(m.firstName)+'</h1></div>'+
-        cardHTML(m)+tierProgress(m)+
+        reviewHTML(m)+cardHTML(m)+tierProgress(m)+
         '<div class="perks"><div><b>'+t.discount+'%</b><span>off every booking</span></div><div><b>'+(t.earn%1?t.earn.toFixed(1):t.earn)+'</b><span>points per ₹100</span></div><div><b>'+m.nights2y+'</b><span>nights in '+S.cfg.windowYears+' years</span></div></div>'+
         (upcoming.length?'<div style="display:grid;gap:10px"><p class="kicker">Your next stay</p>'+bookingHTML(upcoming.slice().sort(function(x,y){return x.checkin<y.checkin?-1:1;})[0])+'</div>':'')+
         '<div class="links"><button class="btn btn-gold" type="button" id="bookNow">Book at your member rate</button><a class="btn btn-line" href="'+nkWa('Hare Krishna! I am a Nikadi '+(m.tier||'')+' member ('+m.masked+').')+'" target="_blank" rel="noopener">WhatsApp us</a></div>'+
@@ -301,7 +301,7 @@
           '<ul class="perks-list compact">'+perksOf(m.tierKey).slice(0,6).map(function(p){return '<li class="perk"><span class="pk-ic">'+ICON_CHECK+'</span><span class="pk-t">'+nkEsc(p.text)+'</span></li>';}).join('')+'</ul>'+
           '<button class="btn btn-line" type="button" id="benMore">See all your benefits</button></div>'+
         '<div style="display:grid;gap:12px"><p class="kicker">Levels</p>'+ladderHTML(m.tierKey)+'<p class="small">Tap a level to see what it includes.</p></div>'+installHTML());
-      animateFill();wireInstall();$('bookNow').onclick=function(){dash('book');};
+      animateFill();wireInstall();wireReview();$('bookNow').onclick=function(){dash('book');};
       $('allBen').onclick=$('benMore').onclick=function(){S.lvl=m.tierKey;dash('benefits');};
       view.querySelectorAll('[data-rung]').forEach(function(r){r.onclick=function(){S.lvl=r.dataset.rung;dash('benefits');};});
     } else if(S.tab==='benefits'){
@@ -375,9 +375,17 @@
     }
   }
   function rewardHTML(path,title,sub,tag,on){return '<div class="reward"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg></span><div><h3>'+title+'</h3><p>'+sub+'</p></div><span class="tag'+(on?' on':'')+'">'+tag+'</span></div>';}
+  /* the owner changed points or details: tell the member once, until they tap OK */
+  function reviewHTML(m){var l=m.review||[];if(!l.length)return '';
+    return '<div class="note review" id="revBox" role="status"><b>Your profile has been reviewed</b>Your profile has been reviewed and some changes have been made by the Manager:'+
+      '<ul>'+l.map(function(x){return '<li>'+nkEsc(x.text)+' <span class="small">('+nkEsc(x.at)+')</span></li>';}).join('')+'</ul>'+
+      '<p class="small">Your points balance now: <b>'+Number(m.points).toLocaleString('en-IN')+'</b>. Questions? Message us on WhatsApp.</p><button class="btn btn-line" type="button" id="revOk">OK, got it</button></div>';}
+  function wireReview(){var b=$('revOk');if(!b)return;b.onclick=function(){busy(b,true);nkApi('reviewSeen',{token:S.token}).then(function(){S.member.review=[];var x=$('revBox');if(x)x.remove();},function(){busy(b,false);toast('Could not save. Try again.');});};}
   function actHTML(a){
-    var p=Number(a.points)||0,label={Welcome:'Welcome bonus',Stay:'Stay',Redeem:'Redeemed',Adjustment:'Adjustment'}[a.type]||a.type;
-    var desc=a.note&&a.note!==label?a.note:'';
+    var p=Number(a.points)||0,label={Welcome:'Welcome bonus',Stay:'Stay',Redeem:'Redeemed',Adjustment:'Adjustment',Birthday:'Birthday bonus',Correction:'Changed by the Manager',Note:'Profile updated by the Manager'}[a.type]||a.type;
+    var desc=a.note&&a.note!==label?String(a.note).replace(/\s*\[#\d+\]$/,''):'';
+    if(a.type==='Note')desc=/birth/i.test(desc)?'Date of birth updated':'';
+    if(a.type==='Correction')desc=desc.replace(/ · .*$/,'');
     return '<div class="act"><span class="t">'+nkEsc(label)+(desc?' · '+nkEsc(desc):'')+'</span><span class="p '+(p>=0?'plus':'minus')+'">'+(p>=0?'+':'')+p+'<small>bal '+nkEsc(a.balance)+'</small></span><span class="d">'+nkEsc(String(a.date).replace(/T.*$/,''))+(a.amount?' · '+nkInr(a.amount):'')+'</span></div>';
   }
   tabs.addEventListener('click',function(e){var t=e.target.closest('.tab');if(t)dash(t.dataset.tab);});

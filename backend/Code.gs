@@ -160,7 +160,7 @@ function doPost(e) {
   try { req = JSON.parse(e.postData.contents || '{}'); } catch (err) { return json_({ ok: false, error: 'bad_request' }); }
   var actions = {
     config: apiConfig_, lookup: apiLookup_, join: apiJoin_, otpSend: apiOtpSend_, otpVerify: apiOtpVerify_, me: apiMe_,
-    login: apiLogin_, passStart: apiPassStart_, passSet: apiPassSet_, book: apiBook_,
+    login: apiLogin_, reviewSeen: apiReviewSeen_, passStart: apiPassStart_, passSet: apiPassSet_, book: apiBook_,
     payConfig: payConfig_, payOrder: payOrder_, payVerify: payVerify_,
     staffLogin: staffLogin_, staffMember: staffMember_, staffCreate: staffCreate_, staffAddStay: staffAddStay_,
     staffRedeemStart: staffRedeemStart_, staffRedeemConfirm: staffRedeemConfirm_, staffAdjust: staffAdjust_, staffRecent: staffRecent_
@@ -278,6 +278,7 @@ function publicMember_(m) {
     next: t.next ? { name: t.next.name, need: t.need, nights: t.next.nights } : null, hasPassword: !!m.pass,
     phone: m.phone, masked: maskPhone_(m.phone), name: m.name, firstName: firstName_(m.name), email: m.email, city: m.city,
     joined: m.joined ? fmtDate_(m.joined) : '', points: m.points, lifetime: m.lifetime, status: m.status,
+    review: reviewGet_(m.phone),
     freeNightPoints: num_(s.FREE_NIGHT_POINTS, 500), discountPoints: num_(s.DISCOUNT_POINTS, 100), discountValue: num_(s.DISCOUNT_VALUE, 500)
   };
 }
@@ -432,6 +433,19 @@ function membersAdmin_() {
   return { list: list, recent: history_(null, 15) };
 }
 
+/** Changes the owner made to a member's points or profile, shown to the member once in the app (until they tap OK). */
+function reviewGet_(phone) { try { var v = PropertiesService.getScriptProperties().getProperty('NK_REV_' + phone); return v ? JSON.parse(v) : []; } catch (e) { return []; } }
+function reviewAdd_(phone, text) {
+  var l = reviewGet_(phone); l.push({ at: Utilities.formatDate(new Date(), 'Asia/Kolkata', 'd MMM yyyy'), text: text });
+  PropertiesService.getScriptProperties().setProperty('NK_REV_' + phone, JSON.stringify(l.slice(-20)));
+}
+function apiReviewSeen_(req) {
+  var phone = sessionGet_(req.token, 'member');
+  PropertiesService.getScriptProperties().deleteProperty('NK_REV_' + phone);
+  return { ok: true };
+}
+function prettyDob_(d) { if (!d) return ''; var x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : Utilities.formatDate(x, 'Asia/Kolkata', 'd MMMM yyyy'); }
+
 /** Owner's corrections from the admin page (staff app action deskMemberEdit):
     tx  = change the points of one entry (a wrong birthday bonus, a welcome bonus, a stay): written as a Correction entry that points back to it,
     dob = change the date of birth, add = add or take away points with a reason. Nothing in the history is deleted. */
@@ -443,6 +457,7 @@ function memberAdminEdit_(req, by) {
     var d = String(req.dob || '').trim();
     if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error('bad_date');
     sheet_('members').getRange(m.row, 5).setValue(d ? "'" + d : '');
+    reviewAdd_(m.phone, d ? 'Your date of birth was updated to ' + prettyDob_(d) + '.' : 'Your date of birth was removed.');
     addTx_(m, 'Note', '', 0, 'Date of birth changed ' + (m.dob ? (m.dob instanceof Date ? Utilities.formatDate(m.dob, 'Asia/Kolkata', 'yyyy-MM-dd') : String(m.dob).replace(/^'/, '')) : 'none') + ' → ' + (d || 'none') + (why ? ' · ' + why : ''), by, true);
     return { ok: true };
   }
@@ -451,6 +466,7 @@ function memberAdminEdit_(req, by) {
     var p = Math.round(num_(req.points, 0));
     if (!p || Math.abs(p) > 100000) throw new Error('invalid_points');
     addTx_(m, 'Adjustment', '', p, why, by, true);
+    reviewAdd_(m.phone, p > 0 ? p + ' points were added to your account.' : (-p) + ' points were taken off your account.');
     if (p < 0) { m.lifetime = Math.max(0, m.lifetime + p); sheet_('members').getRange(m.row, 8).setValue(m.lifetime); }
     return { ok: true };
   }
@@ -466,6 +482,7 @@ function memberAdminEdit_(req, by) {
   sh.getRange(2, 1, n - 1, 9).getValues().forEach(function (x) { if (x[3] === 'Correction' && String(x[7]).indexOf(tag) >= 0 && String(x[1]).replace(/^'/, '') === m.phone) now += num_(x[5], 0); });
   var delta = target - now;
   if (!delta) throw new Error('no_change');
+  reviewAdd_(m.phone, ({ Birthday: 'Your birthday bonus', Welcome: 'Your welcome bonus', Stay: 'Your stay points', Adjustment: 'Your bonus points' }[r[3]] || 'Your ' + String(r[3]).toLowerCase() + ' points') + ' of ' + fmtDate_(r[0]).replace(/,.*/, '') + ' changed from ' + now + ' to ' + target + ' points.');
   addTx_(m, 'Correction', '', delta, r[3] + ' of ' + fmtDate_(r[0]).replace(/,.*/, '') + ': ' + now + ' → ' + target + ' points · ' + why + ' ' + tag, by, true);
   if (delta < 0) { m.lifetime = Math.max(0, m.lifetime + delta); sheet_('members').getRange(m.row, 8).setValue(m.lifetime); }
   return { ok: true, points: m.points };

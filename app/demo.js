@@ -22,7 +22,7 @@
         { date: "18 Aug 2026, 8:40 AM", type: "Stay", amount: 15000, points: 150, balance: 445, note: "3 nights · Deluxe Double" },
         { date: "3 Mar 2026, 9:05 AM", type: "Stay", amount: 19500, points: 195, balance: 295, note: "Gaura Purnima · 4 nights" },
         { date: "14 Jan 2026, 2:15 PM", type: "Welcome", amount: "", points: 100, balance: 100, note: "Welcome bonus" }
-      ] }
+      ], review: [{ at: "24 Nov 2026", text: "Your birthday bonus of 5 Nov 2026 changed from 50 to 0 points." }, { at: "24 Nov 2026", text: "Your date of birth was updated to 12 March 1995." }] }
   };
   var pending = null;
   function mask(p) { return p.slice(0, 2) + "******" + p.slice(-2); }
@@ -30,7 +30,7 @@
     var n = m.nights || 0, t = n >= 100 ? TIERS[3] : n >= 40 ? TIERS[2] : n >= 15 ? TIERS[1] : TIERS[0], i = TIERS.indexOf(t), next = TIERS[i + 1];
     return { t: t, next: next ? { name: next.name, need: next.nights - n, nights: next.nights } : null };
   }
-  function pub(m) { var x = tierOf(m); return { phone: m.phone, masked: mask(m.phone), name: m.name, firstName: m.name.split(" ")[0], city: m.city, email: m.email || "radha@example.com", joined: m.joined, points: m.points, lifetime: m.lifetime, status: m.status,
+  function pub(m) { var x = tierOf(m); return { review: m.review || [], phone: m.phone, masked: mask(m.phone), name: m.name, firstName: m.name.split(" ")[0], city: m.city, email: m.email || "radha@example.com", joined: m.joined, points: m.points, lifetime: m.lifetime, status: m.status,
     freeNightPoints: 500, discountPoints: 100, discountValue: 500, tier: x.t.name, tierKey: x.t.key, discount: x.t.discount, earn: x.t.earn, nights2y: m.nights || 0, nightsAll: m.nights || 0,
     plusUntil: x.t.key === "plus" ? "13 Nov 2036" : "", next: x.next, hasPassword: !!m.pw, perks: [] }; }
   function full(m) { return { token: "demo-" + m.phone, member: pub(m), history: m.hist, stays: m.stays || { stays: [], bookings: [] } }; }
@@ -65,6 +65,7 @@
           return ok({ booking: id, rate: rate, stays: m.stays });
         case "otpSend": phone = get(d.phone); if (!members[phone]) return fail("not_member"); return ok({ channel: "sms", to: mask(phone) + " (demo code 123456)" });
         case "otpVerify": phone = get(d.phone); if (d.code !== "123456") return fail("otp_wrong"); m = members[phone]; return ok(full(m));
+        case "reviewSeen": m = members[String(d.token).replace("demo-", "")]; if (m) m.review = []; return ok({});
         case "me": m = members[String(d.token).replace("demo-", "")]; if (!m) return fail("not_logged_in"); return ok(full(m));
         case "staffLogin": if (String(d.pin) !== "2468") return fail("wrong_pin"); return ok({ token: "demo-staff", config: cfg });
         case "staffMember": phone = get(d.phone); m = members[phone]; return ok(m ? { found: true, member: pub(m), history: m.hist } : { found: false, phone: phone });
