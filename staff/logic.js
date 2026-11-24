@@ -3137,6 +3137,13 @@ function deskCore(db, hooks) {
       return { id: x.id, walkin: true, status: x.status === 'Checked out' ? 'Checked out' : x.status || 'Checked in', source: 'Walk-in', guest: x.guest, phone: x.phone, rooms: String(x.room), roomType: '', guests: Number(x.guests) || 0,
         checkin: x.checkin, checkout: x.checkout, nights: Number(x.nights) || 0, total: Number(x.roomTotal) || 0, advancePaid: Number(x.paid) || 0, refunded: 0, created: String(x.inAt || x.checkin || ''), by: x.inBy || '' }; });
   }
+  /* The owner corrects membership points (a wrong birthday bonus, any bonus) or a member's date of birth. Owner only; nothing is deleted. */
+  api.memberEdit = function (req) {
+    var me = auth(req); needOwner(me);
+    if (!hooks.memberEdit) fail('not_available');
+    try { return hooks.memberEdit({ phone: req.phone, kind: String(req.kind || ''), row: req.row, points: req.points, dob: req.dob, reason: req.reason }, me.name + ' (owner)'); }
+    catch (e) { fail(String(e && e.message || e)); }
+  };
   api.siteHistory = function (req) {
     var me = auth(req); if (!canApprove(me)) fail('not_allowed');
     var what = String(req.what || ''), t = today();

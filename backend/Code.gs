@@ -288,15 +288,15 @@ function history_(phone, limit) {
   for (var i = vals.length - 1; i >= 0 && out.length < (limit || 50); i--) {
     var r = vals[i];
     if (phone && String(r[1]) !== phone) continue;
-    out.push({ date: fmtDate_(r[0]), phone: String(r[1]), name: r[2], type: r[3], amount: r[4], points: r[5], balance: r[6], note: r[7] });
+    out.push({ row: i + 2, date: fmtDate_(r[0]), phone: String(r[1]), name: r[2], type: r[3], amount: r[4], points: r[5], balance: r[6], note: r[7], by: String(r[8] || '') });
   }
   return out;
 }
 
 /** Adds a transaction and updates the member's balance. Returns the new balance. */
-function addTx_(m, type, amount, points, note, by) {
+function addTx_(m, type, amount, points, note, by, allowNeg) {
   var newBal = m.points + points;
-  if (newBal < 0) throw new Error('insufficient_points');
+  if (newBal < 0 && !allowNeg) throw new Error('insufficient_points');
   var ms = sheet_('members');
   ms.getRange(m.row, 7).setValue(newBal);
   if (points > 0) ms.getRange(m.row, 8).setValue(m.lifetime + points);
@@ -425,10 +425,50 @@ function membersAdmin_() {
   if (n >= 2) sh.getRange(2, 1, n - 1, TABS.members.length).getValues().forEach(function (r) {
     var ph = String(r[0]).replace(/^'/, ''); if (!ph) return;
     var j = r[5] ? new Date(r[5]) : null;
-    list.push({ phone: ph, name: String(r[1] || ''), city: String(r[3] || ''), joined: j && !isNaN(j) ? Utilities.formatDate(j, 'Asia/Kolkata', 'yyyy-MM-dd') : '',
+    var db0 = r[4] instanceof Date ? Utilities.formatDate(r[4], 'Asia/Kolkata', 'yyyy-MM-dd') : String(r[4] || '').replace(/^'/, '');
+    list.push({ phone: ph, name: String(r[1] || ''), city: String(r[3] || ''), dob: db0, joined: j && !isNaN(j) ? Utilities.formatDate(j, 'Asia/Kolkata', 'yyyy-MM-dd') : '',
       points: num_(r[6], 0), lifetime: num_(r[7], 0), status: String(r[8] || 'Active'), tier: String(r[11] || 'Silver'), nights2y: num_(r[13], 0), nightsAll: num_(r[14], 0), hasPassword: !!r[10], email: !!r[2] });
   });
   return { list: list, recent: history_(null, 15) };
+}
+
+/** Owner's corrections from the admin page (staff app action deskMemberEdit):
+    tx  = change the points of one entry (a wrong birthday bonus, a welcome bonus, a stay): written as a Correction entry that points back to it,
+    dob = change the date of birth, add = add or take away points with a reason. Nothing in the history is deleted. */
+function memberAdminEdit_(req, by) {
+  var m = findMember_(normPhone_(req.phone));
+  if (!m) throw new Error('not_member');
+  var why = clean_(req.reason, 150);
+  if (req.kind === 'dob') {
+    var d = String(req.dob || '').trim();
+    if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error('bad_date');
+    sheet_('members').getRange(m.row, 5).setValue(d ? "'" + d : '');
+    addTx_(m, 'Note', '', 0, 'Date of birth changed ' + (m.dob ? (m.dob instanceof Date ? Utilities.formatDate(m.dob, 'Asia/Kolkata', 'yyyy-MM-dd') : String(m.dob).replace(/^'/, '')) : 'none') + ' → ' + (d || 'none') + (why ? ' · ' + why : ''), by, true);
+    return { ok: true };
+  }
+  if (!why) throw new Error('note_required');
+  if (req.kind === 'add') {
+    var p = Math.round(num_(req.points, 0));
+    if (!p || Math.abs(p) > 100000) throw new Error('invalid_points');
+    addTx_(m, 'Adjustment', '', p, why, by, true);
+    if (p < 0) { m.lifetime = Math.max(0, m.lifetime + p); sheet_('members').getRange(m.row, 8).setValue(m.lifetime); }
+    return { ok: true };
+  }
+  if (req.kind !== 'tx') throw new Error('bad_request');
+  var row = Math.round(num_(req.row, 0)), sh = sheet_('tx');
+  if (row < 2 || row > sh.getLastRow()) throw new Error('not_found');
+  var r = sh.getRange(row, 1, 1, 9).getValues()[0];
+  if (String(r[1]).replace(/^'/, '') !== m.phone) throw new Error('not_found');
+  if (r[3] === 'Correction' || r[3] === 'Redeem' || r[3] === 'Note') throw new Error('cannot_edit');
+  var target = Math.round(num_(req.points, NaN));
+  if (!(target >= 0 && target <= 100000)) throw new Error('invalid_points');
+  var tag = '[#' + row + ']', now = num_(r[5], 0), n = sh.getLastRow();
+  sh.getRange(2, 1, n - 1, 9).getValues().forEach(function (x) { if (x[3] === 'Correction' && String(x[7]).indexOf(tag) >= 0 && String(x[1]).replace(/^'/, '') === m.phone) now += num_(x[5], 0); });
+  var delta = target - now;
+  if (!delta) throw new Error('no_change');
+  addTx_(m, 'Correction', '', delta, r[3] + ' of ' + fmtDate_(r[0]).replace(/,.*/, '') + ': ' + now + ' → ' + target + ' points · ' + why + ' ' + tag, by, true);
+  if (delta < 0) { m.lifetime = Math.max(0, m.lifetime + delta); sheet_('members').getRange(m.row, 8).setValue(m.lifetime); }
+  return { ok: true, points: m.points };
 }
 
 /* ---------------- Passwords ---------------- */

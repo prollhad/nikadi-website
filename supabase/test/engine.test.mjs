@@ -393,3 +393,19 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('wa consent booking', no.error, yes.ok || yes.error);
   if (no.error !== 'wa_consent_needed' || !yes.ok) throw new Error('booking consent rule broken');
 }
+{ // owner corrects membership points (a wrong birthday bonus etc.) and the date of birth
+  const j9 = await call('join', { name: 'Bday Tester', phone: '9123456789', city: 'Kolkata', email: '', password: 'secret123', dob: '1990-01-01' });
+  if (!j9.ok) throw new Error('join for member edit failed ' + j9.error);
+  const h0 = await call('deskSiteHistory', { token: tok, what: 'member', phone: '9123456789' });
+  const first = h0.tx.filter(t => t.points > 0 && t.type !== 'Correction').pop();
+  const bal0 = h0.member.points;
+  const e1 = await call('deskMemberEdit', { token: tok, phone: '9123456789', kind: 'tx', row: first.row, points: 0, reason: 'wrong birthday' });
+  const e2 = await call('deskMemberEdit', { token: tok, phone: '9123456789', kind: 'tx', row: first.row, points: 30, reason: 'half back' });
+  const e3 = await call('deskMemberEdit', { token: tok, phone: '9123456789', kind: 'tx', row: first.row, points: 30, reason: 'same' });
+  const e4 = await call('deskMemberEdit', { token: tok, phone: '9123456789', kind: 'add', points: -10 });
+  const e5 = await call('deskMemberEdit', { token: tok, phone: '9123456789', kind: 'dob', dob: '2001-03-09' });
+  const h1 = await call('deskSiteHistory', { token: tok, what: 'member', phone: '9123456789' });
+  const corr = h1.tx.filter(t => t.type === 'Correction');
+  console.log('member edit', first.type, first.points, bal0, '→', h1.member.points, e1.ok, e2.ok, e3.error, e4.error, e5.ok, h1.member.dob, corr.length, corr[0] && corr[0].note);
+  if (!e1.ok || !e2.ok || e3.error !== 'no_change' || e4.error !== 'note_required' || !e5.ok || h1.member.points !== bal0 - first.points + 30 || h1.member.dob !== '2001-03-09' || corr.length !== 2) throw new Error('member edit broken');
+}
