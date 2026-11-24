@@ -1790,6 +1790,127 @@ try{
 /* part 31 */
 try{
 
+/* Nikadi date picker: replaces the browser's date boxes for check-in / check-out (and single dates) with one calm calendar.
+   The real <input type=date> stays in the form (hidden) and keeps an ISO value, so every existing script works unchanged. */
+(function(){
+  var T=function(x){return window.nkT?nkT(x):x;},LANG=(document.documentElement.lang||'en')+'-IN';
+  function ist(){return new Date(Date.now()+330*60000).toISOString().slice(0,10);}
+  function d(iso){return new Date(iso+'T12:00:00Z');}
+  function iso(x){return x.toISOString().slice(0,10);}
+  function add(s,n){var x=d(s);x.setUTCDate(x.getUTCDate()+n);return iso(x);}
+  function diff(a,b){return Math.round((d(b)-d(a))/864e5);}
+  function fmt(s,o){try{return d(s).toLocaleDateString(LANG,Object.assign({timeZone:'UTC'},o));}catch(e){return s;}}
+  function nice(s){return fmt(s,{day:'numeric',month:'short'})+' '+s.slice(0,4);}
+  function wd(s){return fmt(s,{weekday:'long'});}
+  var FEST={};(window.NK_CAL||[]).forEach(function(e){if(e.c&&e.c.indexOf('f')>=0){var a=e.d,b=e.e||e.d;for(var x=a;x<=b;x=add(x,1)){FEST[x]=e;if(x>'2099')break;}}});
+  function price(room,s){var R=window.NikadiRates;if(!R||!room)return null;try{var r=R.rate(room,s),u=R.standard?R.standard(room):r;return {r:r,offer:r<u};}catch(e){return null;}}
+  function k(n){return n>=1000?'₹'+(Math.round(n/100)/10)+'k':'₹'+n;}
+  /* keep the visible text in step when other scripts set .value */
+  var desc=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+  function watch(inp,cb){Object.defineProperty(inp,'value',{configurable:true,get:function(){return desc.get.call(this);},set:function(v){desc.set.call(this,v);cb();}});inp.addEventListener('input',cb);inp.addEventListener('change',cb);}
+  function fire(inp){inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));}
+
+  var bg=null,box=null,S=null;
+  function close(){if(!box)return;var b=box,g=bg;b.classList.remove('on');g.classList.remove('on');setTimeout(function(){b.remove();g.remove();},220);box=bg=null;document.removeEventListener('keydown',esc);if(S&&S.back)try{S.back.focus({preventScroll:true});}catch(e){}S=null;}
+  function esc(e){if(e.key==='Escape')close();}
+  function open(cfg,which,back){
+    if(box)close();
+    var minD=cfg.min?cfg.min():ist(),maxD=add(ist(),cfg.maxDays||540);
+    S={cfg:cfg,back:back,a:cfg.a.value||'',b:cfg.b?cfg.b.value||'':'',phase:cfg.b&&which==='b'&&cfg.a.value?'b':'a',hover:'',min:minD,max:maxD};
+    var first=S.a||minD;S.view=first.slice(0,7)+'-01';
+    bg=document.createElement('div');bg.className='dp-bg';bg.onclick=close;
+    box=document.createElement('div');box.className='dp';box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label',cfg.b?T('Choose your dates'):T('Choose a date'));
+    document.body.appendChild(bg);document.body.appendChild(box);draw();
+    requestAnimationFrame(function(){bg.classList.add('on');box.classList.add('on');});
+    document.addEventListener('keydown',esc);
+    setTimeout(function(){var f=box&&box.querySelector('.dp-d.dp-s')||box&&box.querySelector('.dp-d:not(:disabled)');if(f)f.focus({preventScroll:true});},60);
+  }
+  function months(){var two=window.innerWidth>700,a=S.view,b=add(a,40).slice(0,7)+'-01';return two?[a,b]:[a,b];}
+  function monthHTML(m){
+    var y=+m.slice(0,4),mo=+m.slice(5,7),first=new Date(Date.UTC(y,mo-1,1)),days=new Date(Date.UTC(y,mo,0)).getUTCDate(),lead=first.getUTCDay(),h='',t=ist(),room=S.cfg.room?S.cfg.room():'';
+    var w=[];for(var i=0;i<7;i++)w.push('<span class="wd">'+fmt(add('2026-11-01',i),{weekday:'narrow'})+'</span>');
+    for(i=0;i<lead;i++)h+='<span></span>';
+    for(var dd=1;dd<=days;dd++){
+      var s=m.slice(0,8)+String(dd).padStart(2,'0'),dis=s<S.min||s>S.max,c=['dp-d'],end=S.b||(S.phase==='b'&&S.hover>S.a?S.hover:'');
+      if(S.cfg.b&&S.phase==='b'&&s<=S.a)dis=dis||false;
+      if(s===t)c.push('today');if(FEST[s])c.push('fest');
+      if(s===S.a)c.push('dp-s');if(S.cfg.b&&end&&s===end)c.push('dp-e');if(S.a&&end&&s>S.a&&s<end)c.push('in-r');if(s===S.a&&end)c.push('has-e');
+      var p=!dis&&S.cfg.b?price(room,s):null;if(p&&p.offer)c.push('offer');
+      h+='<button type="button" class="'+c.join(' ')+'" data-d="'+s+'"'+(dis?' disabled':'')+' aria-label="'+fmt(s,{weekday:'long',day:'numeric',month:'long',year:'numeric'})+(FEST[s]?' · '+FEST[s].n:'')+'"'+(s===S.a||s===end?' aria-pressed="true"':'')+'>'+dd+(p?'<small>'+k(p.r)+'</small>':'')+'</button>';
+    }
+    return '<div class="dp-m"><h4>'+fmt(m,{month:'long',year:'numeric'})+'</h4><div class="dp-g">'+w.join('')+h+'</div></div>';
+  }
+  function draw(){
+    var c=S.cfg,n=S.a&&S.b?diff(S.a,S.b):0,ms=months(),prevOk=S.view>S.min.slice(0,7)+'-01',nextOk=add(ms[ms.length-1],35)<=S.max.slice(0,8)+'28'||ms[ms.length-1].slice(0,7)<S.max.slice(0,7);
+    var chips=c.b?'<div class="dp-chips"><button type="button" data-q="tonight">'+T('Tonight')+'</button><button type="button" data-q="wknd">'+T('This weekend')+'</button><button type="button" data-q="nwknd">'+T('Next weekend')+'</button><button type="button" data-q="week">'+T('A week')+'</button></div>':'';
+    var sum=c.b?'<div class="dp-sum"><div class="'+(S.phase==='a'?'act':'')+'"><span>'+T(c.la||'Check-in')+'</span><b>'+(S.a?fmt(S.a,{weekday:'short',day:'numeric',month:'short'}):'—')+'</b></div><i>'+(n?n+' '+T(n>1?'nights':'night'):'→')+'</i><div class="'+(S.phase==='b'?'act':'')+'"><span>'+T(c.lb||'Check-out')+'</span><b>'+(S.b?fmt(S.b,{weekday:'short',day:'numeric',month:'short'}):'—')+'</b></div></div>'
+      :'<div class="dp-sum" style="grid-template-columns:1fr"><div class="act"><span>'+T(c.la||'Date')+'</span><b>'+(S.a?fmt(S.a,{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'—')+'</b></div></div>';
+    var note='';var look=S.hover||S.b||S.a;if(look&&FEST[look])note='<b>'+fmt(look,{day:'numeric',month:'short'})+' · '+FEST[look].n+'</b>'+(FEST[look].big?' · '+T('busy at the temple, book early'):'');
+    else if(c.b)note=S.phase==='a'?T('Tap your check-in date'):T('Now tap your check-out date');
+    box.innerHTML='<div class="dp-h"><h3>'+(c.b?T('Choose your dates'):T('Choose a date'))+'</h3><button type="button" class="dp-x" aria-label="'+T('Close')+'">×</button></div>'+sum+chips+
+      '<div class="dp-nav"><button type="button" data-nav="-1" aria-label="'+T('Previous month')+'"'+(prevOk?'':' disabled')+'>‹</button><button type="button" data-nav="1" aria-label="'+T('Next month')+'"'+(nextOk?'':' disabled')+'>›</button></div>'+
+      '<div class="dp-ms">'+ms.map(monthHTML).join('')+'</div><p class="dp-note" aria-live="polite">'+note+'</p>'+
+      '<div class="dp-f"><div class="lg">'+(Object.keys(FEST).length?'<span><i></i>'+T('Festival day')+'</span>':'')+(c.b&&c.room?'<span><em>₹</em>'+T('Offer price per night')+'</span>':'')+'</div><div class="bt"><button type="button" class="dp-clr">'+T('Clear')+'</button><button type="button" class="dp-ok"'+((c.b?(S.a&&S.b):S.a)?'':' disabled')+'>'+T('Done')+'</button></div></div>';
+    box.querySelector('.dp-x').onclick=close;
+    box.querySelectorAll('[data-nav]').forEach(function(b){b.onclick=function(){var x=d(S.view);x.setUTCMonth(x.getUTCMonth()+Number(b.dataset.nav));S.view=iso(x).slice(0,8)+'01';draw();};});
+    box.querySelectorAll('.dp-d:not(:disabled)').forEach(function(b){
+      b.onclick=function(){pick(b.dataset.d);};
+      b.onmouseenter=function(){if(c.b&&S.phase==='b'||FEST[b.dataset.d]){S.hover=b.dataset.d;paint();}};
+    });
+    box.querySelectorAll('[data-q]').forEach(function(b){b.onclick=function(){quick(b.dataset.q);};});
+    box.querySelector('.dp-clr').onclick=function(){S.a='';S.b='';S.phase='a';draw();};
+    box.querySelector('.dp-ok').onclick=function(){apply();close();};
+  }
+  function paint(){ /* only the range colours change on hover */
+    var end=S.b||(S.phase==='b'&&S.hover>S.a?S.hover:'');
+    box.querySelectorAll('.dp-d').forEach(function(b){var s=b.dataset.d;b.classList.toggle('dp-e',!!S.cfg.b&&!!end&&s===end);b.classList.toggle('in-r',!!S.a&&!!end&&s>S.a&&s<end);b.classList.toggle('has-e',s===S.a&&!!end);});
+    var nt=box.querySelector('.dp-note'),look=S.hover;if(nt&&look&&FEST[look])nt.innerHTML='<b>'+fmt(look,{day:'numeric',month:'short'})+' · '+FEST[look].n+'</b>'+(FEST[look].big?' · '+T('busy at the temple, book early'):'');
+  }
+  function pick(s){
+    var c=S.cfg;S.hover='';
+    if(!c.b){S.a=s;apply();draw();setTimeout(close,180);return;}
+    if(S.phase==='a'||!S.a||s<=S.a){S.a=s;S.b='';S.phase='b';draw();return;}
+    S.b=s;S.phase='a';apply();draw();
+    setTimeout(close,window.innerWidth>700?350:500);
+  }
+  function quick(q){
+    var t=ist(),dow=d(t).getUTCDay(),fri=add(t,(5-dow+7)%7);
+    if(q==='tonight'){S.a=t;S.b=add(t,1);}
+    else if(q==='wknd'){S.a=dow===6?t:fri;S.b=add(S.a,dow===6?1:2);}
+    else if(q==='nwknd'){S.a=add(fri,dow===6||dow===5?7:7);S.b=add(S.a,2);}
+    else if(q==='week'){S.a=S.a||t;S.b=add(S.a,7);}
+    if(S.a<S.min)S.a=S.min;S.phase='a';S.view=S.a.slice(0,8)+'01';apply();draw();
+  }
+  function apply(){var c=S.cfg;if(c.a.value!==S.a){c.a.value=S.a;fire(c.a);}if(c.b&&S.b&&c.b.value!==S.b){c.b.value=S.b;fire(c.b);}if(c.b&&!S.b&&!S.a&&c.b.value){c.b.value='';fire(c.b);}refreshAll();}
+
+  var ALL=[];
+  function refreshAll(){ALL.forEach(function(f){f();});}
+  function trigger(inp,label,cfg,which){
+    var b=document.createElement('button');b.type='button';b.className='dp-tr';
+    inp.classList.add('dp-vh');inp.tabIndex=-1;inp.setAttribute('aria-hidden','true');inp.parentNode.insertBefore(b,inp.nextSibling);
+    function show(){var v=inp.value;b.classList.toggle('empty',!v);b.classList.remove('bad');b.innerHTML=v?'<b>'+fmt(v,{weekday:'short',day:'numeric',month:'short'})+'</b><small>'+fmt(v,{year:'numeric'})+(cfg.b&&which==='b'&&cfg.a.value&&v>cfg.a.value?' · '+diff(cfg.a.value,v)+' '+T(diff(cfg.a.value,v)>1?'nights':'night'):'')+'</small>':'<b>'+T(label)+'</b>';b.setAttribute('aria-label',T(label)+': '+(v?fmt(v,{weekday:'long',day:'numeric',month:'long',year:'numeric'}):T('not chosen')));}
+    b.onclick=function(e){e.preventDefault();open(cfg,which,b);};
+    inp.addEventListener('focus',function(){open(cfg,which,b);}); /* the form's own "please fill in" check lands here */
+    inp.addEventListener('invalid',function(){b.classList.add('bad');});
+    watch(inp,show);ALL.push(show);show();
+  }
+  function pair(a,b,room,la,lb){if(!a||a.dataset.dp)return;a.dataset.dp=1;var cfg={a:a,b:b,room:room,la:la,lb:lb};trigger(a,'Choose check-in',cfg,'a');if(b){b.dataset.dp=1;trigger(b,'Choose check-out',cfg,'b');}}
+  function byId(i){return document.getElementById(i);}
+  function init(){
+    pair(byId('ci'),byId('co'),function(){var r=byId('rm');return r?r.value:'';});
+    pair(byId('a_ci'),byId('a_co'),function(){var r=byId('a_room');return r?r.value:'';},'Arrival','Departure');
+    pair(byId('r_ci'),byId('r_co2'),null);
+    var q=document.querySelector('#qForm input[name=ci]');if(q&&!q.dataset.dp){q.dataset.dp=1;trigger(q,'Choose check-in',{a:q,la:'Check-in'},'a');}
+    document.querySelectorAll('input[name=dt][type=date]').forEach(function(x){if(x.dataset.dp)return;x.dataset.dp=1;trigger(x,'Choose a date',{a:x,la:'Date'},'a');});
+    ['rm','a_room'].forEach(function(i){var r=byId(i);if(r)r.addEventListener('change',function(){if(box&&S)draw();});});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+
+}catch(e){console.error("[nikadi part 31]",e);}
+/* part 32 */
+try{
+
 /* One tick before any WhatsApp chat: the guest agrees to booking, update, bill and review messages. Remembered on this device. */
 (function(){
   var K='nk-wa-ok',gate=document.getElementById('waGate'),ok=document.getElementById('wgOk'),err=document.getElementById('wgErr'),pending=null,open0=window.open;
@@ -1813,4 +1934,4 @@ try{
   window.open=function(u){if(isWa(u)&&!has()){ask(u);return null;}return open0.apply(window,arguments);};
 })();
 
-}catch(e){console.error("[nikadi part 31]",e);}
+}catch(e){console.error("[nikadi part 32]",e);}
