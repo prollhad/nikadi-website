@@ -815,15 +815,16 @@
     } else if (m) {
       h += '<div class="bill"><h3>Bill</h3>' +
         '<div class="bl sum"><span class="t">Room · ' + s.nights + (s.nights > 1 ? ' nights' : ' night') + ' × ' + inr(s.rate) + '</span><span class="d">' + esc(s.rateNote || 'Agreed rate per night') + '</span><span class="a">' + inr(s.roomTotal) + '</span></div>' +
-        s.charges.map(function (c) {
-          return '<div class="bl tap' + (S.st.fine && c.item === S.st.fine.item ? ' fine' : '') + '" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.item) + ' × ' + c.qty + (c.free ? '<span class="free">Free' + (c.note ? ' (' + esc(freeWhy(c.note)) + ')' : '') + '</span>' : '') + '</span>' +
-            '<span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span><span class="a">' + (c.free ? '₹0' : inr(c.total)) + '</span></div>';
+        s.charges.filter(onBill).map(function (c) {
+          return '<div class="bl tap' + (S.st.fine && c.item === S.st.fine.item ? ' fine' : '') + '" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.item) + ' × ' + c.qty + '</span>' +
+            '<span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span><span class="a">' + inr(c.total) + '</span></div>';
         }).join('') +
         '<div class="bl sum"><span class="t">Total</span><span class="d">Room ' + inr(s.roomTotal) + ' + extras ' + inr(s.extras) + '</span><span class="a">' + inr(s.roomTotal + s.extras) + '</span></div>' +
         s.payments.map(function (p) {
           return '<div class="bl ' + (p.amount < 0 ? 'refund' : 'paid') + (p.method === 'From advance' ? '' : ' tap') + '" data-pay="' + esc(p.id) + '"><span class="t">' + (p.method === 'From advance' ? 'Advance (booking)' : (p.amount < 0 ? 'Refunded · ' : 'Paid · ') + esc(p.method)) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + (p.note ? ' · ' + esc(p.note) : '') + '</span><span class="a">' + (p.amount < 0 ? '+ ' + inr(-p.amount) : '− ' + inr(p.amount)) + '</span></div>';
         }).join('') +
         '<div class="bl due"><span class="t">' + (s.balance > 0 ? 'Balance due' : s.balance < 0 ? 'Refund due to guest' : 'Fully paid') + '</span><span class="a">' + inr(Math.abs(s.balance)) + '</span></div></div>' +
+        roomOnlyBox(s) +
         '<p class="small">Tap an extra to change or remove it. Tap a payment to correct a mistake.' + (rcp() ? ' Changes to recorded money go to the manager for approval.' : '') + '</p>';
       h += '<div class="btns">' + (inHouse ? '<button class="btn btn-gold" id="b-add" type="button">Add item</button>' : '') +
         '<button class="btn btn-line" id="b-pay" type="button">Take payment</button>' +
@@ -921,6 +922,16 @@
     function scan(root) { $$('table.stack', root).forEach(label); }
     new MutationObserver(function (ms) { ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { if (n.matches && n.matches('table.stack')) label(n); else scan(n); } }); }); }).observe(document.body, { childList: true, subtree: true });
   })();
+
+  /* the bill shows only what the guest pays for; free things (water, toilet roll, kits, extra bedding) are written on the room instead */
+  function onBill(c) { return !c.free && Number(c.total) > 0; }
+  function roomOnlyBox(s) {
+    var l = s.charges.filter(function (c) { return !onBill(c); });
+    if (!l.length) return '';
+    return '<div class="bill"><h3>Given to the room · not on the bill</h3>' + l.map(function (c) {
+      return '<div class="bl tap" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.qty + ' × ' + c.item) + '</span><span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(freeWhy(c.note) || c.note) : '') + '</span></div>';
+    }).join('') + '</div>';
+  }
 
   /* ---------- Bedding & towels in each room: what is there, take out (to wash / for reuse), put in, count ---------- */
   function openRoomLinen(roomNo, after) {
@@ -1740,7 +1751,7 @@
         return '<button type="button" data-room="' + r.room + '" aria-pressed="' + (r.room === S.addRoom) + '">' + r.room + '<small>' + esc(r.stay.guest.split(' ')[0]) + '</small></button>';
       }).join('') + '</div></div>' : '<div class="empty">No guests are staying right now.</div>') +
       '<div class="field"><span class="label">2 · Item</span><div class="items" id="items">' + items.map(function (i) {
-        var sub = mgr() ? inr(i.price) : '';
+        var sub = !Number(i.price) ? 'On the room, not on the bill' : mgr() ? inr(i.price) : '';
         if (i.track) sub += (sub ? ' · ' : '') + i.stock + ' in stock';
         return '<button type="button" data-item="' + esc(i.item) + '" aria-pressed="' + (i.item === S.addItem) + '"><b>' + esc(i.item) + '</b><span>' + esc(sub || 'Tap to choose') + '</span></button>';
       }).join('') + '</div></div>' +
@@ -1760,11 +1771,12 @@
     $('#go', v).onclick = function () {
       var err = $('#err', v);
       if (!S.addRoom) { err.textContent = 'Choose the room first.'; return; }
-      var d = { room: S.addRoom, item: S.addItem, qty: Number($('#q', v).textContent), free: $('#free', v).checked, note: $('#note', v).value };
+      var it0 = items.filter(function (i) { return i.item === S.addItem; })[0];
+      var d = { room: S.addRoom, item: S.addItem, qty: Number($('#q', v).textContent), free: $('#free', v).checked || !!(it0 && !Number(it0.price)), note: $('#note', v).value };
       if (mgr()) d.price = $('#price', v).value.replace(/\D/g, '');
       submit(this, err, 'deskCharge', d, function (r) {
         vibrate();
-        toast(r.added.qty + ' × ' + r.added.item + ' → Room ' + r.added.room + (r.added.free ? ' (free)' : ''));
+        toast(r.added.qty + ' × ' + r.added.item + ' → Room ' + r.added.room + (r.added.free ? ' (on the room, not on the bill)' : ''));
         $('#q', v).textContent = '1'; $('#free', v).checked = false; $('#note', v).value = '';
         refresh();
       });

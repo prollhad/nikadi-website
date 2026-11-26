@@ -1288,7 +1288,7 @@ function deskCore(db, hooks) {
       s = stay(r.stay);
     }
     var it = item(req.item);
-    var free = !!req.free || !!s.comp;
+    var free = !!req.free || !!s.comp || (!Number(it.price) && !(mgr && Number(req.price) > 0)); // ₹0 things (toilet roll…) go on the room, never on the bill
     if (!sellable(it) && !free) fail('no_item'); // free-only items (morning kit…) can still be given free
     var qty = Math.round(Number(req.qty || 1)); if (!(qty >= 1 && qty <= 50)) fail('bad_qty');
     var price = Number(it.price || 0), tot = null;
