@@ -429,3 +429,9 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('room linen', JSON.stringify(inRoom(put)), JSON.stringify(inRoom(out)), tooMany.error, JSON.stringify(inRoom(fromReuse)), item(fromReuse, 'Bed runner').reuse, JSON.stringify(inRoom(cnt)));
   if (inRoom(put)['Towel'] < 2 || inRoom(out)['Towel'] !== inRoom(put)['Towel'] - 1 || tooMany.error !== 'more_than_in_room' || inRoom(cnt)['Towel'] !== 3 || !fromReuse.ok) throw new Error('room linen broken');
 }
+{ // toilet paper is in Add item
+  const st = await call('deskState', { token: tok });
+  const tp = (st.items || []).find(i => i.item === 'Toilet roll');
+  console.log('toilet roll', tp && tp.sell);
+  if (!tp || !tp.sell) throw new Error('toilet roll not in Add item');
+}

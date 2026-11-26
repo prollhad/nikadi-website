@@ -202,7 +202,7 @@ var DESK_DEFAULTS = {
     { item: 'Extra mattress', price: 500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes', hsn: '996311', gst: 5 },
     { item: 'Late checkout', price: 1500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes', hsn: '996311', gst: 5 },
     { item: 'Morning kit (free)', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'No' },
-    { item: 'Toilet roll', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'No' }
+    { item: 'Toilet roll', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'Yes' }
   ],
   staff: [
     { name: 'Owner', pin: '1111', role: 'Owner', active: 'Yes' },
@@ -1104,8 +1104,17 @@ function deskCore(db, hooks) {
     return {};
   };
 
+  /* one-time: toilet paper shows in Add item (owner's request, 26 Nov); it stays a stock item, ₹0 until the owner sets a price */
+  function ensureToiletPaper() {
+    if (cfgGet('toiletSell') === '1') return;
+    cfgSet('toiletSell', '1');
+    var it = find('items', 'item', 'Toilet roll');
+    if (it) { if (it.sell !== 'Yes' || it.active !== 'Yes') db.set('items', it, { sell: 'Yes', active: 'Yes' }); }
+    else db.add('items', { item: 'Toilet roll', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'Yes' });
+  }
   api.state = function (req) {
     var me = auth(req), mgr = isMgr(me), t = today();
+    ensureToiletPaper();
     if (me.role === 'Laundry') return { me: me, today: t, now: stamp(), rooms: [], items: [], toBuy: [], stocklog: [], arrivals: [], hk: { stay: [], out: [] }, methods: METHODS, pending: 0, approvals: 0, myRequests: 0, waNew: 0,
       laundryNew: db.all('laundry').filter(function (x) { return x.status === 'At laundry' || x.status === 'Part returned'; }).length };
     var stays = {};
