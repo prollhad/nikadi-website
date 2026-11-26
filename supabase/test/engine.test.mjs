@@ -417,3 +417,15 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('member review', lg.ok || lg.error, (me.member.review || []).map(x => x.text).join(' | '), seen.ok, (me2.member.review || []).length);
   if (!lg.ok || (me.member.review || []).length !== 3 || !seen.ok || (me2.member.review || []).length !== 0) throw new Error('member review notice broken');
 }
+{ // bedding & towels per room: put in, take out (wash / reuse), count; checklist with fewer used ones out
+  const R = 3;
+  const put = await call('deskRoomLinen', { token: tok, room: R, put: { 'Towel': 2, 'Bed runner': 1 }, from: {} });
+  const inRoom = n => (n.rooms.find(r => r.room === R).linen || {});
+  const out = await call('deskRoomLinen', { token: tok, room: R, out: { 'Towel': { wash: 1, reuse: 0 }, 'Bed runner': { wash: 0, reuse: 1 } } });
+  const tooMany = await call('deskRoomLinen', { token: tok, room: R, out: { 'Towel': { wash: 5 } } });
+  const fromReuse = await call('deskRoomLinen', { token: tok, room: R, put: { 'Bed runner': 1 }, from: { 'Bed runner': 'reuse' } });
+  const cnt = await call('deskRoomLinen', { token: tok, room: R, set: { 'Towel': 3 } });
+  const item = (n, k) => n.items.find(i => i.item === k);
+  console.log('room linen', JSON.stringify(inRoom(put)), JSON.stringify(inRoom(out)), tooMany.error, JSON.stringify(inRoom(fromReuse)), item(fromReuse, 'Bed runner').reuse, JSON.stringify(inRoom(cnt)));
+  if (inRoom(put)['Towel'] < 2 || inRoom(out)['Towel'] !== inRoom(put)['Towel'] - 1 || tooMany.error !== 'more_than_in_room' || inRoom(cnt)['Towel'] !== 3 || !fromReuse.ok) throw new Error('room linen broken');
+}

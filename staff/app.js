@@ -34,7 +34,7 @@
     method_required: 'Choose how they paid: Cash, UPI or Card.', invalid_phone: 'Please check the phone number and its country code (+91 for India).', bad_qty: 'Please check the quantity.',
     bad_nights: 'Please check the number of nights.', not_in_house: 'This guest has already checked out.', bad_pin: 'The PIN must be 4 to 6 digits.', bad_aadhaar: 'The Aadhaar number must have 12 digits.', bad_pan: 'The PAN looks wrong. It has 10 letters and digits, like ABCDE1234F.', bad_ifsc: 'The IFSC looks wrong. It has 11 letters and digits, like SBIN0001234.', bad_account: 'Please check the account number.', id_taken: 'That employee ID is already used by someone else.', bad_kind: 'Please choose which document this is.', pin_easy: 'That PIN is too easy to guess. Please choose another one, not a repeat or a run like 1111 or 1234.', pin_short: 'The Owner and Manager need a 6 digit PIN, because they can see the money and accounts.',
     pin_taken: 'Someone else already uses this PIN. Choose another.', name_taken: 'That name is already used.', last_owner: 'There must always be at least one active Owner.',
-    no_item: 'This item is not available.', wa_consent_needed: 'The guest has to agree to WhatsApp messages (booking, updates, bill, review) before we can take the booking.', not_enough_reuse: 'There are not that many kept for reuse. Take it from the clean store instead.', bad_item: 'Pillows, blankets and mattresses are not washed, so they always go back to the clean store.', not_tracked: 'Stock is not counted for this item.', bad_status: 'The room status has changed. Pull to refresh.',
+    no_item: 'This item is not available.', more_than_in_room: 'That is more than the app shows in the room. If the room really has more, use Count the room first.', wa_consent_needed: 'The guest has to agree to WhatsApp messages (booking, updates, bill, review) before we can take the booking.', not_enough_reuse: 'There are not that many kept for reuse. Take it from the clean store instead.', bad_item: 'Pillows, blankets and mattresses are not washed, so they always go back to the clean store.', not_tracked: 'Stock is not counted for this item.', bad_status: 'The room status has changed. Pull to refresh.',
     network: 'No internet connection. Please try again.', server_error: 'Something went wrong. Please try again.',
     not_setup: 'The staff app is not connected to the Google Sheet yet.',
     room_booked: 'A room you chose is already booked or occupied on those dates. Check the calendar and pick a free room.',
@@ -726,8 +726,12 @@
     body.innerHTML = '<p class="small">' + (kind === 'out' ? 'Everything fresh for the next guest. Tick each line when it is done.' : 'Guest is staying on. Tick each line, and pick what you changed.') + '</p>' +
       '<div class="hkc">' + list.map(function (l) {
         return l[2] ? '<div class="hkc-row opt" data-k="' + esc(l[0]) + '"><span class="hkc-l">' + esc(l[1]) + '</span>' + seg('hk-' + l[0], l[2], '') +
-            (l[3] ? '<div class="hkc-lin" id="lin-' + esc(l[0]) + '" hidden><small class="small">How many fresh ones did you put in? (the used ones go to the laundry pile)</small>' + Object.keys(l[3]).map(function (k) {
-              return '<label class="lc-row"><span>' + esc(k) + '</span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="20" data-lk="' + esc(k) + '" value="' + l[3][k] + '"><button type="button" data-d="1" aria-label="More">+</button></span></label>'; }).join('') + '</div>' : '') + '</div>'
+            (l[3] ? '<div class="hkc-lin" id="lin-' + esc(l[0]) + '" hidden><small class="small">How many fresh ones went in, and how many used ones came out (a guest may keep one).</small>' + Object.keys(l[3]).map(function (k) {
+              return '<div class="lc-row hk-io"><span>' + esc(k) + '</span><span class="hk-q"><small>Fresh in</small><span class="lc-q"><button type="button" data-d="-1" aria-label="Fewer fresh">−</button><input class="input" type="number" inputmode="numeric" min="0" max="20" data-lk="' + esc(k) + '" value="' + l[3][k] + '" aria-label="Fresh ' + esc(k) + ' put in"><button type="button" data-d="1" aria-label="More fresh">+</button></span></span>' +
+                '<span class="hk-q"><small>Used out</small><span class="lc-q"><button type="button" data-d="-1" aria-label="Fewer used">−</button><input class="input" type="number" inputmode="numeric" min="0" max="20" data-lo="' + esc(k) + '" value="' + l[3][k] + '" aria-label="Used ' + esc(k) + ' taken out"><button type="button" data-d="1" aria-label="More used">+</button></span></span></div>'; }).join('') +
+              '<div class="hk-src"><span class="small">Fresh ones from</span>' + seg('src-' + l[0], ['Clean store', 'Reuse'], 'Clean store') + '</div>' +
+              '<div class="hk-src"><span class="small">Used ones go</span>' + seg('dest-' + l[0], ['To wash', 'Keep for reuse'], 'To wash') + '</div>' +
+              '<small class="small">Pillows and blankets are never washed: used ones always go back to the store.</small></div>' : '') + '</div>'
           : '<button type="button" class="hkc-row tick" data-k="' + esc(l[0]) + '" aria-pressed="false"><i aria-hidden="true"></i><span class="hkc-l">' + esc(l[1]) + '</span></button>';
       }).join('') + '</div>' +
       '<p class="err" id="err" role="alert"></p><button class="btn btn-ok big-cta" id="go" type="button" disabled></button>';
@@ -738,10 +742,13 @@
       list.forEach(function (l) { var row = $('[data-k="' + l[0] + '"]', body); if (row) row.classList.toggle('ok', l[2] ? !!got[l[0]] : got[l[0]] === true); });
     }
     $$('.hkc-row.tick', body).forEach(function (b) { b.onclick = function () { var on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); got[b.dataset.k] = on; upd(); }; });
-    wireSegs(body, function () { list.forEach(function (l) { if (l[2]) { var v = segVal(body, 'hk-' + l[0]); if (v) got[l[0]] = v; if (l[3]) $('#lin-' + l[0], body).hidden = v !== l[2][0]; } }); upd(); });
+    wireSegs(body, function () { list.forEach(function (l) { if (l[2]) { var v = segVal(body, 'hk-' + l[0]); if (v) got[l[0]] = v; if (l[3]) $('#lin-' + l[0], body).hidden = got[l[0]] !== l[2][0]; } }); upd(); });
     $$('.hkc-lin .lc-q', body).forEach(function (w) { w.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; e.preventDefault(); var i = $('input', w); i.value = Math.max(0, Math.min(20, (Number(i.value) || 0) + Number(b.dataset.d))); }; });
     upd();
-    function linen() { list.forEach(function (l) { if (!l[3]) return; var o = {}; $$('#lin-' + l[0] + ' input[data-lk]', body).forEach(function (i) { var n = Math.round(Number(i.value) || 0); if (n > 0) o[i.dataset.lk] = n; }); got['linen_' + l[0]] = got[l[0]] === l[2][0] ? o : {}; }); return got; }
+    function linen() { list.forEach(function (l) { if (!l[3]) return; var o = {}, u = {}; $$('#lin-' + l[0] + ' input[data-lk]', body).forEach(function (i) { var n = Math.round(Number(i.value) || 0); if (n > 0) o[i.dataset.lk] = n; });
+      $$('#lin-' + l[0] + ' input[data-lo]', body).forEach(function (i) { var n = Math.round(Number(i.value) || 0); if (n > 0) u[i.dataset.lo] = n; });
+      var on = got[l[0]] === l[2][0]; got['linen_' + l[0]] = on ? o : {}; got['out_' + l[0]] = on ? u : {};
+      got['src_' + l[0]] = segVal(body, 'src-' + l[0]) === 'Reuse' ? 'reuse' : 'store'; got['dest_' + l[0]] = segVal(body, 'dest-' + l[0]) === 'Keep for reuse' ? 'reuse' : 'wash'; }); return got; }
     $('#go', body).onclick = function () { var x = this; if (x.disabled) return; busy(x, true); send(linen()).then(function (r) { closeSheet(); return r; }, function (e) { busy(x, false); $('#err', body).textContent = errText(e); vibrate(); }); };
   }
 
@@ -752,13 +759,14 @@
     if (r.status === 'Occupied' && r.stay) { body.innerHTML = '<div class="loading">Loading bill…</div>'; loadStay(body, r.stay.id); return; }
     if (r.status === 'Needs cleaning') {
       body.innerHTML = '<div class="note"><b>Needs cleaning</b>' + esc(r.by ? 'Marked by ' + r.by + ' · ' + tShort(r.updated) : 'Clean this room before the next guest.') + '</div>' +
-        '<button class="btn btn-ok big-cta" id="cl" type="button">Open cleaning checklist</button><p class="small">Tick every line of the checklist. Then the room turns green and can be given to a guest.</p>' +
+        '<button class="btn btn-ok big-cta" id="cl" type="button">Open cleaning checklist</button><button class="btn btn-line" id="rl" type="button">Bedding &amp; towels in this room</button><p class="small">Tick every line of the checklist. Then the room turns green and can be given to a guest.</p>' +
         (mgr() && S.st.backToReady ? '<button class="btn btn-line" id="br" type="button">Back to ready (room was not used)</button><p class="small">For a room nobody used, e.g. a guest moved out of it straight away. No cleaning checklist; it is noted in the housekeeping log.</p>' : '');
       if ($('#br', body)) $('#br', body).onclick = function () {
         var b = this; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Tap again: Room ' + r.room + ' back to ready'; return; }
         busy(b, true);
         api('deskRoomStatus', { room: r.room, status: 'Ready', asIs: true }).then(function () { vibrate(); toast('Room ' + r.room + ' is ready again'); closeSheet(); refresh(); }, function (e) { busy(b, false); toast(errText(e)); });
       };
+      $('#rl', body).onclick = function () { openRoomLinen(r.room); };
       $('#cl', body).onclick = function () {
         openHkCheck(r.room, 'out', function (check) { return api('deskRoomStatus', { room: r.room, status: 'Ready', check: check }).then(function () { vibrate(); toast('Room ' + r.room + ' is ready'); closeSheet(); refresh(); }); });
       };
@@ -768,8 +776,9 @@
         (mgr() ? ' <button class="linkbtn" type="button" id="ob">Open booking</button>' : '') + '</div>' : '') +
       '<div class="note"><b>Ready for guests</b>' + esc(r.beds) + (mgr() ? ' · usual rate ' + inr(r.rate) + ' per night' : '') + '</div>' +
       (mgr() ? '<button class="btn ' + (r.arriving ? 'btn-line' : 'btn-gold big-cta') + '" id="ci" type="button">' + (r.arriving ? 'Check in a walk-in guest instead' : 'Check in a guest') + '</button>' : '') +
-      '<button class="btn btn-quiet" id="dirty" type="button">Mark as needs cleaning</button>';
+      '<button class="btn btn-quiet" id="dirty" type="button">Mark as needs cleaning</button><button class="btn btn-line" id="rl" type="button">Bedding &amp; towels in this room</button>';
     if (mgr()) $('#ci', body).onclick = function () { openCheckIn(r); };
+    $('#rl', body).onclick = function () { openRoomLinen(r.room); };
     if ($('#ob', body)) $('#ob', body).onclick = function () { openBooking(r.arriving.id); };
     $('#dirty', body).onclick = function () { var b = this; busy(b, true); api('deskRoomStatus', { room: r.room, status: 'Needs cleaning' }).then(function () { toast('Room ' + r.room + ' marked for cleaning'); closeSheet(); }, function (e) { busy(b, false); toast(errText(e)); }); };
   }
@@ -791,6 +800,7 @@
     if (s.service) h += serviceBox(s.service);
     if (inHouse) h += kitBox(s);
     if (inHouse) h += '<button class="btn btn-line" type="button" id="b-extra">Extra bedding &amp; towels (not on the bill)</button>';
+    h += '<button class="btn btn-quiet" type="button" id="b-rl">Bedding &amp; towels in this room</button>';
     if (m && s.notes) h += '<div class="note"><b>Notes</b>' + esc(s.notes) + '</div>';
     if (m && s.booking) h += '<button class="linkbtn" type="button" id="b-bk">From booking ' + esc(s.booking) + ' →</button>';
     if (m) h += '<button class="idc-room ' + (s.ids ? 'has' : 'none') + '" type="button" id="b-ids">' + ICON.idcopy + '<span><b>ID copies' + (s.ids ? ' · ' + s.ids + (s.ids === 1 ? ' ID' : ' IDs') + ' taken' : '') + '</b><small>' + (s.ids ? 'Open, add more or print on A4' : 'No ID saved yet for this stay · add Aadhaar, licence or passport') + '</small></span><i aria-hidden="true">›</i></button>';
@@ -836,6 +846,7 @@
     if ((b = $('#hk-undo', body))) b.onclick = function () { var x = this; busy(x, true); api('deskServiceUndo', { room: s.room }).then(function () { toast('Undone'); loadStay(body, s.id); refresh(); }, function (e) { busy(x, false); toast(errText(e)); }); };
     if ((b = $('#b-add', body))) b.onclick = function () { openAdd(s.room); };
     if ((b = $('#b-extra', body))) b.onclick = function () { openExtra(s.room, function () { refresh(); }); };
+    if ((b = $('#b-rl', body))) b.onclick = function () { openRoomLinen(s.room); };
     if ((b = $('#b-bk', body))) b.onclick = function () { openBooking(s.booking); };
     if ((b = $('#b-ids', body))) b.onclick = function () { openIds(s); };
     if ((b = $('#b-kit', body))) b.onclick = function () { openKit(s, body); };
@@ -901,6 +912,68 @@
   /* what housekeeping gives today: water is chosen in the checklist (1 to 4 bottles, or none), the rest is fixed */
   function giveText(items) { return (items || []).map(function (i) { return i.item === 'Water bottle' ? 'Water bottles (choose 1 to 4, or none)' : i.qty + ' × ' + i.item; }).join(', '); }
   /* Extra bedding and towels for a staying guest: taken from the clean store into the room, never on the bill */
+  /* tables marked "stack" turn into cards on a phone: every number gets its column name, nothing hides off the side */
+  (function () {
+    function label(t) {
+      var hs = $$('thead th', t).map(function (th) { return th.textContent.trim(); });
+      $$('tbody tr', t).forEach(function (tr) { var cells = $$('td', tr); if (cells.length === 1 && cells[0].colSpan > 1) { tr.classList.add('grp'); return; } cells.forEach(function (td, i) { if (hs[i] != null && !td.hasAttribute('data-l')) td.setAttribute('data-l', hs[i]); }); });
+    }
+    function scan(root) { $$('table.stack', root).forEach(label); }
+    new MutationObserver(function (ms) { ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { if (n.matches && n.matches('table.stack')) label(n); else scan(n); } }); }); }).observe(document.body, { childList: true, subtree: true });
+  })();
+
+  /* ---------- Bedding & towels in each room: what is there, take out (to wash / for reuse), put in, count ---------- */
+  function openRoomLinen(roomNo, after) {
+    var body = openSheet('Bedding & towels in the rooms', ''), D = null, pick = roomNo ? 'Room ' + roomNo : '', mode = 'Take out';
+    body.innerHTML = '<div class="loading">Loading…</div>';
+    function load(p) { return api('deskRoomLinen', p || {}).then(function (r) { D = r; draw(); return r; }); }
+    function cur() { var n = Number(String(pick).replace(/\D/g, '')); return D.rooms.filter(function (r) { return r.room === n; })[0] || null; }
+    function itemOf(k) { return D.items.filter(function (i) { return i.item === k; })[0] || { item: k, wash: true, store: 0, reuse: 0 }; }
+    function q(name, val, label) { return '<span class="hk-q"><small>' + label + '</small><span class="lc-q"><button type="button" data-d="-1" aria-label="Less ' + esc(label) + '">−</button><input class="input" type="number" inputmode="numeric" min="0" max="50" ' + name + ' value="' + val + '" aria-label="' + esc(label) + '"><button type="button" data-d="1" aria-label="More ' + esc(label) + '">+</button></span></span>'; }
+    function summary(r) { var k = Object.keys(r.linen || {}); return k.length ? k.map(function (x) { return r.linen[x] + ' × ' + esc(x); }).join(' · ') : 'nothing counted yet'; }
+    function draw() {
+      if (!cur() && D.rooms.length === 1) pick = 'Room ' + D.rooms[0].room;
+      var r = cur(), h = '<p class="small">What is in each room now, kept up to date by every checklist, extra and change here. Tap a room.</p>' +
+        '<div class="list rl-all">' + D.rooms.map(function (x) { return '<button type="button" class="rl-room' + (r && r.room === x.room ? ' on' : '') + '" data-room="' + x.room + '"><b>Room ' + x.room + '</b><span>' + summary(x) + '</span></button>'; }).join('') + '</div>';
+      if (r) {
+        var have = Object.keys(r.linen || {}).filter(function (k) { return r.linen[k] > 0; }), groups = [], by = {};
+        D.items.forEach(function (i) { if (!by[i.group]) { by[i.group] = []; groups.push(i.group); } by[i.group].push(i); });
+        h += '<div class="sec-h" style="margin-top:16px"><h2 style="font-size:1.1rem">Room ' + r.room + '</h2><span class="small">' + esc(r.status || '') + '</span></div>' +
+          seg('rl-mode', ['Take out', 'Put in', 'Count the room'], mode);
+        if (mode === 'Take out') h += have.length ? '<p class="small" style="margin-top:10px">How many came out of the room, and where they go. Leave 0 for what stays in the room (a guest may keep one).</p><div class="list">' + have.map(function (k) {
+            var it = itemOf(k);
+            return '<div class="lc-row hk-io"><span>' + esc(k) + '<small>' + r.linen[k] + ' in the room</small></span>' + (it.wash ? q('data-w="' + esc(k) + '"', 0, 'To wash') + q('data-u="' + esc(k) + '"', 0, 'For reuse') : q('data-s="' + esc(k) + '"', 0, 'Back to store')) + '</div>'; }).join('') + '</div>'
+          : '<p class="small" style="margin-top:10px">The app shows nothing in this room. If there are things in it, use <b>Count the room</b> first.</p>';
+        else if (mode === 'Put in') h += '<p class="small" style="margin-top:10px">Fresh pieces put into the room (not for a guest\'s extra request: that is "+ Bedding &amp; towels").</p>' + groups.map(function (g) {
+            return '<p class="small" style="margin:10px 0 6px"><b>' + esc(g) + '</b></p><div class="list">' + by[g].map(function (i) {
+              return '<div class="ex-item"><div class="lc-row"><span>' + esc(i.item) + '<small>' + i.store + ' clean' + (i.wash ? ' · ' + i.reuse + ' for reuse' : '') + '</small></span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="50" data-p="' + esc(i.item) + '" value="0" aria-label="How many ' + esc(i.item) + '"><button type="button" data-d="1" aria-label="More">+</button></span></div>' +
+                (i.wash ? '<div class="ex-src" hidden><span class="small">Take it from</span>' + seg('rs-' + D.items.indexOf(i), ['Clean store', 'Reuse'], 'Clean store') + '</div>' : '') + '</div>'; }).join('') + '</div>'; }).join('');
+        else h += '<p class="small" style="margin-top:10px">Count what is really in room ' + r.room + ' now and set the numbers. Extra pieces come from the clean store; pieces not found are written off as missing.</p>' + groups.map(function (g) {
+            return '<p class="small" style="margin:10px 0 6px"><b>' + esc(g) + '</b></p><div class="list">' + by[g].map(function (i) {
+              var n = Number((r.linen || {})[i.item] || 0);
+              return '<div class="lc-row"><span>' + esc(i.item) + '</span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="50" data-c="' + esc(i.item) + '" data-was="' + n + '" value="' + n + '" aria-label="' + esc(i.item) + ' in the room"><button type="button" data-d="1" aria-label="More">+</button></span></div>'; }).join('') + '</div>'; }).join('');
+        h += '<p class="err" id="err" role="alert"></p>' + (mode !== 'Take out' || have.length ? '<button class="btn btn-ok big-cta" id="go" type="button">' + (mode === 'Take out' ? 'Save what came out' : mode === 'Put in' ? 'Save what went in' : 'Save the count') + '</button>' : '');
+      }
+      body.innerHTML = h;
+      $$('[data-room]', body).forEach(function (b) { b.onclick = function () { pick = 'Room ' + b.dataset.room; draw(); var t = $('.sec-h', body); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); }; });
+      wireSegs(body, function () { var m = segVal(body, 'rl-mode'); if (m && m !== mode) { mode = m; draw(); return; } });
+      $$('.lc-q', body).forEach(function (w) { w.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; e.preventDefault(); var i = $('input', w); i.value = Math.max(0, Math.min(50, (Number(i.value) || 0) + Number(b.dataset.d))); i.dispatchEvent(new Event('input')); }; });
+      $$('input[data-p]', body).forEach(function (i) { i.oninput = function () { var w = i.closest('.ex-item').querySelector('.ex-src'); if (w) w.hidden = !(Number(i.value) > 0); }; });
+      var go = $('#go', body); if (!go) return;
+      go.onclick = function () {
+        var p = { room: cur().room }, n = 0;
+        if (mode === 'Take out') { p.out = {}; $$('.hk-io', body).forEach(function (row) { var w = $('input[data-w]', row), u = $('input[data-u]', row), st = $('input[data-s]', row), k = (w || st).dataset.w || (w || st).dataset.s;
+            var o = { wash: w ? Number(w.value) || 0 : 0, reuse: u ? Number(u.value) || 0 : 0, store: st ? Number(st.value) || 0 : 0 }; if (o.wash + o.reuse + o.store) { p.out[k] = o; n++; } }); }
+        else if (mode === 'Put in') { p.put = {}; p.from = {}; $$('input[data-p]', body).forEach(function (i) { var v = Math.round(Number(i.value) || 0); if (v > 0) { var it = itemOf(i.dataset.p); p.put[i.dataset.p] = v; p.from[i.dataset.p] = it.wash && segVal(body, 'rs-' + D.items.indexOf(it)) === 'Reuse' ? 'reuse' : 'store'; n++; } }); }
+        else { p.set = {}; $$('input[data-c]', body).forEach(function (i) { var v = Math.round(Number(i.value) || 0); if (v !== Number(i.dataset.was)) { p.set[i.dataset.c] = v; n++; } }); }
+        if (!n) { $('#err', body).textContent = mode === 'Count the room' ? 'Nothing changed.' : 'Set how many first.'; return; }
+        busy(go, true);
+        load(p).then(function () { vibrate(); toast('Saved · Room ' + p.room); if (after) after(); }, function (e) { busy(go, false); $('#err', body).textContent = errText(e); vibrate(); });
+      };
+    }
+    load().then(null, function (e) { body.innerHTML = '<p class="err">' + esc(errText(e)) + '</p>'; });
+  }
+
   /* Extra bedding and towels for a staying guest. Every piece comes from the clean store or from the pieces kept for reuse;
      taking it back, washable ones go to the wash or are kept for reuse, pillows / blankets / mattresses go back to the store. Never on the bill. */
   var MATTRESS_SET = [['Extra mattress (single)', 1], ['Pillow', 1], ['Pillow cover', 1], ['Bedsheet (single)', 1], ['Blanket cover (single)', 1], ['Blanket (single)', 1]];
@@ -996,7 +1069,7 @@
     }
     var d = HK.data, due = d.rooms.filter(function (r) { return r.due; }), left = due.filter(function (r) { return !r.done; }).length;
     var daily = giveText(d.daily) || 'nothing set';
-    v.innerHTML = '<div class="hrow"><div><p class="kicker">' + esc(dShort(d.date)) + ' · free daily per room: ' + esc(daily) + '</p><h1>Housekeeping</h1></div><div class="upd"><button class="btn btn-gold" type="button" id="hex">+ Bedding &amp; towels</button><button class="btn btn-quiet" type="button" id="hrf">Refresh</button></div></div>' +
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">' + esc(dShort(d.date)) + ' · free daily per room: ' + esc(daily) + '</p><h1>Housekeeping</h1></div><div class="upd"><button class="btn btn-gold" type="button" id="hex">+ Bedding &amp; towels</button><button class="btn btn-line" type="button" id="hrl">Rooms: bedding &amp; towels</button><button class="btn btn-quiet" type="button" id="hrf">Refresh</button></div></div>' +
       '<div class="counts"><div class="count c-dirty"><b>' + left + '</b><span>To do</span></div><div class="count c-ready"><b>' + (due.length - left) + '</b><span>Done</span></div></div>' +
       (due.length ? '<div class="list hk-list">' + due.map(function (r) {
         return '<div class="hk-row ' + (r.done ? 'done' : '') + '"><div class="hk-room"><b>' + r.room + '</b><small>' + esc(r.type) + '</small></div>' +
@@ -1007,6 +1080,7 @@
       (function () { var other = d.rooms.filter(function (r) { return !r.due; }); return other.length ? '<p class="small">Not on today\'s list: ' + other.map(function (r) { return 'Room ' + r.room + (r.firstDay ? ' (arrived today)' : r.leaves ? ' (leaves today)' : ''); }).join(', ') + '.</p>' : ''; })();
     $('#hrf', v).onclick = function () { HK.data = null; render(); };
     $('#hex', v).onclick = function () { openExtra(0); };
+    $('#hrl', v).onclick = function () { openRoomLinen(0); };
     $$('[data-done]', v).forEach(function (b) { b.onclick = function () { var n = Number(b.dataset.done); openHkCheck(n, 'stay', function (check) { return api('deskServiceDone', { room: n, check: check }).then(function (r) { vibrate(); toast('Room ' + n + ' done'); HK.data = r; render(); refresh(); }); }); }; });
     $$('[data-undo]', v).forEach(function (b) { b.onclick = function () { busy(b, true); api('deskServiceUndo', { room: Number(b.dataset.undo) }).then(function (r) { toast('Undone'); HK.data = r; render(); refresh(); }, function (e) { busy(b, false); toast(errText(e)); }); }; });
   }
@@ -1670,6 +1744,7 @@
         if (i.track) sub += (sub ? ' · ' : '') + i.stock + ' in stock';
         return '<button type="button" data-item="' + esc(i.item) + '" aria-pressed="' + (i.item === S.addItem) + '"><b>' + esc(i.item) + '</b><span>' + esc(sub || 'Tap to choose') + '</span></button>';
       }).join('') + '</div></div>' +
+      '<p class="small add-lin">Pillows, bed cover, bed runner, towels, extra mattress set and other bedding are free and kept in stock: <button class="linkbtn" type="button" id="addLin">Bedding &amp; towels →</button></p>' +
       '<div class="field"><span class="label">3 · How many</span>' + stepper('q', 1, 1, 50) + '</div>' +
       (mgr() ? field('Price each (₹)', '<input class="input" id="price" inputmode="numeric">') : '') +
       '<label class="toggle"><span>Free (no charge to guest)</span><input type="checkbox" id="free"></label>' +
@@ -1681,6 +1756,7 @@
     if (rr) rr.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; S.addRoom = Number(b.dataset.room); $$('button', rr).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); };
     $('#items', v).onclick = function (e) { var b = e.target.closest('button'); if (!b) return; S.addItem = b.dataset.item; $$('#items button', v).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); setPrice(); };
     wireSteppers(v);
+    $('#addLin', v).onclick = function () { openExtra(S.addRoom || 0, function () { refresh(); }); };
     $('#go', v).onclick = function () {
       var err = $('#err', v);
       if (!S.addRoom) { err.textContent = 'Choose the room first.'; return; }
@@ -1723,7 +1799,7 @@
         '<small>' + esc(lText(x.items)) + '</small></span><span class="a">' + (act ? '<span class="pill gold">' + act + '</span>' : x.total != null && lSum(x.back) ? inr(x.total) + (x.paid ? '<small>paid</small>' : '') : '') + '</span></button>';
     }
     var cols = lr ? [['laundry', 'With you now']] : [['store', 'Clean in store'], ['reuse', 'Kept for reuse'], ['rooms', 'In rooms'], ['dirty', 'Used, to wash'], ['laundry', 'At laundry']];
-    var table = '<div class="tbl-wrap"><table class="tbl lin"><thead><tr><th>Item</th>' + cols.map(function (c) { return '<th class="r">' + c[1] + '</th>'; }).join('') + (lr ? '' : '<th class="r">Total</th>') + (d.linen[0] && d.linen[0].price != null ? '<th class="r">Laundry ₹ / piece</th>' : '') + '</tr></thead><tbody>' +
+    var table = '<div class="tbl-wrap"><table class="tbl lin stack"><thead><tr><th>Item</th>' + cols.map(function (c) { return '<th class="r">' + c[1] + '</th>'; }).join('') + (lr ? '' : '<th class="r">Total</th>') + (d.linen[0] && d.linen[0].price != null ? '<th class="r">Laundry ₹ / piece</th>' : '') + '</tr></thead><tbody>' +
       d.linen.map(function (i, n) {
         var low = i.low && i.store < i.low, gh = n === 0 || d.linen[n - 1].group !== i.group ? '<tr class="grp"><td colspan="' + (cols.length + 3) + '">' + esc(i.group || 'Other') + '</td></tr>' : '';
         return gh + '<tr' + (d.can.setup || fd ? ' class="tap" data-li="' + esc(i.item) + '"' : '') + '><td><b>' + esc(i.item) + '</b>' + (low ? '<small class="warn-t">clean ones running low</small>' : '') + '</td>' +
@@ -1802,7 +1878,7 @@
     var money = x.prices != null, open = x.returns.filter(function (r) { return !r.okAt; })[0];
     var h = '<p class="kicker"><span class="st-pill s-' + (LSTAT[x.status] || 'pend') + '">' + esc(x.status) + '</span></p>' +
       '<dl class="facts"><div><dt>Listed</dt><dd>' + esc(tShort(x.at)) + '<small> · ' + esc(x.by) + '</small></dd></div><div><dt>Given out (approved)</dt><dd>' + (x.outAt ? esc(tShort(x.outAt)) + '<small> · ' + esc(x.outBy) + '</small>' : 'Not yet') + '</dd></div></dl>' +
-      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Item</th><th class="r">Given</th><th class="r">Back</th><th class="r">Still out</th>' + (money ? '<th class="r">₹ / piece</th><th class="r">Amount</th>' : '') + '</tr></thead><tbody>' +
+      '<div class="tbl-wrap"><table class="tbl stack"><thead><tr><th>Item</th><th class="r">Given</th><th class="r">Back</th><th class="r">Still out</th>' + (money ? '<th class="r">₹ / piece</th><th class="r">Amount</th>' : '') + '</tr></thead><tbody>' +
       Object.keys(keys).map(function (k) { var b = Number(x.back[k] || 0), pr = money ? Number(x.prices[k] != null ? x.prices[k] : 0) : 0;
         return '<tr><td>' + esc(k) + '</td><td class="r">' + (x.items[k] || 0) + '</td><td class="r">' + b + '</td><td class="r">' + (x.short[k] && x.outAt ? '<b class="warn-t">' + x.short[k] + '</b>' : '') + '</td>' + (money ? '<td class="r">' + inr(pr) + '</td><td class="r">' + inr(b * pr) + '</td>' : '') + '</tr>'; }).join('') +
       (money ? '<tr><td colspan="5"><b>Bill</b> <small class="muted">pieces received back × price</small></td><td class="r"><b>' + inr(x.total) + '</b></td></tr>' : '') + '</tbody></table></div>' +
@@ -1943,7 +2019,7 @@
       groups.map(function (g) {
         var its = L.filter(function (i) { return i.group === g; }), tot = its.reduce(function (a, i) { return a + i.total; }, 0), clean = its.reduce(function (a, i) { return a + i.store; }, 0);
         return '<details class="panel folder" open><summary><span class="fold-ic" aria-hidden="true">' + ICON.stock + '</span><h2>' + esc(g) + '</h2><span class="small">' + tot + ' in all · ' + clean + ' clean in store</span></summary>' +
-          '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Item</th><th class="r">Clean</th><th class="r">Reuse</th><th class="r">Rooms</th><th class="r">To wash</th><th class="r">Laundry</th><th class="r">Total</th></tr></thead><tbody>' +
+          '<div class="tbl-wrap"><table class="tbl stack"><thead><tr><th>Item</th><th class="r">Clean</th><th class="r">Reuse</th><th class="r">Rooms</th><th class="r">To wash</th><th class="r">Laundry</th><th class="r">Total</th></tr></thead><tbody>' +
           its.map(function (i) { var low = i.low && i.store < i.low;
             return '<tr' + (mgr() ? ' class="tap" data-ri="' + esc(i.item) + '"' : '') + '><td><b>' + esc(i.item) + '</b>' + (low ? '<small class="warn-t">clean ones running low (warn below ' + i.low + ')</small>' : '') + '</td><td class="r">' + i.store + '</td><td class="r">' + (i.reuse || 0) + '</td><td class="r">' + i.rooms + '</td><td class="r">' + i.dirty + '</td><td class="r">' + i.laundry + '</td><td class="r"><b>' + i.total + '</b></td></tr>'; }).join('') +
           '</tbody></table></div></details>';

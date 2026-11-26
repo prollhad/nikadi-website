@@ -19,10 +19,10 @@ var DESK_HK_WATER = ['No water needed', '1 given', '2 given', '3 given', '4 give
 var DESK_EXTRA_NOTE = 'Extra bedding and towels'; // extra linen given to a staying guest: written on the room, never on the bill
 var DESK_HK_STAY = [['water', 'Water bottles', DESK_HK_WATER], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['dental', 'Dental kit', ['Not needed', '1 given', '2 given', '3 given']],
   ['bathroom', 'Bathroom cleaned'], ['binRoom', 'Dustbin in the room checked'], ['binToilet', 'Dustbin in the toilet checked'], ['floor', 'Floor cleaned'],
-  ['bedding', 'Bedsheet, pillow covers, blanket cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Blanket cover (king size)': 1 }]];
+  ['bedding', 'Bedsheet, pillow covers, blanket cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Blanket cover (king size)': 1 }], ['runner', 'Bed runner', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bed runner': 1 }]];
 var DESK_HK_OUT = [['water', 'Water bottles put in the room', DESK_HK_WATER], ['towels', 'Towels', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Towel': 2, 'Bath mat': 1 }], ['kit', 'Used dental kit / toiletries removed'], ['bathroom', 'Bathroom cleaned'],
   ['binRoom', 'Dustbin in the room emptied'], ['binToilet', 'Dustbin in the toilet emptied'], ['floor', 'Floor cleaned'],
-  ['bedding', 'Bedsheet, pillow covers, blanket cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Blanket cover (king size)': 1 }]];
+  ['bedding', 'Bedsheet, pillow covers, blanket cover', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bedsheet (king size)': 1, 'Pillow cover': 2, 'Blanket cover (king size)': 1 }], ['runner', 'Bed runner', [DESK_HK_FRESH, DESK_HK_KEPT], { 'Bed runner': 1 }]];
 /* Linen (bedding and towels): counted in 4 places. [item, laundry price per piece ₹ (the owner sets the real prices in the app)] */
 var DESK_LINEN_GROUPS = ['Mattresses', 'Pillows', 'Bedsheets', 'Blankets & bed covers', 'Towels & bath mats', 'Other'];
 /* [item, laundry price ₹, folder, goes to the laundry (shown in laundry lists)] */
@@ -93,7 +93,7 @@ var DESK_POLICY = {
 
 var DESK_SCHEMA = {
   rooms: { sheet: 'Rooms', cols: [['room', 'Room', 'n'], ['type', 'Room type'], ['beds', 'Beds'], ['rate', 'Usual rate per night (₹)', 'n'],
-    ['status', 'Status'], ['stay', 'Current stay ID'], ['updated', 'Updated', 't'], ['by', 'Updated by']] },
+    ['status', 'Status'], ['stay', 'Current stay ID'], ['updated', 'Updated', 't'], ['by', 'Updated by'], ['linen', 'Bedding & towels in the room (kept by the app)']] },
   stays: { sheet: 'Stays', cols: [['id', 'Stay ID'], ['room', 'Room', 'n'], ['guest', 'Guest name'], ['phone', 'Phone', 's'], ['guests', 'Guests', 'n'],
     ['checkin', 'Check-in date', 'd'], ['checkout', 'Check-out date', 'd'], ['nights', 'Nights', 'n'], ['rate', 'Agreed rate per night (₹)', 'n'],
     ['rateNote', 'Rate note'], ['status', 'Status'], ['roomTotal', 'Room total (₹)', 'n'], ['extras', 'Extras (₹)', 'n'], ['paid', 'Paid (₹)', 'n'],
@@ -357,18 +357,31 @@ function deskCore(db, hooks) {
       if (l[2]) {
         if (l[2].indexOf(v) < 0) fail('hk_checklist');
         var n = l[3] && v === DESK_HK_FRESH ? linenCounts(got['linen_' + l[0]]) : null;
-        out.push(l[1] + ': ' + v.toLowerCase() + (n ? ' (' + linenText(n) + ')' : ''));
+        var o2 = n && got['out_' + l[0]] ? linenCounts(got['out_' + l[0]]) : null;
+        out.push(l[1] + ': ' + v.toLowerCase() + (n ? ' (in: ' + (linenText(n) || 'none') + (got['src_' + l[0]] === 'reuse' ? ' from reuse' : '') + '; out: ' + (linenText(o2 || n) || 'none') + (got['dest_' + l[0]] === 'reuse' ? ' kept for reuse' : ' to wash') + ')' : ''));
       } else { if (v !== true) fail('hk_checklist'); out.push(l[1]); }
     });
     return out;
   }
   /* linen changed by housekeeping: fresh ones from the clean store into the room, the used ones out to "used, waiting for laundry" */
+  /* Linen changed by housekeeping on a checklist line: "fresh in" pieces come from the clean store (or from reuse), the "used out" pieces
+     (can be fewer: a guest kept one towel) go to the wash or are kept for reuse. Pillows / blankets / mattresses always go back to the store. */
   function hkLinen(list, got, roomNo, by) {
     got = got || {};
     list.forEach(function (l) {
       if (!l[3] || got[l[0]] !== DESK_HK_FRESH) return;
-      var n = linenCounts(got['linen_' + l[0]]);
-      Object.keys(n).forEach(function (k) { var it = linenItem(k); if (!it) return; linenMove(it, n[k], 'store', 'rooms', 'Fresh put in the room', roomNo, by); linenMove(it, n[k], 'rooms', 'dirty', 'Used one taken out of the room', roomNo, by); });
+      var fin = linenCounts(got['linen_' + l[0]]), fout = got['out_' + l[0]] ? linenCounts(got['out_' + l[0]]) : fin;
+      var src = got['src_' + l[0]] === 'reuse' ? 'reuse' : 'store', dest = got['dest_' + l[0]] === 'reuse' ? 'reuse' : 'wash';
+      Object.keys(fin).forEach(function (k) {
+        var it = linenItem(k); if (!it) return;
+        var fromReuse = src === 'reuse' && it.wash !== 'No' ? Math.min(fin[k], Number(it.reuse || 0)) : 0;
+        if (fromReuse) linenMove(it, fromReuse, 'reuse', 'rooms', 'Put in the room (from reuse)', roomNo, by);
+        if (fin[k] - fromReuse) linenMove(it, fin[k] - fromReuse, 'store', 'rooms', 'Fresh put in the room', roomNo, by);
+      });
+      Object.keys(fout).forEach(function (k) {
+        var it = linenItem(k); if (!it) return; var pl = backPlace(it, dest);
+        linenMove(it, fout[k], 'rooms', pl, 'Used one taken out of the room' + (pl === 'reuse' ? ' · kept for reuse' : pl === 'dirty' ? ' · to wash' : ' · back to the store'), roomNo, by);
+      });
     });
   }
   /* ---- daily housekeeping checklist ---- */
@@ -1449,6 +1462,45 @@ function deskCore(db, hooks) {
     if (it) linenMove(it, Number(c.qty), 'rooms', pl, why + (pl === 'reuse' ? ' · kept for reuse' : pl === 'dirty' ? ' · to wash' : ' · back to the store'), c.room, by);
     db.set('charges', c, { removed: why + (pl === 'reuse' ? ' (kept for reuse)' : pl === 'dirty' ? ' (to wash)' : ' (back to the store)') + ' · ' + by + ' ' + stamp() });
   }
+  /* ---- Bedding & towels in a room (everyone, housekeeping included) ----
+     Take out (how many to the wash, how many kept for reuse; pillows / blankets / mattresses back to the store),
+     put in (from the clean store or from reuse), or correct what is really in the room. */
+  api.roomLinen = function (req) {
+    var me = auth(req);
+    if (req.room != null && (req.out || req.put || req.set)) {
+      var r = room(req.room), have = roomLinenOf(r);
+      if (req.out) {
+        var any = 0;
+        Object.keys(req.out).forEach(function (k) {
+          var it = linenItem(k); if (!it) fail('no_item');
+          var o = req.out[k] || {}, w = Math.round(Number(o.wash) || 0), u = Math.round(Number(o.reuse) || 0), st = Math.round(Number(o.store) || 0);
+          if (w < 0 || u < 0 || st < 0 || w + u + st > 50) fail('bad_qty');
+          if (it.wash === 'No') { st += w + u; w = 0; u = 0; }
+          if (w + u + st > Number(have[k] || 0)) fail('more_than_in_room');
+          if (w) linenMove(it, w, 'rooms', 'dirty', 'Taken out of the room · to wash', r.room, me.name);
+          if (u) linenMove(it, u, 'rooms', 'reuse', 'Taken out of the room · kept for reuse', r.room, me.name);
+          if (st) linenMove(it, st, 'rooms', 'store', 'Taken out of the room · back to the store', r.room, me.name);
+          any += w + u + st;
+        });
+        if (!any) fail('bad_qty');
+      } else if (req.put) {
+        var n = linenCounts(req.put), from = req.from && typeof req.from === 'object' ? req.from : {};
+        if (!linenSum(n)) fail('bad_qty');
+        Object.keys(n).forEach(function (k) { var it = linenItem(k); if (n[k] > 50) fail('bad_qty'); if (from[k] === 'reuse' && (it.wash === 'No' || Number(it.reuse || 0) < n[k])) fail('not_enough_reuse'); });
+        Object.keys(n).forEach(function (k) { var it = linenItem(k), src = from[k] === 'reuse' ? 'reuse' : 'store'; linenMove(it, n[k], src, 'rooms', 'Put in the room' + (src === 'reuse' ? ' (from reuse)' : ' (from the clean store)'), r.room, me.name); });
+      } else { // the real count in the room: difference comes from the clean store, or is written off as missing
+        Object.keys(req.set).forEach(function (k) {
+          var it = linenItem(k); if (!it) fail('no_item');
+          var q = Math.round(Number(req.set[k])); if (!(q >= 0 && q <= 50)) fail('bad_qty');
+          var d = q - Number(have[k] || 0);
+          if (d > 0) linenMove(it, d, 'store', 'rooms', 'Room counted: ' + q + ' in the room', r.room, me.name);
+          if (d < 0) linenMove(it, -d, 'rooms', '', 'Room counted: ' + q + ' in the room (missing)', r.room, me.name);
+        });
+      }
+    }
+    return { rooms: db.all('rooms').map(function (x) { return { room: Number(x.room), type: x.type, status: x.status, linen: roomLinenOf(x) }; }).sort(function (a, b) { return a.room - b.room; }),
+      items: linenAll().filter(function (i) { return yes(i.active); }).map(function (i) { return { item: i.item, group: i.group || 'Other', store: Number(i.store || 0), reuse: Number(i.reuse || 0), wash: i.wash !== 'No' }; }) };
+  };
   api.linenExtra = function (req) {
     var me = auth(req);
     var to = req.unused ? 'store' : req.to === 'reuse' ? 'reuse' : 'wash';
@@ -2269,12 +2321,20 @@ function deskCore(db, hooks) {
   function linenText(n) { return Object.keys(n).map(function (k) { return n[k] + ' × ' + k; }).join(', ') || 'nothing'; }
   function linenSum(n) { return Object.keys(n || {}).reduce(function (a, k) { return a + Number(n[k] || 0); }, 0); }
   /* qty pieces from one place to another (from/to: store, rooms, dirty, laundry, or '' for new / thrown away). Never below 0. */
+  /* what is in each room right now (rooms.linen = {"Towel": 2, ...}); kept in step by every linen move that names the room */
+  function roomLinenOf(r) { try { var o = JSON.parse(r.linen || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+  function roomLinenAdd(roomNo, item, d) {
+    var r = find('rooms', 'room', Number(roomNo)); if (!r) return;
+    var o = roomLinenOf(r); o[item] = Math.max(0, Number(o[item] || 0) + d); if (!o[item]) delete o[item];
+    db.set('rooms', r, { linen: JSON.stringify(o) });
+  }
   function linenMove(it, qty, from, to, reason, roomNo, by) {
     qty = Math.round(Number(qty) || 0); if (!qty) return;
     var p = {};
     if (DESK_LINEN_PLACES[from]) p[from] = Math.max(0, Number(it[from] || 0) - qty);
     if (DESK_LINEN_PLACES[to]) p[to] = Number(it[to] || 0) + qty;
     db.set('linen', it, p);
+    if (roomNo && (from === 'rooms' || to === 'rooms')) roomLinenAdd(roomNo, it.item, to === 'rooms' ? qty : -qty);
     db.add('linenlog', { at: stamp(), item: it.item, qty: qty, from: DESK_LINEN_PLACES[from] || from || 'New', to: DESK_LINEN_PLACES[to] || to || 'Removed', reason: text(reason, 120), room: roomNo || '', by: by });
   }
   function linenView(it, me) {

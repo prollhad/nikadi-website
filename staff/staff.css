@@ -880,3 +880,32 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .ex-all{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:12px}
 .ex-reuse>summary{cursor:pointer;list-style:none}
 .ex-reuse>summary::-webkit-details-marker{display:none}
+
+/* wide tables scroll sideways again (a later rule had hidden the overflow) */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* on a phone, laundry / stock tables become one card per item */
+@media (max-width:700px){
+  table.stack,table.stack tbody{display:block;width:100%}
+  table.stack thead{display:none}
+  table.stack tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
+  table.stack tr.grp{display:block;padding:10px 14px 6px;background:var(--band)}
+  table.stack tr.grp td{padding:0;border:0;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  table.stack td{display:flex;flex-direction:column;gap:2px;padding:0;border:0;text-align:left!important;min-width:0}
+  table.stack td:first-child{grid-column:1/-1;font-size:1rem}
+  table.stack td[data-l]:not(:first-child)::before{content:attr(data-l);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  table.stack td:not(:first-child){font-size:1.05rem}
+  table.stack tr.tap{cursor:pointer}
+  .folder table.stack td:first-child{padding-left:0;min-width:0}
+}
+/* checklist / room bedding: fresh in and used out side by side */
+.hk-io{flex-wrap:wrap;gap:8px 12px}
+.hk-io>span:first-child{flex:1 1 100%}
+.hk-q{display:flex;flex-direction:column;gap:4px;flex:1 1 140px}
+.hk-q small{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hk-src{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.hk-src .seg{flex:1 1 220px;min-width:0}
+.rl-all{display:flex;flex-direction:column}
+.rl-room{appearance:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;width:100%;background:transparent;border:0;border-bottom:1px solid var(--line-soft);padding:12px 14px;color:inherit;font:inherit;cursor:pointer}
+.rl-room span{font-size:.82rem;color:var(--muted)}
+.rl-room.on{background:var(--band)}
+.add-lin{margin:4px 0 14px}
