@@ -540,7 +540,7 @@
       return '<details class="wk-guest wk-gen"' + (WK.genOpen !== false ? ' open' : '') + '><summary class="wk-h"><div class="wk-hl"><b>Quick replies for anyone</b><small>No name needed · type the phone in New enquiry below to send to that number, or choose the chat in WhatsApp</small></div></summary>' +
         gen.map(function (m, mi) {
           var ph = WK.q && WK.q.phone, href = ph ? waHref(ph, m.text) : 'https://wa.me/?text=' + encodeURIComponent(m.text);
-          return '<div class="wk-msg"><a class="wk-send" target="_blank" rel="noopener" href="' + esc(href) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-p">' + esc(m.text) + '</span><span class="wk-s">' + (ph ? 'Tap to send to ' + esc(nkPhoneShow(ph)) : 'Tap to send · choose the chat') + '</span></a>' +
+          return '<div class="wk-msg' + (m.kind === 'gfest' ? ' wk-fest' : '') + '"><a class="wk-send" target="_blank" rel="noopener" href="' + esc(href) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-p">' + esc(m.text) + '</span><span class="wk-s">' + (ph ? 'Tap to send to ' + esc(nkPhoneShow(ph)) : 'Tap to send · choose the chat') + '</span></a>' +
             '<button class="wk-ed" type="button" data-ge="' + mi + '">Edit</button></div>';
         }).join('') + '</details>';
     }

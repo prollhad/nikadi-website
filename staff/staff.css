@@ -744,6 +744,7 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .wk-send .wk-l{font-weight:500}.wk-send .wk-l em{font-style:normal;font-size:.7rem;color:var(--gold-hi,#e0be7a);margin-left:4px}
 .wk-send .wk-s{font-size:.74rem;color:var(--gold-hi,#e0be7a)}
 .wk-msg.sent .wk-send{border-color:var(--line);background:none}.wk-msg.sent .wk-s{color:var(--green)}
+.wk-msg.wk-fest .wk-send{border:1.5px solid #e0702a;background:linear-gradient(135deg,rgba(232,120,40,.20),rgba(214,70,110,.14))}.wk-msg.wk-fest .wk-l{color:#f39a4f;font-weight:700}.wk-msg.wk-fest .wk-s{color:#f39a4f}
 .wk-ed{flex:none;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:.78rem;cursor:pointer}
 .wk-ta{width:100%;box-sizing:border-box;font:inherit;font-size:.9rem;line-height:1.45;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);resize:vertical}
 .wk-enq .grid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.wk-enq .grid2>*,.wk-enq input,.wk-enq select{min-width:0;max-width:100%}.wk-enq .phonewrap{min-width:0}
