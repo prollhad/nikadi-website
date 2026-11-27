@@ -20,7 +20,7 @@
     old_record: 'This record is more than a few months old and is kept in the archive Sheet. It can be viewed but not changed.',
     drive_unavailable: 'Google Drive is not connected here.',
     too_big: 'This bill is too long to save.',
-    category_required: 'Choose what kind of expense it is.', date_future: 'The date can\'t be in the future.', bad_photo: 'That photo could not be uploaded. Try another photo.', photos_unavailable: 'Photo upload is not set up yet. Save without the photo for now.', not_found: 'That entry was not found. Refresh and try again.',
+    director_not_shown: 'Directors are not shown on the website.', job_not_shown: 'Only managers, reception and housekeeping can be shown on the website.', category_required: 'Choose what kind of expense it is.', date_future: 'The date can\'t be in the future.', bad_photo: 'That photo could not be uploaded. Try another photo.', photos_unavailable: 'Photo upload is not set up yet. Save without the photo for now.', not_found: 'That entry was not found. Refresh and try again.',
     wa_not_connected: 'WhatsApp is not connected yet (Settings → WhatsApp).', bad_phone_id: 'The phone number ID should be only digits.', bad_token: 'That access token looks too short. Copy the whole token.',
     bill_locked: 'This guest has checked out. Only a manager or the owner can change the bill now.', checkout_future: 'The check-out date can\'t be in the future for a guest who already left.',
     pdf_tools_failed: 'Could not make the PDF. Check the internet connection and try again.', bad_pdf: 'The PDF could not be sent. Please try again.', bad_title: 'Choose Mr., Ms., Mrs., Dr. or Name only.',

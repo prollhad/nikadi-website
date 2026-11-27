@@ -165,6 +165,7 @@ var DESK_SCHEMA = {
     ['accName', 'Account holder'], ['bank', 'Bank'], ['branch', 'Branch'], ['accNo', 'Account no.', 's'], ['ifsc', 'IFSC', 's'], ['upi', 'UPI ID', 's'],
     ['aadhaar', 'Aadhaar no.', 's'], ['pan', 'PAN', 's'], ['voter', 'Voter ID no.', 's'], ['uan', 'PF UAN', 's'], ['esic', 'ESI no.', 's'],
     ['prevWork', 'Previous work'], ['notes', 'Notes'], ['added', 'Added', 't'], ['by', 'Added by'], ['edited', 'Last change'], ['removed', 'Deleted']] },
+  webteam: { sheet: 'Website team', lazy: true, hidden: true, cols: [['id', 'Employee ID'], ['name', 'Name'], ['job', 'Job'], ['photo', 'Photo (small JPEG)', 's'], ['at', 'Added', 't'], ['by', 'Added by']] },
   empdocs: { sheet: 'Employee documents (private)', lazy: true, hidden: true, cols: [['id', 'ID'], ['emp', 'Employee ID'], ['kind', 'Document'], ['label', 'Label'], ['file', 'File (Drive ID)', 's'],
     ['at', 'Added', 't'], ['by', 'Added by'], ['removed', 'Removed']] },
   payroll: { sheet: 'Salaries (private)', lazy: true, hidden: true, cols: [['id', 'ID'], ['month', 'Month'], ['emp', 'Employee ID'], ['name', 'Name'], ['job', 'Designation'], ['rate', 'Monthly rate (₹)', 'n'],
@@ -3027,7 +3028,7 @@ function deskCore(db, hooks) {
   function empView(e, full) {
     var o = { id: e.id, name: e.name, job: e.job, director: yes(e.director), status: e.status || 'Active', joined: e.joined, left: e.left, phone: e.phone, salary: Number(e.salary || 0), salaryNote: e.salaryNote,
       blood: e.blood, emName: e.emName, emRel: e.emRel, emPhone: e.emPhone, docs: empDocs(e.id), photo: (db.all('empdocs').filter(function (d) { return d.emp === e.id && d.kind === 'photo' && !d.removed; })[0] || {}).id || '',
-      aadhaar: empMask(e.aadhaar, 4), pan: empMask(e.pan, 4), accNo: empMask(e.accNo, 4), bank: e.bank, ifsc: e.ifsc };
+      aadhaar: empMask(e.aadhaar, 4), pan: empMask(e.pan, 4), accNo: empMask(e.accNo, 4), bank: e.bank, ifsc: e.ifsc, web: !!find('webteam', 'id', e.id), webOk: empWebOk(e) };
     if (full) Object.keys(EMP_TEXT).concat(['dob', 'aadhaar', 'pan', 'voter', 'uan', 'esic', 'accNo', 'ifsc', 'upi', 'edited', 'added', 'by']).forEach(function (k) { o[k] = e[k] == null ? '' : e[k]; });
     return o;
   }
@@ -3061,9 +3062,10 @@ function deskCore(db, hooks) {
       if (want && want !== old.id) { /* the owner may correct an ID, for example before the cards are printed */
         if (find('employees', 'id', want)) fail('id_taken');
         db.all('empdocs').forEach(function (d) { if (d.emp === old.id) db.set('empdocs', d, { emp: want }); });
+        var wt = find('webteam', 'id', old.id); if (wt) db.set('webteam', wt, { id: want });
         p.id = want;
       }
-      p.edited = stamp() + ' · ' + me.name; db.set('employees', old, p); return { employee: empView(old, true) };
+      p.edited = stamp() + ' · ' + me.name; db.set('employees', old, p); empWebSync(old); return { employee: empView(old, true) };
     }
     var newId = want || empNext(); if (find('employees', 'id', newId)) fail('id_taken');
     var row = db.add('employees', Object.assign({ id: newId, added: stamp(), by: me.name, edited: '', removed: '' }, p));
@@ -3074,7 +3076,35 @@ function deskCore(db, hooks) {
     var e = empGet(req.id);
     db.all('empdocs').forEach(function (d) { if (d.emp === e.id && !d.removed) { db.set('empdocs', d, { removed: stamp() + ' · ' + me.name }); if (hooks.trashFile) try { hooks.trashFile(d.file); } catch (x) {} } });
     db.set('employees', e, { removed: stamp() + ' · ' + me.name });
+    var wt = find('webteam', 'id', e.id); if (wt) db.del('webteam', wt);
     return { removed: e.id };
+  };
+  /* Website "Our team": the owner switches a person on with their permission. Only the photo (small copy),
+     name, job and Employee ID go public. Directors are never shown; only managers, reception and housekeeping. */
+  var EMP_WEB_JOBS = /manager|reception|front ?(desk|office)|house ?keep|room ?attendant/i;
+  function empWebOk(e) { return !yes(e.director) && (e.status || 'Active') !== 'Left' && EMP_WEB_JOBS.test(String(e.job || '')); }
+  function empWebSync(e) {
+    var wt = find('webteam', 'id', e.id); if (!wt) return;
+    if (!empWebOk(e)) db.del('webteam', wt); else if (wt.name !== e.name || wt.job !== e.job) db.set('webteam', wt, { name: e.name, job: e.job });
+  }
+  api.empWebSet = function (req) {
+    var me = auth(req); needOwner(me);
+    var e = empGet(req.id), wt = find('webteam', 'id', e.id);
+    if (!req.on) { if (wt) db.del('webteam', wt); return { web: false }; }
+    if (yes(e.director)) fail('director_not_shown');
+    if (!empWebOk(e)) fail('job_not_shown');
+    var ph = String(req.photo || '');
+    if (!/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(ph) || ph.length > 45000) fail('bad_photo');
+    var p = { name: e.name, job: e.job, photo: ph, at: stamp(), by: me.name };
+    if (wt) db.set('webteam', wt, p); else db.add('webteam', Object.assign({ id: e.id }, p));
+    return { web: true };
+  };
+  /* Public (no login): the website's team wall. */
+  api.siteTeam = function () {
+    var list = db.all('webteam').filter(function (t) { var e = find('employees', 'id', t.id); return e && !e.removed && empWebOk(e); })
+      .sort(function (a, b) { return a.id < b.id ? -1 : 1; })
+      .map(function (t) { return { id: t.id, name: t.name, job: t.job, photo: t.photo }; });
+    return { team: list };
   };
   api.empDocSave = function (req) {
     var me = auth(req); needOwner(me);

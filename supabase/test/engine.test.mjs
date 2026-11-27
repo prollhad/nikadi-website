@@ -435,3 +435,20 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('toilet roll', tp && tp.sell);
   if (!tp || !tp.sell) throw new Error('toilet roll not in Add item');
 }
+{ // website "Our team": owner switches staff on; directors and other jobs refused; public list has no private details
+  const ph = 'data:image/jpeg;base64,' + 'A'.repeat(400);
+  const d = await call('deskEmployeeSave', { token: tok, name: 'Web Director', job: 'Director', director: true });
+  const r = await call('deskEmployeeSave', { token: tok, name: 'Web Reception', job: 'Receptionist', phone: '9811111111', aadhaar: '111122223333' });
+  const c = await call('deskEmployeeSave', { token: tok, name: 'Web Cook', job: 'Cook' });
+  const s1 = await call('deskEmpWebSet', { token: tok, id: d.employee.id, on: true, photo: ph });
+  const s2 = await call('deskEmpWebSet', { token: tok, id: c.employee.id, on: true, photo: ph });
+  const s3 = await call('deskEmpWebSet', { token: tok, id: r.employee.id, on: true, photo: 'data:image/png;base64,AAAA' });
+  const s4 = await call('deskEmpWebSet', { token: tok, id: r.employee.id, on: true, photo: ph });
+  const pub = await call('deskSiteTeam', {});
+  const mine = (pub.team || []).find(t => t.id === r.employee.id);
+  const leak = JSON.stringify(pub).includes('9811111111') || JSON.stringify(pub).includes('111122223333');
+  const left = await call('deskEmployeeSave', Object.assign({}, (await call('deskEmployee', { token: tok, id: r.employee.id })).employee, { token: tok, original: r.employee.id, status: 'Left' }));
+  const pub2 = await call('deskSiteTeam', {});
+  console.log('web team', s1.error, s2.error, s3.error, s4.ok, mine && mine.job, leak, left.ok, (pub2.team || []).some(t => t.id === r.employee.id));
+  if (s1.error !== 'director_not_shown' || s2.error !== 'job_not_shown' || s3.error !== 'bad_photo' || !s4.ok || !mine || mine.job !== 'Receptionist' || leak || !left.ok || (pub2.team || []).some(t => t.id === r.employee.id)) throw new Error('website team broken');
+}

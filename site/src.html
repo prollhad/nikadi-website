@@ -4948,11 +4948,15 @@ row.querySelectorAll('.igc').forEach(function(c){var q=c.querySelector('[data-in
   function dn(a,b){var p=a.split('-'),q=b.split('-');return Math.round((Date.UTC(+q[0],+q[1]-1,+q[2])-Date.UTC(+p[0],+p[1]-1,+p[2]))/864e5);}
   function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function load(url,cb){fetch(url,{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(cb).catch(function(){});}
-  if($('staffGrid'))load('/data/team.json',function(a){
+  function team(cb){ /* live list from the staff app (owner switches people on with their permission); the old file is the fallback */
+    fetch('https://ebwdrqdsexjterbxyeoa.supabase.co/functions/v1/api',{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deskSiteTeam'})})
+      .then(function(r){return r.json();}).then(function(j){if(j&&j.ok&&j.team&&j.team.length)cb(j.team);else load('/data/team.json',cb);},function(){load('/data/team.json',cb);});
+  }
+  if($('staffGrid'))team(function(a){
     a=(a||[]).filter(function(x){return x&&x.name&&x.photo&&x.show!==false;});if(!a.length)return;
     $('staffGrid').innerHTML=a.map(function(x){
-      var src=esc(x.photo),webp=/\.jpe?g$/i.test(x.photo)?esc(x.photo.replace(/\.jpe?g$/i,'.webp')):'';
-      return '<figure class="staff"><div class="ph"><picture>'+(webp?'<source srcset="'+webp+'" type="image/webp">':'')+'<img src="'+src+'" alt="'+esc(x.name)+', '+esc(x.role||'Nikadi team')+'" loading="lazy" decoding="async"></picture></div><figcaption><b>'+esc(x.name)+'</b><span>'+esc(x.role||'')+'</span>'+(x.id?'<span class="eid">ID '+esc(x.id)+'</span>':'')+'</figcaption></figure>';
+      var src=esc(x.photo),webp=/^data:/.test(x.photo)?'':/\.jpe?g$/i.test(x.photo)?esc(x.photo.replace(/\.jpe?g$/i,'.webp')):'';
+      return '<figure class="staff"><div class="ph"><picture>'+(webp?'<source srcset="'+webp+'" type="image/webp">':'')+'<img src="'+src+'" alt="'+esc(x.name)+', '+esc(x.role||x.job||'Nikadi team')+'" loading="lazy" decoding="async"></picture></div><figcaption><b>'+esc(x.name)+'</b><span>'+esc(x.role||x.job||'')+'</span>'+(x.id?'<span class="eid">ID '+esc(x.id)+'</span>':'')+'</figcaption></figure>';
     }).join('');
     $('team').hidden=false;
   });

@@ -66,12 +66,47 @@
     var body = C.openSheet('Employee'); body.innerHTML = '<div class="loading">Loading…</div>';
     C.api('deskEmployee', { id: id }).then(function (r) { draw(body, r.employee); }, function (e) { body.innerHTML = '<p class="err">' + esc(C.errText(e)) + '</p>'; });
   }
+  /* Website "Our team" switch: photo (small copy), name, job and Employee ID only. Never directors. */
+  function webPanel(e, have) {
+    var why = e.director ? 'Directors are not shown on the website.' : e.status === 'Left' ? 'Only people working now can be shown.' : !e.webOk ? 'Only managers, reception and housekeeping can be shown. Change the designation if this person does one of these jobs.' : !have.photo ? 'Add a photo in Documents first.' : '';
+    return '<div class="panel emp-web"><div class="sec-h"><h2>On the website</h2><span class="small">"Our team" on nikadiguesthouse.com</span></div>' +
+      (why && !e.web ? '<p class="small">' + esc(why) + '</p>' :
+      '<label class="emp-web-sw"><input type="checkbox" id="epWeb"' + (e.web ? ' checked' : '') + '><span><b>Show on the website</b><small>Only the photo, name, job and Employee ID are shown, so guests can check that someone really works for Nikadi. Turn on only with this person\'s permission.</small></span></label>') +
+      '<p class="small" id="epWebMsg" role="status"></p></div>';
+  }
+  function webThumb(url) {
+    return new Promise(function (ok, no) {
+      var im = new Image();
+      im.onload = function () {
+        var W = 360, H = 450, r = W / H, sw = im.naturalWidth, sh = im.naturalHeight, sx = 0, sy = 0;
+        if (sw / sh > r) { var nw = sh * r; sx = (sw - nw) / 2; sw = nw; } else { var nh = sw / r; sy = Math.max(0, (sh - nh) * 0.25); sh = nh; }
+        var c = document.createElement('canvas'); c.width = W; c.height = H;
+        var g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(im, sx, sy, sw, sh, 0, 0, W, H);
+        var q = 0.84, d = c.toDataURL('image/jpeg', q);
+        while (d.length > 44000 && q > 0.4) { q -= 0.08; d = c.toDataURL('image/jpeg', q); }
+        ok(d);
+      };
+      im.onerror = no; im.src = url;
+    });
+  }
+  function webWire(body, e, have) {
+    var box = $('#epWeb', body), msg = $('#epWebMsg', body); if (!box) return;
+    box.onchange = function () {
+      var on = box.checked; box.disabled = true; msg.textContent = on ? 'Putting on the website…' : 'Taking off the website…';
+      var go = on ? photo(have.photo[0].id).then(function (u) { if (!u) throw 'no_photo'; return webThumb(u); }) : Promise.resolve('');
+      go.then(function (ph) { return C.api('deskEmpWebSet', { id: e.id, on: on, photo: ph }); }).then(function () {
+        box.disabled = false; e.web = on; msg.textContent = on ? 'Shown on the website (Our team). It appears within a minute.' : 'Not shown on the website any more.';
+        if (LIST) LIST = null;
+      }, function (x) { box.disabled = false; box.checked = !on; msg.textContent = x === 'no_photo' ? 'Could not open the photo. Try again.' : C.errText(x); });
+    };
+  }
   function row(k, v) { return v ? '<div class="emp-kv"><span>' + esc(k) + '</span><b>' + esc(v) + '</b></div>' : ''; }
   function mask(v) { v = String(v || ''); return v ? '•••• ' + v.slice(-4) : ''; }
   function draw(body, e) {
     var have = {}; e.docs.forEach(function (d) { (have[d.kind] = have[d.kind] || []).push(d); });
     body.innerHTML = '<div class="emp-head"><span class="emp-ph big"' + (have.photo ? ' data-ph="' + esc(have.photo[0].id) + '"' : '') + '>' + esc(initials(e.name)) + '</span><div><h3>' + esc(e.name) + '</h3><p class="small">' + esc(e.job || '') + (e.director ? ' · Director' : '') + (e.status === 'Left' ? ' · left on ' + esc(dLong(e.left)) : '') + '</p><code class="emp-id">' + esc(e.id) + '</code></div></div>' +
       '<div class="emp-acts"><button class="btn btn-gold" type="button" id="epCard">Employee ID card</button><button class="btn btn-line" type="button" id="epEdit">Edit details</button></div>' +
+      webPanel(e, have) +
       '<div class="panel"><div class="sec-h"><h2>Work</h2></div>' + row('Designation', e.job) + row('Date of joining', dLong(e.joined)) + row('Monthly salary', e.salary ? rs(e.salary) + (e.salaryNote ? ' · ' + e.salaryNote : '') : e.salaryNote) + row('Status', e.status) + '</div>' +
       '<div class="panel" id="epPay"><div class="sec-h"><h2>Salary and payslips</h2></div><div class="loading">Loading the pay record…</div></div>' +
       '<div class="panel"><div class="sec-h"><h2>Personal</h2></div>' + row('Phone', e.phone) + row('Email', e.email) + row('Date of birth', dLong(e.dob)) + row('Gender', e.gender) + row('Blood group', e.blood) + row("Father's / husband's name", e.father) + row('Home address', e.address) + row('Emergency contact', [e.emName + (e.emRel ? ' (' + e.emRel + ')' : ''), e.emPhone].filter(Boolean).join(' · ')) + '</div>' +
@@ -87,6 +122,7 @@
       '<div class="emp-acts"><button class="btn btn-quiet danger" type="button" id="epDel">Delete this profile</button></div>' +
       '<p class="small">Added ' + esc(e.added) + ' by ' + esc(e.by) + (e.edited ? ' · last change ' + esc(e.edited) : '') + '</p>';
     payHistory($('#epPay', body), e);
+    webWire(body, e, have);
     $$('[data-ph]', body).forEach(function (el) { photo(el.dataset.ph).then(function (u) { if (u) { el.style.backgroundImage = 'url(' + u + ')'; if (el.classList.contains('emp-ph')) el.textContent = ''; } }); });
     $('#epEdit', body).onclick = function () { C.closeSheet(); setTimeout(function () { edit(e); }, 60); };
     $('#epCard', body).onclick = function () { idCard(e, have.photo ? have.photo[0].id : ''); };
