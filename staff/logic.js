@@ -3087,6 +3087,10 @@ function deskCore(db, hooks) {
     var wt = find('webteam', 'id', e.id); if (!wt) return;
     if (!empWebOk(e)) db.del('webteam', wt); else if (wt.name !== e.name || wt.job !== e.job) db.set('webteam', wt, { name: e.name, job: e.job });
   }
+  /* order on the website (owner, 28 Nov): managers, then reception, then housekeeping; inside that, these people first in this order */
+  var EMP_WEB_ORDER = ['debarun', 'sujit', 'khokon', 'sourav'];
+  function empWebRank(t) { var j = String(t.job || ''); return /manager/i.test(j) ? 0 : /reception|front ?(desk|office)/i.test(j) ? 1 : 2; }
+  function empWebName(t) { var n = String(t.name || '').toLowerCase(); for (var i = 0; i < EMP_WEB_ORDER.length; i++) if (n.indexOf(EMP_WEB_ORDER[i]) === 0 || n.indexOf(' ' + EMP_WEB_ORDER[i]) >= 0) return i; return EMP_WEB_ORDER.length; }
   api.empWebSet = function (req) {
     var me = auth(req); needOwner(me);
     var e = empGet(req.id), wt = find('webteam', 'id', e.id);
@@ -3102,7 +3106,7 @@ function deskCore(db, hooks) {
   /* Public (no login): the website's team wall. */
   api.siteTeam = function () {
     var list = db.all('webteam').filter(function (t) { var e = find('employees', 'id', t.id); return e && !e.removed && empWebOk(e); })
-      .sort(function (a, b) { return a.id < b.id ? -1 : 1; })
+      .sort(function (a, b) { return empWebRank(a) - empWebRank(b) || empWebName(a) - empWebName(b) || (a.id < b.id ? -1 : 1); })
       .map(function (t) { return { id: t.id, name: t.name, job: t.job, photo: t.photo }; });
     return { team: list };
   };

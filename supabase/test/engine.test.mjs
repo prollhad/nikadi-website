@@ -452,3 +452,13 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('web team', s1.error, s2.error, s3.error, s4.ok, mine && mine.job, leak, left.ok, (pub2.team || []).some(t => t.id === r.employee.id));
   if (s1.error !== 'director_not_shown' || s2.error !== 'job_not_shown' || s3.error !== 'bad_photo' || !s4.ok || !mine || mine.job !== 'Receptionist' || leak || !left.ok || (pub2.team || []).some(t => t.id === r.employee.id)) throw new Error('website team broken');
 }
+{ // website team order: managers, reception, housekeeping; Debarun, Sujith, Khokon, Sourav first
+  const ph = 'data:image/jpeg;base64,' + 'A'.repeat(200);
+  const mk = async (name, job) => { const e = await call('deskEmployeeSave', { token: tok, name, job }); await call('deskEmpWebSet', { token: tok, id: e.employee.id, on: true, photo: ph }); return e.employee.id; };
+  await mk('Zara Hk', 'Housekeeping'); await mk('Sourav Das', 'Housekeeping'); await mk('Anil Rec', 'Front office / Receptionist'); await mk('Khokon Ghosh', 'Front office / Receptionist');
+  await mk('Sujith Roy', 'Manager'); await mk('Debarun Saha', 'Manager');
+  const pub = await call('deskSiteTeam', {});
+  const names = pub.team.map(t => t.name).filter(n => /Hk|Sourav|Anil|Khokon|Sujith|Debarun/.test(n));
+  console.log('web team order', names.join(', '));
+  if (names.join(',') !== 'Debarun Saha,Sujith Roy,Khokon Ghosh,Anil Rec,Sourav Das,Zara Hk') throw new Error('website team order broken');
+}
