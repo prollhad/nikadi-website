@@ -3,7 +3,7 @@
    Loaded by the staff app; NikadiEmp.mount(view, ctx) draws the page. */
 (function () {
   var C, LIST = null, PH = {}, FONTS = null;
-  var JOBS = ['Director', 'Manager', 'Front office / Receptionist', 'Housekeeping', 'Room attendant', 'Laundry', 'Security guard', 'Bell boy', 'Cook', 'Kitchen helper', 'Driver', 'Electrician / Maintenance', 'Cleaner', 'Gardener', 'Accountant', 'Office assistant'];
+  var JOBS = ['Director', 'Senior Manager', 'Manager', 'Front office / Receptionist', 'Housekeeping', 'Room attendant', 'Laundry', 'Security guard', 'Bell boy', 'Cook', 'Kitchen helper', 'Driver', 'Electrician / Maintenance', 'Cleaner', 'Gardener', 'Accountant', 'Office assistant'];
   var BANKS = ['State Bank of India', 'Punjab National Bank', 'Bank of Baroda', 'Canara Bank', 'Union Bank of India', 'Bank of India', 'Indian Bank', 'Central Bank of India', 'Indian Overseas Bank', 'UCO Bank', 'Bank of Maharashtra', 'Punjab & Sind Bank',
     'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra Bank', 'IndusInd Bank', 'Yes Bank', 'IDFC First Bank', 'IDBI Bank', 'Bandhan Bank', 'Federal Bank', 'South Indian Bank', 'Karur Vysya Bank', 'City Union Bank', 'Tamilnad Mercantile Bank',
     'Karnataka Bank', 'RBL Bank', 'DCB Bank', 'CSB Bank', 'Dhanlaxmi Bank', 'Jammu & Kashmir Bank', 'Nainital Bank',

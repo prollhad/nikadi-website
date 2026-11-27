@@ -3093,9 +3093,9 @@ function deskCore(db, hooks) {
     var wt = find('webteam', 'id', e.id); if (!wt) return;
     if (!empWebOk(e)) db.del('webteam', wt); else if (wt.name !== e.name || wt.job !== e.job) db.set('webteam', wt, { name: e.name, job: e.job });
   }
-  /* order on the website (owner, 28 Nov): managers, then reception, then housekeeping; inside that, these people first in this order */
+  /* order on the website (owner, 28 Nov): senior managers, managers, then reception, then housekeeping; inside that, these people first in this order */
   var EMP_WEB_ORDER = ['debarun', 'sujit', 'khokon', 'sourav'];
-  function empWebRank(t) { var j = String(t.job || ''); return /manager/i.test(j) ? 0 : /reception|front ?(desk|office)/i.test(j) ? 1 : 2; }
+  function empWebRank(t) { var j = String(t.job || ''); return /senior\s*manager/i.test(j) ? 0 : /manager/i.test(j) ? 1 : /reception|front ?(desk|office)/i.test(j) ? 2 : 3; }
   function empWebName(t) { var n = String(t.name || '').toLowerCase(); for (var i = 0; i < EMP_WEB_ORDER.length; i++) if (n.indexOf(EMP_WEB_ORDER[i]) === 0 || n.indexOf(' ' + EMP_WEB_ORDER[i]) >= 0) return i; return EMP_WEB_ORDER.length; }
   api.empWebSet = function (req) {
     var me = auth(req); needOwner(me);
