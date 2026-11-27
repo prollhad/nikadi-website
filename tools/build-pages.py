@@ -33,8 +33,8 @@ PAGES = {
     'banner': ('Members save up to 20%', 'Nikadi Membership', 'Four levels, member rates up to 20% off every night, and points on every stay. Free to join.', None)},
 }
 NAV = [('/#rooms', 'Rooms', None), ('/temple.html', 'Temple', 'temple.html'), ('/things-to-do.html', 'Things to do', 'things-to-do.html'),
-       ('/travel.html', 'Getting to Mayapur · travel desk', 'travel.html'), ('/membership.html', 'Membership', 'membership.html'), ('/#reviews', 'Reviews', None),
-       ('/about.html', 'About', 'about.html'), ('/#contact', 'Contact', None)]
+       ('/travel.html', 'Travel', 'travel.html'), ('/membership.html', 'Membership', 'membership.html'), ('/#reviews', 'Reviews', None),
+       ('/about.html', 'About', 'about.html'), ('/about.html#team', 'Our team', 'team'), ('/#contact', 'Contact', None)]
 
 # ---- split the master file ----
 hdr_at = src.index('<div class="offerbar"')
@@ -92,7 +92,7 @@ for name, p in PAGES.items():
     h = re.sub(r'<meta name="description" content="[^"]*">', '<meta name="description" content="' + p['desc'] + '">', h)
     h = re.sub(r'<meta property="og:url" content="[^"]*">', '<meta property="og:url" content="' + BASE + p['url'] + '">\n<link rel="canonical" href="' + BASE + p['url'] + '">', h)
     h = re.sub(r'<meta property="og:title" content="[^"]*">', '<meta property="og:title" content="' + p['title'] + '">', h)
-    nav = ''.join('<a href="' + u + '"' + (' aria-current="page"' if f == name else '') + '>' + l + '</a>' for u, l, f in NAV)
+    nav = ''.join('<a href="' + u + '"' + (' class="nav-team"' if f == 'team' else '') + (' aria-current="page"' if f == name else '') + '>' + l + '</a>' for u, l, f in NAV)
     hd = re.sub(r'(<nav class="main" aria-label="Sections">\s*).*?(\s*</nav>)', lambda m: m.group(1) + nav + m.group(2), header, count=1, flags=re.S)
     hd = hd.replace('<a class="brand" href="#home">', '<a class="brand" href="/">')
     main = (banner(p['banner']) if p.get('banner') else '') + ''.join(secs[s] for s in p['sections'] if s in secs)
