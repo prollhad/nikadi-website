@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pay · Nikadi Guest House</title>
+<meta name="description" content="Scan or long-press the QR to pay Nikadi Guest House with any UPI app. Payments are received by Gourdham Enterprise, our payment partner.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0c1430">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nikadi Guest House">
+<meta property="og:title" content="Scan & pay · Nikadi Guest House">
+<meta property="og:description" content="Long-press the QR or tap to pay with any UPI app. Received by Gourdham Enterprise, payment partner of Nikadi Guest House.">
+<meta property="og:url" content="https://www.nikadiguesthouse.com/pay/">
+<meta property="og:image" content="https://www.nikadiguesthouse.com/img/pay/nikadi-pay-qr-og.jpg">
+<meta property="og:image:width" content="600">
+<meta property="og:image:height" content="840">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico?v=2" sizes="any">
+<style>
+:root{--bg:#0c1430;--bg2:#16224a;--gold:#d8b56a;--gold2:#e6c98a;--ink:#f3ede0;--muted:#b9b6c6;--line:rgba(216,181,106,.35)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(ellipse at 50% 0%,var(--bg2) 0%,var(--bg) 70%);background-color:var(--bg);color:var(--ink);font:400 16px/1.55 'Helvetica Neue',Arial,sans-serif;min-height:100vh;
+  padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;justify-content:center}
+main{width:100%;max-width:460px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.card{width:100%;height:auto;border-radius:18px;display:block;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.tip{color:var(--muted);font-size:.9rem;margin:0}
+.btn{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;font-size:.9rem;border:1.5px solid var(--gold);color:var(--gold2);background:transparent;cursor:pointer;padding:0 18px}
+.gold{background:linear-gradient(135deg,#f3dc9f,#c9a35a 55%,#e6c98a);color:#141824;border-color:transparent}
+.box{border:1px solid var(--line);border-radius:14px;padding:14px;text-align:left;background:rgba(8,12,30,.5)}
+.box h2{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:0 0 8px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:.92rem}
+dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere;user-select:all}
+.msg{min-height:1.2em;color:var(--gold2);font-size:.85rem}
+.small{color:var(--muted);font-size:.82rem;margin:0}
+a.site{color:var(--gold2)}
+</style>
+</head>
+<body>
+<main>
+  <img class="card" src="/img/pay/nikadi-pay-qr.jpg" width="1200" height="1680" alt="UPI QR code: scan and pay Gourdham Enterprise, payment partner of Nikadi Guest House. UPI ID Vyapar.173921652511@hdfcbank">
+  <p class="tip">Scan the QR with any UPI app, or long-press it on your phone and choose <b>Scan QR code</b>. On this phone, tap the button below.</p>
+  <a class="btn gold" id="upi" href="upi://pay?pa=Vyapar.173921652511@hdfcbank&amp;pn=Default&amp;mc=8999&amp;tr=STQU173921652511&amp;cu=INR">Pay with a UPI app</a>
+  <button class="btn" type="button" id="copyUpi">Copy UPI ID</button>
+  <span class="msg" id="m1" aria-live="polite"></span>
+  <div class="box">
+    <h2>UPI</h2>
+    <dl><dt>UPI ID</dt><dd id="upiId">Vyapar.173921652511@hdfcbank</dd><dt>Name</dt><dd>Gourdham Enterprise</dd></dl>
+  </div>
+  <div class="box">
+    <h2>Or bank transfer (NEFT / IMPS)</h2>
+    <dl id="bank"><dt>Account name</dt><dd>Gourdham Enterprise</dd><dt>Account no.</dt><dd>50200005796177</dd><dt>Type</dt><dd>Current account</dd><dt>IFSC</dt><dd>HDFC0009856</dd><dt>Bank</dt><dd>HDFC Bank, Mayapur (Bamanpukur)</dd></dl>
+    <button class="btn" type="button" id="copyBank" style="margin-top:12px;width:100%">Copy bank details</button>
+    <span class="msg" id="m2" aria-live="polite"></span>
+  </div>
+  <p class="small">Payments are received by <b>Gourdham Enterprise</b>, the payment partner of Nikadi Guest House. Please send the payment screenshot on WhatsApp <b>+91 75011 01137</b> so we can confirm your booking.</p>
+  <p class="small"><a class="site" href="/">www.nikadiguesthouse.com</a></p>
+</main>
+<script>
+(function(){
+  function copy(t,m,src){function ok(){m.textContent='Copied';setTimeout(function(){m.textContent='';},2000);}function fb(){var r=document.createRange();r.selectNodeContents(src);var s=getSelection();s.removeAllRanges();s.addRange(r);m.textContent='Selected. Use your phone\'s copy option.';}try{navigator.clipboard.writeText(t).then(ok,fb);}catch(e){fb();}}
+  document.getElementById('copyUpi').onclick=function(){copy('Vyapar.173921652511@hdfcbank',document.getElementById('m1'),document.getElementById('upiId'));};
+  document.getElementById('copyBank').onclick=function(){copy('Account name: Gourdham Enterprise\nAccount no: 50200005796177\nAccount type: Current\nIFSC: HDFC0009856\nBank: HDFC Bank, Mayapur (Bamanpukur)',document.getElementById('m2'),document.getElementById('bank'));};
+})();
+</script>
+</body>
+</html>

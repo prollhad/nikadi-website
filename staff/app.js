@@ -815,16 +815,15 @@
     } else if (m) {
       h += '<div class="bill"><h3>Bill</h3>' +
         '<div class="bl sum"><span class="t">Room · ' + s.nights + (s.nights > 1 ? ' nights' : ' night') + ' × ' + inr(s.rate) + '</span><span class="d">' + esc(s.rateNote || 'Agreed rate per night') + '</span><span class="a">' + inr(s.roomTotal) + '</span></div>' +
-        s.charges.filter(onBill).map(function (c) {
-          return '<div class="bl tap' + (S.st.fine && c.item === S.st.fine.item ? ' fine' : '') + '" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.item) + ' × ' + c.qty + '</span>' +
-            '<span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span><span class="a">' + inr(c.total) + '</span></div>';
+        s.charges.map(function (c) {
+          return '<div class="bl tap' + (S.st.fine && c.item === S.st.fine.item ? ' fine' : '') + '" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.item) + ' × ' + c.qty + (c.free ? '<span class="free">Free' + (c.note ? ' (' + esc(freeWhy(c.note)) + ')' : '') + '</span>' : '') + '</span>' +
+            '<span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span><span class="a">' + (c.free ? '₹0' : inr(c.total)) + '</span></div>';
         }).join('') +
         '<div class="bl sum"><span class="t">Total</span><span class="d">Room ' + inr(s.roomTotal) + ' + extras ' + inr(s.extras) + '</span><span class="a">' + inr(s.roomTotal + s.extras) + '</span></div>' +
         s.payments.map(function (p) {
           return '<div class="bl ' + (p.amount < 0 ? 'refund' : 'paid') + (p.method === 'From advance' ? '' : ' tap') + '" data-pay="' + esc(p.id) + '"><span class="t">' + (p.method === 'From advance' ? 'Advance (booking)' : (p.amount < 0 ? 'Refunded · ' : 'Paid · ') + esc(p.method)) + '</span><span class="d">' + esc(tShort(p.at)) + ' · ' + esc(p.by) + (p.ref ? ' · Ref ' + esc(p.ref) : '') + (p.note ? ' · ' + esc(p.note) : '') + '</span><span class="a">' + (p.amount < 0 ? '+ ' + inr(-p.amount) : '− ' + inr(p.amount)) + '</span></div>';
         }).join('') +
         '<div class="bl due"><span class="t">' + (s.balance > 0 ? 'Balance due' : s.balance < 0 ? 'Refund due to guest' : 'Fully paid') + '</span><span class="a">' + inr(Math.abs(s.balance)) + '</span></div></div>' +
-        roomOnlyBox(s) +
         '<p class="small">Tap an extra to change or remove it. Tap a payment to correct a mistake.' + (rcp() ? ' Changes to recorded money go to the manager for approval.' : '') + '</p>';
       h += '<div class="btns">' + (inHouse ? '<button class="btn btn-gold" id="b-add" type="button">Add item</button>' : '') +
         '<button class="btn btn-line" id="b-pay" type="button">Take payment</button>' +
@@ -1480,7 +1479,7 @@
   var KIT_OPTS = ['Morning kit', 'Dental kit', 'Choose later'];
   function kitField(cur) {
     return '<div class="field"><span>Free kit for this room</span>' + seg('kit', cur ? ['Morning kit', 'Dental kit', 'No kit'] : KIT_OPTS, cur || 'Choose later') +
-      '<small class="small">Morning kit for regular guests · Dental kit only for guests paying a lower rate. One per guest, taken from stock.</small></div>';
+      '<small class="small">Morning kit for regular guests: 1 per room. Dental kit only for guests paying a lower rate: one per guest. Taken from stock.</small></div>';
   }
   function kitVal(root) { var v = segVal(root, 'kit'); return v === 'Morning kit' || v === 'Dental kit' ? v : ''; }
   function kitBox(s) {
@@ -1490,9 +1489,11 @@
   function openKit(s, parentBody) {
     var body = openSheet('Free kit · Room ' + s.room);
     body.innerHTML = kitField(s.kit ? s.kit.kind : 'Morning kit') +
-      '<div class="field"><span>How many</span>' + stepper('k-qty', s.kit ? s.kit.qty : s.guests, 1, 20) + '</div>' +
+      '<div class="field"><span>How many</span>' + stepper('k-qty', s.kit ? s.kit.qty : 1, 1, 20) + '</div>' +
       '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button">Save</button>';
     wireSegs(body); wireSteppers(body);
+    /* Morning kit: 1 per room; Dental kit: one per guest */
+    body.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-seg="kit"] button, .seg button'); if (!b) return; setTimeout(function () { var k = kitVal(body); if (k) $('#k-qty', body).textContent = k === 'Morning kit' ? 1 : (s.guests || 1); }, 0); });
     $('#go', body).onclick = function () {
       var k = kitVal(body);
       submit(this, $('#err', body), 'deskKit', { id: s.id, kit: k, qty: Number($('#k-qty', body).textContent) }, function (res) {
@@ -1557,7 +1558,7 @@
         room: r.room, guest: $('#f-guest', body).value, phone: nkPhoneVal('f-phone', body), guests: Number($('#f-guests', body).textContent), companions: compVal(body),
         checkin: $('#f-in', body).value, checkout: $('#f-out', body).value, rate: $('#f-rate', body).value.replace(/[^\d]/g, ''),
         rateNote: $('#f-rnote', body).value, advance: $('#f-adv', body).value.replace(/[^\d]/g, ''), method: segVal(body, 'method'), ref: $('#f-ref', body).value, notes: $('#f-notes', body).value,
-        kit: kitVal(body), kitQty: Number($('#f-guests', body).textContent)
+        kit: kitVal(body), kitQty: kitVal(body) === 'Morning kit' ? 1 : Number($('#f-guests', body).textContent)
       }, function (res) { vibrate(); toast(res.stay.guest + ' checked in to room ' + r.room); after(2); });
     };
     setTimeout(function () { $('#f-guest', body).focus(); }, 50);

@@ -398,6 +398,18 @@
 "name": "Large Twin 01.jpg",
 "src": "/img/rooms/c/large-01.jpg",
 "thumb": "/img/rooms/c/large-01.jpg"
+},
+{
+"cat": "Other",
+"name": "Nikadi Pay Qr Og.jpg",
+"src": "/img/pay/nikadi-pay-qr-og.jpg",
+"thumb": "/img/pay/nikadi-pay-qr-og.jpg"
+},
+{
+"cat": "Other",
+"name": "Nikadi Pay Qr.jpg",
+"src": "/img/pay/nikadi-pay-qr.jpg",
+"thumb": "/img/pay/nikadi-pay-qr.jpg"
 }
 ]
 }
