@@ -807,7 +807,7 @@
     if (s.drive) h += '<a class="linkbtn" href="' + esc(s.drive) + '" target="_blank" rel="noopener">Open this stay in Google Drive (details, bill, IDs) →</a>';
     if (m && s.comp) {
       h += '<div class="bill"><h3>Items given (free stay)</h3>' + (s.charges.length ? s.charges.map(function (c) {
-        return '<div class="bl tap" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.qty + ' × ' + c.item) + '</span><span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span></div>';
+        return '<div class="bl tap" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.qty + ' × ' + c.item) + freeTag(c.note && freeWhy(c.note)) + '</span><span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span></div>';
       }).join('') : '<div class="bl"><span class="d">Nothing given yet</span></div>') + '</div>' +
         '<div class="btns">' + (inHouse ? '<button class="btn btn-gold" id="b-add" type="button">Add item</button><button class="btn btn-quiet" id="b-edit" type="button">Edit / extend</button><button class="btn btn-quiet" id="b-out" type="button">Check out</button>' : '') + '</div>';
       if (inHouse && s.undoIn && mgr()) h += undoInBox(s.undoIn, s.undoInRooms, !!s.booking);
@@ -816,8 +816,8 @@
       h += '<div class="bill"><h3>Bill</h3>' +
         '<div class="bl sum"><span class="t">Room · ' + s.nights + (s.nights > 1 ? ' nights' : ' night') + ' × ' + inr(s.rate) + '</span><span class="d">' + esc(s.rateNote || 'Agreed rate per night') + '</span><span class="a">' + inr(s.roomTotal) + '</span></div>' +
         s.charges.map(function (c) {
-          return '<div class="bl tap' + (S.st.fine && c.item === S.st.fine.item ? ' fine' : '') + '" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.item) + ' × ' + c.qty + (c.free ? '<span class="free">Free' + (c.note ? ' (' + esc(freeWhy(c.note)) + ')' : '') + '</span>' : '') + '</span>' +
-            '<span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span><span class="a">' + (c.free ? '₹0' : inr(c.total)) + '</span></div>';
+          return '<div class="bl tap' + (S.st.fine && c.item === S.st.fine.item ? ' fine' : '') + '" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.item) + ' × ' + c.qty + (isFree(c) ? freeTag(c.note && freeWhy(c.note)) : '') + '</span>' +
+            '<span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</span><span class="a">' + (isFree(c) ? '₹0' : inr(c.total)) + '</span></div>';
         }).join('') +
         '<div class="bl sum"><span class="t">Total</span><span class="d">Room ' + inr(s.roomTotal) + ' + extras ' + inr(s.extras) + '</span><span class="a">' + inr(s.roomTotal + s.extras) + '</span></div>' +
         s.payments.map(function (p) {
@@ -836,7 +836,7 @@
         : '<p class="small">Check-out can\'t be reversed now: ' + esc(errText(s.undo)) + '</p>';
     } else {
       h += '<div class="bill"><h3>Items given</h3>' + (s.charges.length ? s.charges.map(function (c) {
-        return '<div class="bl"><span class="t">' + esc(c.qty + ' × ' + c.item) + (c.free ? '<span class="free">Free' + (c.note ? ' (' + esc(freeWhy(c.note)) + ')' : '') + '</span>' : '') + '</span><span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + '</span></div>';
+        return '<div class="bl"><span class="t">' + esc(c.qty + ' × ' + c.item) + (isFree(c) ? freeTag(c.note && freeWhy(c.note)) : '') + '</span><span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + '</span></div>';
       }).join('') : '<div class="bl"><span class="d">Nothing added yet</span></div>') + '</div>' +
         (inHouse ? '<button class="btn btn-gold big-cta" id="b-add" type="button">Add item to this room</button>' : '');
     }
@@ -908,6 +908,9 @@
   }
   function addDaysYmd(ymd, n) { var p = String(ymd).split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)); return d.toISOString().slice(0, 10); }
 
+  /* anything given at no charge wears the green FREE tag */
+  function isFree(c) { return !!c.free || !(Number(c.total) > 0); }
+  function freeTag(why) { return '<span class="free">Free' + (why ? ' (' + esc(why) + ')' : '') + '</span>'; }
   function freeWhy(note) { note = String(note || ''); return /^Check-in/.test(note) ? 'check-in' : note === 'Welcome kit' ? 'welcome kit' : /^Daily housekeeping/.test(note) ? note.replace(/^Daily housekeeping \(day (\d+)\).*/, 'daily · day $1') : note; }
   /* what housekeeping gives today: water is chosen in the checklist (1 to 4 bottles, or none), the rest is fixed */
   function giveText(items) { return (items || []).map(function (i) { return i.item === 'Water bottle' ? 'Water bottles (choose 1 to 4, or none)' : i.qty + ' × ' + i.item; }).join(', '); }
@@ -928,7 +931,7 @@
     var l = s.charges.filter(function (c) { return !onBill(c); });
     if (!l.length) return '';
     return '<div class="bill"><h3>Given to the room · not on the bill</h3>' + l.map(function (c) {
-      return '<div class="bl tap" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.qty + ' × ' + c.item) + '</span><span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(freeWhy(c.note) || c.note) : '') + '</span></div>';
+      return '<div class="bl tap" data-charge="' + esc(c.id) + '"><span class="t">' + esc(c.qty + ' × ' + c.item) + freeTag() + '</span><span class="d">' + esc(tShort(c.at)) + ' · ' + esc(c.by) + (c.note ? ' · ' + esc(freeWhy(c.note) || c.note) : '') + '</span></div>';
     }).join('') + '</div>';
   }
 
@@ -956,7 +959,7 @@
           : '<p class="small" style="margin-top:10px">The app shows nothing in this room. If there are things in it, use <b>Count the room</b> first.</p>';
         else if (mode === 'Put in') h += '<p class="small" style="margin-top:10px">Fresh pieces put into the room (not for a guest\'s extra request: that is "+ Bedding &amp; towels").</p>' + groups.map(function (g) {
             return '<p class="small" style="margin:10px 0 6px"><b>' + esc(g) + '</b></p><div class="list">' + by[g].map(function (i) {
-              return '<div class="ex-item"><div class="lc-row"><span>' + esc(i.item) + '<small>' + i.store + ' clean' + (i.wash ? ' · ' + i.reuse + ' for reuse' : '') + '</small></span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="50" data-p="' + esc(i.item) + '" value="0" aria-label="How many ' + esc(i.item) + '"><button type="button" data-d="1" aria-label="More">+</button></span></div>' +
+              return '<div class="ex-item"><div class="lc-row"><span>' + esc(i.item) + (/mattress/i.test(i.item) ? '' : freeTag()) + '<small>' + i.store + ' clean' + (i.wash ? ' · ' + i.reuse + ' for reuse' : '') + '</small></span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="50" data-p="' + esc(i.item) + '" value="0" aria-label="How many ' + esc(i.item) + '"><button type="button" data-d="1" aria-label="More">+</button></span></div>' +
                 (i.wash ? '<div class="ex-src" hidden><span class="small">Take it from</span>' + seg('rs-' + D.items.indexOf(i), ['Clean store', 'Reuse'], 'Clean store') + '</div>' : '') + '</div>'; }).join('') + '</div>'; }).join('');
         else h += '<p class="small" style="margin-top:10px">Count what is really in room ' + r.room + ' now and set the numbers. Extra pieces come from the clean store; pieces not found are written off as missing.</p>' + groups.map(function (g) {
             return '<p class="small" style="margin:10px 0 6px"><b>' + esc(g) + '</b></p><div class="list">' + by[g].map(function (i) {
@@ -1005,14 +1008,14 @@
         '<p class="kicker">Which room?</p>' + seg('ex-room', D.rooms.map(function (x) { return 'Room ' + x.room; }), pick) +
         (r && matGiven && !r.comp && r.mattressCharged < matGiven ? '<p class="warn-t small" style="margin-top:10px"><b>The extra mattress is not on room ' + r.room + '\'s bill yet.</b> Tell reception to add it with Add item.</p>' : '') +
         (r && r.given.length ? '<p class="kicker" style="margin-top:14px">In room ' + r.room + ' now (extras)</p><div class="list">' + r.given.map(function (g) {
-          return '<div class="lc-row ex-given"><span>' + g.qty + ' × ' + esc(g.item) + '<small>from ' + esc(String(g.from).toLowerCase()) + ' · ' + esc(g.by) + ' · ' + esc(tShort(g.at)) + '</small></span><span class="ex-acts">' +
+          return '<div class="lc-row ex-given"><span>' + g.qty + ' × ' + esc(g.item) + (/mattress/i.test(g.item) ? '' : freeTag()) + '<small>from ' + esc(String(g.from).toLowerCase()) + ' · ' + esc(g.by) + ' · ' + esc(tShort(g.at)) + '</small></span><span class="ex-acts">' +
             (g.wash ? '<button class="btn btn-quiet sm" type="button" data-back="' + esc(g.id) + '" data-to="wash">To wash</button><button class="btn btn-line sm" type="button" data-back="' + esc(g.id) + '" data-to="reuse">Keep for reuse</button>'
               : '<button class="btn btn-quiet sm" type="button" data-back="' + esc(g.id) + '" data-to="store">Back to store</button>') + '</span></div>'; }).join('') + '</div>' +
           (r.given.length > 1 ? '<div class="ex-all"><span class="small">Take everything back (pillows, blankets and the mattress go back to the store). Sheets and covers:</span><span class="ex-acts"><button class="btn btn-quiet sm" type="button" data-all="wash">All to wash</button><button class="btn btn-line sm" type="button" data-all="reuse">All for reuse</button></span></div>' : '') : '') +
         '<div class="sec-h" style="margin-top:16px"><h2 style="font-size:1.05rem">What are you giving?</h2><button class="btn btn-gold sm" type="button" id="ex-mat">Extra mattress set</button></div>' +
         groups.map(function (g) { return '<p class="small" style="margin:10px 0 6px"><b>' + esc(g) + '</b></p><div class="list">' + by[g].map(function (i) {
           var q = keep[i.item] ? keep[i.item].q : 0, src = keep[i.item] ? keep[i.item].src : 'Clean store';
-          return '<div class="ex-item"><div class="lc-row"><span>' + esc(i.item) + '<small>' + i.store + ' clean in store' + (i.wash ? ' · ' + i.reuse + ' kept for reuse' : '') + '</small></span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="20" data-lk="' + esc(i.item) + '" value="' + q + '" aria-label="How many ' + esc(i.item) + '"><button type="button" data-d="1" aria-label="More">+</button></span></div>' +
+          return '<div class="ex-item"><div class="lc-row"><span>' + esc(i.item) + (/mattress/i.test(i.item) ? '' : freeTag()) + '<small>' + i.store + ' clean in store' + (i.wash ? ' · ' + i.reuse + ' kept for reuse' : '') + '</small></span><span class="lc-q"><button type="button" data-d="-1" aria-label="Less">−</button><input class="input" type="number" inputmode="numeric" min="0" max="20" data-lk="' + esc(i.item) + '" value="' + q + '" aria-label="How many ' + esc(i.item) + '"><button type="button" data-d="1" aria-label="More">+</button></span></div>' +
             (i.wash ? '<div class="ex-src"' + (q ? '' : ' hidden') + '><span class="small">Take it from</span>' + seg(srcName(i), ['Clean store', 'Reuse'], src) + '</div>' : '') + '</div>'; }).join('') + '</div>'; }).join('') +
         '<p class="err" id="err" role="alert"></p><button class="btn btn-ok big-cta" id="go" type="button" disabled></button>' + reuseBox();
       function counts() { var o = {}; $$('input[data-lk]', body).forEach(function (i) { var n = Math.round(Number(i.value) || 0); if (n > 0) o[i.dataset.lk] = n; }); return o; }
@@ -1079,12 +1082,12 @@
     }
     var d = HK.data, due = d.rooms.filter(function (r) { return r.due; }), left = due.filter(function (r) { return !r.done; }).length;
     var daily = giveText(d.daily) || 'nothing set';
-    v.innerHTML = '<div class="hrow"><div><p class="kicker">' + esc(dShort(d.date)) + ' · free daily per room: ' + esc(daily) + '</p><h1>Housekeeping</h1></div><div class="upd"><button class="btn btn-gold" type="button" id="hex">+ Bedding &amp; towels</button><button class="btn btn-line" type="button" id="hrl">Rooms: bedding &amp; towels</button><button class="btn btn-quiet" type="button" id="hrf">Refresh</button></div></div>' +
+    v.innerHTML = '<div class="hrow"><div><p class="kicker">' + esc(dShort(d.date)) + ' · daily per room ' + freeTag() + ': ' + esc(daily) + '</p><h1>Housekeeping</h1></div><div class="upd"><button class="btn btn-gold" type="button" id="hex">+ Bedding &amp; towels</button><button class="btn btn-line" type="button" id="hrl">Rooms: bedding &amp; towels</button><button class="btn btn-quiet" type="button" id="hrf">Refresh</button></div></div>' +
       '<div class="counts"><div class="count c-dirty"><b>' + left + '</b><span>To do</span></div><div class="count c-ready"><b>' + (due.length - left) + '</b><span>Done</span></div></div>' +
       (due.length ? '<div class="list hk-list">' + due.map(function (r) {
         return '<div class="hk-row ' + (r.done ? 'done' : '') + '"><div class="hk-room"><b>' + r.room + '</b><small>' + esc(r.type) + '</small></div>' +
           '<div class="hk-what"><b>' + esc(r.guest) + ' · ' + r.guests + (r.guests > 1 ? ' guests' : ' guest') + ' · day ' + r.day + ' of ' + r.of + '</b>' +
-          '<span>' + (r.done ? '✓ Done by ' + esc(r.done.by) + ' at ' + esc(tShort(r.done.at).split(', ').pop()) + ' · ' + esc(String(r.done.items).split(' · Checked')[0]) : 'Give: ' + esc(giveText(r.items) || '—')) + '</span></div>' +
+          '<span>' + (r.done ? '✓ Done by ' + esc(r.done.by) + ' at ' + esc(tShort(r.done.at).split(', ').pop()) + ' · ' + esc(String(r.done.items).split(' · Checked')[0]) + freeTag() : 'Give: ' + esc(giveText(r.items) || '—') + freeTag()) + '</span></div>' +
           (r.done ? '<button class="btn btn-quiet sm" type="button" data-undo="' + r.room + '">Undo</button>' : '<button class="btn btn-ok" type="button" data-done="' + r.room + '">Checklist</button>') + '</div>';
       }).join('') + '</div>' : '<p class="small">No rooms need daily housekeeping today. Rooms are on this list from the guest\'s 2nd day until the day before they leave (the first day gets the free check-in water).</p>') +
       (function () { var other = d.rooms.filter(function (r) { return !r.due; }); return other.length ? '<p class="small">Not on today\'s list: ' + other.map(function (r) { return 'Room ' + r.room + (r.firstDay ? ' (arrived today)' : r.leaves ? ' (leaves today)' : ''); }).join(', ') + '.</p>' : ''; })();
@@ -1752,9 +1755,9 @@
         return '<button type="button" data-room="' + r.room + '" aria-pressed="' + (r.room === S.addRoom) + '">' + r.room + '<small>' + esc(r.stay.guest.split(' ')[0]) + '</small></button>';
       }).join('') + '</div></div>' : '<div class="empty">No guests are staying right now.</div>') +
       '<div class="field"><span class="label">2 · Item</span><div class="items" id="items">' + items.map(function (i) {
-        var sub = !Number(i.price) ? 'On the room, not on the bill' : mgr() ? inr(i.price) : '';
+        var zero = !Number(i.price), sub = zero ? 'Not on the bill' : mgr() ? inr(i.price) : '';
         if (i.track) sub += (sub ? ' · ' : '') + i.stock + ' in stock';
-        return '<button type="button" data-item="' + esc(i.item) + '" aria-pressed="' + (i.item === S.addItem) + '"><b>' + esc(i.item) + '</b><span>' + esc(sub || 'Tap to choose') + '</span></button>';
+        return '<button type="button" data-item="' + esc(i.item) + '" aria-pressed="' + (i.item === S.addItem) + '"><b>' + esc(i.item) + (zero ? freeTag() : '') + '</b><span>' + esc(sub || 'Tap to choose') + '</span></button>';
       }).join('') + '</div></div>' +
       '<p class="small add-lin">Pillows, bed cover, bed runner, towels, extra mattress set and other bedding are free and kept in stock: <button class="linkbtn" type="button" id="addLin">Bedding &amp; towels →</button></p>' +
       '<div class="field"><span class="label">3 · How many</span>' + stepper('q', 1, 1, 50) + '</div>' +

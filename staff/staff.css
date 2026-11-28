@@ -912,3 +912,5 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .add-lin{margin:4px 0 14px}
 
 .emp-web-sw{display:flex;gap:12px;align-items:flex-start;cursor:pointer}.emp-web-sw input{width:22px;height:22px;margin-top:2px;accent-color:var(--gold,#d4af37);flex:none}.emp-web-sw span{display:grid;gap:4px}.emp-web-sw small{color:var(--muted);font-size:.8rem;line-height:1.4}
+/* FREE tag keeps its own size and green inside rows that restyle every span */
+.hk-row .hk-what span.free,.items button span.free,.lc-row span.free{font-size:.62rem;color:#8fe0a8;display:inline-block}
