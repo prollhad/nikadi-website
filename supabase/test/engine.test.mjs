@@ -462,3 +462,18 @@ if (!Object.values(sav2.days[5].t).every(v => v === 'full') || sav3.days[5].t[tS
   console.log('web team order', names.join(', '));
   if (names.join(',') !== 'Bina Senior,Debarun Saha,Sujith Roy,Khokon Ghosh,Anil Rec,Sourav Das,Zara Hk') throw new Error('website team order broken');
 }
+{ // late check-out step chosen in Add item keeps a clean note
+  await call('deskItemSave', { token: tok, item: 'Late checkout', price: 1500, sell: true });
+  const s = await call('deskState', { token: tok });
+  const free = s.rooms.find(r => r.status === 'Ready');
+  let lateOk = true;
+  if (free) {
+    const c = await call('deskCheckIn', { token: tok, room: free.room, guest: 'Late Guest', phone: '9876500000', guests: 1, checkin: s.today, checkout: s.today.slice(0, 8) + String(+s.today.slice(8) + 1).padStart(2, '0'), rate: 2200, advance: 0, method: 'Cash', wa: false });
+    const l = await call('deskCharge', { token: tok, room: free.room, item: 'Late checkout', qty: 1, price: '2200', note: 'After 12 noon · full room price' });
+    const s2 = await call('deskState', { token: tok }); const r = s2.rooms.find(x => x.room === free.room);
+    console.log('late full', c.ok, l.ok, l.error || '', l.added && l.added.total);
+    const ln = r && r.stay ? JSON.stringify(s2) : '';
+    lateOk = l.ok && l.added.total === 2200 && !/Price changed from ₹1500/.test(ln);
+  }
+  if (!free || !lateOk) throw new Error('late check-out step broken');
+}

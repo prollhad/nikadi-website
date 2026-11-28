@@ -206,7 +206,7 @@ var DESK_DEFAULTS = {
   items: [
     { item: 'Water bottle', price: 20, track: 'Yes', stock: 0, low: 24, active: 'Yes', sell: 'Yes', hsn: '2201', gst: 5 },
     { item: 'Dental kit', price: 30, track: 'Yes', stock: 0, low: 10, active: 'Yes', sell: 'Yes', hsn: '3306', gst: 5 },
-    { item: 'Extra mattress', price: 500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes', hsn: '996311', gst: 5 },
+    { item: 'Extra mattress', price: 1000, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes', hsn: '996311', gst: 5 },
     { item: 'Late checkout', price: 1500, track: 'No', stock: 0, low: 0, active: 'Yes', sell: 'Yes', hsn: '996311', gst: 5 },
     { item: 'Morning kit (free)', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'No' },
     { item: 'Toilet roll', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'Yes' }
@@ -1125,9 +1125,17 @@ function deskCore(db, hooks) {
     if (it) { if (it.sell !== 'Yes' || it.active !== 'Yes') db.set('items', it, { sell: 'Yes', active: 'Yes' }); }
     else db.add('items', { item: 'Toilet roll', price: 0, track: 'Yes', stock: 0, low: 20, active: 'Yes', sell: 'Yes' });
   }
+  /* one-time price changes asked by the owner (28 Nov 2026): extra mattress ₹500 → ₹1,000 */
+  function priceFix() {
+    if (cfgGet('priceFix') === '2026-11-28') return;
+    var it = find('items', 'item', 'Extra mattress'); if (it && Number(it.price) === 500) db.set('items', it, { price: 1000 });
+    cfgSet('priceFix', '2026-11-28');
+  }
+  /* items whose price any staff member can set when adding (extra mattress is negotiated; late check-out has steps up to the full room price) */
+  var DESK_OPEN_PRICE = ['Extra mattress', 'Late checkout'];
   api.state = function (req) {
     var me = auth(req), mgr = isMgr(me), t = today();
-    ensureToiletPaper();
+    ensureToiletPaper(); priceFix();
     if (me.role === 'Laundry') return { me: me, today: t, now: stamp(), rooms: [], items: [], toBuy: [], stocklog: [], arrivals: [], hk: { stay: [], out: [] }, methods: METHODS, pending: 0, approvals: 0, myRequests: 0, waNew: 0,
       laundryNew: db.all('laundry').filter(function (x) { return x.status === 'At laundry' || x.status === 'Part returned'; }).length };
     var stays = {};
@@ -1144,7 +1152,7 @@ function deskCore(db, hooks) {
       var s = r.stay && stays[r.stay];
       if (s) {
         o.stay = { id: s.id, guest: mgr ? s.guest : String(s.guest || '').split(/\s+/)[0], guests: s.guests, checkin: s.checkin, checkout: s.checkout,
-          leavesToday: s.checkout <= t, comp: s.comp || '' };
+          leavesToday: s.checkout <= t, comp: s.comp || '', rate: Number(s.rate) || 0 }; // rate: for the late check-out step 'full room price'
         if (mgr) o.stay.balance = s.balance;
         var sv = serviceView(s); if (sv) o.service = { day: sv.day, of: sv.of, done: sv.done ? { by: sv.done.by, at: sv.done.at } : null };
       }
@@ -1295,16 +1303,17 @@ function deskCore(db, hooks) {
       s = stay(r.stay);
     }
     var it = item(req.item);
-    var free = !!req.free || !!s.comp || (!Number(it.price) && !(mgr && Number(req.price) > 0)); // ₹0 things (toilet roll…) go on the room, never on the bill
+    var open = mgr || DESK_OPEN_PRICE.indexOf(it.item) >= 0;
+    var free = !!req.free || !!s.comp || (!Number(it.price) && !(open && Number(req.price) > 0)); // ₹0 things (toilet roll…) go on the room, never on the bill
     if (!sellable(it) && !free) fail('no_item'); // free-only items (morning kit…) can still be given free
     var qty = Math.round(Number(req.qty || 1)); if (!(qty >= 1 && qty <= 50)) fail('bad_qty');
     var price = Number(it.price || 0), tot = null;
-    if (mgr && req.price != null && req.price !== '') { price = money(req.price); if (isNaN(price)) fail('invalid_amount'); }
+    if (open && req.price != null && req.price !== '') { price = money(req.price); if (isNaN(price)) fail('invalid_amount'); }
     if (mgr && req.total != null && req.total !== '' && !free) { // what the guest actually paid for all of them (e.g. ₹30 for 2 bottles)
       tot = money(req.total); if (isNaN(tot)) fail('invalid_amount'); price = Math.round(tot / qty * 100) / 100;
     }
     var note = text(req.note, 120);
-    if (mgr && price !== Number(it.price) && !free) note = text((note ? note + ' · ' : '') + 'Price changed from ₹' + it.price, 160);
+    if (open && price !== Number(it.price) && !free && !(it.item === DESK_LATE_ITEM && /^(Till |After 12)/.test(note))) note = text((note ? note + ' · ' : '') + 'Price changed from ₹' + it.price, 160);
     var c = db.add('charges', { id: id('C'), at: stamp(), stay: s.id, room: r.room, item: it.item, qty: qty, price: free ? 0 : price,
       total: free ? 0 : tot != null ? tot : price * qty, free: free ? 'Yes' : 'No', note: note, by: me.name, removed: '' });
     moveStock(it, -qty, free ? 'Free to room' : (req.id ? 'Added to bill after check-out' : 'Charged to room'), r.room, me.name);

@@ -1707,13 +1707,15 @@
     };
   }
 
+  /* late check-out steps: 10 AM ₹500 · 11 AM ₹1,000 · 12 noon ₹1,500 · after 12 noon the full room price */
+  function lateTiers(rate) { return (S.st.lateOut || []).concat(Number(rate) > 0 ? [{ label: 'After 12', price: Number(rate), full: true }] : []); }
   function openEditCharge(c, s, parentBody) {
     var body = openSheet(c.item + ' · Room ' + s.room);
-    var tiers = c.item === 'Late checkout' && S.st.lateOut ? S.st.lateOut : null;
+    var tiers = c.item === 'Late checkout' && S.st.lateOut ? lateTiers(s.rate) : null;
     var ask = rcp() && !(c.deskEdit && s.status === 'In house'); // late check-out and fines: reception sets what was actually paid // the automatic late check-out line can be changed without approval
     body.innerHTML = '<p class="small">Added ' + esc(tShort(c.at)) + ' by ' + esc(c.by) + (c.note ? ' · ' + esc(c.note) : '') + '</p>' +
       (tiers ? '<div class="field"><span>Late check-out till</span><div class="seg" id="f-tier">' + tiers.map(function (x) {
-        return '<button type="button" data-p="' + x.price + '" aria-pressed="' + (!c.free && Number(c.price) === x.price) + '">' + esc(x.label) + '<br>' + inr(x.price) + '</button>';
+        return '<button type="button" data-p="' + x.price + '" aria-pressed="' + (!c.free && Number(c.price) === x.price) + '">' + esc(x.label) + '<br>' + (x.full ? 'Full room ' : '') + inr(x.price) + '</button>';
       }).join('') + '</div><span class="small">Or type any amount below. Use “Remove from bill” if the guest left on time.</span></div>' : '') +
       '<div class="field"><span>Quantity</span>' + stepper('f-q', c.qty, 1, 50) + '</div>' +
       field('Price each (₹)', '<input class="input" id="f-p" inputmode="numeric" value="' + (c.free ? 0 : c.price) + '">') +
@@ -1761,14 +1763,28 @@
       }).join('') + '</div></div>' +
       '<p class="small add-lin">Pillows, bed cover, bed runner, towels, extra mattress set and other bedding are free and kept in stock: <button class="linkbtn" type="button" id="addLin">Bedding &amp; towels →</button></p>' +
       '<div class="field"><span class="label">3 · How many</span>' + stepper('q', 1, 1, 50) + '</div>' +
-      (mgr() ? field('Price each (₹)', '<input class="input" id="price" inputmode="numeric">') : '') +
+      '<div id="late"></div>' +
+      field('Price each (₹)', '<input class="input" id="price" inputmode="numeric">') +
       '<label class="toggle"><span>Free (no charge to guest)</span><input type="checkbox" id="free"></label>' +
       field('Note (optional)', '<input class="input" id="note" maxlength="120">') +
       '<p class="err" id="err" role="alert"></p><button class="btn btn-gold big-cta" id="go" type="button"' + (occ.length ? '' : ' disabled') + '>Add to room</button>';
-    function setPrice() { var p = $('#price', v); if (p) { var it = items.filter(function (i) { return i.item === S.addItem; })[0]; p.value = it ? it.price : ''; } }
+    var OPEN = ['Extra mattress', 'Late checkout'];
+    function canPrice() { return mgr() || OPEN.indexOf(S.addItem) >= 0; }
+    function setPrice() {
+      var p = $('#price', v), it = items.filter(function (i) { return i.item === S.addItem; })[0], lb = $('#late', v);
+      p.closest('.field').hidden = !canPrice(); p.value = it ? it.price : '';
+      var rm = occ.filter(function (r) { return r.room === S.addRoom; })[0], rate = rm && rm.stay ? rm.stay.rate : 0;
+      if (S.addItem !== 'Late checkout') { lb.innerHTML = ''; return; }
+      var t = lateTiers(rate);
+      lb.innerHTML = '<div class="field"><span class="label">Late check-out till</span><div class="seg" id="tier">' + t.map(function (x, i) {
+        return '<button type="button" data-p="' + x.price + '" data-n="' + esc(x.full ? 'After 12 noon · full room price' : 'Till ' + x.label) + '" aria-pressed="' + (i === 0) + '">' + esc(x.label) + '<br>' + (x.full ? 'Full room ' : '') + inr(x.price) + '</button>';
+      }).join('') + '</div>' + (rate ? '' : '<span class="small">Choose the room to see its full room price.</span>') + '</div>';
+      p.value = t[0].price;
+      $('#tier', v).onclick = function (e) { var b = e.target.closest('button'); if (!b) return; $$('#tier button', v).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); p.value = b.dataset.p; };
+    }
     setPrice();
     var rr = $('#rooms', v);
-    if (rr) rr.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; S.addRoom = Number(b.dataset.room); $$('button', rr).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); };
+    if (rr) rr.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; S.addRoom = Number(b.dataset.room); $$('button', rr).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); if (S.addItem === 'Late checkout') setPrice(); };
     $('#items', v).onclick = function (e) { var b = e.target.closest('button'); if (!b) return; S.addItem = b.dataset.item; $$('#items button', v).forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); setPrice(); };
     wireSteppers(v);
     $('#addLin', v).onclick = function () { openExtra(S.addRoom || 0, function () { refresh(); }); };
@@ -1776,8 +1792,9 @@
       var err = $('#err', v);
       if (!S.addRoom) { err.textContent = 'Choose the room first.'; return; }
       var it0 = items.filter(function (i) { return i.item === S.addItem; })[0];
-      var d = { room: S.addRoom, item: S.addItem, qty: Number($('#q', v).textContent), free: $('#free', v).checked || !!(it0 && !Number(it0.price)), note: $('#note', v).value };
-      if (mgr()) d.price = $('#price', v).value.replace(/\D/g, '');
+      var tb = $('#tier button[aria-pressed="true"]', v), nt = $('#note', v).value.trim();
+      var d = { room: S.addRoom, item: S.addItem, qty: Number($('#q', v).textContent), free: $('#free', v).checked || !!(it0 && !Number(it0.price)), note: tb ? tb.dataset.n + (nt ? ' · ' + nt : '') : nt };
+      if (canPrice()) d.price = $('#price', v).value.replace(/\D/g, '');
       submit(this, err, 'deskCharge', d, function (r) {
         vibrate();
         toast(r.added.qty + ' × ' + r.added.item + ' → Room ' + r.added.room + (r.added.free ? ' (on the room, not on the bill)' : ''));
