@@ -480,9 +480,9 @@
             (canDone ? '<span class="wk-donebox" data-dbox="' + gi + '"><button class="btn btn-gold sm wk-done" type="button" data-done="' + gi + '">Done</button></span>' : '') + '</div>' +
             (!open ? '' : g.msgs.map(function (m, mi) {
               var k = g.key + '|' + m.kind, txt = WK.edit[k] != null ? WK.edit[k] : m.text;
-              return '<div class="wk-msg' + (m.sent ? ' sent' : '') + '"><a class="wk-send" target="_blank" rel="noopener" data-g="' + gi + '" data-m="' + mi + '" href="' + esc(waHref(g.phone, txt)) + '">' +
+              return '<div class="wk-msg' + wkCls(m.kind) + (m.sent ? ' sent' : '') + '"><a class="wk-send" target="_blank" rel="noopener" data-g="' + gi + '" data-m="' + mi + '" href="' + esc(waHref(g.phone, txt)) + '">' +
                 '<span class="wk-l">' + esc(m.label) + (WK.edit[k] != null ? ' <em>edited</em>' : '') + '</span><span class="wk-p">' + esc(txt) + '</span><span class="wk-s">' + (m.sent ? '✓ Sent ' + esc(m.sent) : 'Tap to send') + '</span></a>' +
-                '<button class="wk-ed" type="button" data-eg="' + gi + '" data-em="' + mi + '">Edit</button></div>';
+                '<button class="wk-ed" type="button" data-eg="' + gi + '" data-em="' + mi + '">Edit</button>' + wkQr(m.kind) + '</div>';
             }).join('')) + '</div>';
         }).join('') + '</div>' : WK.folder === 'enq' ? '<p class="small">Pending booking requests (website, phone, WhatsApp) also show here, with their prices and advance.</p>' : '<p class="note">' + (WK.folder === 'in' ? 'No arriving bookings or guests in house with a WhatsApp number.' : 'No one leaving today or checked out in the last 3 days.') + '</p>');
       $$('[data-wk]', body).forEach(function (b) { b.onclick = function () { WK.folder = b.dataset.wk; draw(); }; });
@@ -519,6 +519,7 @@
         var g = list[+a.dataset.g], m = g.msgs[+a.dataset.m], k = g.key + '|' + m.kind;
         api('deskWaKitSent', { ref: g.key, kind: m.kind, phone: g.phone, name: g.name, edited: WK.edit[k] != null }).then(function (r) { WK.data = r; S.st.waToSend = cnt('in') + cnt('out') + cnt('enq'); draw(); }, function () {});
       }; });
+      $$('.wk-send[data-g]', body).forEach(function (a) { a.addEventListener('wk-sent', function () { a.onclick(); }); }); // sent together with the QR picture
       $$('.wk-ed[data-eg]', body).forEach(function (b) { b.onclick = function () {
         var g = list[+b.dataset.eg], m = g.msgs[+b.dataset.em], k = g.key + '|' + m.kind;
         var box = openSheet('Edit · ' + m.label);
@@ -540,8 +541,8 @@
       return '<details class="wk-guest wk-gen"' + (WK.genOpen !== false ? ' open' : '') + '><summary class="wk-h"><div class="wk-hl"><b>Quick replies for anyone</b><small>No name needed · type the phone in New enquiry below to send to that number, or choose the chat in WhatsApp</small></div></summary>' +
         gen.map(function (m, mi) {
           var ph = WK.q && WK.q.phone, href = ph ? waHref(ph, m.text) : 'https://wa.me/?text=' + encodeURIComponent(m.text);
-          return '<div class="wk-msg' + (m.kind === 'gfest' ? ' wk-fest' : '') + '"><a class="wk-send" target="_blank" rel="noopener" href="' + esc(href) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-p">' + esc(m.text) + '</span><span class="wk-s">' + (ph ? 'Tap to send to ' + esc(nkPhoneShow(ph)) : 'Tap to send · choose the chat') + '</span></a>' +
-            '<button class="wk-ed" type="button" data-ge="' + mi + '">Edit</button></div>';
+          return '<div class="wk-msg' + wkCls(m.kind) + '"><a class="wk-send" target="_blank" rel="noopener" href="' + esc(href) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-p">' + esc(m.text) + '</span><span class="wk-s">' + (ph ? 'Tap to send to ' + esc(nkPhoneShow(ph)) : 'Tap to send · choose the chat') + '</span></a>' +
+            '<button class="wk-ed" type="button" data-ge="' + mi + '">Edit</button>' + wkQr(m.kind) + '</div>';
         }).join('') + '</details>';
     }
     function enqForm() {
@@ -556,8 +557,8 @@
     }
     function enqOut(r) {
       return r.msgs.map(function (m, mi) {
-        return '<div class="wk-msg"><a class="wk-send q-send" target="_blank" rel="noopener" data-qm="' + mi + '" href="' + esc(r.phone ? waHref(r.phone, m.text) : 'https://wa.me/?text=' + encodeURIComponent(m.text)) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-p">' + esc(m.text) + '</span><span class="wk-s">' + (r.phone ? 'Tap to send to ' + esc(nkPhoneShow(r.phone)) : 'Tap to send · choose the chat in WhatsApp') + '</span></a>' +
-          '<button class="wk-ed" type="button" data-qe="' + mi + '">Edit</button></div>';
+        return '<div class="wk-msg' + wkCls(m.kind) + '"><a class="wk-send q-send" target="_blank" rel="noopener" data-qm="' + mi + '" href="' + esc(r.phone ? waHref(r.phone, m.text) : 'https://wa.me/?text=' + encodeURIComponent(m.text)) + '"><span class="wk-l">' + esc(m.label) + '</span><span class="wk-p">' + esc(m.text) + '</span><span class="wk-s">' + (r.phone ? 'Tap to send to ' + esc(nkPhoneShow(r.phone)) : 'Tap to send · choose the chat in WhatsApp') + '</span></a>' +
+          '<button class="wk-ed" type="button" data-qe="' + mi + '">Edit</button>' + wkQr(m.kind) + '</div>';
       }).join('');
     }
     function readEnq() {
@@ -908,6 +909,30 @@
   }
   function addDaysYmd(ymd, n) { var p = String(ymd).split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)); return d.toISOString().slice(0, 10); }
 
+  /* WhatsApp ready messages: advance & payment glow green, welcome & thank-you glow yellow, festival orange.
+     Payment messages also get a button that shares the payment QR picture (JPEG) together with the words. */
+  var WK_PAY = /^(advance|advpending|gpay|paid)$/, WK_QR = /^(advance|advpending|gpay)$/, WK_WARM = /^(welcome|ghello|gthanks|review)$/;
+  function wkCls(k) { return k === 'gfest' ? ' wk-fest' : WK_PAY.test(k) ? ' wk-pay' : WK_WARM.test(k) ? ' wk-warm' : ''; }
+  function wkQr(k) { return WK_QR.test(k) ? '<button class="wk-qr" type="button">' + '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>' + 'Send with the payment QR picture</button>' : ''; }
+  var WK_QR_IMG = '/img/pay/nikadi-pay-qr-hd.jpg', WK_QR_NAME = 'Nikadi Guest House - payment QR.jpg';
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.wk-qr'); if (!b) return;
+    var box = b.closest('.wk-msg'), txt = $('.wk-p', box).textContent, send = $('.wk-send', box);
+    function copy() { try { return navigator.clipboard.writeText(txt).then(function () { return true; }, function () { return false; }); } catch (x) { return Promise.resolve(false); } }
+    busy(b, true);
+    fetch(WK_QR_IMG).then(function (r) { if (!r.ok) throw new Error('img'); return r.blob(); }).then(function (bl) {
+      var f = new File([bl], WK_QR_NAME, { type: 'image/jpeg' });
+      busy(b, false);
+      if (navigator.canShare && navigator.canShare({ files: [f] })) {
+        return copy().then(function () { return navigator.share({ files: [f], text: txt }); }).then(function () {
+          toast('Choose the guest\'s chat in WhatsApp · the words are also copied, paste them if they do not appear');
+          if (send && send.dataset.g != null) send.dispatchEvent(new CustomEvent('wk-sent'));
+        }, function () {});
+      }
+      /* computer: no picture sharing here, so open the picture and copy the words */
+      copy().then(function (ok) { window.open(WK_QR_IMG, '_blank'); toast(ok ? 'Words copied. Save or drag the QR picture into WhatsApp, then paste the words.' : 'Save or drag the QR picture into WhatsApp, then copy the words from the message.'); });
+    }, function () { busy(b, false); toast('Could not load the QR picture. Check the internet and try again.'); });
+  });
   /* anything given at no charge wears the green FREE tag */
   function isFree(c) { return !!c.free || !(Number(c.total) > 0); }
   function freeTag(why) { return '<span class="free">Free' + (why ? ' (' + esc(why) + ')' : '') + '</span>'; }

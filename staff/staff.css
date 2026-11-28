@@ -914,3 +914,10 @@ button,a,[role=button],.btn,.idc-slot{touch-action:manipulation;-webkit-user-sel
 .emp-web-sw{display:flex;gap:12px;align-items:flex-start;cursor:pointer}.emp-web-sw input{width:22px;height:22px;margin-top:2px;accent-color:var(--gold,#d4af37);flex:none}.emp-web-sw span{display:grid;gap:4px}.emp-web-sw small{color:var(--muted);font-size:.8rem;line-height:1.4}
 /* FREE tag keeps its own size and green inside rows that restyle every span */
 .hk-row .hk-what span.free,.items button span.free,.lc-row span.free{font-size:.62rem;color:#8fe0a8;display:inline-block}
+/* ready messages: advance & payment glow green, welcome & thank-you glow yellow */
+.wk-msg{flex-wrap:wrap}
+.wk-msg.wk-pay .wk-send{border:1.5px solid rgba(116,192,140,.85);background:rgba(116,192,140,.13);box-shadow:0 0 10px rgba(116,192,140,.28)}.wk-msg.wk-pay .wk-l,.wk-msg.wk-pay .wk-s{color:#8fe0a8}.wk-msg.wk-pay .wk-l{font-weight:700}
+.wk-msg.wk-warm .wk-send{border:1.5px solid rgba(240,200,70,.85);background:rgba(240,200,70,.12);box-shadow:0 0 10px rgba(240,200,70,.26)}.wk-msg.wk-warm .wk-l,.wk-msg.wk-warm .wk-s{color:#f5d35c}.wk-msg.wk-warm .wk-l{font-weight:700}
+.wk-msg.sent.wk-pay .wk-send,.wk-msg.sent.wk-warm .wk-send{box-shadow:none;opacity:.8}
+.wk-qr{flex:1 1 100%;display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;border-radius:10px;border:1px dashed rgba(116,192,140,.8);background:rgba(116,192,140,.08);color:#8fe0a8;font:inherit;font-size:.82rem;font-weight:600;cursor:pointer}
+.wk-qr:active{background:rgba(116,192,140,.2)}
