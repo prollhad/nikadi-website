@@ -694,7 +694,7 @@ function deskCore(db, hooks) {
     return out;
   }
   /* Enquiries: rooms + prices for the guest's dates, the 50% advance and the "advance received" reply */
-  var DESK_UPI = '50200005796177@HDFC0009856.ifsc.npci', DESK_PAY_LINK = 'https://www.nikadiguesthouse.com/#booking';
+  var DESK_UPI = 'Vyapar.173921652511@hdfcbank', DESK_PAY_LINK = 'https://www.nikadiguesthouse.com/#booking';
   /* Payments go to Gourdham Enterprise (payment partner) until Nikadi's own company bank account is ready (owner, 28 Nov 2026). */
   var DESK_PAY_WHO = 'Gourdham Enterprise, payment partner of Nikadi Guest House';
   var DESK_BANK = 'Bank transfer: Gourdham Enterprise · A/c 50200005796177 (current) · IFSC HDFC0009856 · HDFC Bank, Mayapur';

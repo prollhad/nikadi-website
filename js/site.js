@@ -561,8 +561,10 @@ try{
 try{
 
 // ---- Settings: update these to change payment details ----
-var UPI_ID = "50200005796177@HDFC0009856.ifsc.npci"; /* Gourdham Enterprise HDFC current account (payment partner) until Nikadi's own company account is ready */
+var UPI_ID = "Vyapar.173921652511@hdfcbank"; /* Gourdham Enterprise HDFC SmartHub Vyapar merchant UPI (payment partner) until Nikadi's own company account is ready */
 var UPI_NAME = "Gourdham Enterprise";
+/* the exact code on HDFC's printed QR standee: used as-is so the merchant QR works in every app */
+var UPI_URI = "upi://pay?pa=Vyapar.173921652511@hdfcbank&pn=Default&mc=8999&tr=STQU173921652511&cu=INR";
 var WA = "917501101137";
 // -----------------------------------------------------------
 
@@ -616,7 +618,7 @@ var WA = "917501101137";
   document.getElementById('copyEmail').addEventListener('click',function(){copy('nikadiguesthouse@gmail.com',document.getElementById('emailMsg'),document.getElementById('email'));});
 
   if(UPI_ID){
-    var uri='upi://pay?pa='+UPI_ID+'&pn='+encodeURIComponent(UPI_NAME)+'&cu=INR&tn='+encodeURIComponent('Nikadi booking advance');
+    var uri=UPI_URI||('upi://pay?pa='+UPI_ID+'&pn='+encodeURIComponent(UPI_NAME)+'&cu=INR&tn='+encodeURIComponent('Nikadi booking advance'));
     var box=document.getElementById('qr');box.innerHTML='';
     try{new QRCode(box,{text:uri,width:400,height:400,correctLevel:QRCode.CorrectLevel.M});}catch(e){box.innerHTML='<p class="wait">Pay to the UPI ID below.</p>';}
     document.getElementById('upiId').textContent=UPI_ID;
