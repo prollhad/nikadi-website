@@ -461,6 +461,7 @@ html.sky-day .s:not(.alt) .head p,html.sky-sunset .s:not(.alt) .head p,html.sky-
 .upi .acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .upi .btn{padding:11px 18px}
 .bank{width:100%;border-top:1px solid var(--line);padding-top:20px;display:grid;gap:14px;justify-items:center}
+.pay-partner{margin:8px 0 0;font-size:.82rem;line-height:1.45;color:var(--muted);max-width:30em;text-align:center}.pay-partner b{color:var(--ink);font-weight:600}
 .bank dl{margin:0;width:100%;display:grid;grid-template-columns:auto 1fr;gap:8px 16px;text-align:left}
 .bank dt{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);align-self:center}
 .bank dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;user-select:all}
@@ -2568,7 +2569,8 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         </form>
         <p class="kicker">Pay by UPI</p>
         <div class="upi-qr" id="qr"><p class="wait">UPI QR code coming soon. Please message us on WhatsApp for payment details.</p></div>
-        <div class="id" id="upiId">Nikadi Guest House</div>
+        <div class="id" id="upiId">Gourdham Enterprise</div>
+        <p class="pay-partner">Payments are received by <b>Gourdham Enterprise</b>, the payment partner of Nikadi Guest House. Your UPI app will show this name.</p>
         <p class="apps">Google Pay · PhonePe · Paytm · BHIM · any UPI app</p>
         <div class="acts" id="upiActs" hidden>
           <button class="btn btn-gold" type="button" id="copyUpi">Copy UPI ID</button>
@@ -2578,10 +2580,11 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
         <div class="bank">
           <p class="kicker">Or bank transfer (NEFT / IMPS)</p>
           <dl>
-            <dt>Account name</dt><dd>Khokon Ghosh</dd>
-            <dt>Account no.</dt><dd id="accNo">925010055272125</dd>
-            <dt>IFSC</dt><dd id="ifsc">UTIB0006265</dd>
-            <dt>Bank</dt><dd>Axis Bank</dd>
+            <dt>Account name</dt><dd>Gourdham Enterprise</dd>
+            <dt>Account no.</dt><dd id="accNo">50200005796177</dd>
+            <dt>Account type</dt><dd>Current account</dd>
+            <dt>IFSC</dt><dd id="ifsc">HDFC0009856</dd>
+            <dt>Bank</dt><dd>HDFC Bank, Mayapur (Bamanpukur) branch</dd>
           </dl>
           <button class="btn btn-line" type="button" id="copyBank">Copy bank details</button>
           <span class="msg" id="bankMsg" aria-live="polite"></span>
@@ -3984,8 +3987,8 @@ At least you should visit this hotel once.It is right next to the temple.</p><bu
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 // ---- Settings: update these to change payment details ----
-var UPI_ID = "nikadiguesthouse@axisbank";
-var UPI_NAME = "Khokon Ghosh";
+var UPI_ID = "50200005796177@HDFC0009856.ifsc.npci"; /* Gourdham Enterprise HDFC current account (payment partner) until Nikadi's own company account is ready */
+var UPI_NAME = "Gourdham Enterprise";
 var WA = "917501101137";
 // -----------------------------------------------------------
 
@@ -4035,11 +4038,11 @@ var WA = "917501101137";
     function fb(){var r=document.createRange();r.selectNodeContents(srcEl);var s=getSelection();s.removeAllRanges();s.addRange(r);msgEl.textContent='Selected. Use your device\'s copy option.';}
     try{navigator.clipboard.writeText(text).then(ok,fb);}catch(e){fb();}
   }
-  document.getElementById('copyBank').addEventListener('click',function(){copy('Account name: Khokon Ghosh\nAccount no: 925010055272125\nIFSC: UTIB0006265\nBank: Axis Bank',document.getElementById('bankMsg'),document.querySelector('.bank dl'));});
+  document.getElementById('copyBank').addEventListener('click',function(){copy('Account name: Gourdham Enterprise\nAccount no: 50200005796177\nAccount type: Current\nIFSC: HDFC0009856\nBank: HDFC Bank, Mayapur (Bamanpukur) branch',document.getElementById('bankMsg'),document.querySelector('.bank dl'));});
   document.getElementById('copyEmail').addEventListener('click',function(){copy('nikadiguesthouse@gmail.com',document.getElementById('emailMsg'),document.getElementById('email'));});
 
   if(UPI_ID){
-    var uri='upi://pay?pa='+encodeURIComponent(UPI_ID)+'&pn='+encodeURIComponent(UPI_NAME)+'&cu=INR&tn='+encodeURIComponent('Nikadi booking advance');
+    var uri='upi://pay?pa='+UPI_ID+'&pn='+encodeURIComponent(UPI_NAME)+'&cu=INR&tn='+encodeURIComponent('Nikadi booking advance');
     var box=document.getElementById('qr');box.innerHTML='';
     try{new QRCode(box,{text:uri,width:400,height:400,correctLevel:QRCode.CorrectLevel.M});}catch(e){box.innerHTML='<p class="wait">Pay to the UPI ID below.</p>';}
     document.getElementById('upiId').textContent=UPI_ID;

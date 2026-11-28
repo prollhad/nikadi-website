@@ -694,7 +694,10 @@ function deskCore(db, hooks) {
     return out;
   }
   /* Enquiries: rooms + prices for the guest's dates, the 50% advance and the "advance received" reply */
-  var DESK_UPI = 'nikadiguesthouse@axisbank', DESK_PAY_LINK = 'https://www.nikadiguesthouse.com/#booking';
+  var DESK_UPI = '50200005796177@HDFC0009856.ifsc.npci', DESK_PAY_LINK = 'https://www.nikadiguesthouse.com/#booking';
+  /* Payments go to Gourdham Enterprise (payment partner) until Nikadi's own company bank account is ready (owner, 28 Nov 2026). */
+  var DESK_PAY_WHO = 'Gourdham Enterprise, payment partner of Nikadi Guest House';
+  var DESK_BANK = 'Bank transfer: Gourdham Enterprise · A/c 50200005796177 (current) · IFSC HDFC0009856 · HDFC Bank, Mayapur';
   var DESK_TYPE_INFO = { 'Deluxe Double': ['Deluxe Double', 'king bed, up to 2 adults'], 'Deluxe Twin': ['Deluxe Twin', '2 single beds, up to 2 adults'], 'Large Twin': ['Large Twin', '2 single beds, more space, up to 3 adults'] };
   function roomTypeKey(t) { t = String(t || ''); return /large/i.test(t) ? 'Large Twin' : /twin/i.test(t) ? 'Deluxe Twin' : /double|king/i.test(t) ? 'Deluxe Double' : ''; }
   /* ---- Tonight's late price ----
@@ -759,7 +762,7 @@ function deskCore(db, hooks) {
       else add('full', 'Sorry, we are full', n + ', Hare Krishna! Sorry, we are fully booked for ' + when + '. If your dates can change a little, tell us and we will check again. Thank you!');
       if (best) {
         var adv = Math.round(best.total / 2);
-        add('advance', 'Ask for 50% advance', n + ', Hare Krishna! To hold your ' + DESK_TYPE_INFO[best.type][0] + ' for ' + when + ', please pay the 50% advance of ' + rupees(adv) + ' (total ' + rupees(best.total) + '). The balance is paid at check-in.\n💳 UPI ID: ' + DESK_UPI + ' (Nikadi Guest House)\nOr scan our QR code here: ' + DESK_PAY_LINK + '\nPlease send the payment screenshot in this chat and we will confirm your booking right away.\nCancellation: 3 or more days before check-in, full refund of the advance.');
+        add('advance', 'Ask for 50% advance', n + ', Hare Krishna! To hold your ' + DESK_TYPE_INFO[best.type][0] + ' for ' + when + ', please pay the 50% advance of ' + rupees(adv) + ' (total ' + rupees(best.total) + '). The balance is paid at check-in.\n💳 UPI ID: ' + DESK_UPI + '\nPaid to: ' + DESK_PAY_WHO + '\nOr scan our QR code here: ' + DESK_PAY_LINK + '\n' + DESK_BANK + '\nPlease send the payment screenshot in this chat and we will confirm your booking right away.\nCancellation: 3 or more days before check-in, full refund of the advance.');
         add('paid', 'Advance received', n + ', Hare Krishna! Thank you, we have received your advance' + (adv ? ' of ' + rupees(adv) : '') + '. We are confirming your booking now and will send the confirmation with all the details in a moment.');
       }
     }
@@ -786,7 +789,7 @@ function deskCore(db, hooks) {
       'Guests: ' + (b.guests || 2) + ' · ' + nights + ' night' + (nights > 1 ? 's' : '') + '\n' +
       'Total: ' + rupees(total) + (Number(b.advancePaid) > 0 ? '\nAdvance already received: ' + rupees(b.advancePaid) : '') + '\n\n' +
       'To confirm your booking, please pay the advance of ' + rupees(due) + '. The balance is paid at check-in.\n' +
-      'UPI ID: ' + DESK_UPI + ' (Nikadi Guest House)\nQR code: ' + DESK_PAY_LINK + '\n' +
+      'UPI ID: ' + DESK_UPI + '\nPaid to: ' + DESK_PAY_WHO + '\nQR code: ' + DESK_PAY_LINK + '\n' + DESK_BANK + '\n' +
       'Please send the payment screenshot in this chat. Your room is held for you once the advance is received.\n' +
       'Cancellation: 3 or more days before check-in, full refund of the advance.';
   }
@@ -801,7 +804,7 @@ function deskCore(db, hooks) {
     var fd = '2027-03-01';
     add('gfest', 'Festival season rates', G + ' Festival season in Sri Dham Mayapur: 24 December 2026 to 31 March 2027.\nOur festival season rates per night, GST included:\n• Deluxe Double (king bed, up to 2 adults): ' + rupees(deskRateOn('Deluxe Double', fd)) + '\n• Deluxe Twin (2 single beds, up to 2 adults): ' + rupees(deskRateOn('Deluxe Twin', fd)) + '\n• Large Twin (more space, up to 3 adults): ' + rupees(deskRateOn('Large Twin', fd)) + '\nRooms fill up fast in the festival season. Send us your dates and number of guests; a 50% advance confirms the booking.\nFestival details and booking: ' + DESK_WA_SITE + '/#gaura-purnima');
     add('gphotos', 'Photos & website', G + ' You can see our rooms and photos here: ' + DESK_WA_SITE + '/#rooms');
-    add('gpay', 'Advance & payment', G + ' To confirm a booking we take a 50% advance; the balance is paid at check-in.\nUPI ID: ' + DESK_UPI + ' (Nikadi Guest House)\nQR code: ' + DESK_PAY_LINK + '\nPlease send the payment screenshot in this chat.');
+    add('gpay', 'Advance & payment', G + ' To confirm a booking we take a 50% advance; the balance is paid at check-in.\nUPI ID: ' + DESK_UPI + '\nPaid to: ' + DESK_PAY_WHO + '\nQR code: ' + DESK_PAY_LINK + '\n' + DESK_BANK + '\nPlease send the payment screenshot in this chat.');
     add('grules', 'Check-in & house rules', G + ' Check-in from 11:00 AM, check-out by 9:00 AM. Please bring a photo ID for every guest.\nNikadi is a pure vegetarian home: no smoking, tobacco or alcohol. Quiet hours 10 PM to 6 AM. Rooms only; Govinda\'s and prasadam halls are a short walk away.');
     add('gcancel', 'Cancellation policy', G + ' Cancel 3 or more days before check-in for a full refund of the advance. After that, the advance is not refundable. Full details: ' + DESK_WA_SITE + '/#cancellation');
     add('gcall', 'We will call you back', G + ' Thank you for your message. Our reception will call you back shortly. You can also call us on +91 75011 01137.');

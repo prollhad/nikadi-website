@@ -561,8 +561,8 @@ try{
 try{
 
 // ---- Settings: update these to change payment details ----
-var UPI_ID = "nikadiguesthouse@axisbank";
-var UPI_NAME = "Khokon Ghosh";
+var UPI_ID = "50200005796177@HDFC0009856.ifsc.npci"; /* Gourdham Enterprise HDFC current account (payment partner) until Nikadi's own company account is ready */
+var UPI_NAME = "Gourdham Enterprise";
 var WA = "917501101137";
 // -----------------------------------------------------------
 
@@ -612,11 +612,11 @@ var WA = "917501101137";
     function fb(){var r=document.createRange();r.selectNodeContents(srcEl);var s=getSelection();s.removeAllRanges();s.addRange(r);msgEl.textContent='Selected. Use your device\'s copy option.';}
     try{navigator.clipboard.writeText(text).then(ok,fb);}catch(e){fb();}
   }
-  document.getElementById('copyBank').addEventListener('click',function(){copy('Account name: Khokon Ghosh\nAccount no: 925010055272125\nIFSC: UTIB0006265\nBank: Axis Bank',document.getElementById('bankMsg'),document.querySelector('.bank dl'));});
+  document.getElementById('copyBank').addEventListener('click',function(){copy('Account name: Gourdham Enterprise\nAccount no: 50200005796177\nAccount type: Current\nIFSC: HDFC0009856\nBank: HDFC Bank, Mayapur (Bamanpukur) branch',document.getElementById('bankMsg'),document.querySelector('.bank dl'));});
   document.getElementById('copyEmail').addEventListener('click',function(){copy('nikadiguesthouse@gmail.com',document.getElementById('emailMsg'),document.getElementById('email'));});
 
   if(UPI_ID){
-    var uri='upi://pay?pa='+encodeURIComponent(UPI_ID)+'&pn='+encodeURIComponent(UPI_NAME)+'&cu=INR&tn='+encodeURIComponent('Nikadi booking advance');
+    var uri='upi://pay?pa='+UPI_ID+'&pn='+encodeURIComponent(UPI_NAME)+'&cu=INR&tn='+encodeURIComponent('Nikadi booking advance');
     var box=document.getElementById('qr');box.innerHTML='';
     try{new QRCode(box,{text:uri,width:400,height:400,correctLevel:QRCode.CorrectLevel.M});}catch(e){box.innerHTML='<p class="wait">Pay to the UPI ID below.</p>';}
     document.getElementById('upiId').textContent=UPI_ID;
