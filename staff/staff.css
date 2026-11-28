@@ -67,7 +67,7 @@ main.view{padding-bottom:28px}
 .bl.due{background:rgba(201,163,90,.1)}
 .bl.due .t,.bl.due .a{color:var(--gold-hi);font-weight:500;font-size:1.15rem}
 .bl.paid .a{color:var(--green)}
-.free{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--green);background:var(--green);color:#06210f;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:1px}
+.free{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(116,192,140,.85);background:rgba(116,192,140,.16);color:#8fe0a8;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:1px;box-shadow:0 0 7px rgba(116,192,140,.35);text-shadow:0 0 6px rgba(143,224,168,.35)}
 .btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .btns .btn{min-height:48px;padding:0 10px;letter-spacing:.12em}
 .btns .wide{grid-column:1/-1}
